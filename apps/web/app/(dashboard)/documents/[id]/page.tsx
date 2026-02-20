@@ -1,20 +1,58 @@
 import { Metadata } from "next";
+import { auth } from "@clerk/nextjs";
+import { redirect, notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Download, Eye } from "lucide-react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 export const metadata: Metadata = {
     title: "Document Viewer — AutoApply AI",
     description: "Compare your original CV with the AI-tailored version",
 };
 
-export default function DocumentViewerPage({
+async function getApplication(clerkId: string, applicationId: string) {
+    const user = await prisma.user.findFirst({
+        where: { clerkId },
+    });
+
+    if (!user) return null;
+
+    const application = await prisma.application.findFirst({
+        where: { id: applicationId, userId: user.id },
+        include: { job: true },
+    });
+
+    if (!application) return null;
+
+    // Also fetch the user's master profile for the "original CV" view
+    const masterProfile = await prisma.masterProfile.findFirst({
+        where: { userId: user.id },
+    });
+
+    return { application, masterProfile };
+}
+
+export default async function DocumentViewerPage({
     params,
 }: {
     params: { id: string };
 }) {
+    const { userId } = auth();
+    if (!userId) redirect("/sign-in");
+
+    const data = await getApplication(userId, params.id);
+
+    if (!data) {
+        notFound();
+    }
+
+    const { application, masterProfile } = data;
+    const job = application.job;
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -29,19 +67,27 @@ export default function DocumentViewerPage({
                             Document Viewer
                         </h1>
                         <p className="text-muted-foreground">
-                            Application ID: {params.id}
+                            {job.title} at {job.company}
                         </p>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2">
-                        <Download className="h-4 w-4" />
-                        Download CV
-                    </Button>
-                    <Button variant="outline" className="gap-2">
-                        <Download className="h-4 w-4" />
-                        Download Letter
-                    </Button>
+                    {application.tailoredCvUrl && (
+                        <a href={application.tailoredCvUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" className="gap-2">
+                                <Download className="h-4 w-4" />
+                                Download CV
+                            </Button>
+                        </a>
+                    )}
+                    {application.coverLetterUrl && (
+                        <a href={application.coverLetterUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" className="gap-2">
+                                <Download className="h-4 w-4" />
+                                Download Letter
+                            </Button>
+                        </a>
+                    )}
                 </div>
             </div>
 
@@ -50,16 +96,52 @@ export default function DocumentViewerPage({
                 <CardContent className="p-6">
                     <div className="flex items-center gap-6">
                         <div className="text-center">
-                            <div className="text-4xl font-bold text-primary">—</div>
+                            <div className="text-4xl font-bold text-primary">
+                                {application.compatibilityScore}%
+                            </div>
                             <p className="text-sm text-muted-foreground">Match Score</p>
                         </div>
                         <div className="flex-1 space-y-2">
-                            <h3 className="font-semibold">Job Title — Company</h3>
+                            <h3 className="font-semibold">
+                                {job.title} — {job.company}
+                            </h3>
                             <div className="flex gap-2 flex-wrap">
-                                <Badge variant="outline">ATS Keywords</Badge>
+                                {application.atsKeywords.map((kw) => (
+                                    <Badge key={kw} variant="outline">
+                                        {kw}
+                                    </Badge>
+                                ))}
                             </div>
+                            {application.matchingStrengths.length > 0 && (
+                                <div className="mt-2">
+                                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                                        Strengths
+                                    </p>
+                                    <ul className="text-sm space-y-1">
+                                        {application.matchingStrengths.map((s, i) => (
+                                            <li key={i} className="text-green-700">
+                                                + {s}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {application.gaps.length > 0 && (
+                                <div className="mt-2">
+                                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                                        Gaps
+                                    </p>
+                                    <ul className="text-sm space-y-1">
+                                        {application.gaps.map((g, i) => (
+                                            <li key={i} className="text-amber-700">
+                                                - {g}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
-                        <Badge>Tailored</Badge>
+                        <Badge className="capitalize">{application.status}</Badge>
                     </div>
                 </CardContent>
             </Card>
@@ -75,9 +157,15 @@ export default function DocumentViewerPage({
                     </div>
                     <CardContent className="p-6">
                         <div className="prose prose-sm max-w-none">
-                            <p className="text-muted-foreground text-center py-12">
-                                Upload your CV in the Profile section to see it here.
-                            </p>
+                            {masterProfile?.rawText ? (
+                                <pre className="whitespace-pre-wrap text-sm font-sans">
+                                    {masterProfile.rawText}
+                                </pre>
+                            ) : (
+                                <p className="text-muted-foreground text-center py-12">
+                                    Upload your CV in the Profile section to see it here.
+                                </p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -92,9 +180,15 @@ export default function DocumentViewerPage({
                     </div>
                     <CardContent className="p-6">
                         <div className="prose prose-sm max-w-none">
-                            <p className="text-muted-foreground text-center py-12">
-                                No tailored document generated yet.
-                            </p>
+                            {application.tailoredCvMarkdown ? (
+                                <ReactMarkdown>
+                                    {application.tailoredCvMarkdown}
+                                </ReactMarkdown>
+                            ) : (
+                                <p className="text-muted-foreground text-center py-12">
+                                    Tailored CV is being generated...
+                                </p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -107,16 +201,22 @@ export default function DocumentViewerPage({
                 </div>
                 <CardContent className="p-6">
                     <div className="prose prose-sm max-w-none">
-                        <p className="text-muted-foreground text-center py-8">
-                            No cover letter generated yet.
-                        </p>
+                        {application.coverLetterMarkdown ? (
+                            <ReactMarkdown>
+                                {application.coverLetterMarkdown}
+                            </ReactMarkdown>
+                        ) : (
+                            <p className="text-muted-foreground text-center py-8">
+                                Cover letter is being generated...
+                            </p>
+                        )}
                     </div>
                 </CardContent>
             </Card>
 
             {/* Disclaimer */}
             <p className="text-xs text-muted-foreground text-center">
-                ⚠️ AI-tailored content is based solely on your provided CV. Always
+                AI-tailored content is based solely on your provided CV. Always
                 verify all information before submitting to employers.
             </p>
         </div>

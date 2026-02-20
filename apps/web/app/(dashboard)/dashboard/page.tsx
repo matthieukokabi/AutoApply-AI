@@ -1,25 +1,81 @@
 import { Metadata } from "next";
+import { auth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Briefcase, FileText, TrendingUp, Clock } from "lucide-react";
+import { KanbanBoard } from "@/components/kanban-board";
 
 export const metadata: Metadata = {
     title: "Dashboard — AutoApply AI",
     description: "Track your job applications and tailored documents",
 };
 
-const KANBAN_COLUMNS = [
-    { id: "discovered", label: "Discovered", color: "bg-blue-500" },
-    { id: "tailored", label: "Tailored", color: "bg-purple-500" },
-    { id: "applied", label: "Applied", color: "bg-yellow-500" },
-    { id: "interview", label: "Interview", color: "bg-emerald-500" },
-    { id: "offer", label: "Offer", color: "bg-green-500" },
-    { id: "rejected", label: "Rejected", color: "bg-red-500" },
-];
+async function getDashboardData(clerkId: string) {
+    const user = await prisma.user.findFirst({
+        where: { clerkId },
+    });
 
-export default function DashboardPage() {
-    // TODO: Fetch real data from API
-    const stats = {
+    if (!user) return null;
+
+    const [applications, totalApplications, tailoredDocs, avgResult, statusCounts] =
+        await Promise.all([
+            prisma.application.findMany({
+                where: { userId: user.id },
+                include: { job: true },
+                orderBy: { createdAt: "desc" },
+            }),
+            prisma.application.count({ where: { userId: user.id } }),
+            prisma.application.count({
+                where: { userId: user.id, tailoredCvUrl: { not: null } },
+            }),
+            prisma.application.aggregate({
+                where: { userId: user.id },
+                _avg: { compatibilityScore: true },
+            }),
+            prisma.application.groupBy({
+                by: ["status"],
+                where: { userId: user.id },
+                _count: { id: true },
+            }),
+        ]);
+
+    const byStatus: Record<string, number> = {};
+    statusCounts.forEach((s) => {
+        byStatus[s.status] = s._count.id;
+    });
+
+    return {
+        applications: applications.map((a) => ({
+            id: a.id,
+            compatibilityScore: a.compatibilityScore,
+            status: a.status,
+            atsKeywords: a.atsKeywords,
+            recommendation: a.recommendation,
+            createdAt: a.createdAt.toISOString(),
+            job: {
+                id: a.job.id,
+                title: a.job.title,
+                company: a.job.company,
+                location: a.job.location,
+            },
+        })),
+        stats: {
+            totalApplications,
+            tailoredDocs,
+            avgScore: Math.round(avgResult._avg.compatibilityScore || 0),
+            pendingReview: byStatus["tailored"] || 0,
+        },
+    };
+}
+
+export default async function DashboardPage() {
+    const { userId } = auth();
+    if (!userId) redirect("/sign-in");
+
+    const data = await getDashboardData(userId);
+
+    const stats = data?.stats ?? {
         totalApplications: 0,
         tailoredDocs: 0,
         avgScore: 0,
@@ -86,28 +142,7 @@ export default function DashboardPage() {
             {/* Kanban Board */}
             <div>
                 <h2 className="text-xl font-semibold mb-4">Application Pipeline</h2>
-                <div className="grid grid-cols-6 gap-4 min-h-[400px]">
-                    {KANBAN_COLUMNS.map((column) => (
-                        <div
-                            key={column.id}
-                            className="bg-muted/50 rounded-lg p-3 space-y-3"
-                        >
-                            <div className="flex items-center gap-2">
-                                <div className={`h-2 w-2 rounded-full ${column.color}`} />
-                                <h3 className="text-sm font-medium">{column.label}</h3>
-                                <Badge variant="secondary" className="ml-auto text-xs">
-                                    0
-                                </Badge>
-                            </div>
-                            <div className="space-y-2 min-h-[300px]">
-                                {/* Application cards will be rendered here */}
-                                <p className="text-xs text-muted-foreground text-center py-8">
-                                    No applications yet
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <KanbanBoard initialApplications={data?.applications ?? []} />
             </div>
         </div>
     );
