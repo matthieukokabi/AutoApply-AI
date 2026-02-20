@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # ─── Main Application Database ──────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: autoapply-db
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-autoapply}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-autoapply}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - autoapply-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-autoapply}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (Job Queuing / Rate Limiting) ────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: autoapply-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-autoapply_redis}
+    volumes:
+      - redis_data:/data
+    networks:
+      - autoapply-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD:-autoapply_redis}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Next.js Web Application ────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: autoapply-web
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-autoapply}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-autoapply}?schema=public
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+      N8N_WEBHOOK_URL: http://n8n:5678
+      REDIS_URL: redis://:${REDIS_PASSWORD:-autoapply_redis}@redis:6379
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - autoapply-network
+
+  # ─── n8n Automation Engine ──────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: autoapply-n8n
+    restart: unless-stopped
+    ports:
+      - '5678:5678'
+    environment:
+      # n8n core config
+      N8N_BASIC_AUTH_ACTIVE: 'true'
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:?Set N8N_BASIC_AUTH_PASSWORD in .env}
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      # n8n database (uses main Postgres with separate schema)
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: db
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-autoapply}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-autoapply}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_SCHEMA: n8n
+      # LLM API keys (used in workflows)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      # Job API keys
+      ADZUNA_APP_ID: ${ADZUNA_APP_ID}
+      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY}
+      # App database connection (for workflow queries)
+      APP_DATABASE_URL: postgresql://${POSTGRES_USER:-autoapply}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-autoapply}?schema=public
+      # Gotenberg
+      GOTENBERG_URL: http://gotenberg:3000
+      # Storage
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_REGION: ${S3_REGION}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/workflows:ro
+      - ./n8n/templates:/home/node/templates:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - autoapply-network
+
+  # ─── Gotenberg (PDF Generation) ─────────────────────────────
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: autoapply-gotenberg
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    command:
+      - 'gotenberg'
+      - '--chromium-disable-javascript=true'
+      - '--api-timeout=60s'
+    networks:
+      - autoapply-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  n8n_data:
+    driver: local
+
+networks:
+  autoapply-network:
+    driver: bridge
+    name: autoapply-network

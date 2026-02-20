@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User & Authentication ──────────────────────────────────
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  clerkId            String    @unique
+  name               String
+  automationEnabled  Boolean   @default(false)
+  subscriptionStatus String    @default("free") // free | pro | unlimited
+  stripeCustomerId   String?   @unique
+  creditsRemaining   Int       @default(3)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  masterProfile  MasterProfile?
+  preferences    JobPreferences?
+  applications   Application[]
+  appliedJobIds  String[]       @default([])
+
+  @@map("users")
+}
+
+// ─── Master CV / Profile ────────────────────────────────────
+
+model MasterProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawText        String   // Full CV as plain text
+  structuredJson Json     // Parsed sections: contact, summary, experience, education, skills
+  updatedAt      DateTime @updatedAt
+
+  @@map("master_profiles")
+}
+
+// ─── Job Preferences ────────────────────────────────────────
+
+model JobPreferences {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetTitles     String[] // Desired job titles
+  locations        String[] // Cities / countries
+  remotePreference String   @default("any") // remote | hybrid | onsite | any
+  salaryMin        Int?
+  industries       String[]
+
+  @@map("job_preferences")
+}
+
+// ─── Jobs ───────────────────────────────────────────────────
+
+model Job {
+  id          String    @id @default(cuid())
+  externalId  String    @unique
+  title       String
+  company     String
+  location    String
+  description String
+  source      String    // adzuna | themuse | remotive | arbeitnow | manual
+  url         String
+  salary      String?
+  postedAt    DateTime?
+  fetchedAt   DateTime  @default(now())
+
+  applications Application[]
+
+  @@index([source])
+  @@index([fetchedAt])
+  @@map("jobs")
+}
+
+// ─── Applications (Tailored Documents) ──────────────────────
+
+model Application {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId              String
+  job                Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  compatibilityScore Int
+  atsKeywords        String[]  @default([])
+  matchingStrengths  String[]  @default([])
+  gaps               String[]  @default([])
+  recommendation     String?   // apply | stretch | skip
+  tailoredCvUrl      String?
+  coverLetterUrl     String?
+  tailoredCvMarkdown String?
+  coverLetterMarkdown String?
+  status             String    @default("tailored") // discovered | tailored | applied | interview | offer | rejected
+  appliedAt          DateTime?
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([userId, jobId])
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("applications")
+}
+
+// ─── Workflow Errors (n8n error logging) ────────────────────
+
+model WorkflowError {
+  id          String   @id @default(cuid())
+  workflowId  String
+  nodeName    String
+  errorType   String
+  message     String
+  payload     Json?
+  userId      String?
+  createdAt   DateTime @default(now())
+
+  @@index([workflowId])
+  @@index([createdAt])
+  @@map("workflow_errors")
+}

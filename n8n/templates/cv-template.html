@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #333;
+      margin: 0;
+      padding: 40px 50px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 2px;
+    }
+
+    .contact-info {
+      font-size: 10px;
+      color: #555;
+      margin-bottom: 16px;
+    }
+
+    .contact-info a {
+      color: #555;
+      text-decoration: none;
+    }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #111;
+      border-bottom: 1.5px solid #333;
+      padding-bottom: 3px;
+      margin-top: 14px;
+      margin-bottom: 8px;
+    }
+
+    .experience-item {
+      margin-bottom: 10px;
+    }
+
+    .experience-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 2px;
+    }
+
+    .job-title {
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .company {
+      font-style: italic;
+      color: #444;
+    }
+
+    .dates {
+      font-size: 10px;
+      color: #666;
+      white-space: nowrap;
+    }
+
+    ul {
+      padding-left: 18px;
+      margin-top: 3px;
+    }
+
+    li {
+      margin-bottom: 2px;
+      font-size: 10.5px;
+      line-height: 1.4;
+    }
+
+    .skills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      list-style: none;
+      padding: 0;
+    }
+
+    .skills-list li {
+      font-size: 10.5px;
+    }
+
+    .education-item {
+      margin-bottom: 6px;
+    }
+
+    .degree {
+      font-weight: 700;
+    }
+
+    .institution {
+      color: #444;
+    }
+
+    .summary {
+      font-size: 10.5px;
+      line-height: 1.5;
+      color: #444;
+      margin-bottom: 4px;
+    }
+
+    /* No colors, no columns, no images — ATS-safe */
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        padding: 40px 50px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 
+    Template variables (replaced by n8n):
+    {{name}}, {{email}}, {{phone}}, {{location}}
+    {{summary}}
+    {{experience}} - HTML content
+    {{education}} - HTML content
+    {{skills}} - HTML content
+  -->
+  <h1>{{name}}</h1>
+  <div class="contact-info">
+    {{email}} | {{phone}} | {{location}}
+  </div>
+
+  <h2>Professional Summary</h2>
+  <p class="summary">{{summary}}</p>
+
+  <h2>Experience</h2>
+  {{experience}}
+
+  <h2>Education</h2>
+  {{education}}
+
+  <h2>Skills</h2>
+  <ul class="skills-list">
+    {{skills}}
+  </ul>
+</body>
+</html>

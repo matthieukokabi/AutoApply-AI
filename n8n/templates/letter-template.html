@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            line-height: 1.7;
+            color: #333;
+            margin: 0;
+            padding: 60px 65px;
+        }
+
+        .sender-info {
+            margin-bottom: 24px;
+            font-size: 10.5px;
+            color: #444;
+        }
+
+        .date {
+            margin-bottom: 20px;
+            font-size: 10.5px;
+            color: #666;
+        }
+
+        .recipient {
+            margin-bottom: 20px;
+            font-size: 10.5px;
+        }
+
+        .salutation {
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .body p {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .closing {
+            margin-top: 24px;
+        }
+
+        .signature {
+            margin-top: 36px;
+            font-weight: 600;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        @media print {
+            body {
+                padding: 60px 65px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sender-info">
+        {{name}}<br>
+        {{email}} | {{phone}}<br>
+        {{location}}
+    </div>
+
+    <div class="date">{{date}}</div>
+
+    <div class="recipient">
+        {{company_name}}<br>
+        {{company_address}}
+    </div>
+
+    <div class="salutation">Dear Hiring Manager,</div>
+
+    <div class="body">
+        {{letter_content}}
+    </div>
+
+    <div class="closing">Sincerely,</div>
+    <div class="signature">{{name}}</div>
+</body>
+
+</html>

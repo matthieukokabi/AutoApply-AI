@@ -1,0 +1,310 @@
+{
+    "name": "User-Initiated Single Job Tailoring",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "single-job-tailor",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                0,
+                0
+            ],
+            "webhookId": "single-job-tailor"
+        },
+        {
+            "parameters": {
+                "model": "claude-sonnet-4-5-20250514",
+                "messages": {
+                    "values": [
+                        {
+                            "role": "system",
+                            "content": "You are an expert ATS analyst and career advisor.\n\nINPUT: You will receive a JSON object with two keys:\n- \"job_description\": the full text of a job posting\n- \"master_cv\": the candidate's complete CV\n\nTASK:\n1. Calculate a compatibility_score (0-100) based on:\n   - Required skills match (weight: 40%)\n   - Experience years match (weight: 25%)\n   - Education match (weight: 15%)\n   - Industry/domain relevance (weight: 20%)\n\n2. Extract the top 10 critical ATS keywords from the job description\n\n3. Identify gaps: skills or qualifications the candidate lacks\n\nOUTPUT: Return ONLY valid JSON:\n{\n  \"compatibility_score\": <number>,\n  \"ats_keywords\": [<strings>],\n  \"matching_strengths\": [<strings>],\n  \"gaps\": [<strings>],\n  \"recommendation\": \"apply\" | \"stretch\" | \"skip\"\n}\n\nRULES:\n- Be conservative with scoring. Do not inflate.\n- If the job requires 5+ years and the candidate has 2, that's a significant gap.\n- \"stretch\" means score 60-79. \"apply\" means 80+. \"skip\" means <60."
+                        },
+                        {
+                            "role": "user",
+                            "content": "={{ JSON.stringify({ job_description: $json.body.jobDescription, master_cv: $json.body.masterCvText }) }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "temperature": 0.1,
+                    "maxTokens": 1000
+                }
+            },
+            "id": "llm-scoring",
+            "name": "LLM Relevance Scoring",
+            "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+            "typeVersion": 1.1,
+            "position": [
+                220,
+                0
+            ],
+            "credentials": {
+                "anthropicApi": {
+                    "id": "anthropic",
+                    "name": "Anthropic API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  try {\n    let responseText = item.json.message?.content || item.json.text || '';\n    const jsonMatch = responseText.match(/```json?\\s*([\\s\\S]*?)```/) || [null, responseText];\n    const parsed = JSON.parse(jsonMatch[1].trim());\n    results.push({ json: { ...item.json, ...parsed, parse_error: false } });\n  } catch (e) {\n    results.push({ json: { ...item.json, compatibility_score: 0, parse_error: true, error: e.message } });\n  }\n}\n\nreturn results;"
+            },
+            "id": "parse-scoring",
+            "name": "Parse Scoring Response",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                440,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "model": "claude-sonnet-4-5-20250514",
+                "messages": {
+                    "values": [
+                        {
+                            "role": "system",
+                            "content": "You are an expert resume writer specializing in ATS optimization.\n\nINPUT: JSON with \"job_description\", \"master_cv\", and \"ats_keywords\"\n\nTASK: Rewrite the CV to maximize ATS compatibility for this specific role.\n\nRULES — CRITICAL:\n1. NEVER invent, fabricate, or hallucinate any experience, skill, company, date, or credential\n2. ONLY use information present in the master_cv\n3. You MAY: reorder bullet points, rephrase using ATS keywords (synonymous mapping only), adjust the professional summary, emphasize relevant experience\n4. You MUST NOT: add skills the candidate doesn't have, change employment dates, invent metrics or achievements, add certifications not listed\n5. Output clean Markdown with standard sections: Contact, Summary, Experience, Education, Skills\n6. Use single-column format, no tables, no images, no graphics\n7. Keep to 1-2 pages maximum\n\nOUTPUT: JSON with two keys:\n{\n  \"tailored_cv_markdown\": \"<full CV in markdown>\",\n  \"motivation_letter_markdown\": \"<targeted cover letter in markdown>\"\n}\n\nFor the motivation letter:\n- Reference the company name and specific role\n- Connect candidate's top 3 relevant experiences to the job's stated needs\n- Keep to 250-350 words\n- Professional but not generic — avoid clichés\n- Again: NEVER fabricate any claims"
+                        },
+                        {
+                            "role": "user",
+                            "content": "={{ JSON.stringify({ job_description: $json.body?.jobDescription || $json.jobDescription, master_cv: $json.body?.masterCvText || $json.masterCvText, ats_keywords: $json.ats_keywords }) }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "temperature": 0.2,
+                    "maxTokens": 4000
+                }
+            },
+            "id": "llm-tailoring",
+            "name": "LLM CV Tailoring",
+            "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+            "typeVersion": 1.1,
+            "position": [
+                660,
+                0
+            ],
+            "credentials": {
+                "anthropicApi": {
+                    "id": "anthropic",
+                    "name": "Anthropic API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  try {\n    let responseText = item.json.message?.content || item.json.text || '';\n    const jsonMatch = responseText.match(/```json?\\s*([\\s\\S]*?)```/) || [null, responseText];\n    const parsed = JSON.parse(jsonMatch[1].trim());\n    results.push({ json: { ...item.json, ...parsed, tailoring_error: false } });\n  } catch (e) {\n    results.push({ json: { ...item.json, tailoring_error: true, error: e.message } });\n  }\n}\n\nreturn results;"
+            },
+            "id": "parse-tailored",
+            "name": "Parse Tailored Response",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                880,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $env.GOTENBERG_URL }}/forms/chromium/convert/html",
+                "sendBody": true,
+                "contentType": "multipart-form-data",
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "files",
+                            "value": "={{ '<html><head><style>body{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;margin:40px;color:#333}h1{font-size:18px}h2{font-size:14px;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:16px}ul{padding-left:20px}li{margin-bottom:4px}</style></head><body>' + ($json.tailored_cv_markdown || '').replace(/\\n/g, '<br>') + '</body></html>' }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "cv-to-pdf",
+            "name": "Generate CV PDF",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1100,
+                -100
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $env.GOTENBERG_URL }}/forms/chromium/convert/html",
+                "sendBody": true,
+                "contentType": "multipart-form-data",
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "files",
+                            "value": "={{ '<html><head><style>body{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;margin:60px;color:#333}p{margin-bottom:12px}</style></head><body>' + ($json.motivation_letter_markdown || '').replace(/\\n/g, '<br>') + '</body></html>' }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "letter-to-pdf",
+            "name": "Generate Letter PDF",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1100,
+                100
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "INSERT INTO applications (id, user_id, job_id, compatibility_score, ats_keywords, matching_strengths, gaps, recommendation, tailored_cv_markdown, cover_letter_markdown, status, created_at, updated_at) VALUES (gen_random_uuid(), '{{ $json.body?.userId || $json.userId }}', '{{ $json.body?.jobId || $json.jobId }}', {{ $json.compatibility_score }}, ARRAY{{ $json.ats_keywords }}, ARRAY{{ $json.matching_strengths }}, ARRAY{{ $json.gaps }}, '{{ $json.recommendation }}', '{{ $json.tailored_cv_markdown }}', '{{ $json.motivation_letter_markdown }}', 'tailored', NOW(), NOW()) ON CONFLICT (user_id, job_id) DO UPDATE SET compatibility_score = EXCLUDED.compatibility_score, tailored_cv_markdown = EXCLUDED.tailored_cv_markdown, cover_letter_markdown = EXCLUDED.cover_letter_markdown, status = 'tailored', updated_at = NOW()",
+                "additionalFields": {}
+            },
+            "id": "update-db",
+            "name": "Update Database",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.3,
+            "position": [
+                1320,
+                0
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "app-db",
+                    "name": "App Database"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify({ success: true, compatibility_score: $json.compatibility_score, recommendation: $json.recommendation, ats_keywords: $json.ats_keywords }) }}"
+            },
+            "id": "respond",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1540,
+                0
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "LLM Relevance Scoring",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "LLM Relevance Scoring": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Scoring Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Scoring Response": {
+            "main": [
+                [
+                    {
+                        "node": "LLM CV Tailoring",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "LLM CV Tailoring": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Tailored Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Tailored Response": {
+            "main": [
+                [
+                    {
+                        "node": "Generate CV PDF",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Generate Letter PDF",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate CV PDF": {
+            "main": [
+                [
+                    {
+                        "node": "Update Database",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Letter PDF": {
+            "main": [
+                [
+                    {
+                        "node": "Update Database",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Database": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "saveManualExecutions": true
+    },
+    "tags": [
+        {
+            "name": "production"
+        },
+        {
+            "name": "user-triggered"
+        }
+    ]
+}
