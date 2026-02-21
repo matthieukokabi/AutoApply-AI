@@ -1,31 +1,17 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * GET /api/onboarding
  * Check if the user needs onboarding (no profile or preferences yet).
- * Also creates the User record if it doesn't exist (first login via Clerk).
+ * Auto-creates or links the User record on first login via getAuthUser().
  */
 export async function GET() {
     try {
-        const { userId: clerkId } = auth();
-        if (!clerkId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        // Upsert user — creates on first login
-        let user = await prisma.user.findFirst({ where: { clerkId } });
+        const user = await getAuthUser();
         if (!user) {
-            user = await prisma.user.create({
-                data: {
-                    clerkId,
-                    email: "",
-                    name: "",
-                    subscriptionStatus: "free",
-                    creditsRemaining: 3,
-                },
-            });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const [profile, preferences] = await Promise.all([

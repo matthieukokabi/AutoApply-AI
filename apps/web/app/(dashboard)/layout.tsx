@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 import {
     LayoutDashboard,
     User,
@@ -28,19 +29,9 @@ export default async function DashboardLayout({
 
     const user = await currentUser();
 
-    // Auto-create DB user on first dashboard visit
-    let dbUser = await prisma.user.findFirst({ where: { clerkId: userId } });
-    if (!dbUser) {
-        dbUser = await prisma.user.create({
-            data: {
-                clerkId: userId,
-                email: user?.emailAddresses[0]?.emailAddress || "",
-                name: `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
-                subscriptionStatus: "free",
-                creditsRemaining: 3,
-            },
-        });
-    }
+    // Auto-create or link DB user on first dashboard visit
+    const dbUser = await getAuthUser();
+    if (!dbUser) redirect("/sign-in");
 
     // Redirect to onboarding if no CV uploaded yet
     const profile = await prisma.masterProfile.findUnique({
