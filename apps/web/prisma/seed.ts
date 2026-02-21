@@ -7,16 +7,16 @@ async function main() {
 
   // ─── Admin User (Unlimited Plan) ──────────────────────────
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@autoapply.ai' },
+    where: { email: 'matthieu.kokabi@gmail.com' },
     update: {
       subscriptionStatus: 'unlimited',
       creditsRemaining: 9999,
       automationEnabled: true,
     },
     create: {
-      email: 'admin@autoapply.ai',
+      email: 'matthieu.kokabi@gmail.com',
       clerkId: 'user_admin_test_001',
-      name: 'Admin Tester',
+      name: 'Matthieu Kokabi',
       subscriptionStatus: 'unlimited',
       creditsRemaining: 9999,
       automationEnabled: true,
@@ -27,8 +27,8 @@ async function main() {
   // ─── Master Profile ───────────────────────────────────────
   const structuredProfile = {
     contact: {
-      name: 'Admin Tester',
-      email: 'admin@autoapply.ai',
+      name: 'Matthieu Kokabi',
+      email: 'matthieu.kokabi@gmail.com',
       phone: '+41 79 123 45 67',
       location: 'Zurich, Switzerland',
       linkedin: 'https://linkedin.com/in/admin-tester',
@@ -99,7 +99,7 @@ async function main() {
 
   const rawCvText = `ADMIN TESTER
 Senior Full-Stack Engineer
-admin@autoapply.ai | +41 79 123 45 67 | Zurich, Switzerland
+matthieu.kokabi@gmail.com | +41 79 123 45 67 | Zurich, Switzerland
 linkedin.com/in/admin-tester
 
 SUMMARY
@@ -257,7 +257,7 @@ English (Fluent), French (Native), German (B2)`;
   const sampleTailoredCv = `# ADMIN TESTER
 ## Senior Full-Stack Engineer
 
-**Contact:** admin@autoapply.ai | +41 79 123 45 67 | Zurich, Switzerland
+**Contact:** matthieu.kokabi@gmail.com | +41 79 123 45 67 | Zurich, Switzerland
 
 ---
 
@@ -297,7 +297,7 @@ I am particularly excited about Stripe's mission to increase the GDP of the inte
 I would welcome the opportunity to discuss how my experience in scalable systems, payment technology, and team leadership can contribute to Stripe's continued success.
 
 Best regards,
-Admin Tester`;
+Matthieu Kokabi`;
 
   await Promise.all([
     prisma.application.upsert({
@@ -389,14 +389,14 @@ Admin Tester`;
   console.log('\n🎉 Seed complete!');
   console.log('─────────────────────────────────────────');
   console.log('Admin Account:');
-  console.log('  Email:        admin@autoapply.ai');
+  console.log('  Email:        matthieu.kokabi@gmail.com');
   console.log('  Plan:         Unlimited');
   console.log('  Credits:      9999');
   console.log('  Automation:   Enabled');
   console.log('  Clerk ID:     user_admin_test_001');
   console.log('─────────────────────────────────────────');
   console.log('\n⚠️  IMPORTANT: You need to create this user in Clerk dashboard');
-  console.log('   with the email admin@autoapply.ai so the clerkId matches.');
+  console.log('   with the email matthieu.kokabi@gmail.com so the clerkId matches.');
   console.log('   Or sign up via the app and the seed clerkId will be updated on first login.');
 }
 
