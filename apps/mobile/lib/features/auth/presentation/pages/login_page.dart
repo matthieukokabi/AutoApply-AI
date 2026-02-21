@@ -1,18 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/auth/auth_provider.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends ConsumerState<LoginPage> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  bool _isSignUp = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSubmit() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    await ref.read(authProvider.notifier).signIn(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      final auth = ref.read(authProvider);
+      if (auth.isAuthenticated) {
+        context.go('/dashboard');
+      } else if (auth.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(auth.error!)),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SizedBox(height: 60),
               // Logo
               Icon(
                 Icons.auto_awesome,
@@ -37,22 +86,57 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 48),
 
-              // TODO: Integrate Clerk authentication
+              // Email field
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Password field
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _handleSubmit(),
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock_outlined),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Submit button
               FilledButton(
-                onPressed: () {
-                  // Navigate to dashboard for now
-                },
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Sign In'),
+                onPressed: _isLoading ? null : _handleSubmit,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(_isSignUp ? 'Create Account' : 'Sign In'),
                 ),
               ),
               const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () {},
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Create Account'),
+
+              // Toggle sign in / sign up
+              TextButton(
+                onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                child: Text(
+                  _isSignUp
+                      ? 'Already have an account? Sign In'
+                      : "Don't have an account? Create one",
                 ),
               ),
             ],

@@ -6,10 +6,21 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/jobs/presentation/pages/jobs_page.dart';
 import '../../features/documents/presentation/pages/document_viewer_page.dart';
 import '../../shared/widgets/app_scaffold.dart';
+import '../auth/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
+
   return GoRouter(
     initialLocation: '/dashboard',
+    redirect: (context, state) {
+      final isLoggedIn = authState.isAuthenticated;
+      final isLoginRoute = state.uri.toString() == '/login';
+
+      if (!isLoggedIn && !isLoginRoute) return '/login';
+      if (isLoggedIn && isLoginRoute) return '/dashboard';
+      return null;
+    },
     routes: [
       // Auth
       GoRoute(

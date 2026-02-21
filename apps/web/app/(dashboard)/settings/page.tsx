@@ -177,6 +177,24 @@ export default function SettingsPage() {
         }
     }
 
+    async function handleCheckout(plan: string) {
+        try {
+            const res = await fetch("/api/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan }),
+            });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                setMessage({ type: "error", text: data.error || "Checkout failed." });
+            }
+        } catch {
+            setMessage({ type: "error", text: "Network error." });
+        }
+    }
+
     async function handleDeleteAccount() {
         if (!confirmDelete) {
             setConfirmDelete(true);
@@ -371,7 +389,9 @@ export default function SettingsPage() {
                                 {user?.subscriptionStatus || "free"}
                             </Badge>
                         </div>
-                        <Button>Upgrade</Button>
+                        <Button onClick={() => handleCheckout("pro_monthly")}>
+                            Upgrade
+                        </Button>
                     </div>
                     <div className="flex items-center justify-between">
                         <div>
@@ -380,7 +400,12 @@ export default function SettingsPage() {
                                 {user?.creditsRemaining ?? 0} credits
                             </p>
                         </div>
-                        <Button variant="outline">Buy Credits</Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => handleCheckout("credit_pack")}
+                        >
+                            Buy Credits
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

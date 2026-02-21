@@ -4,14 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/profile/upload — handle CV file upload
- * Accepts PDF or DOCX, extracts text, stores as master profile.
- *
- * For now, accepts the extracted text from the client side.
- * Client-side extraction avoids heavy server deps (pdf-parse, mammoth)
- * that cause issues in edge/serverless. The client reads the file
- * and sends the text content.
- *
- * Body: { rawText: string, fileName: string }
+ * Accepts PDF, DOCX, or TXT files as multipart/form-data.
+ * Extracts text server-side using pdf-parse (PDF) or mammoth (DOCX).
  */
 export async function POST(req: Request) {
     try {
@@ -20,16 +14,52 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const user = await prisma.user.findFirst({
-            where: { clerkId },
-        });
-
+        const user = await prisma.user.findFirst({ where: { clerkId } });
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        const body = await req.json();
-        const { rawText, fileName } = body;
+        const contentType = req.headers.get("content-type") || "";
+
+        let rawText = "";
+        let fileName = "upload";
+
+        if (contentType.includes("multipart/form-data")) {
+            // Handle binary file upload
+            const formData = await req.formData();
+            const file = formData.get("file") as File | null;
+
+            if (!file) {
+                return NextResponse.json({ error: "No file provided" }, { status: 400 });
+            }
+
+            fileName = file.name;
+            const ext = fileName.split(".").pop()?.toLowerCase();
+            const buffer = Buffer.from(await file.arrayBuffer());
+
+            if (ext === "pdf") {
+                const { PDFParse } = await import("pdf-parse");
+                const parser = new PDFParse({ data: buffer });
+                const result = await parser.getText();
+                rawText = result.text;
+            } else if (ext === "docx") {
+                const mammoth = await import("mammoth");
+                const result = await mammoth.extractRawText({ buffer });
+                rawText = result.value;
+            } else if (ext === "txt") {
+                rawText = buffer.toString("utf-8");
+            } else {
+                return NextResponse.json(
+                    { error: "Unsupported file type. Please upload PDF, DOCX, or TXT." },
+                    { status: 400 }
+                );
+            }
+        } else {
+            // Fallback: JSON body with rawText (for paste or client-side extraction)
+            const body = await req.json();
+            rawText = body.rawText || "";
+            fileName = body.fileName || "paste";
+        }
 
         if (!rawText || rawText.trim().length < 50) {
             return NextResponse.json(
@@ -38,16 +68,8 @@ export async function POST(req: Request) {
             );
         }
 
-        // Build a basic structured JSON from the raw text.
-        // In production, this would call an LLM to parse the CV.
-        // For now, store a minimal structure that the user can edit.
         const defaultStructuredJson = {
-            contact: {
-                name: "",
-                email: "",
-                phone: "",
-                location: "",
-            },
+            contact: { name: "", email: "", phone: "", location: "" },
             summary: "",
             experience: [],
             education: [],
@@ -63,7 +85,6 @@ export async function POST(req: Request) {
             },
             update: {
                 rawText,
-                // Only update structured JSON if there isn't one yet
             },
         });
 

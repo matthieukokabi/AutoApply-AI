@@ -134,13 +134,12 @@ export default function ProfilePage() {
         setMessage(null);
 
         try {
-            // Read file as text on client side
-            const text = await file.text();
+            const formData = new FormData();
+            formData.append("file", file);
 
             const res = await fetch("/api/profile/upload", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ rawText: text, fileName: file.name }),
+                body: formData,
             });
 
             if (res.ok) {
@@ -234,13 +233,13 @@ export default function ProfilePage() {
                                         : "Drop your CV here or click to upload"}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    Plain text or TXT file (max 5MB)
+                                    PDF, DOCX, or TXT file (max 5MB)
                                 </p>
                             </div>
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept=".txt,.text"
+                                accept=".pdf,.docx,.txt,.text"
                                 className="hidden"
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];

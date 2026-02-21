@@ -1,4 +1,6 @@
 class ApiConstants {
+  // For local dev on iOS simulator use localhost,
+  // for Android emulator use 10.0.2.2
   static const String baseUrl = 'http://localhost:3000/api';
 
   // Auth
@@ -7,11 +9,10 @@ class ApiConstants {
 
   // Profile
   static const String profile = '/profile';
-  static const String masterProfile = '/profile/master';
+  static const String profileUpload = '/profile/upload';
 
   // Jobs
   static const String jobs = '/jobs';
-  static const String jobFeed = '/jobs/feed';
 
   // Applications
   static const String applications = '/applications';
@@ -19,6 +20,12 @@ class ApiConstants {
   // Tailor
   static const String tailor = '/tailor';
 
-  // Settings
-  static const String preferences = '/settings/preferences';
+  // Preferences
+  static const String preferences = '/preferences';
+
+  // Stats
+  static const String stats = '/stats';
+
+  // Onboarding
+  static const String onboarding = '/onboarding';
 }
