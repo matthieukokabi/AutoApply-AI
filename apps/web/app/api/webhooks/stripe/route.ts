@@ -67,6 +67,33 @@ export async function POST(req: Request) {
                 break;
             }
 
+            case "customer.subscription.created":
+            case "customer.subscription.updated": {
+                const subscription = event.data.object as Stripe.Subscription;
+                const customer = subscription.customer as string;
+                const priceId = subscription.items.data[0]?.price.id;
+                const status = subscription.status;
+
+                let plan = "pro";
+                if (priceId === process.env.STRIPE_PRICE_UNLIMITED_MONTHLY) {
+                    plan = "unlimited";
+                }
+
+                // Only activate if subscription is active/trialing
+                if (status === "active" || status === "trialing") {
+                    await prisma.user.updateMany({
+                        where: { stripeCustomerId: customer },
+                        data: {
+                            subscriptionStatus: plan,
+                            creditsRemaining: plan === "unlimited" ? 9999 : 50,
+                        },
+                    });
+                } else if (status === "past_due" || status === "unpaid") {
+                    console.warn(`Subscription ${subscription.id} status: ${status} for customer: ${customer}`);
+                }
+                break;
+            }
+
             case "customer.subscription.deleted": {
                 const subscription = event.data.object as Stripe.Subscription;
                 const customer = subscription.customer as string;
@@ -82,10 +109,17 @@ export async function POST(req: Request) {
                 break;
             }
 
+            case "invoice.payment_succeeded": {
+                const invoice = event.data.object as Stripe.Invoice;
+                const customer = invoice.customer as string;
+                console.log(`Payment succeeded for customer: ${customer}, amount: ${invoice.amount_paid / 100} ${invoice.currency?.toUpperCase()}`);
+                break;
+            }
+
             case "invoice.payment_failed": {
                 const invoice = event.data.object as Stripe.Invoice;
                 const customer = invoice.customer as string;
-                console.error(`Payment failed for customer: ${customer}`);
+                console.error(`Payment failed for customer: ${customer}, amount: ${invoice.amount_due / 100} ${invoice.currency?.toUpperCase()}`);
                 break;
             }
         }

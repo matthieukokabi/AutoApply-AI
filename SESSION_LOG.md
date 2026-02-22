@@ -145,3 +145,113 @@
 - Xcode not installed — cannot build native iOS/macOS Flutter apps locally
 - Flutter mobile app uses demo auth (not real Clerk Flutter SDK yet)
 - Stripe keys are placeholder — need production setup
+
+---
+
+## Session 4 — 2026-02-22
+
+### Completed
+
+**Admin Account & Auth Fixes (from prev context):**
+- Created `prisma/seed.ts` — admin user (matthieu.kokabi@gmail.com) with Unlimited plan, 9999 credits
+- 5 sample jobs (Stripe, Vercel, DeepMind, N26, Notion) + 5 sample applications
+- Fixed user creation race condition: centralized all user creation in `lib/auth.ts` → `getAuthUser()`
+- Fixed `(dashboard)/layout.tsx` and `api/onboarding/route.ts` to use `getAuthUser()` instead of direct `prisma.user.create()`
+- Enhanced sign-in/sign-up pages with better styling
+- LinkedIn OAuth enabled via Clerk Dashboard (shared credentials for dev)
+- Phone verification disabled in Clerk
+
+**Stripe — Full Integration:**
+- API keys configured (test mode — AutoApply sandbox)
+- 3 products created in Stripe Dashboard:
+  - AutoApply Pro: $29/mo (price_1T3LmSCObkaQqcv27oj42Mae) + $249/yr (price_1T3LmSCObkaQqcv2upF4ZJxB)
+  - AutoApply Unlimited: $79/mo (price_1T3LolCObkaQqcv2PsDAFiDM)
+  - Credit Pack: $19 one-time (price_1T3LquCObkaQqcv20R2uHOi4)
+- Webhook endpoint: https://autoapply.works/api/webhooks/stripe (whsec_yy2kOF9M8FCIxMrpFanrUuMRsrikHRNx)
+- Webhook handler updated to handle all 6 events:
+  - checkout.session.completed, customer.subscription.created/updated/deleted
+  - invoice.payment_succeeded, invoice.payment_failed
+- Stripe Customer Portal configured (payments, invoices, cancel, plan switching)
+- Stripe Branding set (#2563EB brand, #1E40AF accent, "AutoApply" name)
+
+**Clerk — Production Instance:**
+- Production instance created for autoapply.works
+- Frontend API URL: https://clerk.autoapply.works
+- Instance ID: ins_39zqMLJuFyCTNUeIm1CMb4tIe7e
+
+**Domain — autoapply.works:**
+- Purchased on Hostinger
+- DNS: CNAME clerk → frontend-api.clerk.services (for Clerk auth)
+- Email forwarding via ForwardEmail.net (DNS-based, free):
+  - support@autoapply.works → matthieu.kokabi@gmail.com
+  - noreply@autoapply.works → matthieu.kokabi@gmail.com
+  - contact@autoapply.works → matthieu.kokabi@gmail.com
+- MX records: mx1.forwardemail.net (pri 10), mx2.forwardemail.net (pri 20)
+
+### .env Keys (Test Mode)
+- All keys are in the .env file (gitignored — not in repo)
+- Clerk: pk_test_... / sk_test_...
+- Stripe: pk_test_... / sk_test_...
+- Stripe Webhook: whsec_...
+- All 4 Stripe price IDs configured
+- See "New Machine Setup" section below for full .env contents (share privately, not in git)
+
+### What's Next
+1. Test Stripe checkout flow end-to-end (Path A — use test card 4242 4242 4242 4242)
+2. Fix landing page if styling issue persists
+3. Deploy to Vercel (add A record + CNAME www to Hostinger DNS)
+4. Set production env vars on Vercel
+5. Set Clerk production keys on Vercel
+
+### Setup Instructions for New Machine
+See SESSION_LOG.md "New Machine Setup" section below.
+
+---
+
+## New Machine Setup — How to Continue
+
+### Prerequisites
+- Node.js 20+ (`brew install node` or `nvm install 20`)
+- PostgreSQL 16 (`brew install postgresql@16 && brew services start postgresql@16`)
+- Git configured with GitHub access
+- Flutter SDK (for mobile app only)
+
+### Step-by-step
+```bash
+# 1. Clone the repo
+git clone https://github.com/MattMenworworksAI/AutoApply-AI.git
+cd AutoApply-AI
+
+# 2. Install web dependencies
+cd apps/web
+npm install --legacy-peer-deps
+
+# 3. Create the database
+createdb autoapply
+psql autoapply -c "CREATE USER autoapply WITH PASSWORD 'autoapply_dev_123';"
+psql autoapply -c "GRANT ALL PRIVILEGES ON DATABASE autoapply TO autoapply;"
+psql autoapply -c "GRANT ALL ON SCHEMA public TO autoapply;"
+
+# 4. Copy .env (IMPORTANT — .env is gitignored, you MUST recreate it)
+# Copy the .env file from your current Mac to the new machine.
+# The easiest way: on your CURRENT Mac, run:
+#   cat apps/web/.env | pbcopy
+# Then on the NEW Mac, create the file:
+#   nano apps/web/.env   (paste contents, save)
+# OR use AirDrop/iCloud to transfer the .env file directly.
+
+# 5. Push schema + seed database
+npx prisma db push
+npx tsx prisma/seed.ts
+
+# 6. Run dev server
+npm run dev
+
+# 7. Run tests
+npm test
+```
+
+### Claude Code Prompt to Continue
+```
+Read SESSION_LOG.md in the project root and continue from where Session 4 left off. The next task is: Test Stripe checkout flow end-to-end (Path A). After that: fix landing page styling if needed, then prepare for Vercel deployment.
+```
