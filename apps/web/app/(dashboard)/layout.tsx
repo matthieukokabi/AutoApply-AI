@@ -11,6 +11,7 @@ import {
     Settings,
     Sparkles,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const sidebarItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -66,7 +67,7 @@ export default async function DashboardLayout({
                     ))}
                 </nav>
 
-                <div className="p-4 border-t">
+                <div className="p-4 border-t space-y-2">
                     <div className="flex items-center gap-3 px-3 py-2">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
                             {user?.firstName?.[0] || "U"}
@@ -79,6 +80,7 @@ export default async function DashboardLayout({
                                 {user?.emailAddresses[0]?.emailAddress}
                             </p>
                         </div>
+                        <ThemeToggle />
                     </div>
                 </div>
             </aside>
