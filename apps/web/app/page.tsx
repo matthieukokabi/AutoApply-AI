@@ -1,3 +1,5 @@
+import { auth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +20,12 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
+    // If user is already signed in, redirect to dashboard
+    const { userId } = auth();
+    if (userId) {
+        redirect("/dashboard");
+    }
+
     return (
         <div className="flex flex-col min-h-screen">
             {/* Navigation */}
