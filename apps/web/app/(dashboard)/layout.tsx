@@ -31,13 +31,35 @@ export default async function DashboardLayout({
     const user = await currentUser();
 
     // Auto-create or link DB user on first dashboard visit
-    const dbUser = await getAuthUser();
+    let dbUser;
+    try {
+        dbUser = await getAuthUser();
+    } catch (error) {
+        console.error("Failed to get/create DB user:", error);
+        // Don't redirect to sign-in (causes loop) — show error instead
+        return (
+            <div className="min-h-screen flex items-center justify-center p-8">
+                <div className="text-center space-y-4">
+                    <h1 className="text-2xl font-bold">Something went wrong</h1>
+                    <p className="text-muted-foreground">We couldn&apos;t load your account. Please try again.</p>
+                    <a href="/dashboard" className="inline-block px-4 py-2 bg-primary text-white rounded-md">
+                        Retry
+                    </a>
+                </div>
+            </div>
+        );
+    }
     if (!dbUser) redirect("/sign-in");
 
     // Redirect to onboarding if no CV uploaded yet
-    const profile = await prisma.masterProfile.findUnique({
-        where: { userId: dbUser.id },
-    });
+    let profile;
+    try {
+        profile = await prisma.masterProfile.findUnique({
+            where: { userId: dbUser.id },
+        });
+    } catch (error) {
+        console.error("Failed to check profile:", error);
+    }
     if (!profile || !profile.rawText) {
         redirect("/onboarding");
     }

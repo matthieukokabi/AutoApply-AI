@@ -38,9 +38,9 @@ export async function POST(req: Request) {
             const buffer = Buffer.from(await file.arrayBuffer());
 
             if (ext === "pdf") {
-                const { PDFParse } = await import("pdf-parse");
-                const parser = new PDFParse({ data: buffer });
-                const result = await parser.getText();
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                const pdfParse = require("pdf-parse");
+                const result = await pdfParse(buffer);
                 rawText = result.text;
             } else if (ext === "docx") {
                 const mammoth = await import("mammoth");

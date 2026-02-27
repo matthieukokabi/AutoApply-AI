@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,17 +15,20 @@ import {
     ChevronLeft,
     Loader2,
     Check,
+    AlertCircle,
 } from "lucide-react";
 
 type Step = "welcome" | "cv" | "preferences" | "done";
 
 export default function OnboardingPage() {
     const router = useRouter();
+    const { isSignedIn, isLoaded } = useAuth();
     const [step, setStep] = useState<Step>("welcome");
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [rawText, setRawText] = useState("");
     const [cvUploaded, setCvUploaded] = useState(false);
+    const [error, setError] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Preferences
@@ -33,8 +37,15 @@ export default function OnboardingPage() {
     const [remote, setRemote] = useState("any");
     const [salary, setSalary] = useState("");
 
+    // Redirect to sign-in if not authenticated
+    if (isLoaded && !isSignedIn) {
+        router.push("/sign-in");
+        return null;
+    }
+
     async function handleFileUpload(file: File) {
         setUploading(true);
+        setError("");
         try {
             const formData = new FormData();
             formData.append("file", file);
@@ -46,9 +57,13 @@ export default function OnboardingPage() {
                 const data = await res.json();
                 setRawText(data.profile.rawText);
                 setCvUploaded(true);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                setError(data.error || `Upload failed (${res.status}). Please try again or paste your CV text instead.`);
             }
         } catch (err) {
             console.error("Upload failed:", err);
+            setError("Network error — please check your connection and try again.");
         } finally {
             setUploading(false);
         }
@@ -57,15 +72,22 @@ export default function OnboardingPage() {
     async function handleSaveText() {
         if (!rawText.trim() || rawText.trim().length < 50) return;
         setUploading(true);
+        setError("");
         try {
             const res = await fetch("/api/profile/upload", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ rawText, fileName: "paste" }),
             });
-            if (res.ok) setCvUploaded(true);
+            if (res.ok) {
+                setCvUploaded(true);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                setError(data.error || "Failed to save CV text. Please try again.");
+            }
         } catch (err) {
             console.error("Save failed:", err);
+            setError("Network error — please check your connection and try again.");
         } finally {
             setUploading(false);
         }
@@ -73,8 +95,9 @@ export default function OnboardingPage() {
 
     async function handleSavePreferences() {
         setSaving(true);
+        setError("");
         try {
-            await fetch("/api/preferences", {
+            const res = await fetch("/api/preferences", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -85,17 +108,23 @@ export default function OnboardingPage() {
                     industries: [],
                 }),
             });
-            setStep("done");
+            if (res.ok) {
+                setStep("done");
+            } else {
+                const data = await res.json().catch(() => ({}));
+                setError(data.error || "Failed to save preferences. Please try again.");
+            }
         } catch (err) {
             console.error("Save preferences failed:", err);
+            setError("Network error — please check your connection and try again.");
         } finally {
             setSaving(false);
         }
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col">
-            <header className="border-b bg-white/80 backdrop-blur">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col">
+            <header className="border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur">
                 <div className="container flex h-14 items-center">
                     <Link href="/" className="flex items-center space-x-2">
                         <Sparkles className="h-6 w-6 text-primary" />
@@ -153,10 +182,18 @@ export default function OnboardingPage() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
+                                {error && (
+                                    <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+                                        <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
+                                        <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                                            {error}
+                                        </p>
+                                    </div>
+                                )}
                                 {cvUploaded ? (
-                                    <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 border border-green-200">
-                                        <Check className="h-5 w-5 text-green-600" />
-                                        <p className="text-sm font-medium text-green-800">
+                                    <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+                                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
                                             CV uploaded successfully!
                                         </p>
                                     </div>
@@ -200,7 +237,7 @@ export default function OnboardingPage() {
                                                 <div className="w-full border-t" />
                                             </div>
                                             <div className="relative flex justify-center text-xs uppercase">
-                                                <span className="bg-white px-2 text-muted-foreground">
+                                                <span className="bg-card px-2 text-muted-foreground">
                                                     or paste text
                                                 </span>
                                             </div>
@@ -243,6 +280,14 @@ export default function OnboardingPage() {
 
                     {step === "preferences" && (
                         <Card>
+                            {error && (
+                                <div className="mx-6 mt-6 flex items-center gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
+                                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
+                                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                                        {error}
+                                    </p>
+                                </div>
+                            )}
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Briefcase className="h-5 w-5" />
