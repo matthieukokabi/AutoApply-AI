@@ -253,5 +253,69 @@ npm test
 
 ### Claude Code Prompt to Continue
 ```
-Read SESSION_LOG.md in the project root and continue from where Session 4 left off. The next task is: Test Stripe checkout flow end-to-end (Path A). After that: fix landing page styling if needed, then prepare for Vercel deployment.
+Read SESSION_LOG.md in the project root and continue from where the last session left off.
 ```
+
+---
+
+## Session 5 — 2026-02-27
+
+### Completed
+
+**Landing Page — Complete Redesign:**
+- Gradient hero text, stats bar (4 APIs, 100+ keywords, 0 fabricated, 4h cycle)
+- "How It Works" 3-step section
+- Features grid on muted background
+- Pricing cards with checkmark lists and real Stripe checkout buttons
+- CTA banner section before footer
+- 4-column footer (brand, product, legal, data sources)
+
+**Dark Mode — Full Implementation:**
+- Installed `next-themes` package
+- `components/theme-provider.tsx` — wraps app with system/light/dark detection
+- `components/theme-toggle.tsx` — sun/moon icon toggle button
+- Root layout updated with ThemeProvider (defaults to system preference)
+- Dashboard sidebar has toggle next to user avatar
+- Landing page header has toggle
+- CSS dark mode variables were already defined — now properly activated
+
+**Stripe Checkout — Wired to UI:**
+- `components/checkout-button.tsx` — client component calling POST /api/checkout
+- Pro Monthly, Pro Yearly, Unlimited, Credit Pack buttons all trigger real Stripe sessions
+- Free tier links to /sign-up
+
+**Production Deployment — Vercel:**
+- Deployed to Vercel (project: auto-apply-ai)
+- Root directory: `apps/web`, Framework: Next.js
+- Added `.npmrc` with `legacy-peer-deps=true` to fix Clerk peer dep conflict
+- 17 environment variables configured on Vercel
+- Live at: https://auto-apply-ai-psi.vercel.app
+
+**Production Database — Neon:**
+- Created Neon project `autoapply` in Frankfurt (EU)
+- PostgreSQL 17, connection pooling enabled
+- Prisma schema pushed, database seeded (admin + 5 sample jobs + 5 applications)
+- Connection string: ep-morning-meadow-ag8qe5hq-pooler.c-2.eu-central-1.aws.neon.tech
+
+**Domain — autoapply.works → Vercel:**
+- A record: `@` → `216.198.79.1` (Vercel)
+- CNAME: `www` → `cname.vercel-dns.com`
+- Existing records preserved (clerk CNAME, MX, TXT)
+- SSL auto-provisioned by Vercel
+- Site live at: https://autoapply.works ✅
+
+**Build & Tests:**
+- `next build` — 0 errors
+- `vitest run` — 24/24 tests passing
+
+### What's Next
+1. **Switch Clerk to production keys** — currently using test keys, auth won't work on autoapply.works until production Clerk keys are set
+2. **Deploy n8n + Gotenberg to Render** — automation engine for job discovery
+3. **Add more job board APIs** — JSearch (RapidAPI), Jooble, Reed.co.uk, RSS feeds
+4. **Email notifications** — SendGrid/Resend for "new jobs matched" alerts
+5. **More tests** — component tests, E2E flow tests
+
+### Blockers / Decisions
+- Clerk production keys (ins_39zqMLJuFyCTNUeIm1CMb4tIe7e) need to be set on Vercel — currently test keys are deployed, so sign-in on autoapply.works won't work with production Clerk
+- n8n needs a hosting platform (Render recommended) — not yet set up
+- Stripe webhook secret needs updating if URL changes from test to production
