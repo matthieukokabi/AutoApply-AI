@@ -6,6 +6,7 @@ export default authMiddleware({
         "/",
         "/sign-in(.*)",
         "/sign-up(.*)",
+        "/__clerk(.*)",
         "/api/webhooks/stripe",
         "/api/webhooks/n8n",
         "/api/debug/auth",
