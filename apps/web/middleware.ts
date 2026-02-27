@@ -17,8 +17,22 @@ export default authMiddleware({
         const { userId } = authResult;
         const url = req.nextUrl;
 
-        // If user is signed in and trying to access sign-in/sign-up, redirect to dashboard
-        if (userId && (url.pathname.startsWith("/sign-in") || url.pathname.startsWith("/sign-up"))) {
+        // IMPORTANT: Do NOT redirect Clerk's internal auth routes (sso-callback, factor-one, etc.)
+        // These sub-paths are used by Clerk to finalize OAuth flows and must not be intercepted.
+        const isClerkInternalRoute =
+            url.pathname.includes("/sso-callback") ||
+            url.pathname.includes("/factor-") ||
+            url.pathname.includes("/verify") ||
+            url.pathname.includes("/reset-password") ||
+            url.pathname.includes("/verify-email");
+
+        // If user is signed in and on the main sign-in/sign-up page (NOT an internal Clerk route),
+        // redirect to dashboard
+        if (
+            userId &&
+            !isClerkInternalRoute &&
+            (url.pathname === "/sign-in" || url.pathname === "/sign-up")
+        ) {
             return NextResponse.redirect(new URL("/dashboard", req.url));
         }
 
