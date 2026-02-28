@@ -24,6 +24,10 @@ export default authMiddleware({
         "/terms",
         "/privacy",
         "/contact",
+        "/:locale/blog",
+        "/:locale/blog/(.*)",
+        "/blog",
+        "/blog/(.*)",
     ],
 
     beforeAuth(req) {

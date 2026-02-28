@@ -68,6 +68,9 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
                         <Link href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
                             {t("nav.howItWorks")}
                         </Link>
+                        <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
+                            {t("nav.blog")}
+                        </Link>
                     </nav>
                     <div className="flex flex-1 items-center justify-end space-x-2">
                         <LanguageSwitcher />
@@ -386,6 +389,7 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
                                 <Link href="#features" className="hover:text-foreground transition-colors">{t("nav.features")}</Link>
                                 <Link href="#pricing" className="hover:text-foreground transition-colors">{t("nav.pricing")}</Link>
                                 <Link href="#how-it-works" className="hover:text-foreground transition-colors">{t("nav.howItWorks")}</Link>
+                                <Link href="/blog" className="hover:text-foreground transition-colors">{t("nav.blog")}</Link>
                             </div>
                         </div>
                         <div>

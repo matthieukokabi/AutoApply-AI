@@ -4,7 +4,8 @@
         "pricing": "Tarifs",
         "howItWorks": "Comment ça marche",
         "signIn": "Connexion",
-        "getStarted": "Commencer gratuitement"
+        "getStarted": "Commencer gratuitement",
+        "blog": "Blog"
     },
     "hero": {
         "badge": "Assistant carrière propulsé par l'IA",
@@ -83,7 +84,19 @@
     "cta": {
         "title": "Prêt à transformer votre recherche d'emploi ?",
         "subtitle": "Rejoignez les chercheurs d'emploi qui décrochent des entretiens plus rapidement grâce à des candidatures personnalisées par l'IA.",
-        "getStarted": "Commencer gratuitement"
+        "getStarted": "Commencer gratuitement",
+        "blog": "Blog"
+    },
+    "blog": {
+        "title": "Blog",
+        "description": "Conseils, guides et analyses sur la recherche d'emploi avec l'IA, l'optimisation du CV et l'évolution de carrière.",
+        "noPosts": "Aucun article disponible pour le moment. Revenez bientôt !",
+        "signIn": "Connexion",
+        "backToBlog": "Retour au blog",
+        "readMore": "Continuer la lecture",
+        "ctaTitle": "Prêt à décrocher le job de vos rêves ?",
+        "ctaDescription": "Laissez AutoApply AI personnaliser votre CV et votre lettre de motivation pour chaque candidature.",
+        "ctaButton": "Commencer gratuitement"
     },
     "footer": {
         "tagline": "Assistant carrière propulsé par l'IA. Optimisé ATS, zéro fabrication.",

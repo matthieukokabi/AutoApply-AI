@@ -4,7 +4,8 @@
         "pricing": "Preise",
         "howItWorks": "So funktioniert's",
         "signIn": "Anmelden",
-        "getStarted": "Kostenlos starten"
+        "getStarted": "Kostenlos starten",
+        "blog": "Blog"
     },
     "hero": {
         "badge": "KI-gestützter Karriere-Assistent",
@@ -83,7 +84,19 @@
     "cta": {
         "title": "Bereit, Ihre Jobsuche zu transformieren?",
         "subtitle": "Schliessen Sie sich Jobsuchenden an, die mit KI-personalisierten Bewerbungen schneller zu Vorstellungsgesprächen kommen.",
-        "getStarted": "Kostenlos starten"
+        "getStarted": "Kostenlos starten",
+        "blog": "Blog"
+    },
+    "blog": {
+        "title": "Blog",
+        "description": "Tipps, Anleitungen und Einblicke zur KI-gestützten Jobsuche, Lebenslauf-Optimierung und Karriereentwicklung.",
+        "noPosts": "Noch keine Blogbeiträge verfügbar. Schauen Sie bald wieder vorbei!",
+        "signIn": "Anmelden",
+        "backToBlog": "Zurück zum Blog",
+        "readMore": "Weiterlesen",
+        "ctaTitle": "Bereit für Ihren Traumjob?",
+        "ctaDescription": "Lassen Sie AutoApply AI Ihren Lebenslauf und Ihr Anschreiben für jede Bewerbung massschneidern.",
+        "ctaButton": "Kostenlos starten"
     },
     "footer": {
         "tagline": "KI-gestützter Karriere-Assistent. ATS-optimiert, ohne Erfindungen.",

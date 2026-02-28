@@ -4,7 +4,8 @@
         "pricing": "Pricing",
         "howItWorks": "How It Works",
         "signIn": "Sign In",
-        "getStarted": "Get Started Free"
+        "getStarted": "Get Started Free",
+        "blog": "Blog"
     },
     "hero": {
         "badge": "AI-Powered Career Assistant",
@@ -84,6 +85,17 @@
         "title": "Ready to Transform Your Job Search?",
         "subtitle": "Join job seekers who are landing interviews faster with AI-tailored applications.",
         "getStarted": "Get Started Free"
+    },
+    "blog": {
+        "title": "Blog",
+        "description": "Tips, guides, and insights on AI-powered job searching, CV optimization, and career growth.",
+        "noPosts": "No blog posts available yet. Check back soon!",
+        "signIn": "Sign In",
+        "backToBlog": "Back to Blog",
+        "readMore": "Keep Reading",
+        "ctaTitle": "Ready to land your dream job?",
+        "ctaDescription": "Let AutoApply AI tailor your CV and cover letter for every application.",
+        "ctaButton": "Get Started Free"
     },
     "footer": {
         "tagline": "AI-powered career assistant. ATS-optimized, zero fabrication.",

@@ -4,7 +4,8 @@
         "pricing": "Precios",
         "howItWorks": "Cómo funciona",
         "signIn": "Iniciar sesión",
-        "getStarted": "Empezar gratis"
+        "getStarted": "Empezar gratis",
+        "blog": "Blog"
     },
     "hero": {
         "badge": "Asistente de carrera con IA",
@@ -83,7 +84,19 @@
     "cta": {
         "title": "¿Listo para transformar tu búsqueda de empleo?",
         "subtitle": "Únete a los buscadores de empleo que consiguen entrevistas más rápido con candidaturas personalizadas por IA.",
-        "getStarted": "Empezar gratis"
+        "getStarted": "Empezar gratis",
+        "blog": "Blog"
+    },
+    "blog": {
+        "title": "Blog",
+        "description": "Consejos, guías y análisis sobre búsqueda de empleo con IA, optimización del CV y desarrollo profesional.",
+        "noPosts": "Aún no hay artículos disponibles. ¡Vuelve pronto!",
+        "signIn": "Iniciar sesión",
+        "backToBlog": "Volver al blog",
+        "readMore": "Seguir leyendo",
+        "ctaTitle": "¿Listo para conseguir tu empleo ideal?",
+        "ctaDescription": "Deja que AutoApply AI personalice tu CV y carta de presentación para cada solicitud.",
+        "ctaButton": "Empezar gratis"
     },
     "footer": {
         "tagline": "Asistente de carrera con IA. Optimizado ATS, sin fabricación.",
