@@ -52,6 +52,7 @@ model JobPreferences {
   locations        String[] // Cities / countries
   remotePreference String   @default("any") // remote | hybrid | onsite | any
   salaryMin        Int?
+  salaryCurrency   String   @default("USD") // USD | EUR | GBP | CHF | CAD | AUD | SEK | NOK | DKK | PLN | CZK | INR | JPY | BRL
   industries       String[]
 
   @@map("job_preferences")

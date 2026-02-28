@@ -62,6 +62,22 @@ export interface Education {
 
 // ─── Job Preferences ───────────────────────────────────────
 
+export type SalaryCurrency =
+    | "USD"
+    | "EUR"
+    | "GBP"
+    | "CHF"
+    | "CAD"
+    | "AUD"
+    | "SEK"
+    | "NOK"
+    | "DKK"
+    | "PLN"
+    | "CZK"
+    | "INR"
+    | "JPY"
+    | "BRL";
+
 export interface JobPreferences {
     id: string;
     userId: string;
@@ -69,6 +85,7 @@ export interface JobPreferences {
     locations: string[];
     remotePreference: "remote" | "hybrid" | "onsite" | "any";
     salaryMin?: number;
+    salaryCurrency: SalaryCurrency;
     industries: string[];
 }
 

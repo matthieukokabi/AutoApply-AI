@@ -9,6 +9,7 @@ const mockPreferences = {
     locations: ["London", "Remote"],
     remotePreference: "remote",
     salaryMin: 80000,
+    salaryCurrency: "GBP",
     industries: ["Technology"],
 };
 
@@ -66,6 +67,7 @@ describe("PUT /api/preferences", () => {
                 locations: ["London"],
                 remotePreference: "remote",
                 salaryMin: "80000",
+                salaryCurrency: "GBP",
                 industries: ["Technology"],
             }),
         });

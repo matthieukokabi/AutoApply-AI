@@ -100,6 +100,7 @@ class JobPreferences {
   final List<String> locations;
   final String remotePreference;
   final int? salaryMin;
+  final String salaryCurrency;
   final List<String> industries;
 
   JobPreferences({
@@ -109,6 +110,7 @@ class JobPreferences {
     required this.locations,
     required this.remotePreference,
     this.salaryMin,
+    this.salaryCurrency = 'USD',
     required this.industries,
   });
 
@@ -125,6 +127,7 @@ class JobPreferences {
             [],
         remotePreference: json['remotePreference'] as String? ?? 'any',
         salaryMin: json['salaryMin'] as int?,
+        salaryCurrency: json['salaryCurrency'] as String? ?? 'USD',
         industries: (json['industries'] as List<dynamic>?)
                 ?.map((e) => e as String)
                 .toList() ??

@@ -20,6 +20,23 @@ import {
 
 type Step = "welcome" | "cv" | "preferences" | "done";
 
+const CURRENCIES = [
+    { code: "USD", symbol: "$", label: "US Dollar" },
+    { code: "EUR", symbol: "€", label: "Euro" },
+    { code: "GBP", symbol: "£", label: "British Pound" },
+    { code: "CHF", symbol: "Fr.", label: "Swiss Franc" },
+    { code: "CAD", symbol: "CA$", label: "Canadian Dollar" },
+    { code: "AUD", symbol: "A$", label: "Australian Dollar" },
+    { code: "SEK", symbol: "kr", label: "Swedish Krona" },
+    { code: "NOK", symbol: "kr", label: "Norwegian Krone" },
+    { code: "DKK", symbol: "kr", label: "Danish Krone" },
+    { code: "PLN", symbol: "zł", label: "Polish Zloty" },
+    { code: "CZK", symbol: "Kč", label: "Czech Koruna" },
+    { code: "INR", symbol: "₹", label: "Indian Rupee" },
+    { code: "JPY", symbol: "¥", label: "Japanese Yen" },
+    { code: "BRL", symbol: "R$", label: "Brazilian Real" },
+];
+
 export default function OnboardingPage() {
     const router = useRouter();
     const { isSignedIn, isLoaded } = useAuth();
@@ -36,6 +53,7 @@ export default function OnboardingPage() {
     const [locations, setLocations] = useState("");
     const [remote, setRemote] = useState("any");
     const [salary, setSalary] = useState("");
+    const [currency, setCurrency] = useState("USD");
 
     // Redirect to sign-in if not authenticated
     if (isLoaded && !isSignedIn) {
@@ -105,6 +123,7 @@ export default function OnboardingPage() {
                     locations: locations.split(",").map((s) => s.trim()).filter(Boolean),
                     remotePreference: remote,
                     salaryMin: salary || null,
+                    salaryCurrency: currency,
                     industries: [],
                 }),
             });
@@ -335,15 +354,28 @@ export default function OnboardingPage() {
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium block mb-1">
-                                        Minimum Salary (Annual, USD)
+                                        Minimum Salary (Annual)
                                     </label>
-                                    <input
-                                        type="number"
-                                        className="w-full px-3 py-2 border rounded-md text-sm"
-                                        placeholder="e.g. 80000"
-                                        value={salary}
-                                        onChange={(e) => setSalary(e.target.value)}
-                                    />
+                                    <div className="flex gap-2">
+                                        <select
+                                            className="w-28 px-2 py-2 border rounded-md text-sm shrink-0"
+                                            value={currency}
+                                            onChange={(e) => setCurrency(e.target.value)}
+                                        >
+                                            {CURRENCIES.map((c) => (
+                                                <option key={c.code} value={c.code}>
+                                                    {c.symbol} {c.code}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="number"
+                                            className="flex-1 px-3 py-2 border rounded-md text-sm"
+                                            placeholder={`e.g. ${currency === "JPY" ? "8000000" : "80000"}`}
+                                            value={salary}
+                                            onChange={(e) => setSalary(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex justify-between pt-2">

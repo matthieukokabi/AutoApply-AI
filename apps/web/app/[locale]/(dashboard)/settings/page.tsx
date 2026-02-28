@@ -23,8 +23,26 @@ interface Preferences {
     locations: string[];
     remotePreference: string;
     salaryMin: number | null;
+    salaryCurrency: string;
     industries: string[];
 }
+
+const CURRENCIES = [
+    { code: "USD", symbol: "$", label: "US Dollar" },
+    { code: "EUR", symbol: "€", label: "Euro" },
+    { code: "GBP", symbol: "£", label: "British Pound" },
+    { code: "CHF", symbol: "Fr.", label: "Swiss Franc" },
+    { code: "CAD", symbol: "CA$", label: "Canadian Dollar" },
+    { code: "AUD", symbol: "A$", label: "Australian Dollar" },
+    { code: "SEK", symbol: "kr", label: "Swedish Krona" },
+    { code: "NOK", symbol: "kr", label: "Norwegian Krone" },
+    { code: "DKK", symbol: "kr", label: "Danish Krone" },
+    { code: "PLN", symbol: "zł", label: "Polish Zloty" },
+    { code: "CZK", symbol: "Kč", label: "Czech Koruna" },
+    { code: "INR", symbol: "₹", label: "Indian Rupee" },
+    { code: "JPY", symbol: "¥", label: "Japanese Yen" },
+    { code: "BRL", symbol: "R$", label: "Brazilian Real" },
+];
 
 export default function SettingsPage() {
     const [user, setUser] = useState<UserInfo | null>(null);
@@ -33,6 +51,7 @@ export default function SettingsPage() {
         locations: [],
         remotePreference: "any",
         salaryMin: null,
+        salaryCurrency: "USD",
         industries: [],
     });
     const [loading, setLoading] = useState(true);
@@ -51,6 +70,7 @@ export default function SettingsPage() {
     const [locationsStr, setLocationsStr] = useState("");
     const [industriesStr, setIndustriesStr] = useState("");
     const [salaryStr, setSalaryStr] = useState("");
+    const [currencyCode, setCurrencyCode] = useState("USD");
     const [remotePref, setRemotePref] = useState("any");
 
     useEffect(() => {
@@ -75,6 +95,7 @@ export default function SettingsPage() {
                         setLocationsStr(p.locations?.join(", ") || "");
                         setIndustriesStr(p.industries?.join(", ") || "");
                         setSalaryStr(p.salaryMin?.toString() || "");
+                        setCurrencyCode(p.salaryCurrency || "USD");
                         setRemotePref(p.remotePreference || "any");
                     }
                 }
@@ -105,6 +126,7 @@ export default function SettingsPage() {
                         .filter(Boolean),
                     remotePreference: remotePref,
                     salaryMin: salaryStr || null,
+                    salaryCurrency: currencyCode,
                     industries: industriesStr
                         .split(",")
                         .map((s) => s.trim())
@@ -304,15 +326,31 @@ export default function SettingsPage() {
 
                     <div>
                         <label className="text-sm font-medium block mb-1">
-                            Minimum Salary (Annual, USD)
+                            Minimum Salary (Annual)
                         </label>
-                        <input
-                            type="number"
-                            className="w-full px-3 py-2 border rounded-md text-sm"
-                            placeholder="e.g. 80000"
-                            value={salaryStr}
-                            onChange={(e) => setSalaryStr(e.target.value)}
-                        />
+                        <div className="flex gap-2">
+                            <select
+                                className="w-32 px-3 py-2 border rounded-md text-sm shrink-0"
+                                value={currencyCode}
+                                onChange={(e) => setCurrencyCode(e.target.value)}
+                            >
+                                {CURRENCIES.map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.symbol} {c.code}
+                                    </option>
+                                ))}
+                            </select>
+                            <input
+                                type="number"
+                                className="flex-1 px-3 py-2 border rounded-md text-sm"
+                                placeholder={`e.g. ${currencyCode === "JPY" ? "8000000" : "80000"}`}
+                                value={salaryStr}
+                                onChange={(e) => setSalaryStr(e.target.value)}
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Jobs below this annual salary will be filtered out
+                        </p>
                     </div>
 
                     <div>

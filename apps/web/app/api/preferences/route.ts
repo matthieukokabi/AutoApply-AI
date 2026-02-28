@@ -30,9 +30,14 @@ export async function GET() {
     }
 }
 
+const VALID_CURRENCIES = [
+    "USD", "EUR", "GBP", "CHF", "CAD", "AUD",
+    "SEK", "NOK", "DKK", "PLN", "CZK", "INR", "JPY", "BRL",
+];
+
 /**
  * PUT /api/preferences — create or update job preferences
- * Body: { targetTitles, locations, remotePreference, salaryMin, industries }
+ * Body: { targetTitles, locations, remotePreference, salaryMin, salaryCurrency, industries }
  */
 export async function PUT(req: Request) {
     try {
@@ -55,8 +60,12 @@ export async function PUT(req: Request) {
             locations = [],
             remotePreference = "any",
             salaryMin,
+            salaryCurrency = "USD",
             industries = [],
         } = body;
+
+        // Validate currency
+        const currency = VALID_CURRENCIES.includes(salaryCurrency) ? salaryCurrency : "USD";
 
         const preferences = await prisma.jobPreferences.upsert({
             where: { userId: user.id },
@@ -66,6 +75,7 @@ export async function PUT(req: Request) {
                 locations,
                 remotePreference,
                 salaryMin: salaryMin ? parseInt(salaryMin, 10) : null,
+                salaryCurrency: currency,
                 industries,
             },
             update: {
@@ -73,6 +83,7 @@ export async function PUT(req: Request) {
                 locations,
                 remotePreference,
                 salaryMin: salaryMin ? parseInt(salaryMin, 10) : null,
+                salaryCurrency: currency,
                 industries,
             },
         });

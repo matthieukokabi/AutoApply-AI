@@ -50,6 +50,7 @@ class ApiService {
     required List<String> locations,
     required String remotePreference,
     String? salaryMin,
+    String salaryCurrency = 'USD',
     List<String> industries = const [],
   }) async {
     final res = await _dio.put('/preferences', data: {
@@ -57,6 +58,7 @@ class ApiService {
       'locations': locations,
       'remotePreference': remotePreference,
       'salaryMin': salaryMin,
+      'salaryCurrency': salaryCurrency,
       'industries': industries,
     },);
     final data = res.data as Map<String, dynamic>;

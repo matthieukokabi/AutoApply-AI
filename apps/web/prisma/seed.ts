@@ -155,6 +155,7 @@ English (Fluent), French (Native), German (B2)`;
       locations: ['Zurich', 'Berlin', 'London', 'Remote'],
       remotePreference: 'hybrid',
       salaryMin: 120000,
+      salaryCurrency: 'CHF',
       industries: ['SaaS', 'Fintech', 'AI/ML', 'Developer Tools'],
     },
     create: {
@@ -163,6 +164,7 @@ English (Fluent), French (Native), German (B2)`;
       locations: ['Zurich', 'Berlin', 'London', 'Remote'],
       remotePreference: 'hybrid',
       salaryMin: 120000,
+      salaryCurrency: 'CHF',
       industries: ['SaaS', 'Fintech', 'AI/ML', 'Developer Tools'],
     },
   });
