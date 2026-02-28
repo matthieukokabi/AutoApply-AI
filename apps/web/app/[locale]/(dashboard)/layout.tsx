@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
@@ -14,10 +14,10 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const sidebarItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/profile", label: "Profile & CV", icon: User },
-    { href: "/jobs", label: "Job Feed", icon: Briefcase },
-    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
+    { href: "/profile" as const, label: "Profile & CV", icon: User },
+    { href: "/jobs" as const, label: "Job Feed", icon: Briefcase },
+    { href: "/settings" as const, label: "Settings", icon: Settings },
 ];
 
 export default async function DashboardLayout({
@@ -63,6 +63,8 @@ export default async function DashboardLayout({
     if (!profile || !profile.rawText) {
         redirect("/onboarding");
     }
+
+    // Note: Link and redirect from @/i18n/routing are locale-aware
 
     return (
         <div className="flex h-screen">

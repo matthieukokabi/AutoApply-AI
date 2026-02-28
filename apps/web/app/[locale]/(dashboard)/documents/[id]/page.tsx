@@ -1,12 +1,13 @@
 import { Metadata } from "next";
 import { auth } from "@clerk/nextjs";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
+import { Link } from "@/i18n/routing";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Download, Eye } from "lucide-react";
-import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 
 export const metadata: Metadata = {
