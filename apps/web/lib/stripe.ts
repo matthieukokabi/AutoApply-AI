@@ -21,6 +21,7 @@ export const PLANS = {
         name: "Unlimited",
         credits: Infinity,
         monthlyPriceId: process.env.STRIPE_PRICE_UNLIMITED_MONTHLY,
+        yearlyPriceId: process.env.STRIPE_PRICE_UNLIMITED_YEARLY,
     },
     credit_pack: {
         name: "Credit Pack",

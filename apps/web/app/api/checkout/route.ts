@@ -35,6 +35,9 @@ export async function POST(req: Request) {
             case "unlimited":
                 priceId = PLANS.unlimited.monthlyPriceId;
                 break;
+            case "unlimited_yearly":
+                priceId = PLANS.unlimited.yearlyPriceId;
+                break;
             case "credit_pack":
                 priceId = PLANS.credit_pack.priceId;
                 mode = "payment";

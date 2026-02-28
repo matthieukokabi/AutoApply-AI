@@ -317,6 +317,7 @@ export default function LandingPage() {
                                 <span className="text-4xl font-bold">$79</span>
                                 <span className="text-muted-foreground">/month</span>
                             </div>
+                            <p className="text-xs text-muted-foreground mt-1">or $699/year (save 26%)</p>
                         </CardHeader>
                         <CardContent className="flex-1">
                             <ul className="space-y-3 text-sm">
@@ -338,9 +339,12 @@ export default function LandingPage() {
                                 </li>
                             </ul>
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="flex flex-col gap-2">
                             <CheckoutButton plan="unlimited" variant="outline" className="w-full">
                                 Go Unlimited — $79/mo
+                            </CheckoutButton>
+                            <CheckoutButton plan="unlimited_yearly" variant="ghost" className="w-full text-xs">
+                                or $699/year (save 26%)
                             </CheckoutButton>
                         </CardFooter>
                     </Card>

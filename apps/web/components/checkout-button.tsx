@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 interface CheckoutButtonProps {
-    plan: "pro_monthly" | "pro_yearly" | "unlimited" | "credit_pack";
+    plan: "pro_monthly" | "pro_yearly" | "unlimited" | "unlimited_yearly" | "credit_pack";
     children: React.ReactNode;
     variant?: "default" | "outline" | "ghost" | "secondary" | "destructive" | "link";
     className?: string;
