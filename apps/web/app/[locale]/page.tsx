@@ -121,7 +121,7 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
                 <div className="container py-8">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                         <div>
-                            <div className="text-3xl font-bold text-primary">4</div>
+                            <div className="text-3xl font-bold text-primary">7</div>
                             <div className="text-sm text-muted-foreground mt-1">{t("stats.jobApis")}</div>
                         </div>
                         <div>
@@ -407,6 +407,9 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
                                 <span>The Muse API</span>
                                 <span>Remotive API</span>
                                 <span>Arbeitnow API</span>
+                                <span>JSearch API</span>
+                                <span>Jooble API</span>
+                                <span>Reed API</span>
                             </div>
                         </div>
                     </div>

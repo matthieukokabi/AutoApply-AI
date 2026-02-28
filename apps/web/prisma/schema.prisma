@@ -67,7 +67,7 @@ model Job {
   company     String
   location    String
   description String
-  source      String    // adzuna | themuse | remotive | arbeitnow | manual
+  source      String    // adzuna | themuse | remotive | arbeitnow | jsearch | jooble | reed | manual
   url         String
   salary      String?
   postedAt    DateTime?

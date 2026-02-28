@@ -242,6 +242,121 @@
         },
         {
             "parameters": {
+                "url": "https://jsearch.p.rapidapi.com/search",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-RapidAPI-Key",
+                            "value": "={{ $env.JSEARCH_API_KEY }}"
+                        },
+                        {
+                            "name": "X-RapidAPI-Host",
+                            "value": "jsearch.p.rapidapi.com"
+                        }
+                    ]
+                },
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "value": "={{ ($json.target_titles[0] || 'software engineer') + ' in ' + ($json.locations[0] || 'remote') }}"
+                        },
+                        {
+                            "name": "page",
+                            "value": "1"
+                        },
+                        {
+                            "name": "num_pages",
+                            "value": "1"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "fetch-jsearch",
+            "name": "Fetch JSearch Jobs",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1320,
+                600
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ 'https://jooble.org/api/' + $env.JOOBLE_API_KEY }}",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "keywords",
+                            "value": "={{ $json.target_titles[0] || 'software engineer' }}"
+                        },
+                        {
+                            "name": "location",
+                            "value": "={{ $json.locations[0] || '' }}"
+                        },
+                        {
+                            "name": "page",
+                            "value": "1"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "fetch-jooble",
+            "name": "Fetch Jooble Jobs",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1320,
+                800
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://www.reed.co.uk/api/1.0/search",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpBasicAuth",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "keywords",
+                            "value": "={{ $json.target_titles[0] || 'software engineer' }}"
+                        },
+                        {
+                            "name": "locationName",
+                            "value": "={{ $json.locations[0] || '' }}"
+                        },
+                        {
+                            "name": "resultsToTake",
+                            "value": "20"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "fetch-reed",
+            "name": "Fetch Reed Jobs",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1320,
+                1000
+            ],
+            "credentials": {
+                "httpBasicAuth": {
+                    "id": "reed-api",
+                    "name": "Reed API"
+                }
+            }
+        },
+        {
+            "parameters": {
                 "mode": "combine",
                 "mergeByFields": {},
                 "options": {}
@@ -252,7 +367,7 @@
             "typeVersion": 2.1,
             "position": [
                 1540,
-                100
+                400
             ]
         },
         {
@@ -265,7 +380,7 @@
             "typeVersion": 2,
             "position": [
                 1760,
-                100
+                400
             ]
         },
         {
@@ -294,7 +409,7 @@
             "typeVersion": 1.1,
             "position": [
                 1980,
-                100
+                400
             ],
             "credentials": {
                 "anthropicApi": {
@@ -313,7 +428,7 @@
             "typeVersion": 2,
             "position": [
                 2200,
-                100
+                400
             ]
         },
         {
@@ -334,7 +449,7 @@
             "typeVersion": 1,
             "position": [
                 2420,
-                100
+                400
             ]
         },
         {
@@ -349,7 +464,7 @@
             "typeVersion": 2.3,
             "position": [
                 2640,
-                300
+                600
             ],
             "credentials": {
                 "postgres": {
@@ -384,7 +499,7 @@
             "typeVersion": 1.1,
             "position": [
                 2640,
-                -100
+                200
             ],
             "credentials": {
                 "anthropicApi": {
@@ -403,7 +518,7 @@
             "typeVersion": 2,
             "position": [
                 2860,
-                -100
+                200
             ]
         },
         {
@@ -428,7 +543,7 @@
             "typeVersion": 4.1,
             "position": [
                 3080,
-                -200
+                100
             ]
         },
         {
@@ -453,7 +568,7 @@
             "typeVersion": 4.1,
             "position": [
                 3080,
-                0
+                300
             ]
         },
         {
@@ -468,7 +583,7 @@
             "typeVersion": 2.3,
             "position": [
                 3300,
-                -100
+                200
             ],
             "credentials": {
                 "postgres": {
@@ -515,7 +630,7 @@
             "typeVersion": 4.1,
             "position": [
                 3520,
-                -100
+                200
             ]
         },
         {
@@ -528,7 +643,7 @@
             "typeVersion": 2,
             "position": [
                 3300,
-                300
+                600
             ]
         },
         {
@@ -543,7 +658,7 @@
             "typeVersion": 2.3,
             "position": [
                 3520,
-                300
+                600
             ],
             "credentials": {
                 "postgres": {
@@ -631,6 +746,21 @@
                         "node": "Fetch Arbeitnow Jobs",
                         "type": "main",
                         "index": 0
+                    },
+                    {
+                        "node": "Fetch JSearch Jobs",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Jooble Jobs",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Reed Jobs",
+                        "type": "main",
+                        "index": 0
                     }
                 ]
             ]
@@ -669,6 +799,39 @@
             ]
         },
         "Fetch Arbeitnow Jobs": {
+            "main": [
+                [
+                    {
+                        "node": "Merge All Jobs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch JSearch Jobs": {
+            "main": [
+                [
+                    {
+                        "node": "Merge All Jobs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Jooble Jobs": {
+            "main": [
+                [
+                    {
+                        "node": "Merge All Jobs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Reed Jobs": {
             "main": [
                 [
                     {

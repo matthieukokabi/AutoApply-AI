@@ -236,6 +236,9 @@ export default function JobsPage() {
                     <option value="themuse">The Muse</option>
                     <option value="remotive">Remotive</option>
                     <option value="arbeitnow">Arbeitnow</option>
+                    <option value="jsearch">JSearch</option>
+                    <option value="jooble">Jooble</option>
+                    <option value="reed">Reed</option>
                     <option value="manual">Manual</option>
                 </select>
                 <select
