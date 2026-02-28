@@ -1,10 +1,12 @@
 import { auth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { CheckoutButton } from "@/components/checkout-button";
 import {
     ArrowRight,
@@ -15,16 +17,35 @@ import {
     BarChart3,
     Zap,
     Check,
-    Globe,
-    Clock,
 } from "lucide-react";
 
-export default function LandingPage() {
+export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+    const t = await getTranslations({ locale, namespace: "hero" });
+    return {
+        title: `AutoApply AI — ${t("badge")}`,
+        description: t("description"),
+        alternates: {
+            languages: {
+                en: "/",
+                fr: "/fr",
+                de: "/de",
+                es: "/es",
+                it: "/it",
+            },
+        },
+    };
+}
+
+export default async function LandingPage({ params: { locale } }: { params: { locale: string } }) {
+    setRequestLocale(locale);
+
     // If user is already signed in, redirect to dashboard
     const { userId } = auth();
     if (userId) {
         redirect("/dashboard");
     }
+
+    const t = await getTranslations();
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -39,22 +60,23 @@ export default function LandingPage() {
                     </div>
                     <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
                         <Link href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-                            Features
+                            {t("nav.features")}
                         </Link>
                         <Link href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                            Pricing
+                            {t("nav.pricing")}
                         </Link>
                         <Link href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
-                            How It Works
+                            {t("nav.howItWorks")}
                         </Link>
                     </nav>
                     <div className="flex flex-1 items-center justify-end space-x-2">
+                        <LanguageSwitcher />
                         <ThemeToggle />
                         <Link href="/sign-in">
-                            <Button variant="ghost">Sign In</Button>
+                            <Button variant="ghost">{t("nav.signIn")}</Button>
                         </Link>
                         <Link href="/sign-up">
-                            <Button>Get Started Free</Button>
+                            <Button>{t("nav.getStarted")}</Button>
                         </Link>
                     </div>
                 </div>
@@ -63,33 +85,31 @@ export default function LandingPage() {
             {/* Hero */}
             <section className="container flex flex-col items-center gap-6 pb-12 pt-20 md:pt-32 text-center">
                 <Badge variant="secondary" className="px-4 py-1.5 text-sm">
-                    AI-Powered Career Assistant
+                    {t("hero.badge")}
                 </Badge>
                 <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl max-w-4xl">
-                    Land Your Dream Job with{" "}
+                    {t("hero.titleStart")}{" "}
                     <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                        AI Precision
+                        {t("hero.titleHighlight")}
                     </span>
                 </h1>
                 <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl leading-relaxed">
-                    AutoApply AI discovers relevant jobs, scores your compatibility, and
-                    generates ATS-optimized resumes and cover letters — all tailored to
-                    each specific role.
+                    {t("hero.description")}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mt-4">
                     <Link href="/sign-up">
                         <Button size="lg" className="gap-2 px-8">
-                            Start Free <ArrowRight className="h-4 w-4" />
+                            {t("hero.startFree")} <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
                     <Link href="#pricing">
                         <Button size="lg" variant="outline" className="px-8">
-                            View Pricing
+                            {t("hero.viewPricing")}
                         </Button>
                     </Link>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2 max-w-md">
-                    No credit card required. 3 free tailored documents per month.
+                    {t("hero.noCreditCard")}
                 </p>
             </section>
 
@@ -99,19 +119,19 @@ export default function LandingPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                         <div>
                             <div className="text-3xl font-bold text-primary">4</div>
-                            <div className="text-sm text-muted-foreground mt-1">Job Board APIs</div>
+                            <div className="text-sm text-muted-foreground mt-1">{t("stats.jobApis")}</div>
                         </div>
                         <div>
                             <div className="text-3xl font-bold text-primary">100+</div>
-                            <div className="text-sm text-muted-foreground mt-1">ATS Keywords Matched</div>
+                            <div className="text-sm text-muted-foreground mt-1">{t("stats.atsKeywords")}</div>
                         </div>
                         <div>
                             <div className="text-3xl font-bold text-primary">0</div>
-                            <div className="text-sm text-muted-foreground mt-1">Fabricated Skills</div>
+                            <div className="text-sm text-muted-foreground mt-1">{t("stats.fabricatedSkills")}</div>
                         </div>
                         <div>
                             <div className="text-3xl font-bold text-primary">4h</div>
-                            <div className="text-sm text-muted-foreground mt-1">Auto-Discovery Cycle</div>
+                            <div className="text-sm text-muted-foreground mt-1">{t("stats.discoveryCycle")}</div>
                         </div>
                     </div>
                 </div>
@@ -120,38 +140,32 @@ export default function LandingPage() {
             {/* How It Works */}
             <section id="how-it-works" className="container py-20">
                 <h2 className="text-3xl font-bold text-center mb-4">
-                    How It Works
+                    {t("howItWorks.title")}
                 </h2>
                 <p className="text-center text-muted-foreground mb-16 max-w-lg mx-auto">
-                    Three simple steps from upload to application-ready documents.
+                    {t("howItWorks.subtitle")}
                 </p>
                 <div className="grid gap-8 md:grid-cols-3 max-w-4xl mx-auto">
                     <div className="flex flex-col items-center text-center">
                         <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                             <span className="text-xl font-bold text-primary">1</span>
                         </div>
-                        <h3 className="font-semibold text-lg mb-2">Upload Your CV</h3>
-                        <p className="text-sm text-muted-foreground">
-                            Upload your master CV (PDF, DOCX, or paste text). We extract and structure your experience.
-                        </p>
+                        <h3 className="font-semibold text-lg mb-2">{t("howItWorks.step1Title")}</h3>
+                        <p className="text-sm text-muted-foreground">{t("howItWorks.step1Desc")}</p>
                     </div>
                     <div className="flex flex-col items-center text-center">
                         <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                             <span className="text-xl font-bold text-primary">2</span>
                         </div>
-                        <h3 className="font-semibold text-lg mb-2">Set Preferences</h3>
-                        <p className="text-sm text-muted-foreground">
-                            Tell us your target roles, locations, salary range, and remote preferences. We search every 4 hours.
-                        </p>
+                        <h3 className="font-semibold text-lg mb-2">{t("howItWorks.step2Title")}</h3>
+                        <p className="text-sm text-muted-foreground">{t("howItWorks.step2Desc")}</p>
                     </div>
                     <div className="flex flex-col items-center text-center">
                         <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                             <span className="text-xl font-bold text-primary">3</span>
                         </div>
-                        <h3 className="font-semibold text-lg mb-2">Get Tailored Docs</h3>
-                        <p className="text-sm text-muted-foreground">
-                            For each matching job, get a tailored CV and cover letter — ATS-optimized, zero fabrication.
-                        </p>
+                        <h3 className="font-semibold text-lg mb-2">{t("howItWorks.step3Title")}</h3>
+                        <p className="text-sm text-muted-foreground">{t("howItWorks.step3Desc")}</p>
                     </div>
                 </div>
             </section>
@@ -160,50 +174,26 @@ export default function LandingPage() {
             <section id="features" className="bg-muted/30">
                 <div className="container py-20">
                     <h2 className="text-3xl font-bold text-center mb-4">
-                        Built for Serious Job Seekers
+                        {t("features.title")}
                     </h2>
                     <p className="text-center text-muted-foreground mb-16 max-w-lg mx-auto">
-                        Every feature designed to maximize your chances while keeping your data safe.
+                        {t("features.subtitle")}
                     </p>
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {[
-                            {
-                                icon: Search,
-                                title: "Smart Job Discovery",
-                                description: "Aggregates listings from Adzuna, The Muse, Remotive, and more — all from official APIs. No scraping, no ToS violations.",
-                            },
-                            {
-                                icon: BarChart3,
-                                title: "AI Compatibility Scoring",
-                                description: "Each job is scored 0-100 against your profile based on skills match (40%), experience (25%), education (15%), and domain relevance (20%).",
-                            },
-                            {
-                                icon: FileText,
-                                title: "ATS-Optimized Documents",
-                                description: "Tailored resume and cover letter per job, optimized for Applicant Tracking Systems. Keywords injected naturally from your real experience.",
-                            },
-                            {
-                                icon: Zap,
-                                title: "Automated Pipeline",
-                                description: "Set preferences once. Every 4 hours, new matching jobs are discovered and documents prepared automatically for your review.",
-                            },
-                            {
-                                icon: Shield,
-                                title: "Privacy First",
-                                description: "GDPR-compliant. No credential storage. No automated logins. Your data stays yours with one-click export and deletion.",
-                            },
-                            {
-                                icon: Sparkles,
-                                title: "Anti-Hallucination",
-                                description: "Zero tolerance for fabricated content. AI only reorders, rephrases, and emphasizes what's already in your CV. Nothing invented.",
-                            },
+                            { icon: Search, titleKey: "features.smartDiscovery", descKey: "features.smartDiscoveryDesc" },
+                            { icon: BarChart3, titleKey: "features.aiScoring", descKey: "features.aiScoringDesc" },
+                            { icon: FileText, titleKey: "features.atsDocuments", descKey: "features.atsDocumentsDesc" },
+                            { icon: Zap, titleKey: "features.automatedPipeline", descKey: "features.automatedPipelineDesc" },
+                            { icon: Shield, titleKey: "features.privacyFirst", descKey: "features.privacyFirstDesc" },
+                            { icon: Sparkles, titleKey: "features.antiHallucination", descKey: "features.antiHallucinationDesc" },
                         ].map((feature) => (
-                            <Card key={feature.title} className="bg-card/50 hover:bg-card transition-colors">
+                            <Card key={feature.titleKey} className="bg-card/50 hover:bg-card transition-colors">
                                 <CardHeader>
                                     <feature.icon className="h-10 w-10 text-primary mb-2" />
-                                    <CardTitle className="text-lg">{feature.title}</CardTitle>
+                                    <CardTitle className="text-lg">{t(feature.titleKey)}</CardTitle>
                                     <CardDescription className="leading-relaxed">
-                                        {feature.description}
+                                        {t(feature.descKey)}
                                     </CardDescription>
                                 </CardHeader>
                             </Card>
@@ -215,46 +205,46 @@ export default function LandingPage() {
             {/* Pricing */}
             <section id="pricing" className="container py-20">
                 <h2 className="text-3xl font-bold text-center mb-4">
-                    Simple, Transparent Pricing
+                    {t("pricing.title")}
                 </h2>
                 <p className="text-center text-muted-foreground mb-16 max-w-lg mx-auto">
-                    Start free. Upgrade when you&apos;re ready to supercharge your job search.
+                    {t("pricing.subtitle")}
                 </p>
                 <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
                     {/* Free */}
                     <Card className="flex flex-col">
                         <CardHeader>
-                            <CardTitle>Free</CardTitle>
-                            <CardDescription>Get started with the basics</CardDescription>
+                            <CardTitle>{t("pricing.free")}</CardTitle>
+                            <CardDescription>{t("pricing.freeDesc")}</CardDescription>
                             <div className="mt-4">
                                 <span className="text-4xl font-bold">$0</span>
-                                <span className="text-muted-foreground">/month</span>
+                                <span className="text-muted-foreground">{t("pricing.month")}</span>
                             </div>
                         </CardHeader>
                         <CardContent className="flex-1">
                             <ul className="space-y-3 text-sm">
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    3 tailored documents/month
+                                    {t("pricing.freeDocs")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    Manual job paste only
+                                    {t("pricing.manualOnly")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    Basic dashboard
+                                    {t("pricing.basicDashboard")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    CV upload &amp; parsing
+                                    {t("pricing.cvUpload")}
                                 </li>
                             </ul>
                         </CardContent>
                         <CardFooter>
                             <Link href="/sign-up" className="w-full">
                                 <Button variant="outline" className="w-full">
-                                    Start Free
+                                    {t("hero.startFree")}
                                 </Button>
                             </Link>
                         </CardFooter>
@@ -263,47 +253,47 @@ export default function LandingPage() {
                     {/* Pro */}
                     <Card className="flex flex-col border-primary shadow-lg relative">
                         <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-                            Most Popular
+                            {t("pricing.mostPopular")}
                         </Badge>
                         <CardHeader>
-                            <CardTitle>Pro</CardTitle>
-                            <CardDescription>For active job seekers</CardDescription>
+                            <CardTitle>{t("pricing.pro")}</CardTitle>
+                            <CardDescription>{t("pricing.proDesc")}</CardDescription>
                             <div className="mt-4">
                                 <span className="text-4xl font-bold">$29</span>
-                                <span className="text-muted-foreground">/month</span>
+                                <span className="text-muted-foreground">{t("pricing.month")}</span>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">or $249/year (save 28%)</p>
+                            <p className="text-xs text-muted-foreground mt-1">{t("pricing.proSaveYearly")}</p>
                         </CardHeader>
                         <CardContent className="flex-1">
                             <ul className="space-y-3 text-sm">
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    50 tailored documents/month
+                                    {t("pricing.proDocs")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    Automated job discovery
+                                    {t("pricing.autoDiscovery")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    Full Kanban dashboard
+                                    {t("pricing.fullKanban")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    AI compatibility scoring
+                                    {t("pricing.aiCompatibility")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    Email notifications
+                                    {t("pricing.emailNotifications")}
                                 </li>
                             </ul>
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
                             <CheckoutButton plan="pro_monthly" className="w-full">
-                                Get Pro — $29/mo
+                                {t("pricing.getProMonthly")}
                             </CheckoutButton>
                             <CheckoutButton plan="pro_yearly" variant="ghost" className="w-full text-xs">
-                                or $249/year (save 28%)
+                                {t("pricing.proSaveYearly")}
                             </CheckoutButton>
                         </CardFooter>
                     </Card>
@@ -311,40 +301,40 @@ export default function LandingPage() {
                     {/* Unlimited */}
                     <Card className="flex flex-col">
                         <CardHeader>
-                            <CardTitle>Unlimited</CardTitle>
-                            <CardDescription>No limits, maximum power</CardDescription>
+                            <CardTitle>{t("pricing.unlimited")}</CardTitle>
+                            <CardDescription>{t("pricing.unlimitedDesc")}</CardDescription>
                             <div className="mt-4">
                                 <span className="text-4xl font-bold">$79</span>
-                                <span className="text-muted-foreground">/month</span>
+                                <span className="text-muted-foreground">{t("pricing.month")}</span>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">or $699/year (save 26%)</p>
+                            <p className="text-xs text-muted-foreground mt-1">{t("pricing.unlimitedSaveYearly")}</p>
                         </CardHeader>
                         <CardContent className="flex-1">
                             <ul className="space-y-3 text-sm">
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    Unlimited tailoring
+                                    {t("pricing.unlimitedTailoring")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    Priority processing
+                                    {t("pricing.priorityProcessing")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    API access
+                                    {t("pricing.apiAccess")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    Everything in Pro
+                                    {t("pricing.everythingInPro")}
                                 </li>
                             </ul>
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
                             <CheckoutButton plan="unlimited" variant="outline" className="w-full">
-                                Go Unlimited — $79/mo
+                                {t("pricing.goUnlimited")}
                             </CheckoutButton>
                             <CheckoutButton plan="unlimited_yearly" variant="ghost" className="w-full text-xs">
-                                or $699/year (save 26%)
+                                {t("pricing.unlimitedSaveYearly")}
                             </CheckoutButton>
                         </CardFooter>
                     </Card>
@@ -352,11 +342,10 @@ export default function LandingPage() {
 
                 <div className="text-center mt-10 p-6 rounded-lg bg-muted/50 max-w-md mx-auto">
                     <p className="text-sm text-muted-foreground mb-3">
-                        Need more credits? Get a <strong>Credit Pack</strong> — 10
-                        additional documents for <strong>$19</strong> (one-time).
+                        {t("pricing.creditPackDesc")}
                     </p>
                     <CheckoutButton plan="credit_pack" variant="secondary">
-                        Buy Credit Pack — $19
+                        {t("pricing.buyCreditPack")}
                     </CheckoutButton>
                 </div>
             </section>
@@ -365,14 +354,14 @@ export default function LandingPage() {
             <section className="bg-primary text-primary-foreground">
                 <div className="container py-16 text-center">
                     <h2 className="text-3xl font-bold mb-4">
-                        Ready to Transform Your Job Search?
+                        {t("cta.title")}
                     </h2>
                     <p className="text-lg opacity-90 mb-8 max-w-lg mx-auto">
-                        Join job seekers who are landing interviews faster with AI-tailored applications.
+                        {t("cta.subtitle")}
                     </p>
                     <Link href="/sign-up">
                         <Button size="lg" variant="secondary" className="gap-2 px-8">
-                            Get Started Free <ArrowRight className="h-4 w-4" />
+                            {t("cta.getStarted")} <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
                 </div>
@@ -388,27 +377,27 @@ export default function LandingPage() {
                                 <span className="font-semibold">AutoApply AI</span>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                                AI-powered career assistant. ATS-optimized, zero fabrication.
+                                {t("footer.tagline")}
                             </p>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-3 text-sm">Product</h4>
+                            <h4 className="font-semibold mb-3 text-sm">{t("footer.product")}</h4>
                             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                                <Link href="#features" className="hover:text-foreground transition-colors">Features</Link>
-                                <Link href="#pricing" className="hover:text-foreground transition-colors">Pricing</Link>
-                                <Link href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</Link>
+                                <Link href="#features" className="hover:text-foreground transition-colors">{t("nav.features")}</Link>
+                                <Link href="#pricing" className="hover:text-foreground transition-colors">{t("nav.pricing")}</Link>
+                                <Link href="#how-it-works" className="hover:text-foreground transition-colors">{t("nav.howItWorks")}</Link>
                             </div>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-3 text-sm">Legal</h4>
+                            <h4 className="font-semibold mb-3 text-sm">{t("footer.legal")}</h4>
                             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                                <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
-                                <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-                                <Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+                                <Link href="/terms" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link>
+                                <Link href="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link>
+                                <Link href="/contact" className="hover:text-foreground transition-colors">{t("footer.contact")}</Link>
                             </div>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-3 text-sm">Data Sources</h4>
+                            <h4 className="font-semibold mb-3 text-sm">{t("footer.dataSources")}</h4>
                             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                                 <span>Adzuna API</span>
                                 <span>The Muse API</span>
@@ -419,10 +408,10 @@ export default function LandingPage() {
                     </div>
                     <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-sm text-muted-foreground">
-                            &copy; {new Date().getFullYear()} AutoApply AI. All rights reserved.
+                            &copy; {new Date().getFullYear()} AutoApply AI. {t("footer.rights")}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            All job data sourced from official APIs only. No scraping.
+                            {t("footer.officialApis")}
                         </p>
                     </div>
                 </div>

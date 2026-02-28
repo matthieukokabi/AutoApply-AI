@@ -1,0 +1,99 @@
+{
+    "nav": {
+        "features": "Funktionen",
+        "pricing": "Preise",
+        "howItWorks": "So funktioniert's",
+        "signIn": "Anmelden",
+        "getStarted": "Kostenlos starten"
+    },
+    "hero": {
+        "badge": "KI-gestützter Karriere-Assistent",
+        "titleStart": "Finden Sie Ihren Traumjob mit",
+        "titleHighlight": "KI-Präzision",
+        "description": "AutoApply AI entdeckt relevante Stellen, bewertet Ihre Kompatibilität und erstellt ATS-optimierte Lebensläufe und Anschreiben — individuell für jede Stelle.",
+        "startFree": "Kostenlos starten",
+        "viewPricing": "Preise ansehen",
+        "noCreditCard": "Keine Kreditkarte erforderlich. 3 kostenlose massgeschneiderte Dokumente pro Monat."
+    },
+    "stats": {
+        "jobApis": "Job-APIs",
+        "atsKeywords": "ATS-Schlüsselwörter erkannt",
+        "fabricatedSkills": "Erfundene Fähigkeiten",
+        "discoveryCycle": "Auto-Entdeckungszyklus"
+    },
+    "howItWorks": {
+        "title": "So funktioniert's",
+        "subtitle": "Drei einfache Schritte vom Upload bis zu bewerbungsfertigen Dokumenten.",
+        "step1Title": "Laden Sie Ihren Lebenslauf hoch",
+        "step1Desc": "Laden Sie Ihren Lebenslauf hoch (PDF, DOCX oder Text einfügen). Wir extrahieren und strukturieren Ihre Erfahrung.",
+        "step2Title": "Präferenzen festlegen",
+        "step2Desc": "Geben Sie Ihre Wunschpositionen, Standorte, Gehaltsvorstellungen und Remote-Präferenzen an. Wir suchen alle 4 Stunden.",
+        "step3Title": "Dokumente erhalten",
+        "step3Desc": "Für jede passende Stelle erhalten Sie einen massgeschneiderten Lebenslauf und ein Anschreiben — ATS-optimiert, ohne Erfindungen."
+    },
+    "features": {
+        "title": "Entwickelt für ernsthafte Jobsuchende",
+        "subtitle": "Jede Funktion darauf ausgelegt, Ihre Chancen zu maximieren und Ihre Daten zu schützen.",
+        "smartDiscovery": "Intelligente Jobsuche",
+        "smartDiscoveryDesc": "Aggregiert Stellenangebote von Adzuna, The Muse, Remotive und mehr — ausschliesslich über offizielle APIs. Kein Scraping.",
+        "aiScoring": "KI-Kompatibilitätsbewertung",
+        "aiScoringDesc": "Jede Stelle wird von 0-100 bewertet: Fähigkeiten (40%), Erfahrung (25%), Ausbildung (15%) und Branchenrelevanz (20%).",
+        "atsDocuments": "ATS-optimierte Dokumente",
+        "atsDocumentsDesc": "Massgeschneiderter Lebenslauf und Anschreiben pro Stelle, optimiert für Bewerbermanagement-Systeme.",
+        "automatedPipeline": "Automatisierte Pipeline",
+        "automatedPipelineDesc": "Präferenzen einmal festlegen. Alle 4 Stunden werden neue passende Stellen gefunden und Dokumente automatisch vorbereitet.",
+        "privacyFirst": "Datenschutz zuerst",
+        "privacyFirstDesc": "DSGVO-konform. Keine Zugangsdaten gespeichert. Keine automatischen Anmeldungen. Ihre Daten gehören Ihnen.",
+        "antiHallucination": "Anti-Halluzination",
+        "antiHallucinationDesc": "Null Toleranz für erfundene Inhalte. KI ordnet nur um, formuliert um und hebt hervor, was bereits in Ihrem Lebenslauf steht."
+    },
+    "pricing": {
+        "title": "Einfache, transparente Preise",
+        "subtitle": "Starten Sie kostenlos. Upgraden Sie, wenn Sie bereit sind.",
+        "free": "Kostenlos",
+        "freeDesc": "Starten Sie mit den Grundlagen",
+        "month": "/Monat",
+        "year": "/Jahr",
+        "freeDocs": "3 massgeschneiderte Dokumente/Monat",
+        "manualOnly": "Nur manuelles Einfügen von Stellen",
+        "basicDashboard": "Basis-Dashboard",
+        "cvUpload": "Lebenslauf-Upload & Analyse",
+        "pro": "Pro",
+        "proDesc": "Für aktive Jobsuchende",
+        "proSaveYearly": "oder $249/Jahr (28% sparen)",
+        "proDocs": "50 massgeschneiderte Dokumente/Monat",
+        "autoDiscovery": "Automatische Stellensuche",
+        "fullKanban": "Vollständiges Kanban-Board",
+        "aiCompatibility": "KI-Kompatibilitätsbewertung",
+        "emailNotifications": "E-Mail-Benachrichtigungen",
+        "getProMonthly": "Pro wählen — $29/Mo.",
+        "unlimited": "Unbegrenzt",
+        "unlimitedDesc": "Keine Limits, maximale Power",
+        "unlimitedSaveYearly": "oder $699/Jahr (26% sparen)",
+        "unlimitedTailoring": "Unbegrenzte Anpassung",
+        "priorityProcessing": "Prioritätsverarbeitung",
+        "apiAccess": "API-Zugang",
+        "everythingInPro": "Alles aus Pro",
+        "goUnlimited": "Unbegrenzt wählen — $79/Mo.",
+        "creditPack": "Kredit-Paket",
+        "creditPackDesc": "Mehr Credits benötigt? Holen Sie sich ein Paket — 10 zusätzliche Dokumente für $19 (einmalig).",
+        "buyCreditPack": "Kredit-Paket kaufen — $19",
+        "mostPopular": "Am beliebtesten"
+    },
+    "cta": {
+        "title": "Bereit, Ihre Jobsuche zu transformieren?",
+        "subtitle": "Schliessen Sie sich Jobsuchenden an, die mit KI-personalisierten Bewerbungen schneller zu Vorstellungsgesprächen kommen.",
+        "getStarted": "Kostenlos starten"
+    },
+    "footer": {
+        "tagline": "KI-gestützter Karriere-Assistent. ATS-optimiert, ohne Erfindungen.",
+        "product": "Produkt",
+        "legal": "Rechtliches",
+        "dataSources": "Datenquellen",
+        "termsOfService": "Nutzungsbedingungen",
+        "privacyPolicy": "Datenschutzrichtlinie",
+        "contact": "Kontakt",
+        "rights": "Alle Rechte vorbehalten.",
+        "officialApis": "Alle Stellendaten stammen ausschliesslich von offiziellen APIs. Kein Scraping."
+    }
+}

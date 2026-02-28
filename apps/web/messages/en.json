@@ -1,0 +1,99 @@
+{
+    "nav": {
+        "features": "Features",
+        "pricing": "Pricing",
+        "howItWorks": "How It Works",
+        "signIn": "Sign In",
+        "getStarted": "Get Started Free"
+    },
+    "hero": {
+        "badge": "AI-Powered Career Assistant",
+        "titleStart": "Land Your Dream Job with",
+        "titleHighlight": "AI Precision",
+        "description": "AutoApply AI discovers relevant jobs, scores your compatibility, and generates ATS-optimized resumes and cover letters — all tailored to each specific role.",
+        "startFree": "Start Free",
+        "viewPricing": "View Pricing",
+        "noCreditCard": "No credit card required. 3 free tailored documents per month."
+    },
+    "stats": {
+        "jobApis": "Job Board APIs",
+        "atsKeywords": "ATS Keywords Matched",
+        "fabricatedSkills": "Fabricated Skills",
+        "discoveryCycle": "Auto-Discovery Cycle"
+    },
+    "howItWorks": {
+        "title": "How It Works",
+        "subtitle": "Three simple steps from upload to application-ready documents.",
+        "step1Title": "Upload Your CV",
+        "step1Desc": "Upload your master CV (PDF, DOCX, or paste text). We extract and structure your experience.",
+        "step2Title": "Set Preferences",
+        "step2Desc": "Tell us your target roles, locations, salary range, and remote preferences. We search every 4 hours.",
+        "step3Title": "Get Tailored Docs",
+        "step3Desc": "For each matching job, get a tailored CV and cover letter — ATS-optimized, zero fabrication."
+    },
+    "features": {
+        "title": "Built for Serious Job Seekers",
+        "subtitle": "Every feature designed to maximize your chances while keeping your data safe.",
+        "smartDiscovery": "Smart Job Discovery",
+        "smartDiscoveryDesc": "Aggregates listings from Adzuna, The Muse, Remotive, and more — all from official APIs. No scraping, no ToS violations.",
+        "aiScoring": "AI Compatibility Scoring",
+        "aiScoringDesc": "Each job is scored 0-100 against your profile based on skills match (40%), experience (25%), education (15%), and domain relevance (20%).",
+        "atsDocuments": "ATS-Optimized Documents",
+        "atsDocumentsDesc": "Tailored resume and cover letter per job, optimized for Applicant Tracking Systems. Keywords injected naturally from your real experience.",
+        "automatedPipeline": "Automated Pipeline",
+        "automatedPipelineDesc": "Set preferences once. Every 4 hours, new matching jobs are discovered and documents prepared automatically for your review.",
+        "privacyFirst": "Privacy First",
+        "privacyFirstDesc": "GDPR-compliant. No credential storage. No automated logins. Your data stays yours with one-click export and deletion.",
+        "antiHallucination": "Anti-Hallucination",
+        "antiHallucinationDesc": "Zero tolerance for fabricated content. AI only reorders, rephrases, and emphasizes what's already in your CV. Nothing invented."
+    },
+    "pricing": {
+        "title": "Simple, Transparent Pricing",
+        "subtitle": "Start free. Upgrade when you're ready to supercharge your job search.",
+        "free": "Free",
+        "freeDesc": "Get started with the basics",
+        "month": "/month",
+        "year": "/year",
+        "freeDocs": "3 tailored documents/month",
+        "manualOnly": "Manual job paste only",
+        "basicDashboard": "Basic dashboard",
+        "cvUpload": "CV upload & parsing",
+        "pro": "Pro",
+        "proDesc": "For active job seekers",
+        "proSaveYearly": "or $249/year (save 28%)",
+        "proDocs": "50 tailored documents/month",
+        "autoDiscovery": "Automated job discovery",
+        "fullKanban": "Full Kanban dashboard",
+        "aiCompatibility": "AI compatibility scoring",
+        "emailNotifications": "Email notifications",
+        "getProMonthly": "Get Pro — $29/mo",
+        "unlimited": "Unlimited",
+        "unlimitedDesc": "No limits, maximum power",
+        "unlimitedSaveYearly": "or $699/year (save 26%)",
+        "unlimitedTailoring": "Unlimited tailoring",
+        "priorityProcessing": "Priority processing",
+        "apiAccess": "API access",
+        "everythingInPro": "Everything in Pro",
+        "goUnlimited": "Go Unlimited — $79/mo",
+        "creditPack": "Credit Pack",
+        "creditPackDesc": "Need more credits? Get a Credit Pack — 10 additional documents for $19 (one-time).",
+        "buyCreditPack": "Buy Credit Pack — $19",
+        "mostPopular": "Most Popular"
+    },
+    "cta": {
+        "title": "Ready to Transform Your Job Search?",
+        "subtitle": "Join job seekers who are landing interviews faster with AI-tailored applications.",
+        "getStarted": "Get Started Free"
+    },
+    "footer": {
+        "tagline": "AI-powered career assistant. ATS-optimized, zero fabrication.",
+        "product": "Product",
+        "legal": "Legal",
+        "dataSources": "Data Sources",
+        "termsOfService": "Terms of Service",
+        "privacyPolicy": "Privacy Policy",
+        "contact": "Contact",
+        "rights": "All rights reserved.",
+        "officialApis": "All job data sourced from official APIs only. No scraping."
+    }
+}

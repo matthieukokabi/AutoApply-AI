@@ -1,0 +1,99 @@
+{
+    "nav": {
+        "features": "Funzionalità",
+        "pricing": "Prezzi",
+        "howItWorks": "Come funziona",
+        "signIn": "Accedi",
+        "getStarted": "Inizia gratis"
+    },
+    "hero": {
+        "badge": "Assistente di carriera con IA",
+        "titleStart": "Trova il tuo lavoro ideale con",
+        "titleHighlight": "Precisione IA",
+        "description": "AutoApply AI scopre offerte rilevanti, valuta la tua compatibilità e genera CV e lettere di presentazione ottimizzati ATS — tutto personalizzato per ogni posizione.",
+        "startFree": "Inizia gratis",
+        "viewPricing": "Vedi prezzi",
+        "noCreditCard": "Nessuna carta di credito richiesta. 3 documenti personalizzati gratuiti al mese."
+    },
+    "stats": {
+        "jobApis": "API di lavoro",
+        "atsKeywords": "Parole chiave ATS rilevate",
+        "fabricatedSkills": "Competenze inventate",
+        "discoveryCycle": "Ciclo di scoperta auto"
+    },
+    "howItWorks": {
+        "title": "Come funziona",
+        "subtitle": "Tre semplici passi dal caricamento del CV ai documenti pronti per candidarsi.",
+        "step1Title": "Carica il tuo CV",
+        "step1Desc": "Carica il tuo CV principale (PDF, DOCX o incolla il testo). Estraiamo e strutturiamo la tua esperienza.",
+        "step2Title": "Imposta le preferenze",
+        "step2Desc": "Indica i ruoli desiderati, le località, la fascia salariale e le preferenze di lavoro remoto. Cerchiamo ogni 4 ore.",
+        "step3Title": "Ricevi i tuoi documenti",
+        "step3Desc": "Per ogni lavoro compatibile, ricevi un CV e una lettera di presentazione personalizzati — ottimizzati ATS, senza invenzioni."
+    },
+    "features": {
+        "title": "Progettato per chi cerca lavoro seriamente",
+        "subtitle": "Ogni funzionalità pensata per massimizzare le tue opportunità proteggendo i tuoi dati.",
+        "smartDiscovery": "Ricerca intelligente",
+        "smartDiscoveryDesc": "Aggrega offerte da Adzuna, The Muse, Remotive e altri — solo tramite API ufficiali. Nessuno scraping.",
+        "aiScoring": "Punteggio di compatibilità IA",
+        "aiScoringDesc": "Ogni lavoro viene valutato da 0 a 100 in base a competenze (40%), esperienza (25%), formazione (15%) e rilevanza settoriale (20%).",
+        "atsDocuments": "Documenti ottimizzati ATS",
+        "atsDocumentsDesc": "CV e lettera di presentazione personalizzati per ogni posizione, ottimizzati per i sistemi di tracciamento candidature.",
+        "automatedPipeline": "Pipeline automatizzata",
+        "automatedPipelineDesc": "Imposta le preferenze una volta. Ogni 4 ore vengono trovati nuovi lavori compatibili e i documenti preparati automaticamente.",
+        "privacyFirst": "Privacy prima di tutto",
+        "privacyFirstDesc": "Conforme al GDPR. Nessuna memorizzazione di credenziali. Nessun login automatico. I tuoi dati restano tuoi.",
+        "antiHallucination": "Anti-allucinazione",
+        "antiHallucinationDesc": "Tolleranza zero per contenuti inventati. L'IA riordina, riformula e valorizza solo ciò che esiste nel tuo CV. Nulla di inventato."
+    },
+    "pricing": {
+        "title": "Prezzi semplici e trasparenti",
+        "subtitle": "Inizia gratis. Passa a un piano superiore quando sei pronto.",
+        "free": "Gratuito",
+        "freeDesc": "Inizia con le basi",
+        "month": "/mese",
+        "year": "/anno",
+        "freeDocs": "3 documenti personalizzati/mese",
+        "manualOnly": "Solo aggiunta manuale di offerte",
+        "basicDashboard": "Dashboard base",
+        "cvUpload": "Caricamento e analisi CV",
+        "pro": "Pro",
+        "proDesc": "Per chi cerca lavoro attivamente",
+        "proSaveYearly": "o $249/anno (risparmia 28%)",
+        "proDocs": "50 documenti personalizzati/mese",
+        "autoDiscovery": "Scoperta automatica di lavori",
+        "fullKanban": "Dashboard Kanban completa",
+        "aiCompatibility": "Punteggio di compatibilità IA",
+        "emailNotifications": "Notifiche via email",
+        "getProMonthly": "Scegli Pro — $29/mese",
+        "unlimited": "Illimitato",
+        "unlimitedDesc": "Senza limiti, massima potenza",
+        "unlimitedSaveYearly": "o $699/anno (risparmia 26%)",
+        "unlimitedTailoring": "Personalizzazione illimitata",
+        "priorityProcessing": "Elaborazione prioritaria",
+        "apiAccess": "Accesso API",
+        "everythingInPro": "Tutto ciò che è in Pro",
+        "goUnlimited": "Scegli Illimitato — $79/mese",
+        "creditPack": "Pacchetto crediti",
+        "creditPackDesc": "Servono più crediti? Ottieni un Pacchetto — 10 documenti aggiuntivi a $19 (una tantum).",
+        "buyCreditPack": "Acquista pacchetto — $19",
+        "mostPopular": "Più popolare"
+    },
+    "cta": {
+        "title": "Pronto a trasformare la tua ricerca di lavoro?",
+        "subtitle": "Unisciti a chi ottiene colloqui più velocemente grazie a candidature personalizzate dall'IA.",
+        "getStarted": "Inizia gratis"
+    },
+    "footer": {
+        "tagline": "Assistente di carriera con IA. Ottimizzato ATS, senza invenzioni.",
+        "product": "Prodotto",
+        "legal": "Legale",
+        "dataSources": "Fonti dati",
+        "termsOfService": "Termini di servizio",
+        "privacyPolicy": "Informativa sulla privacy",
+        "contact": "Contatto",
+        "rights": "Tutti i diritti riservati.",
+        "officialApis": "Tutti i dati sulle offerte provengono da API ufficiali. Nessuno scraping."
+    }
+}
