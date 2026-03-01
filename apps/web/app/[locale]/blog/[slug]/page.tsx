@@ -61,8 +61,28 @@ export default async function BlogPostPage({
     const allPosts = getAllPosts(locale).filter((p) => p.slug !== slug);
     const relatedPosts = allPosts.slice(0, 3);
 
+    const articleJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: post.title,
+        description: post.description,
+        author: { "@type": "Person", name: post.author },
+        datePublished: post.date,
+        publisher: {
+            "@type": "Organization",
+            name: "AutoApply AI",
+            url: "https://autoapply.works",
+        },
+        mainEntityOfPage: `https://autoapply.works/${locale}/blog/${slug}`,
+        keywords: post.tags.join(", "),
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+            />
             {/* Navigation */}
             <header className="border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-50">
                 <div className="container flex h-16 items-center justify-between">
