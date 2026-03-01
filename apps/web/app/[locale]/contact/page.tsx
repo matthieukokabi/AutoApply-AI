@@ -12,11 +12,32 @@ export default function ContactPage() {
     const [subject, setSubject] = useState("");
     const [messageBody, setMessageBody] = useState("");
     const [submitted, setSubmitted] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        // In production, this would POST to an API endpoint or email service
-        setSubmitted(true);
+        setLoading(true);
+        setError("");
+
+        try {
+            const res = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, subject, message: messageBody }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to send message");
+            }
+
+            setSubmitted(true);
+        } catch (err: any) {
+            setError(err.message || "Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -112,8 +133,11 @@ export default function ContactPage() {
                                         onChange={(e) => setMessageBody(e.target.value)}
                                     />
                                 </div>
-                                <Button type="submit" className="w-full">
-                                    Send Message
+                                {error && (
+                                    <p className="text-sm text-red-500">{error}</p>
+                                )}
+                                <Button type="submit" className="w-full" disabled={loading}>
+                                    {loading ? "Sending..." : "Send Message"}
                                 </Button>
                             </form>
                         </CardContent>
