@@ -319,3 +319,84 @@ Read SESSION_LOG.md in the project root and continue from where the last session
 - Clerk production keys (ins_39zqMLJuFyCTNUeIm1CMb4tIe7e) need to be set on Vercel — currently test keys are deployed, so sign-in on autoapply.works won't work with production Clerk
 - n8n needs a hosting platform (Render recommended) — not yet set up
 - Stripe webhook secret needs updating if URL changes from test to production
+
+---
+
+## Session 6 — 2026-02-27 (continued)
+
+### Completed
+
+**Clerk Production Auth — Fixed:**
+- Switched from test to production Clerk keys on Vercel
+- Google OAuth and LinkedIn OAuth configured
+- DNS verified for clerk.autoapply.works
+
+**i18n — Multi-Language Landing Page:**
+- Installed `next-intl` with `[locale]` routing
+- 5 languages: English, French, German, Spanish, Italian
+- All landing page text translated (hero, features, pricing, footer)
+- Language switcher dropdown component
+- Locale-aware routing with default English fallback
+
+**Multi-Currency Salary Ranges:**
+- Salary inputs show local currency per country (EUR for FR/DE/IT/ES, GBP for UK, CHF for Swiss)
+- Currency formatting in job cards and filters
+
+---
+
+## Session 7 — 2026-02-28
+
+### Completed
+
+**Blog System — Multilingual SEO Content:**
+- File-based Markdown blog with YAML frontmatter
+- `lib/blog.ts` utility for parsing posts at build time
+- Blog index page + individual post pages with ReactMarkdown
+- 3 English articles: ATS optimization, AI cover letter guide, job search automation
+- All 3 translated into FR, DE, ES, IT (15 blog posts total)
+- Blog routes added to Clerk public routes middleware
+- Blog link added to landing page header nav + footer
+- Commit: `cb817b5`
+
+**Job Board APIs — Expanded to 7 Sources:**
+- Added JSearch (RapidAPI), Jooble, Reed API integrations
+- n8n workflow updated with 3 new fetch nodes (JSearch, Jooble, Reed)
+- Frontend source filter dropdown updated with new options
+- Landing page stats updated from "4" to "7" job APIs
+- Footer data sources list updated
+- `.env.example` updated with new API key placeholders
+- Prisma schema source comment updated
+- Commit: `804de1d`
+
+**SEO Optimization:**
+- Comprehensive keyword research for 5 languages (saved to `docs/seo-keyword-research.md`)
+- Enhanced root layout with expanded keywords, OpenGraph, Twitter cards
+- Locale-specific `generateMetadata` in `[locale]/layout.tsx` with per-language meta tags
+- Dynamic `sitemap.ts` covering all pages + blog posts across all locales
+- `robots.ts` with protected dashboard routes excluded from crawling
+- Commit: `a618216`
+
+**Tests — Expanded to 51:**
+- 5 new test files: jobs, user, account (GDPR), application-detail, onboarding
+- Updated test setup with getAuthUser and utils mocks
+- All 51 tests passing across 11 files
+- Covers: auth, CRUD, GDPR export/delete, status validation, automation toggle, onboarding flow
+- Commit: `a4becad`
+
+### Git Commits This Session
+- `cb817b5` — feat: add multilingual blog system with SEO content
+- `804de1d` — feat: add JSearch, Jooble, Reed job board API integrations (7 total)
+- `a618216` — feat: add SEO optimization — keyword research, meta tags, sitemap, robots.txt
+- `a4becad` — feat: add comprehensive API route tests (51 total, 11 files)
+
+### What's Next
+1. **Social media setup** — Twitter/X, LinkedIn company page, ProductHunt listing
+2. **Flutter mobile app** — Wire Clerk SDK, Riverpod providers, real API calls
+3. **Email notifications** — SendGrid/Resend for job match alerts
+4. **Deploy n8n** — Render or Railway for automation engine
+5. **Stripe production keys** — Switch from test to live mode
+
+### Blockers / Decisions
+- Flutter app uses demo auth (not real Clerk Flutter SDK)
+- n8n still needs hosting platform deployment
+- Need actual JSearch, Jooble, Reed API keys for production
