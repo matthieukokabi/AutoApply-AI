@@ -48,6 +48,19 @@ vi.mock("@/lib/prisma", () => ({
     },
 }));
 
+// Mock auth helper (used by onboarding route)
+vi.mock("@/lib/auth", () => ({
+    getAuthUser: vi.fn(),
+}));
+
+// Mock utils (APPLICATION_STATUSES used by applications/[id] route)
+vi.mock("@/lib/utils", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@/lib/utils")>();
+    return {
+        ...actual,
+    };
+});
+
 // Mock Stripe
 vi.mock("@/lib/stripe", () => ({
     stripe: {
