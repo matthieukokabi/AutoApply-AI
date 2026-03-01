@@ -449,3 +449,92 @@ Read SESSION_LOG.md in the project root and continue from where the last session
 - Flutter app uses demo auth (not real Clerk Flutter SDK)
 - n8n still needs hosting platform deployment
 - Need actual JSearch, Jooble, Reed API keys for production
+
+---
+
+## Session 9 — 2026-03-01
+
+### Completed
+
+**Flutter Mobile App — Real Auth + API Integration:**
+
+**Backend — Mobile Auth Endpoint:**
+- `apps/web/app/api/auth/mobile/route.ts` — POST endpoint for sign-in/sign-up
+  - Clerk Backend API: `createUser()` for sign-up, `getUserList()` + `verifyPassword()` for sign-in
+  - Returns custom JWT (HS256, 30-day expiry) signed with CLERK_SECRET_KEY via jose
+  - Fixed Clerk v4 compatibility (import from `@clerk/nextjs`, not `@clerk/nextjs/server`)
+- `apps/web/lib/mobile-auth.ts` — JWT signing (`createMobileToken`) and verification (`verifyMobileToken`)
+  - Issuer: `autoapply-mobile`, Algorithm: HS256
+- `jose` npm package installed for JWT operations
+
+**Backend — Dual Auth (Web + Mobile):**
+- Updated `apps/web/lib/auth.ts` — `getAuthUser(req?)` now supports:
+  1. Clerk session auth (web) — tries `auth()` first
+  2. Bearer JWT auth (mobile) — falls back to Authorization header
+  3. Auto-creates user in database from either auth source
+- **All 12 API routes updated** to pass `req` to `getAuthUser(req)`:
+  - profile, stats, preferences, applications, applications/[id], jobs, tailor, profile/upload, onboarding, user, account, checkout
+
+**Flutter — Auth System:**
+- `lib/core/services/auth_service.dart` — AuthService with:
+  - Sign-in/sign-up via POST /api/auth/mobile
+  - Token persistence in FlutterSecureStorage
+  - Auto-login check, sign-out with storage clear
+- `lib/core/auth/auth_provider.dart` — Riverpod StateNotifierProvider:
+  - AuthStatus enum (initial, loading, authenticated, unauthenticated, error)
+  - signIn(), signUp(), signOut(), checkAuth() methods
+  - Error message propagation to UI
+
+**Flutter — Environment Config:**
+- `lib/core/config/env_config.dart` — EnvConfig with:
+  - Platform-aware defaults (localhost for iOS, 10.0.2.2 for Android)
+  - Support for dev/staging/production environments
+  - flutter_dotenv integration
+- `.env.example` created with API_BASE_URL and ENVIRONMENT vars
+- `.env` created for local development
+
+**Flutter — Dio Client & Auth Interceptor:**
+- Updated `lib/core/network/dio_client.dart`:
+  - Reads auth token from FlutterSecureStorage
+  - Injects Bearer token into all requests
+  - 401 response → auto-logout (clears storage, resets auth state)
+
+**Flutter — Login Page Wired:**
+- `login_page.dart` — Full sign-in/sign-up flow:
+  - Email validation regex
+  - Password length check (8+ chars) for sign-up
+  - Calls `signUp()` or `signIn()` based on toggle
+  - Uses reactive auth state for loading indicator
+  - Navigation to dashboard on success, SnackBar on error
+
+**Flutter — CV File Upload:**
+- `profile_page.dart` — Added file picker:
+  - FilePicker.platform.pickFiles() for PDF/DOCX/DOC/TXT
+  - 5MB file size limit
+  - Multipart upload via FormData
+  - "OR" divider between file upload and text paste
+- `api_service.dart` — Added `uploadProfileFile()` method with MultipartFile
+
+**Flutter — Dependencies Added:**
+- flutter_secure_storage, flutter_dotenv, file_picker, url_launcher
+
+**Build Verification:**
+- `next build` — 0 errors, all 34 routes compiled
+- `flutter analyze` — 0 errors (11 info-level style hints only)
+- widget_test.dart updated (removed stale MyApp reference)
+
+### Git Commits This Session
+- `f16b304` — feat: wire Flutter mobile auth + update all backend routes for dual auth
+
+### What's Next
+1. **Social media setup** — Twitter/X, LinkedIn company page, ProductHunt listing
+2. **Email notifications** — SendGrid/Resend for job match alerts
+3. **Deploy n8n** — Render or Railway for automation engine
+4. **Flutter — remaining pages** — Wire dashboard, jobs, documents pages to real API data
+5. **End-to-end testing** — Test full mobile auth flow against production
+
+### Blockers / Decisions
+- n8n still needs hosting platform deployment
+- Need actual JSearch, Jooble, Reed API keys for production
+- Flutter mobile app can now auth against the backend but remaining pages (dashboard, jobs, documents) still use provider stubs
+- Clerk production keys need to be set for mobile auth to work against autoapply.works
