@@ -1,11 +1,14 @@
-class ApiConstants {
-  // For local dev on iOS simulator use localhost,
-  // for Android emulator use 10.0.2.2
-  static const String baseUrl = 'http://localhost:3000/api';
+import '../config/env_config.dart';
 
-  // Auth
-  static const String signIn = '/auth/sign-in';
-  static const String signUp = '/auth/sign-up';
+class ApiConstants {
+  /// Base URL from environment config.
+  /// Dev iOS: http://localhost:3000/api
+  /// Dev Android: http://10.0.2.2:3000/api
+  /// Production: https://autoapply.works/api
+  static String get baseUrl => EnvConfig.apiBaseUrl;
+
+  // Auth (mobile-specific endpoint)
+  static const String mobileAuth = '/auth/mobile';
 
   // Profile
   static const String profile = '/profile';

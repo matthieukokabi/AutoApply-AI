@@ -13,7 +13,6 @@ class LoginPage extends ConsumerStatefulWidget {
 class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
   bool _isSignUp = false;
 
   @override
@@ -24,22 +23,42 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _handleSubmit() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    // Basic email validation
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid email address')),
+      );
+      return;
+    }
 
-    await ref.read(authProvider.notifier).signIn(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+    // Password length check for sign-up
+    if (_isSignUp && password.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Password must be at least 8 characters')),
+      );
+      return;
+    }
+
+    final notifier = ref.read(authProvider.notifier);
+
+    if (_isSignUp) {
+      await notifier.signUp(email, password);
+    } else {
+      await notifier.signIn(email, password);
+    }
 
     if (mounted) {
-      setState(() => _isLoading = false);
       final auth = ref.read(authProvider);
       if (auth.isAuthenticated) {
         context.go('/dashboard');
@@ -53,6 +72,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -113,10 +135,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
               // Submit button
               FilledButton(
-                onPressed: _isLoading ? null : _handleSubmit,
+                onPressed: isLoading ? null : _handleSubmit,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: _isLoading
+                  child: isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,

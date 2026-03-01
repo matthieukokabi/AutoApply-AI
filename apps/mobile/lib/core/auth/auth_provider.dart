@@ -1,50 +1,73 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/auth_service.dart';
 
 /// Authentication state and token management.
 ///
-/// In production, this would integrate with Clerk's Flutter SDK.
-/// For now we use a session-token approach: the web app Clerk session
-/// token is stored securely after login and attached to API requests.
+/// Uses the backend `/api/auth/mobile` endpoint which
+/// verifies credentials with Clerk and returns a JWT.
 
 const _tokenKey = 'auth_session_token';
+const _userIdKey = 'auth_user_id';
+const _emailKey = 'auth_email';
 const _storage = FlutterSecureStorage();
 
-enum AuthStatus { initial, authenticated, unauthenticated }
+enum AuthStatus { initial, authenticated, unauthenticated, loading }
 
 class AuthState {
   final AuthStatus status;
   final String? token;
+  final String? userId;
+  final String? email;
   final String? error;
 
   const AuthState({
     this.status = AuthStatus.initial,
     this.token,
+    this.userId,
+    this.email,
     this.error,
   });
 
-  AuthState copyWith({AuthStatus? status, String? token, String? error}) =>
+  AuthState copyWith({
+    AuthStatus? status,
+    String? token,
+    String? userId,
+    String? email,
+    String? error,
+  }) =>
       AuthState(
         status: status ?? this.status,
         token: token ?? this.token,
+        userId: userId ?? this.userId,
+        email: email ?? this.email,
         error: error,
       );
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
+  bool get isLoading => status == AuthStatus.loading;
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthState()) {
+  final AuthService _authService;
+
+  AuthNotifier(this._authService) : super(const AuthState()) {
     _init();
   }
 
+  /// Check for existing session on app start.
   Future<void> _init() async {
     try {
       final token = await _storage.read(key: _tokenKey);
+      final userId = await _storage.read(key: _userIdKey);
+      final email = await _storage.read(key: _emailKey);
+
       if (token != null && token.isNotEmpty) {
         state = AuthState(
           status: AuthStatus.authenticated,
           token: token,
+          userId: userId,
+          email: email,
         );
       } else {
         state = const AuthState(status: AuthStatus.unauthenticated);
@@ -54,38 +77,73 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Sign in with email and password via the API.
-  /// In production, this calls Clerk's authentication endpoint.
+  /// Sign in with email and password via the backend.
   Future<void> signIn(String email, String password) async {
     try {
-      state = state.copyWith(status: AuthStatus.initial, error: null);
+      state = state.copyWith(status: AuthStatus.loading, error: null);
 
-      // For demo/development: accept any non-empty credentials
-      // and store a placeholder token. In production, this would
-      // call Clerk's signIn API and get a real session token.
-      if (email.isNotEmpty && password.isNotEmpty) {
-        const demoToken = 'demo_session_token';
-        await _storage.write(key: _tokenKey, value: demoToken);
-        state = const AuthState(
-          status: AuthStatus.authenticated,
-          token: demoToken,
-        );
-      } else {
-        state = state.copyWith(
-          status: AuthStatus.unauthenticated,
-          error: 'Email and password are required',
-        );
-      }
+      final result = await _authService.signIn(
+        email: email.trim(),
+        password: password,
+      );
+
+      await _persistSession(result);
+
+      state = AuthState(
+        status: AuthStatus.authenticated,
+        token: result.token,
+        userId: result.userId,
+        email: result.email,
+      );
+    } on AuthException catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        error: e.message,
+      );
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        error: e.toString(),
+        error: 'An unexpected error occurred. Please try again.',
       );
     }
   }
 
+  /// Create a new account.
+  Future<void> signUp(String email, String password) async {
+    try {
+      state = state.copyWith(status: AuthStatus.loading, error: null);
+
+      final result = await _authService.signUp(
+        email: email.trim(),
+        password: password,
+      );
+
+      await _persistSession(result);
+
+      state = AuthState(
+        status: AuthStatus.authenticated,
+        token: result.token,
+        userId: result.userId,
+        email: result.email,
+      );
+    } on AuthException catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        error: e.message,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        error: 'An unexpected error occurred. Please try again.',
+      );
+    }
+  }
+
+  /// Sign out and clear stored session.
   Future<void> signOut() async {
     await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _userIdKey);
+    await _storage.delete(key: _emailKey);
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
@@ -97,8 +155,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
       token: token,
     );
   }
+
+  /// Clear any auth error.
+  void clearError() {
+    if (state.error != null) {
+      state = state.copyWith(error: null);
+    }
+  }
+
+  Future<void> _persistSession(AuthResult result) async {
+    await _storage.write(key: _tokenKey, value: result.token);
+    await _storage.write(key: _userIdKey, value: result.userId);
+    await _storage.write(key: _emailKey, value: result.email);
+  }
 }
 
+/// Auth service provider (singleton).
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService();
+});
+
+/// Auth state provider.
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier();
+  final authService = ref.watch(authServiceProvider);
+  return AuthNotifier(authService);
 });

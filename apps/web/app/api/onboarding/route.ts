@@ -7,9 +7,9 @@ import { getAuthUser } from "@/lib/auth";
  * Check if the user needs onboarding (no profile or preferences yet).
  * Auto-creates or links the User record on first login via getAuthUser().
  */
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        const user = await getAuthUser();
+        const user = await getAuthUser(req);
         if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }

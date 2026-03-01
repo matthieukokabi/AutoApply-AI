@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * GET /api/account — export all user data (GDPR data export)
  */
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        const { userId: clerkId } = auth();
-        if (!clerkId) {
+        const authUser = await getAuthUser(req);
+        if (!authUser) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const user = await prisma.user.findFirst({
-            where: { clerkId },
+            where: { id: authUser.id },
             include: {
                 masterProfile: true,
                 preferences: true,
@@ -51,19 +51,11 @@ export async function GET() {
  * DELETE /api/account — GDPR data deletion endpoint
  * Permanently deletes all user data (cascading via Prisma relations).
  */
-export async function DELETE() {
+export async function DELETE(req: Request) {
     try {
-        const { userId: clerkId } = auth();
-        if (!clerkId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const user = await prisma.user.findFirst({
-            where: { clerkId },
-        });
-
+        const user = await getAuthUser(req);
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         // Prisma cascade delete handles masterProfile, preferences, applications

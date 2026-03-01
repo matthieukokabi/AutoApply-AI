@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * GET /api/jobs — list discovered jobs for the current user
@@ -12,17 +12,9 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(req: Request) {
     try {
-        const { userId: clerkId } = auth();
-        if (!clerkId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const user = await prisma.user.findFirst({
-            where: { clerkId },
-        });
-
+        const user = await getAuthUser(req);
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const url = new URL(req.url);

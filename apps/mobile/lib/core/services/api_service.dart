@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../network/dio_client.dart';
@@ -32,6 +33,20 @@ class ApiService {
       'rawText': rawText,
       'fileName': 'paste',
     },);
+    final data = res.data as Map<String, dynamic>;
+    return MasterProfile.fromJson(data['profile'] as Map<String, dynamic>);
+  }
+
+  /// Upload a CV file (PDF, DOCX, etc.) via multipart form.
+  Future<MasterProfile> uploadProfileFile(
+      Uint8List bytes, String fileName) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+      ),
+    });
+    final res = await _dio.post('/profile/upload', data: formData);
     final data = res.data as Map<String, dynamic>;
     return MasterProfile.fromJson(data['profile'] as Map<String, dynamic>);
   }

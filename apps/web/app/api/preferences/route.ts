@@ -1,28 +1,23 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * GET /api/preferences — fetch the current user's job preferences
  */
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        const { userId: clerkId } = auth();
-        if (!clerkId) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const user = await prisma.user.findFirst({
-            where: { clerkId },
-            include: { preferences: true },
+        const preferences = await prisma.jobPreferences.findUnique({
+            where: { userId: user.id },
         });
 
-        if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
-        }
-
         return NextResponse.json({
-            preferences: user.preferences || null,
+            preferences: preferences || null,
         });
     } catch (error) {
         console.error("GET /api/preferences error:", error);
@@ -41,17 +36,9 @@ const VALID_CURRENCIES = [
  */
 export async function PUT(req: Request) {
     try {
-        const { userId: clerkId } = auth();
-        if (!clerkId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const user = await prisma.user.findFirst({
-            where: { clerkId },
-        });
-
+        const user = await getAuthUser(req);
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const body = await req.json();

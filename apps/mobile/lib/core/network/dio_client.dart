@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
+import '../auth/auth_provider.dart';
+import '../config/env_config.dart';
 
 const _storage = FlutterSecureStorage();
 
@@ -14,13 +16,16 @@ final dioProvider = Provider<Dio>((ref) {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
-  ),);
+  ));
 
-  dio.interceptors.add(LogInterceptor(
-    requestBody: true,
-    responseBody: true,
-    error: true,
-  ),);
+  // Only add verbose logging in development
+  if (EnvConfig.isDevelopment) {
+    dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      error: true,
+    ));
+  }
 
   // Auth interceptor — attaches JWT from secure storage
   dio.interceptors.add(InterceptorsWrapper(
@@ -33,11 +38,12 @@ final dioProvider = Provider<Dio>((ref) {
     },
     onError: (error, handler) {
       if (error.response?.statusCode == 401) {
-        // Token expired or invalid — could trigger logout here
+        // Token expired or invalid — trigger logout
+        ref.read(authProvider.notifier).signOut();
       }
       handler.next(error);
     },
-  ),);
+  ));
 
   return dio;
 });

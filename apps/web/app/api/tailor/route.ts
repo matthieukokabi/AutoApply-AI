@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * POST /api/tailor
@@ -9,14 +9,14 @@ import { prisma } from "@/lib/prisma";
  */
 export async function POST(req: Request) {
     try {
-        const { userId } = auth();
-        if (!userId) {
+        const authUser = await getAuthUser(req);
+        if (!authUser) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Get the user from our database
+        // Get the user with profile from our database
         const user = await prisma.user.findFirst({
-            where: { clerkId: userId },
+            where: { id: authUser.id },
             include: { masterProfile: true },
         });
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/providers/providers.dart';
@@ -19,6 +20,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   String _remote = 'any';
   bool _savingCv = false;
   bool _savingPrefs = false;
+  bool _uploadingFile = false;
 
   @override
   void dispose() {
@@ -187,6 +189,58 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
+  Future<void> _pickAndUploadFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'docx', 'doc', 'txt'],
+        withData: true,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.first;
+      if (file.bytes == null || file.name.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not read the selected file')),
+          );
+        }
+        return;
+      }
+
+      // Check file size (max 5 MB)
+      if (file.size > 5 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('File must be under 5 MB')),
+          );
+        }
+        return;
+      }
+
+      setState(() => _uploadingFile = true);
+
+      final api = ref.read(apiServiceProvider);
+      await api.uploadProfileFile(file.bytes!, file.name);
+      ref.invalidate(profileProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${file.name} uploaded successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingFile = false);
+    }
+  }
+
   Widget _buildCvUploadSection(bool hasExisting) {
     return Card(
       child: Padding(
@@ -207,12 +261,53 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Paste your CV text below',
+              'Upload a file or paste your CV text below',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 16),
+
+            // File upload button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _uploadingFile ? null : _pickAndUploadFile,
+                icon: _uploadingFile
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.attach_file),
+                label: Text(_uploadingFile
+                    ? 'Uploading...'
+                    : 'Upload PDF / DOCX'),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Divider with "or"
+            Row(
+              children: [
+                const Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'OR',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ),
+                const Expanded(child: Divider()),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Text paste area
             TextField(
               controller: _cvTextController,
               maxLines: 6,
@@ -265,7 +360,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save),
-                label: const Text('Save CV'),
+                label: const Text('Save CV Text'),
               ),
             ),
           ],

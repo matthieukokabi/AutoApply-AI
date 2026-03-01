@@ -1,28 +1,23 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 /**
  * GET /api/profile — fetch the current user's master profile
  */
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        const { userId: clerkId } = auth();
-        if (!clerkId) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const user = await prisma.user.findFirst({
-            where: { clerkId },
-            include: { masterProfile: true },
+        const profile = await prisma.masterProfile.findUnique({
+            where: { userId: user.id },
         });
 
-        if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
-        }
-
         return NextResponse.json({
-            profile: user.masterProfile || null,
+            profile: profile || null,
         });
     } catch (error) {
         console.error("GET /api/profile error:", error);
@@ -36,17 +31,9 @@ export async function GET() {
  */
 export async function POST(req: Request) {
     try {
-        const { userId: clerkId } = auth();
-        if (!clerkId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const user = await prisma.user.findFirst({
-            where: { clerkId },
-        });
-
+        const user = await getAuthUser(req);
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const body = await req.json();
