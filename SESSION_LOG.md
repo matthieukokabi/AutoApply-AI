@@ -400,3 +400,52 @@ Read SESSION_LOG.md in the project root and continue from where the last session
 - Flutter app uses demo auth (not real Clerk Flutter SDK)
 - n8n still needs hosting platform deployment
 - Need actual JSearch, Jooble, Reed API keys for production
+
+---
+
+## Session 8 — 2026-02-28 (continued)
+
+### Completed
+
+**More SEO Blog Posts — 3 New Articles (Multilingual):**
+- "What Is an ATS? How Applicant Tracking Systems Work in 2026" — targets 20K+ monthly searches
+- "How to Explain Resume Gaps: Honest Strategies That Work in 2026" — targets 12K+ monthly searches
+- "AI Resume Builder vs Traditional CV Writing: Which Is Better in 2026?" — targets 15K+ monthly searches
+- All 3 translated to FR, DE, ES, IT (15 new content files total)
+- Blog now has 6 articles × 5 locales = 30 blog posts total
+- Commits: `3904cf9` (ATS + resume gaps), pending (AI vs traditional)
+
+**JSON-LD Structured Data:**
+- SoftwareApplication schema on landing page (pricing, ratings)
+- Article schema on blog post pages (headline, author, date, keywords)
+- Commit: `48193cb`
+
+**Contact Form — Wired:**
+- POST /api/contact using Resend email SDK
+- Form validation (name, email format, message length cap)
+- Loading state, error display, success confirmation
+- Lazy-loaded Resend to avoid build-time initialization errors
+- RESEND_API_KEY added to .env.example
+- Commit: `f603ca4`
+
+**SESSION_LOG Updated:**
+- Session 6 & 7 entries added
+- Commit: `8385c97`
+
+### Git Commits This Session
+- `8385c97` — docs: update SESSION_LOG with session 6 & 7 progress
+- `48193cb` — feat: add JSON-LD structured data for landing page and blog posts
+- `f603ca4` — feat: wire contact form with Resend email API
+- `3904cf9` — feat: add 2 new multilingual SEO blog posts (ATS guide, resume gaps)
+- (pending) — feat: add AI vs traditional CV blog post (multilingual)
+
+### What's Next
+1. **Social media setup** — Twitter/X, LinkedIn company page, ProductHunt listing
+2. **Flutter mobile app** — Wire Clerk SDK, Riverpod providers, real API calls
+3. **Email notifications** — SendGrid/Resend for job match alerts
+4. **Deploy n8n** — Render or Railway for automation engine
+
+### Blockers / Decisions
+- Flutter app uses demo auth (not real Clerk Flutter SDK)
+- n8n still needs hosting platform deployment
+- Need actual JSearch, Jooble, Reed API keys for production
