@@ -31,15 +31,19 @@ export const metadata: Metadata = {
         "resume optimization tool",
         "ai career tools",
     ],
+    metadataBase: new URL("https://autoapply.works"),
     openGraph: {
         type: "website",
         siteName: "AutoApply AI",
         title: "AutoApply AI — Tailor Your Resume & Cover Letter to Every Job with AI",
         description:
             "AI-powered job search platform. Auto-tailored ATS-optimized CVs, AI cover letters, job matching from 7+ sources, and application tracking.",
+        url: "https://autoapply.works",
     },
     twitter: {
         card: "summary_large_image",
+        site: "@autoapplyai",
+        creator: "@autoapplyai",
         title: "AutoApply AI — Tailor Your Resume & Cover Letter to Every Job with AI",
         description:
             "AI-powered job search platform. Auto-tailored ATS-optimized CVs, AI cover letters, job matching from 7+ sources, and application tracking.",
