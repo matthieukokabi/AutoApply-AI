@@ -1,0 +1,100 @@
+# ──────────────────────────────────────────────────────────────
+# AutoApply AI — Cloud Docker Compose (n8n + Gotenberg only)
+#
+# Use this for deploying n8n and Gotenberg on:
+#   - A VPS (DigitalOcean, Hetzner, etc.)
+#   - Railway (Docker Compose support)
+#   - Any Docker host
+#
+# The web app runs on Vercel, database on Supabase.
+# This file only deploys the automation layer.
+#
+# Usage:
+#   1. Copy .env.n8n.example to .env
+#   2. Fill in all required variables
+#   3. Run: docker compose -f n8n/docker-compose.cloud.yml up -d
+# ──────────────────────────────────────────────────────────────
+
+version: '3.8'
+
+services:
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${N8N_PORT:-5678}:5678'
+    environment:
+      # n8n core
+      N8N_BASIC_AUTH_ACTIVE: 'true'
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:?Set N8N_BASIC_AUTH_PASSWORD}
+      N8N_HOST: ${N8N_HOST:-0.0.0.0}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-https}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:?Set N8N_WEBHOOK_URL to your public n8n URL}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Paris}
+
+      # Database (Supabase PostgreSQL)
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: ${DB_POSTGRESDB_HOST:?Set Supabase DB host}
+      DB_POSTGRESDB_PORT: ${DB_POSTGRESDB_PORT:-5432}
+      DB_POSTGRESDB_DATABASE: ${DB_POSTGRESDB_DATABASE:?Set Supabase DB name}
+      DB_POSTGRESDB_USER: ${DB_POSTGRESDB_USER:?Set Supabase DB user}
+      DB_POSTGRESDB_PASSWORD: ${DB_POSTGRESDB_PASSWORD:?Set Supabase DB password}
+      DB_POSTGRESDB_SCHEMA: n8n
+      DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED: 'false'
+
+      # LLM API keys
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+      # Job board API keys
+      ADZUNA_APP_ID: ${ADZUNA_APP_ID}
+      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY}
+      JSEARCH_API_KEY: ${JSEARCH_API_KEY}
+      JOOBLE_API_KEY: ${JOOBLE_API_KEY}
+      REED_API_KEY: ${REED_API_KEY}
+
+      # App integration
+      APP_DATABASE_URL: ${APP_DATABASE_URL:?Set Supabase connection string}
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET:?Set webhook secret}
+      APP_URL: ${APP_URL:-https://autoapply.works}
+
+      # Gotenberg
+      GOTENBERG_URL: http://gotenberg:3000
+
+      # Storage
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      gotenberg:
+        condition: service_healthy
+    networks:
+      - n8n-network
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+    command:
+      - 'gotenberg'
+      - '--chromium-disable-javascript=true'
+      - '--api-timeout=60s'
+    networks:
+      - n8n-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  n8n_data:
+    driver: local
+
+networks:
+  n8n-network:
+    driver: bridge

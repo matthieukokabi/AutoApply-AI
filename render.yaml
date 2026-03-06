@@ -1,0 +1,119 @@
+# ──────────────────────────────────────────────────────────────
+# AutoApply AI — Render Blueprint
+# Deploy n8n automation engine + Gotenberg PDF service
+#
+# Usage:
+#   1. Push this repo to GitHub
+#   2. Go to Render Dashboard → New → Blueprint
+#   3. Connect your repo and deploy
+#   4. Set environment variables in Render dashboard
+#
+# Note: The web app (Next.js) is deployed separately on Vercel.
+# The PostgreSQL database is managed by Supabase.
+# ──────────────────────────────────────────────────────────────
+
+services:
+  # ─── n8n Automation Engine ──────────────────────────────────
+  - type: web
+    name: autoapply-n8n
+    runtime: docker
+    dockerfilePath: ./n8n/Dockerfile
+    dockerContext: ./n8n
+    plan: starter
+    region: frankfurt  # EU for GDPR compliance
+    healthCheckPath: /healthz
+    envVars:
+      # n8n Core Config
+      - key: N8N_BASIC_AUTH_ACTIVE
+        value: "true"
+      - key: N8N_BASIC_AUTH_USER
+        sync: false  # Set manually in dashboard
+      - key: N8N_BASIC_AUTH_PASSWORD
+        generateValue: true
+      - key: N8N_HOST
+        fromService:
+          name: autoapply-n8n
+          type: web
+          property: host
+      - key: N8N_PORT
+        value: "5678"
+      - key: N8N_PROTOCOL
+        value: https
+      - key: WEBHOOK_URL
+        fromService:
+          name: autoapply-n8n
+          type: web
+          property: hostport
+      - key: GENERIC_TIMEZONE
+        value: Europe/Paris
+
+      # n8n Database (Supabase PostgreSQL)
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        sync: false  # Set to Supabase host
+      - key: DB_POSTGRESDB_PORT
+        value: "5432"
+      - key: DB_POSTGRESDB_DATABASE
+        sync: false  # Set to Supabase database name
+      - key: DB_POSTGRESDB_USER
+        sync: false  # Set to Supabase user
+      - key: DB_POSTGRESDB_PASSWORD
+        sync: false  # Set to Supabase password
+      - key: DB_POSTGRESDB_SCHEMA
+        value: n8n
+      - key: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: "false"
+
+      # LLM API Keys
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+      # Job Board API Keys
+      - key: ADZUNA_APP_ID
+        sync: false
+      - key: ADZUNA_APP_KEY
+        sync: false
+      - key: JSEARCH_API_KEY
+        sync: false
+      - key: JOOBLE_API_KEY
+        sync: false
+      - key: REED_API_KEY
+        sync: false
+
+      # App Integration
+      - key: APP_DATABASE_URL
+        sync: false  # Supabase connection string for workflow DB queries
+      - key: N8N_WEBHOOK_SECRET
+        generateValue: true
+      - key: APP_URL
+        sync: false  # Set to https://autoapply.works
+
+      # Gotenberg (PDF Generation)
+      - key: GOTENBERG_URL
+        fromService:
+          name: autoapply-gotenberg
+          type: web
+          property: hostport
+
+      # Storage (Supabase or S3)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+
+  # ─── Gotenberg PDF Engine ──────────────────────────────────
+  - type: web
+    name: autoapply-gotenberg
+    runtime: image
+    image:
+      url: gotenberg/gotenberg:8
+    plan: starter
+    region: frankfurt
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "3000"
+    dockerCommand: "gotenberg --chromium-disable-javascript=true --api-timeout=60s"
