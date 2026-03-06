@@ -584,3 +584,65 @@ Read SESSION_LOG.md in the project root and continue from where the last session
 - n8n still needs hosting platform deployment
 - Need actual JSearch, Jooble, Reed API keys for production
 - Clerk production keys needed for mobile auth against autoapply.works
+
+---
+
+## Session 11 — 2026-03-06 (continued)
+
+### Completed
+
+**Production Bug Fix: 404 on autoapply.works**
+- Root cause: next-intl locale routing — `[locale]` segment caused Vercel to serve 404 for root `/`
+- Fix: Updated middleware.ts matcher to properly handle locale detection and root path redirect
+- Verified live on autoapply.works
+
+**Email Notification System (Resend):**
+- `apps/web/lib/email.ts` — 5 email functions:
+  - `sendWelcomeEmail()` — On sign-up
+  - `sendJobMatchEmail()` — When new jobs discovered
+  - `sendTailoringCompleteEmail()` — When CV tailoring done
+  - `sendWeeklyDigestEmail()` — Cron-triggered weekly summary
+  - `sendCreditsLowEmail()` — When credits drop to 1 or 0
+- `apps/web/app/api/cron/weekly-digest/route.ts` — Cron endpoint with Bearer auth
+- n8n webhook handler updated to trigger emails on new_applications + credits_low
+- Tailor route sends credits-low email when credits reach 1 or 0
+
+**Flutter Mobile App — All Pages Confirmed Wired:**
+- Dashboard, jobs, profile, documents — all wired to real API from Session 9
+- No additional work needed
+
+**Comprehensive E2E Test Suite — 121 tests across 20 files:**
+- 9 new test files:
+  1. `tailor.test.ts` — 10 tests (auth, credits, n8n trigger, deduction, low-credit email)
+  2. `webhooks-stripe.test.ts` — 11 tests (signature, checkout, subscription lifecycle, invoices)
+  3. `webhooks-n8n.test.ts` — 9 tests (auth, new_applications, single_tailoring_complete, workflow_error)
+  4. `cron-weekly-digest.test.ts` — 7 tests (auth, stats, email, error resilience)
+  5. `auth-mobile.test.ts` — 8 tests (sign-in, sign-up, validation, password verify)
+  6. `profile-upload.test.ts` — 9 tests (JSON paste, file upload, validation)
+  7. `contact.test.ts` — 8 tests (validation, email format, subjects)
+  8. `integration/credit-flow.test.ts` — 6 tests (credit lifecycle, low-credit email, unlimited)
+  9. `integration/stripe-workflow.test.ts` — 4 tests (checkout → webhook → subscription)
+- Updated `__tests__/setup.ts` with comprehensive mocks (email, mobile-auth, Resend, fetch, etc.)
+- All 121/121 tests passing
+
+**n8n Cloud Deployment Configs:**
+- `n8n/Dockerfile` — Based on n8nio/n8n:latest, bakes in workflows + templates
+- `render.yaml` — Render Blueprint for n8n + Gotenberg (Frankfurt, starter plan)
+- `n8n/docker-compose.cloud.yml` — Cloud Docker Compose (n8n + Gotenberg, connects to Supabase)
+- `n8n/.env.n8n.example` — Documented cloud env var template
+- Updated `.env.example` with N8N_WEBHOOK_SECRET and CRON_SECRET
+
+### Git Commits This Session
+- `603b07c` — test: add comprehensive E2E tests for all API routes and workflows
+- `11aa562` — feat: add n8n cloud deployment configs (Render, Docker Compose)
+
+### What's Next
+1. **Social media setup** — Twitter/X, LinkedIn company page, ProductHunt listing
+2. **Stripe production keys** — Switch from test to live mode
+3. **n8n actual deployment** — Push to Render/Railway with real env vars
+4. **Flutter native builds** — iOS/Android build and testing
+
+### Blockers / Decisions
+- Need actual JSearch, Jooble, Reed API keys for production
+- Clerk production keys needed for mobile auth against autoapply.works
+- n8n deployment configs are ready but need hosting credentials to deploy
