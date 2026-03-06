@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, PUT } from "@/app/api/preferences/route";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
+
+const mockUser = {
+    id: "user_1",
+    clerkId: "clerk_test_user_123",
+    email: "test@example.com",
+};
 
 const mockPreferences = {
     id: "pref_1",
@@ -13,29 +20,17 @@ const mockPreferences = {
     industries: ["Technology"],
 };
 
-const mockUserWithPrefs = {
-    id: "user_1",
-    clerkId: "clerk_test_user_123",
-    email: "test@example.com",
-    preferences: mockPreferences,
-};
-
-const mockUserNoPrefs = {
-    id: "user_1",
-    clerkId: "clerk_test_user_123",
-    email: "test@example.com",
-    preferences: null,
-};
-
 beforeEach(() => {
     vi.clearAllMocks();
 });
 
 describe("GET /api/preferences", () => {
     it("returns preferences when they exist", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUserWithPrefs as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.jobPreferences.findUnique).mockResolvedValue(mockPreferences as any);
 
-        const response = await GET();
+        const request = new Request("http://localhost/api/preferences");
+        const response = await GET(request);
         const data = await response.json();
 
         expect(response.status).toBe(200);
@@ -44,19 +39,29 @@ describe("GET /api/preferences", () => {
     });
 
     it("returns null when no preferences set", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUserNoPrefs as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.jobPreferences.findUnique).mockResolvedValue(null);
 
-        const response = await GET();
+        const request = new Request("http://localhost/api/preferences");
+        const response = await GET(request);
         const data = await response.json();
 
         expect(response.status).toBe(200);
         expect(data.preferences).toBeNull();
     });
+
+    it("returns 401 when not authenticated", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(null);
+
+        const request = new Request("http://localhost/api/preferences");
+        const response = await GET(request);
+        expect(response.status).toBe(401);
+    });
 });
 
 describe("PUT /api/preferences", () => {
     it("upserts preferences with valid data", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUserNoPrefs as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.jobPreferences.upsert).mockResolvedValue(mockPreferences as any);
 
         const request = new Request("http://localhost/api/preferences", {

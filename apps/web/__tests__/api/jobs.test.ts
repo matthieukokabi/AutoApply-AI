@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "@/app/api/jobs/route";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 const mockUser = {
     id: "user_1",
@@ -60,7 +61,7 @@ beforeEach(() => {
 
 describe("GET /api/jobs", () => {
     it("returns jobs for the authenticated user", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.job.findMany).mockResolvedValue(mockJobs as any);
 
         const request = new Request("http://localhost/api/jobs");
@@ -74,7 +75,7 @@ describe("GET /api/jobs", () => {
     });
 
     it("filters by source query param", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.job.findMany).mockResolvedValue([mockJobs[0]] as any);
 
         const request = new Request("http://localhost/api/jobs?source=adzuna");
@@ -92,21 +93,11 @@ describe("GET /api/jobs", () => {
     });
 
     it("returns 401 when not authenticated", async () => {
-        const { auth } = await import("@clerk/nextjs");
-        vi.mocked(auth).mockReturnValueOnce({ userId: null } as any);
+        vi.mocked(getAuthUser).mockResolvedValue(null);
 
         const request = new Request("http://localhost/api/jobs");
         const response = await GET(request);
 
         expect(response.status).toBe(401);
-    });
-
-    it("returns 404 when user not found in database", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-
-        const request = new Request("http://localhost/api/jobs");
-        const response = await GET(request);
-
-        expect(response.status).toBe(404);
     });
 });

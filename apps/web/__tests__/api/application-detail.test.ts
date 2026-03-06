@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, PATCH } from "@/app/api/applications/[id]/route";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 const mockUser = {
     id: "user_1",
@@ -35,7 +36,7 @@ beforeEach(() => {
 
 describe("GET /api/applications/[id]", () => {
     it("returns a single application with job details", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
 
         const request = new Request("http://localhost/api/applications/app_1");
@@ -50,7 +51,7 @@ describe("GET /api/applications/[id]", () => {
     });
 
     it("returns 404 when application not found", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(null);
 
         const request = new Request("http://localhost/api/applications/nonexistent");
@@ -61,8 +62,7 @@ describe("GET /api/applications/[id]", () => {
     });
 
     it("returns 401 when not authenticated", async () => {
-        const { auth } = await import("@clerk/nextjs");
-        vi.mocked(auth).mockReturnValueOnce({ userId: null } as any);
+        vi.mocked(getAuthUser).mockResolvedValue(null);
 
         const request = new Request("http://localhost/api/applications/app_1");
         const params = { id: "app_1" };
@@ -74,7 +74,7 @@ describe("GET /api/applications/[id]", () => {
 
 describe("PATCH /api/applications/[id]", () => {
     it("updates application status", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
         vi.mocked(prisma.application.update).mockResolvedValue({
             ...mockApplication,
@@ -98,7 +98,7 @@ describe("PATCH /api/applications/[id]", () => {
     });
 
     it("rejects invalid status", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
 
         const request = new Request("http://localhost/api/applications/app_1", {
@@ -114,7 +114,7 @@ describe("PATCH /api/applications/[id]", () => {
     });
 
     it("updates notes without changing status", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
         vi.mocked(prisma.application.update).mockResolvedValue({
             ...mockApplication,
@@ -136,7 +136,7 @@ describe("PATCH /api/applications/[id]", () => {
     });
 
     it("returns 404 when application not found", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(null);
 
         const request = new Request("http://localhost/api/applications/nonexistent", {

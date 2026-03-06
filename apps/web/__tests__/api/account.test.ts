@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, DELETE } from "@/app/api/account/route";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 const mockUserWithData = {
     id: "user_1",
@@ -43,9 +44,11 @@ beforeEach(() => {
 
 describe("GET /api/account (GDPR data export)", () => {
     it("exports all user data", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUserWithData as any);
 
-        const response = await GET();
+        const request = new Request("http://localhost/api/account");
+        const response = await GET(request);
         const data = await response.json();
 
         expect(response.status).toBe(200);
@@ -57,27 +60,30 @@ describe("GET /api/account (GDPR data export)", () => {
     });
 
     it("returns 401 when not authenticated", async () => {
-        const { auth } = await import("@clerk/nextjs");
-        vi.mocked(auth).mockReturnValueOnce({ userId: null } as any);
+        vi.mocked(getAuthUser).mockResolvedValue(null);
 
-        const response = await GET();
+        const request = new Request("http://localhost/api/account");
+        const response = await GET(request);
         expect(response.status).toBe(401);
     });
 
-    it("returns 404 when user not found", async () => {
+    it("returns 404 when user not found in database", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
 
-        const response = await GET();
+        const request = new Request("http://localhost/api/account");
+        const response = await GET(request);
         expect(response.status).toBe(404);
     });
 });
 
 describe("DELETE /api/account (GDPR data deletion)", () => {
     it("deletes user and all associated data", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.user.delete).mockResolvedValue(mockUser as any);
 
-        const response = await DELETE();
+        const request = new Request("http://localhost/api/account", { method: "DELETE" });
+        const response = await DELETE(request);
         const data = await response.json();
 
         expect(response.status).toBe(200);
@@ -88,17 +94,10 @@ describe("DELETE /api/account (GDPR data deletion)", () => {
     });
 
     it("returns 401 when not authenticated", async () => {
-        const { auth } = await import("@clerk/nextjs");
-        vi.mocked(auth).mockReturnValueOnce({ userId: null } as any);
+        vi.mocked(getAuthUser).mockResolvedValue(null);
 
-        const response = await DELETE();
+        const request = new Request("http://localhost/api/account", { method: "DELETE" });
+        const response = await DELETE(request);
         expect(response.status).toBe(401);
-    });
-
-    it("returns 404 when user not found", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-
-        const response = await DELETE();
-        expect(response.status).toBe(404);
     });
 });

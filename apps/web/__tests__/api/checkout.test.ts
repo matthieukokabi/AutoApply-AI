@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/checkout/route";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { getAuthUser } from "@/lib/auth";
 
 const mockUser = {
     id: "user_1",
@@ -16,7 +17,7 @@ beforeEach(() => {
 
 describe("POST /api/checkout", () => {
     it("creates a checkout session for pro_monthly", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
             url: "https://checkout.stripe.com/test_session",
         } as any);
@@ -41,7 +42,7 @@ describe("POST /api/checkout", () => {
     });
 
     it("creates a payment session for credit_pack", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
             url: "https://checkout.stripe.com/credit_session",
         } as any);
@@ -62,7 +63,7 @@ describe("POST /api/checkout", () => {
     });
 
     it("returns 400 for invalid plan", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
 
         const request = new Request("http://localhost/api/checkout", {
             method: "POST",
@@ -75,8 +76,7 @@ describe("POST /api/checkout", () => {
     });
 
     it("returns 401 for unauthenticated user", async () => {
-        const { auth } = await import("@clerk/nextjs");
-        vi.mocked(auth).mockReturnValueOnce({ userId: null } as any);
+        vi.mocked(getAuthUser).mockResolvedValue(null);
 
         const request = new Request("http://localhost/api/checkout", {
             method: "POST",

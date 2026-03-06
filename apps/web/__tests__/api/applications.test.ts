@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "@/app/api/applications/route";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 const mockUser = {
     id: "user_1",
@@ -53,7 +54,7 @@ beforeEach(() => {
 
 describe("GET /api/applications", () => {
     it("returns all applications for authenticated user", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
 
         const request = new Request("http://localhost/api/applications");
@@ -66,7 +67,7 @@ describe("GET /api/applications", () => {
     });
 
     it("filters by status when query param provided", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findMany).mockResolvedValue([mockApplications[0]] as any);
 
         const request = new Request("http://localhost/api/applications?status=discovered");
@@ -81,11 +82,11 @@ describe("GET /api/applications", () => {
         );
     });
 
-    it("returns 404 when user not found", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    it("returns 401 when not authenticated", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(null);
 
         const request = new Request("http://localhost/api/applications");
         const response = await GET(request);
-        expect(response.status).toBe(404);
+        expect(response.status).toBe(401);
     });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET, PATCH } from "@/app/api/user/route";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 const mockUser = {
     id: "user_1",
@@ -24,9 +25,10 @@ beforeEach(() => {
 
 describe("GET /api/user", () => {
     it("returns user info for authenticated user", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
 
-        const response = await GET();
+        const request = new Request("http://localhost/api/user");
+        const response = await GET(request);
         const data = await response.json();
 
         expect(response.status).toBe(200);
@@ -36,24 +38,17 @@ describe("GET /api/user", () => {
     });
 
     it("returns 401 when not authenticated", async () => {
-        const { auth } = await import("@clerk/nextjs");
-        vi.mocked(auth).mockReturnValueOnce({ userId: null } as any);
+        vi.mocked(getAuthUser).mockResolvedValue(null);
 
-        const response = await GET();
+        const request = new Request("http://localhost/api/user");
+        const response = await GET(request);
         expect(response.status).toBe(401);
-    });
-
-    it("returns 404 when user not found", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-
-        const response = await GET();
-        expect(response.status).toBe(404);
     });
 });
 
 describe("PATCH /api/user", () => {
     it("updates automation toggle for pro users", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockProUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockProUser as any);
         vi.mocked(prisma.user.update).mockResolvedValue({
             ...mockProUser,
             automationEnabled: true,
@@ -74,7 +69,7 @@ describe("PATCH /api/user", () => {
     });
 
     it("rejects automation for free users", async () => {
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
 
         const request = new Request("http://localhost/api/user", {
             method: "PATCH",
@@ -87,8 +82,7 @@ describe("PATCH /api/user", () => {
     });
 
     it("returns 401 when not authenticated", async () => {
-        const { auth } = await import("@clerk/nextjs");
-        vi.mocked(auth).mockReturnValueOnce({ userId: null } as any);
+        vi.mocked(getAuthUser).mockResolvedValue(null);
 
         const request = new Request("http://localhost/api/user", {
             method: "PATCH",

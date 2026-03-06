@@ -538,3 +538,49 @@ Read SESSION_LOG.md in the project root and continue from where the last session
 - Need actual JSearch, Jooble, Reed API keys for production
 - Flutter mobile app can now auth against the backend but remaining pages (dashboard, jobs, documents) still use provider stubs
 - Clerk production keys need to be set for mobile auth to work against autoapply.works
+
+---
+
+## Session 10 — 2026-03-06
+
+### Completed
+
+**Bug Fix: Landing page crash (CookieConsent next-intl context error)**
+- Root cause: `CookieConsent` component imported `Link` from `@/i18n/routing` (requires `NextIntlClientProvider`), but was rendered in root `app/layout.tsx` which is OUTSIDE the `[locale]/layout.tsx` where the provider lives
+- Fix: Changed `import { Link } from "@/i18n/routing"` → `import Link from "next/link"` in `cookie-consent.tsx`
+- Verified with Playwright headless test — page loads correctly, no client-side errors
+
+**Error Boundaries added (3 levels):**
+- `app/global-error.tsx` — Global error handler with inline styles (no component deps)
+- `app/[locale]/error.tsx` — Locale-level error boundary with shadcn UI
+- `app/[locale]/(dashboard)/error.tsx` — Dashboard-level error boundary with Retry + Back to Dashboard
+
+**Test suite fixed (32 failures → 0 failures, 49 tests pass):**
+- All API routes were refactored in Session 9 to use `getAuthUser(req)` instead of direct `prisma.user.findFirst`
+- Tests still mocked the old pattern — updated all 9 test files:
+  - `stats.test.ts` — mock `getAuthUser`, pass `Request` to `GET(req)`
+  - `applications.test.ts` — mock `getAuthUser` instead of `prisma.user.findFirst`
+  - `application-detail.test.ts` — mock `getAuthUser`, remove Clerk auth override
+  - `checkout.test.ts` — mock `getAuthUser`, remove Clerk auth override
+  - `jobs.test.ts` — mock `getAuthUser`, remove old 404/Clerk tests
+  - `preferences.test.ts` — mock `getAuthUser` + `prisma.jobPreferences.findUnique`, pass `Request`
+  - `profile.test.ts` — mock `getAuthUser` + `prisma.masterProfile.findUnique`, pass `Request`
+  - `user.test.ts` — mock `getAuthUser`, pass `Request`, remove Clerk auth override
+  - `account.test.ts` — mock `getAuthUser` + keep `prisma.user.findFirst` for GDPR export, pass `Request`
+
+**Build Verification:**
+- `next build` — 0 errors, all routes compiled
+- `vitest run` — 11 test files, 49 tests pass
+
+### What's Next
+1. **Social media setup** — Twitter/X, LinkedIn company page, ProductHunt listing
+2. **Email notifications** — SendGrid/Resend for job match alerts
+3. **Deploy n8n** — Render or Railway for automation engine
+4. **Flutter — remaining pages** — Wire dashboard, jobs, documents pages to real API data
+5. **Stripe production keys** — Switch from test to live mode
+6. **End-to-end testing** — Full auth + tailoring flow tests
+
+### Blockers / Decisions
+- n8n still needs hosting platform deployment
+- Need actual JSearch, Jooble, Reed API keys for production
+- Clerk production keys needed for mobile auth against autoapply.works
