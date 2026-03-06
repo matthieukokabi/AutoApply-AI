@@ -17,6 +17,8 @@ import {
     BarChart3,
     Zap,
     Check,
+    Twitter,
+    Linkedin,
 } from "lucide-react";
 
 export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
@@ -420,9 +422,17 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
                                 <Sparkles className="h-5 w-5 text-primary" />
                                 <span className="font-semibold">AutoApply AI</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground mb-4">
                                 {t("footer.tagline")}
                             </p>
+                            <div className="flex items-center gap-3">
+                                <a href="https://twitter.com/autoapplyai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
+                                    <Twitter className="h-4 w-4" />
+                                </a>
+                                <a href="https://linkedin.com/company/autoapply-ai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn">
+                                    <Linkedin className="h-4 w-4" />
+                                </a>
+                            </div>
                         </div>
                         <div>
                             <h4 className="font-semibold mb-3 text-sm">{t("footer.product")}</h4>
