@@ -46,9 +46,9 @@ export default authMiddleware({
         const { userId } = authResult;
         const url = req.nextUrl;
 
-        // Skip redirects for API routes
+        // Skip redirects for API routes — return void to preserve beforeAuth response
         if (url.pathname.startsWith("/api/")) {
-            return NextResponse.next();
+            return;
         }
 
         // IMPORTANT: Do NOT redirect Clerk's internal auth routes
@@ -80,7 +80,12 @@ export default authMiddleware({
             return NextResponse.redirect(new URL(`${localePrefix}/sign-in`, req.url));
         }
 
-        return NextResponse.next();
+        // CRITICAL: Return void (not NextResponse.next()) to preserve
+        // the intlMiddleware rewrite response from beforeAuth.
+        // NextResponse.next() would override the locale rewrite from
+        // intlMiddleware, causing a 404 on routes like "/" that need
+        // to be internally rewritten to "/en" for the [locale] segment.
+        return;
     },
 });
 
