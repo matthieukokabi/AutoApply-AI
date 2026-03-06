@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } from "@/lib/email";
 
 /**
  * POST /api/webhooks/n8n
@@ -22,8 +23,10 @@ export async function POST(req: Request) {
                 // n8n sends newly tailored applications
                 const { userId, applications } = data;
 
+                const createdApps = [];
+
                 for (const app of applications) {
-                    await prisma.application.upsert({
+                    const result = await prisma.application.upsert({
                         where: {
                             userId_jobId: {
                                 userId,
@@ -52,12 +55,68 @@ export async function POST(req: Request) {
                             coverLetterMarkdown: app.coverLetterMarkdown,
                             status: "tailored",
                         },
+                        include: { job: true },
                     });
+                    createdApps.push(result);
+                }
+
+                // Send email notification for new job matches
+                try {
+                    const user = await prisma.user.findUnique({ where: { id: userId } });
+                    if (user && createdApps.length > 0) {
+                        const matchedJobs = createdApps.map((a) => ({
+                            title: a.job.title,
+                            company: a.job.company,
+                            score: a.compatibilityScore,
+                            applicationId: a.id,
+                        }));
+
+                        await sendJobMatchEmail(user.email, user.name, matchedJobs);
+
+                        // Check if credits are running low
+                        if (
+                            user.subscriptionStatus !== "unlimited" &&
+                            user.creditsRemaining <= 2 &&
+                            user.creditsRemaining > 0
+                        ) {
+                            await sendCreditsLowEmail(user.email, user.name, user.creditsRemaining);
+                        }
+                    }
+                } catch (emailError) {
+                    console.error("Email notification failed (non-blocking):", emailError);
                 }
 
                 return NextResponse.json({
                     message: `Processed ${applications.length} applications`,
                 });
+            }
+
+            case "single_tailoring_complete": {
+                // Single job tailoring result from user-initiated request
+                const { userId, applicationId, jobId } = data;
+
+                try {
+                    const user = await prisma.user.findUnique({ where: { id: userId } });
+                    const application = await prisma.application.findUnique({
+                        where: { id: applicationId },
+                        include: { job: true },
+                    });
+
+                    if (user && application) {
+                        await sendTailoringCompleteEmail(
+                            user.email,
+                            user.name,
+                            application.job.title,
+                            application.job.company,
+                            application.compatibilityScore,
+                            application.id
+                        );
+                    }
+                } catch (emailError) {
+                    console.error("Tailoring email notification failed (non-blocking):", emailError);
+                }
+
+                return NextResponse.json({ message: "Tailoring notification sent" });
             }
 
             case "workflow_error": {

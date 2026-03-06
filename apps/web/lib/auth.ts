@@ -1,6 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/mobile-auth";
+import { sendWelcomeEmail } from "@/lib/email";
 
 /**
  * Get the authenticated user from Clerk + Prisma.
@@ -81,6 +82,11 @@ export async function getAuthUser(req?: Request) {
                     creditsRemaining: 3,
                 },
             });
+
+            // Send welcome email (non-blocking)
+            sendWelcomeEmail(email, name).catch((err) =>
+                console.error("Welcome email failed:", err)
+            );
         }
     }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { sendCreditsLowEmail } from "@/lib/email";
 
 /**
  * POST /api/tailor
@@ -90,10 +91,17 @@ export async function POST(req: Request) {
 
         // Deduct credit
         if (user.subscriptionStatus !== "unlimited") {
-            await prisma.user.update({
+            const updatedUser = await prisma.user.update({
                 where: { id: user.id },
                 data: { creditsRemaining: { decrement: 1 } },
             });
+
+            // Send credits-low email when running low (non-blocking)
+            if (updatedUser.creditsRemaining <= 1 && updatedUser.creditsRemaining >= 0) {
+                sendCreditsLowEmail(user.email, user.name, updatedUser.creditsRemaining).catch(
+                    (err) => console.error("Credits low email failed:", err)
+                );
+            }
         }
 
         return NextResponse.json({
