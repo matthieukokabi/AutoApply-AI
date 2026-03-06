@@ -12,6 +12,13 @@ vi.mock("@clerk/nextjs", () => ({
     ClerkProvider: ({ children }: any) => children,
     SignIn: () => null,
     SignUp: () => null,
+    clerkClient: {
+        users: {
+            createUser: vi.fn(),
+            getUserList: vi.fn(),
+            verifyPassword: vi.fn(),
+        },
+    },
 }));
 
 // Mock Prisma
@@ -20,6 +27,7 @@ vi.mock("@/lib/prisma", () => ({
         user: {
             findFirst: vi.fn(),
             findUnique: vi.fn(),
+            findMany: vi.fn(),
             create: vi.fn(),
             update: vi.fn(),
             updateMany: vi.fn(),
@@ -36,13 +44,19 @@ vi.mock("@/lib/prisma", () => ({
         application: {
             findMany: vi.fn(),
             findFirst: vi.fn(),
+            findUnique: vi.fn(),
             count: vi.fn(),
             aggregate: vi.fn(),
             groupBy: vi.fn(),
             update: vi.fn(),
+            upsert: vi.fn(),
         },
         job: {
             findMany: vi.fn(),
+            upsert: vi.fn(),
+        },
+        workflowError: {
+            create: vi.fn(),
         },
         $transaction: vi.fn(),
     },
@@ -61,6 +75,47 @@ vi.mock("@/lib/utils", async (importOriginal) => {
     };
 });
 
+// Mock email service
+vi.mock("@/lib/email", () => ({
+    sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+    sendJobMatchEmail: vi.fn().mockResolvedValue(undefined),
+    sendTailoringCompleteEmail: vi.fn().mockResolvedValue(undefined),
+    sendWeeklyDigestEmail: vi.fn().mockResolvedValue(undefined),
+    sendCreditsLowEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock mobile auth
+vi.mock("@/lib/mobile-auth", () => ({
+    createMobileToken: vi.fn().mockResolvedValue("mock_jwt_token_123"),
+    verifyMobileToken: vi.fn().mockResolvedValue(null),
+}));
+
+// Mock Resend (for contact route)
+vi.mock("resend", () => ({
+    Resend: vi.fn().mockImplementation(() => ({
+        emails: {
+            send: vi.fn().mockResolvedValue({ id: "email_123" }),
+        },
+    })),
+}));
+
+// Mock next/headers (for stripe webhook)
+vi.mock("next/headers", () => ({
+    headers: vi.fn(() => ({
+        get: vi.fn((name: string) => {
+            if (name === "Stripe-Signature") return "test_stripe_signature";
+            return null;
+        }),
+    })),
+}));
+
+// Mock global fetch for n8n webhook calls
+vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({}),
+    text: async () => "",
+}));
+
 // Mock Stripe
 vi.mock("@/lib/stripe", () => ({
     stripe: {
@@ -71,6 +126,9 @@ vi.mock("@/lib/stripe", () => ({
         },
         webhooks: {
             constructEvent: vi.fn(),
+        },
+        subscriptions: {
+            retrieve: vi.fn(),
         },
     },
     PLANS: {

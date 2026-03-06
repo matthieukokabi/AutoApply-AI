@@ -1,0 +1,288 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { POST } from "@/app/api/webhooks/stripe/route";
+import { prisma } from "@/lib/prisma";
+import { stripe } from "@/lib/stripe";
+
+beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_secret";
+});
+
+function createStripeEvent(type: string, data: any) {
+    return {
+        type,
+        data: { object: data },
+    };
+}
+
+describe("POST /api/webhooks/stripe", () => {
+    it("returns 400 for invalid signature", async () => {
+        vi.mocked(stripe.webhooks.constructEvent).mockImplementation(() => {
+            throw new Error("Invalid signature");
+        });
+
+        const request = new Request("http://localhost/api/webhooks/stripe", {
+            method: "POST",
+            body: "{}",
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toBe("Invalid signature");
+    });
+
+    describe("checkout.session.completed", () => {
+        it("handles subscription purchase (pro)", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("checkout.session.completed", {
+                    mode: "subscription",
+                    subscription: "sub_123",
+                    customer: "cus_123",
+                    metadata: { userId: "user_1" },
+                }) as any
+            );
+
+            vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue({
+                items: { data: [{ price: { id: "price_pro_monthly" } }] },
+            } as any);
+
+            vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            expect(prisma.user.update).toHaveBeenCalledWith({
+                where: { id: "user_1" },
+                data: {
+                    subscriptionStatus: "pro",
+                    stripeCustomerId: "cus_123",
+                    creditsRemaining: 50,
+                },
+            });
+        });
+
+        it("handles subscription purchase (unlimited)", async () => {
+            process.env.STRIPE_PRICE_UNLIMITED_MONTHLY = "price_unlimited";
+
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("checkout.session.completed", {
+                    mode: "subscription",
+                    subscription: "sub_456",
+                    customer: "cus_456",
+                    metadata: { userId: "user_2" },
+                }) as any
+            );
+
+            vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue({
+                items: { data: [{ price: { id: "price_unlimited" } }] },
+            } as any);
+
+            vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            expect(prisma.user.update).toHaveBeenCalledWith({
+                where: { id: "user_2" },
+                data: {
+                    subscriptionStatus: "unlimited",
+                    stripeCustomerId: "cus_456",
+                    creditsRemaining: 9999,
+                },
+            });
+        });
+
+        it("handles credit pack purchase", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("checkout.session.completed", {
+                    mode: "payment",
+                    customer: "cus_789",
+                    metadata: { userId: "user_3" },
+                }) as any
+            );
+
+            vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            expect(prisma.user.update).toHaveBeenCalledWith({
+                where: { id: "user_3" },
+                data: { creditsRemaining: { increment: 10 } },
+            });
+        });
+
+        it("ignores event when metadata has no userId", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("checkout.session.completed", {
+                    mode: "subscription",
+                    metadata: {},
+                }) as any
+            );
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+            expect(prisma.user.update).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("customer.subscription.created/updated", () => {
+        it("activates pro subscription when status is active", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("customer.subscription.created", {
+                    customer: "cus_123",
+                    status: "active",
+                    items: { data: [{ price: { id: "price_pro_monthly" } }] },
+                }) as any
+            );
+
+            vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            expect(prisma.user.updateMany).toHaveBeenCalledWith({
+                where: { stripeCustomerId: "cus_123" },
+                data: {
+                    subscriptionStatus: "pro",
+                    creditsRemaining: 50,
+                },
+            });
+        });
+
+        it("handles trialing status", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("customer.subscription.updated", {
+                    customer: "cus_trial",
+                    status: "trialing",
+                    items: { data: [{ price: { id: "price_pro_monthly" } }] },
+                }) as any
+            );
+
+            vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+            expect(prisma.user.updateMany).toHaveBeenCalled();
+        });
+
+        it("does not update DB for past_due status", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("customer.subscription.updated", {
+                    id: "sub_789",
+                    customer: "cus_pastdue",
+                    status: "past_due",
+                    items: { data: [{ price: { id: "price_pro_monthly" } }] },
+                }) as any
+            );
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+            expect(prisma.user.updateMany).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("customer.subscription.deleted", () => {
+        it("downgrades to free plan and disables automation", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("customer.subscription.deleted", {
+                    customer: "cus_cancelled",
+                }) as any
+            );
+
+            vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            expect(prisma.user.updateMany).toHaveBeenCalledWith({
+                where: { stripeCustomerId: "cus_cancelled" },
+                data: {
+                    subscriptionStatus: "free",
+                    creditsRemaining: 3,
+                    automationEnabled: false,
+                },
+            });
+        });
+    });
+
+    describe("invoice events", () => {
+        it("handles invoice.payment_succeeded", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("invoice.payment_succeeded", {
+                    customer: "cus_123",
+                    amount_paid: 2900,
+                    currency: "usd",
+                }) as any
+            );
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+        });
+
+        it("handles invoice.payment_failed", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("invoice.payment_failed", {
+                    customer: "cus_123",
+                    amount_due: 2900,
+                    currency: "usd",
+                }) as any
+            );
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+        });
+    });
+});

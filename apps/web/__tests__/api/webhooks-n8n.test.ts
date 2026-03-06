@@ -1,0 +1,254 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { POST } from "@/app/api/webhooks/n8n/route";
+import { prisma } from "@/lib/prisma";
+import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } from "@/lib/email";
+
+const mockUser = {
+    id: "user_1",
+    email: "test@example.com",
+    name: "Test User",
+    subscriptionStatus: "pro",
+    creditsRemaining: 10,
+};
+
+const mockJob = {
+    id: "job_1",
+    title: "Senior Developer",
+    company: "Tech Corp",
+};
+
+const mockApplication = {
+    id: "app_1",
+    userId: "user_1",
+    jobId: "job_1",
+    compatibilityScore: 85,
+    status: "tailored",
+    job: mockJob,
+};
+
+beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.N8N_WEBHOOK_SECRET = "test_webhook_secret";
+});
+
+function createWebhookRequest(type: string, data: any) {
+    return new Request("http://localhost/api/webhooks/n8n", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-webhook-secret": "test_webhook_secret",
+        },
+        body: JSON.stringify({ type, data }),
+    });
+}
+
+describe("POST /api/webhooks/n8n", () => {
+    it("returns 401 for missing webhook secret", async () => {
+        const request = new Request("http://localhost/api/webhooks/n8n", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "test", data: {} }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(401);
+    });
+
+    it("returns 401 for invalid webhook secret", async () => {
+        const request = new Request("http://localhost/api/webhooks/n8n", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-webhook-secret": "wrong_secret",
+            },
+            body: JSON.stringify({ type: "test", data: {} }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(401);
+    });
+
+    it("returns 400 for unknown webhook type", async () => {
+        const request = createWebhookRequest("unknown_type", {});
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Unknown webhook type");
+    });
+
+    describe("new_applications", () => {
+        it("creates applications from n8n payload", async () => {
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [
+                    {
+                        jobId: "job_1",
+                        compatibilityScore: 85,
+                        atsKeywords: ["React", "TypeScript"],
+                        matchingStrengths: ["Frontend experience"],
+                        gaps: [],
+                        recommendation: "apply",
+                        tailoredCvUrl: "/docs/cv-1.pdf",
+                        coverLetterUrl: "/docs/cl-1.pdf",
+                        tailoredCvMarkdown: "# CV Content",
+                        coverLetterMarkdown: "# Cover Letter",
+                    },
+                ],
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toContain("1 applications");
+
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { userId_jobId: { userId: "user_1", jobId: "job_1" } },
+                    create: expect.objectContaining({
+                        userId: "user_1",
+                        jobId: "job_1",
+                        compatibilityScore: 85,
+                        status: "tailored",
+                    }),
+                })
+            );
+        });
+
+        it("sends job match email notification", async () => {
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [
+                    {
+                        jobId: "job_1",
+                        compatibilityScore: 85,
+                    },
+                ],
+            });
+
+            await POST(request);
+
+            expect(sendJobMatchEmail).toHaveBeenCalledWith(
+                "test@example.com",
+                "Test User",
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                        score: 85,
+                    }),
+                ])
+            );
+        });
+
+        it("sends credits-low email when credits are low", async () => {
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue({
+                ...mockUser,
+                subscriptionStatus: "pro",
+                creditsRemaining: 2,
+            } as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [{ jobId: "job_1", compatibilityScore: 85 }],
+            });
+
+            await POST(request);
+
+            expect(sendCreditsLowEmail).toHaveBeenCalledWith(
+                "test@example.com",
+                "Test User",
+                2
+            );
+        });
+
+        it("does not send credits-low email for unlimited users", async () => {
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue({
+                ...mockUser,
+                subscriptionStatus: "unlimited",
+                creditsRemaining: 1,
+            } as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [{ jobId: "job_1", compatibilityScore: 85 }],
+            });
+
+            await POST(request);
+
+            expect(sendCreditsLowEmail).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("single_tailoring_complete", () => {
+        it("sends tailoring complete email", async () => {
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+            vi.mocked(prisma.application.findUnique).mockResolvedValue({
+                ...mockApplication,
+                compatibilityScore: 92,
+            } as any);
+
+            const request = createWebhookRequest("single_tailoring_complete", {
+                userId: "user_1",
+                applicationId: "app_1",
+                jobId: "job_1",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toContain("notification sent");
+
+            expect(sendTailoringCompleteEmail).toHaveBeenCalledWith(
+                "test@example.com",
+                "Test User",
+                "Senior Developer",
+                "Tech Corp",
+                92,
+                "app_1"
+            );
+        });
+    });
+
+    describe("workflow_error", () => {
+        it("logs workflow error to database", async () => {
+            vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("workflow_error", {
+                workflowId: "wf_1",
+                nodeName: "LLM Scoring",
+                errorType: "timeout",
+                message: "LLM request timed out after 30s",
+                payload: { jobId: "job_1" },
+                userId: "user_1",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toBe("Error logged");
+
+            expect(prisma.workflowError.create).toHaveBeenCalledWith({
+                data: {
+                    workflowId: "wf_1",
+                    nodeName: "LLM Scoring",
+                    errorType: "timeout",
+                    message: "LLM request timed out after 30s",
+                    payload: { jobId: "job_1" },
+                    userId: "user_1",
+                },
+            });
+        });
+    });
+});
