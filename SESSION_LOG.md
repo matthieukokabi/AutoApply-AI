@@ -646,3 +646,78 @@ Read SESSION_LOG.md in the project root and continue from where the last session
 - Need actual JSearch, Jooble, Reed API keys for production
 - Clerk production keys needed for mobile auth against autoapply.works
 - n8n deployment configs are ready but need hosting credentials to deploy
+
+---
+
+## Session 12 — 2026-03-07
+
+### Completed
+
+**Email Setup — Hostinger Business Email:**
+- Hostinger Business Email activated for contact@autoapply.works
+- All 4 DNS records green: MX, SPF, DKIM, DMARC
+- Forwarding configured to matthieu.kokabi@gmail.com
+- Removed old ForwardEmail.net DNS records
+- Webmail working at mail.hostinger.com
+
+**Social Media — All Accounts Created & Configured:**
+- **Twitter/X**: @AutoApplyWorks account created
+  - Profile pic, header banner, bio, website link set
+  - Pinned 6-tweet launch thread posted
+- **LinkedIn**: AutoApply AI company page created
+  - Logo, banner, About section, industry, company size, website set
+  - Launch post published
+- **Product Hunt**: Maker account created (signed in with X/Twitter)
+  - Profile configured with bio, avatar, website
+- **GitHub**: Organization `autoapply-ai` created
+  - Profile picture, description, website, email, location set
+
+**Branding Assets — All Generated (Session 11 commit):**
+- app/icon.svg, app/icon.tsx (32x32 favicon), app/apple-icon.tsx (180x180)
+- components/logo.tsx (reusable, sm/md/lg sizes)
+- opengraph-image.tsx (1200x630), twitter-image.tsx (1200x630)
+- Dynamic OG: /api/og, /api/social/profile-pic, /api/social/twitter-header
+- /api/social/linkedin-banner, /api/social/producthunt (5 gallery slides)
+- Commit: `cd7e439`
+
+**Stripe — Confirmed Live Mode:**
+- Stripe account already in live mode (pk_live_ keys active)
+- All 3 products exist with live price IDs:
+  - Pro Monthly: price_1T5maq2IbUfiIrHoI6IIL6zT
+  - Pro Yearly: price_1T5mao2IbUfiIrHo8jWAwhZW
+  - Unlimited Monthly: price_1T5map2IbUfiIrHoVMv8SsZG
+  - Unlimited Yearly: price_1T5o962IbUfiIrHoaJ9gC17K
+  - Credit Pack: price_1T5mao2IbUfiIrHozp0fMitG
+- Webhook configured: https://autoapply.works/api/webhooks/stripe (6 events)
+- Vercel env vars already set to live values (all 8 Stripe vars confirmed)
+
+**Vercel — Environment Variables Verified:**
+- All 8 Stripe env vars on Vercel have correct live values (set Feb 28)
+- NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY → pk_live_...
+- STRIPE_SECRET_KEY → sk_live_...
+- STRIPE_WEBHOOK_SECRET → whsec_...
+- 5 price ID vars → all matching live Stripe dashboard
+- Latest production deployment already using live keys
+
+**Launch Checklist Updated:**
+- docs/launch-checklist.md updated with all completed items
+- .env.example updated with STRIPE_PRICE_UNLIMITED_YEARLY
+
+### Git Commits This Session
+- `cd7e439` — feat: add complete branding, OG images, social media assets, and logo
+
+### What's Next
+1. **Deploy n8n to Render** — automation engine (configs ready from Session 11)
+2. **Get job API keys** — JSearch (RapidAPI), Jooble, Reed for production
+3. **ProductHunt product listing** — Schedule for launch day (Tuesday/Wednesday)
+4. **Flutter native builds** — iOS/Android testing
+5. **Follow relevant X accounts** — @ycombinator, @ProductHunt, @IndieHackers
+6. **Add social links to dashboard sidebar/header**
+7. **Create GitHub public landing repo**
+8. **Create demo video** for ProductHunt + social
+
+### Blockers / Decisions
+- n8n deployment configs ready but need Render/Railway account setup
+- Need actual JSearch, Jooble, Reed API keys for production
+- ProductHunt product listing needs screenshots (dashboard, job feed, CV viewer)
+- Demo video needed before ProductHunt launch

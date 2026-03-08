@@ -2,34 +2,35 @@
 
 ## Twitter / X (@autoapplyai)
 
-- [ ] Create account at https://twitter.com/signup
-- [ ] Set username: @autoapplyai (or closest available)
-- [ ] Upload profile picture (square logo, 400x400px)
-- [ ] Upload header banner (1500x500px)
-- [ ] Set bio (from social-media-kit.md)
-- [ ] Add website link: https://autoapply.works
-- [ ] Set location: Europe
-- [ ] Post pinned launch tweet (from social-media-kit.md)
-- [ ] Post product story thread (5 tweets)
+- [x] Create account at https://twitter.com/signup
+- [x] Set username: @autoapplyai (or closest available)
+- [x] Upload profile picture (square logo, 400x400px)
+- [x] Upload header banner (1500x500px)
+- [x] Set bio (from social-media-kit.md)
+- [x] Add website link: https://autoapply.works
+- [x] Set location: Europe
+- [x] Post pinned launch tweet (from social-media-kit.md)
+- [x] Post product story thread (6-tweet thread)
 - [ ] Follow relevant accounts: @ycombinator, @ProductHunt, @IndieHackers, job search influencers
-- [ ] Add Twitter link to website footer + landing page
+- [x] Add Twitter link to website footer + landing page
 
 ## LinkedIn Company Page
 
-- [ ] Create company page at https://www.linkedin.com/company/setup/new/
-- [ ] Company name: AutoApply AI
-- [ ] Upload logo (300x300px)
-- [ ] Upload banner (1128x191px)
-- [ ] Fill About section (from social-media-kit.md)
-- [ ] Set industry: Technology, Information and Internet
-- [ ] Set company size: 1-10
-- [ ] Set website: https://autoapply.works
-- [ ] Publish launch post (from social-media-kit.md)
-- [ ] Add LinkedIn link to website footer
+- [x] Create company page at https://www.linkedin.com/company/setup/new/
+- [x] Company name: AutoApply AI
+- [x] Upload logo (300x300px)
+- [x] Upload banner (1128x191px)
+- [x] Fill About section (from social-media-kit.md)
+- [x] Set industry: Technology, Information and Internet
+- [x] Set company size: 1-10
+- [x] Set website: https://autoapply.works
+- [x] Publish launch post (from social-media-kit.md)
+- [x] Add LinkedIn link to website footer
 
 ## Product Hunt
 
-- [ ] Create maker account at https://www.producthunt.com
+- [x] Create maker account at https://www.producthunt.com
+- [x] Configure maker profile (bio, avatar, website)
 - [ ] Go to https://www.producthunt.com/posts/new
 - [ ] Set name: AutoApply AI
 - [ ] Set tagline (from social-media-kit.md)
@@ -42,12 +43,26 @@
 - [ ] Share PH link on Twitter + LinkedIn on launch day
 - [ ] Engage with every comment on launch day
 
+## GitHub Organization
+
+- [x] Create organization: github.com/autoapply-ai
+- [x] Upload profile picture
+- [x] Set description, website, email, location
+- [ ] Create a public landing repo (README with project overview)
+
+## Email
+
+- [x] Business email: contact@autoapply.works (Hostinger)
+- [x] DNS records: MX, SPF, DKIM, DMARC — all green
+- [x] Forwarding to matthieu.kokabi@gmail.com
+
 ## Website Updates
 
-- [ ] Add social links to landing page footer
+- [x] Add social links to landing page footer
 - [ ] Add social links to dashboard sidebar/header
-- [ ] Add OpenGraph meta image (1200x630px) — already in layout.tsx, verify image exists
-- [ ] Add Twitter meta tags (card: summary_large_image) — already in layout.tsx, verify
+- [x] Add OpenGraph meta image (1200x630px)
+- [x] Add Twitter meta tags (card: summary_large_image)
+- [x] Branding assets (favicon, apple-icon, OG images, social images)
 
 ## Optional (Post-Launch)
 
