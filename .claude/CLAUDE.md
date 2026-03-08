@@ -15,78 +15,107 @@ At the END of every session:
 
 ---
 
-## PROJECT STATUS AUDIT (as of Feb 2026)
+## PROJECT STATUS AUDIT (as of March 2026)
 
-### COMPLETED (do NOT rebuild these):
-- Project structure & monorepo layout
-- docker-compose.yml (PostgreSQL, Redis, Next.js, n8n, Gotenberg)
-- .env.example with all required variables
-- Prisma schema with all models (User, MasterProfile, JobPreferences, Job, Application, WorkflowError)
-- Next.js web app skeleton: landing page, dashboard layout, all route pages exist
-- All 3 API routes fully implemented: /api/tailor, /api/webhooks/stripe, /api/webhooks/n8n
-- Clerk auth middleware
-- Stripe webhook handler with subscription + credit pack support
-- shadcn/ui component library (button, badge, card)
-- lib/ utilities (prisma client, stripe client, cn(), date formatting)
-- Both n8n workflows fully built (job-discovery-pipeline.json, single-job-tailoring.json)
-- n8n HTML templates for CV and cover letter PDFs
-- packages/shared-types with all TypeScript interfaces
-- Flutter app structure with routing, theme, Dio client, constants
-- Dockerfile for web app
-- README.md
+### ALL CORE FEATURES ARE BUILT ✅
 
-### NOT YET IMPLEMENTED (this is where work continues):
+**IMPORTANT**: This project is feature-complete for MVP. Do NOT rebuild anything below unless fixing a bug.
 
-#### Web Frontend — Data Integration (PRIORITY 1)
-All dashboard pages exist as UI shells but have NO data fetching, NO form handlers, NO state management:
-- `apps/web/app/(dashboard)/dashboard/page.tsx` — Stats are hardcoded to 0, Kanban columns are empty shells, no API calls
-- `apps/web/app/(dashboard)/jobs/page.tsx` — Search/filter inputs exist but aren't wired, no job list rendering, "Paste Job" button is non-functional
-- `apps/web/app/(dashboard)/profile/page.tsx` — CV upload UI exists but no file handler, textarea not connected, structured profile form is empty
-- `apps/web/app/(dashboard)/settings/page.tsx` — Preferences form UI exists but doesn't save, automation toggle non-functional, subscription display hardcoded
-- `apps/web/app/(dashboard)/documents/[id]/page.tsx` — Side-by-side viewer layout exists but shows placeholders, no PDF loading
+#### Infrastructure & Deployment ✅
+- Vercel: Next.js app deployed at https://autoapply.works (project: prj_ZwPbDeUdQnmzk8doa2AHyhsZ7Y7n, team: team_jN9KQ610Y5MyVq41fvUu0Wn7)
+- Neon PostgreSQL: `ep-morning-meadow-ag8qe5hq-pooler.c-2.eu-central-1.aws.neon.tech` (Frankfurt)
+- Render n8n: https://autoapply-n8n.onrender.com (srv-d6gt94d6ubrc73dqk9ag)
+- Render Gotenberg: https://autoapply-gotenberg.onrender.com (srv-d6gt2uruibrs739k2j40)
+- Domain: autoapply.works with SSL, Clerk CNAME, MX records
+- Hostinger Business Email: contact@autoapply.works
 
-What's needed:
-- API route handlers for CRUD on: user profile, master profile, job preferences, applications, jobs list
-- React hooks / server actions for data fetching on each dashboard page
-- Form state management (React Hook Form or similar)
-- File upload handling for CV (PDF/DOCX parsing)
-- Real-time or polling updates for new applications
-- Loading states, error boundaries, empty states
-- PDF viewer/download integration for tailored documents
+#### Backend API — 20+ Routes ✅
+- `GET/POST /api/profile` + `POST /api/profile/upload` — CV management with PDF/DOCX/TXT parsing
+- `GET/PUT /api/preferences` — Job preferences CRUD
+- `GET /api/applications` + `GET/PATCH /api/applications/[id]` — Applications with filters
+- `GET /api/jobs` — Job feed with search/source/minScore filters
+- `GET /api/stats` — Dashboard statistics
+- `POST /api/tailor` — User-initiated job tailoring (triggers n8n webhook)
+- `POST /api/checkout` — Stripe checkout sessions (all plans)
+- `GET/PATCH /api/user` — User info + automation toggle
+- `GET/DELETE /api/account` — GDPR data export + deletion
+- `POST /api/auth/mobile` — Mobile JWT auth (sign-in/sign-up)
+- `POST /api/webhooks/stripe` — 6 Stripe events handled
+- `POST /api/webhooks/n8n` — new_applications, single_tailoring_complete, workflow_error
+- `POST /api/contact` — Contact form (Resend email)
+- `GET /api/cron/weekly-digest` — Weekly email digest
+- `GET /api/onboarding` — Onboarding status check
+- Dual auth: Clerk sessions (web) + Bearer JWT (mobile) via `lib/auth.ts`
 
-#### Flutter Mobile App (PRIORITY 2)
-All pages are skeleton/placeholder with empty onPressed handlers:
-- `login_page.dart` — No Clerk integration, buttons do nothing
-- `dashboard_page.dart` — Stats hardcoded to 0, no data fetching
-- `jobs_page.dart` — Empty state only, no API calls
-- `profile_page.dart` — Upload button non-functional
-- `document_viewer_page.dart` — Empty tabs, no PDF loading
-- `dio_client.dart` — Auth interceptor has TODO comment, no JWT injection
+#### Web Frontend — All Pages Wired ✅
+- **Landing page** (`app/[locale]/page.tsx`) — Hero, features, pricing with CheckoutButton, footer, i18n (5 languages), JSON-LD
+- **Dashboard** (`app/[locale]/(dashboard)/dashboard/page.tsx`) — Server component with real Prisma queries, stats cards, KanbanBoard
+- **Jobs** (`app/[locale]/(dashboard)/jobs/page.tsx`) — Client component with debounced search, source/score filters, Paste Job dialog, Tailor CV button
+- **Profile** (`app/[locale]/(dashboard)/profile/page.tsx`) — File upload (drag-drop), text paste, structured profile editor
+- **Settings** (`app/[locale]/(dashboard)/settings/page.tsx`) — Preferences form, automation toggle, 14 currencies, export data, delete account
+- **Documents** (`app/[locale]/(dashboard)/documents/[id]/page.tsx`) — Side-by-side original vs tailored CV (ReactMarkdown), cover letter, download buttons
+- **Onboarding** (`app/[locale]/onboarding/page.tsx`) — 3-step wizard (welcome → CV upload → preferences → done)
+- **Blog** (`app/[locale]/blog/`) — 6 articles × 5 languages = 30 posts, Markdown-based
+- **Legal** — Terms of Service, Privacy Policy, Contact form
+- **Auth** — Clerk sign-in/sign-up pages
+- **KanbanBoard** (`components/kanban-board.tsx`) — @hello-pangea/dnd, drag-drop with optimistic updates + API PATCH
+- **CheckoutButton** (`components/checkout-button.tsx`) — Calls /api/checkout, redirects to Stripe
+- **Error boundaries** — Global, locale-level, dashboard-level
+- **Cookie consent** banner
+- **Theme toggle** — Dark/light mode via next-themes
+- **Language switcher** — 5 languages (EN, FR, DE, ES, IT)
 
-What's needed:
-- Clerk Flutter SDK integration for auth
-- Repository layer + Riverpod providers for each feature
-- API client methods using Dio for all endpoints
-- Form handling and validation
-- File picker and upload for CV
-- PDF viewer widget
-- Pull-to-refresh and pagination
+#### Stripe — Live Mode ✅
+- All 5 products with live price IDs configured
+- Webhook endpoint active (6 events)
+- Customer Portal configured
+- CheckoutButton components wired on pricing section
 
-#### Testing (PRIORITY 3)
-Zero test files exist. Need:
-- Jest/Vitest for Next.js API routes
-- Component tests for key dashboard pages
-- LLM output validation tests (JSON schema + hallucination detection)
-- Flutter widget tests and integration tests
-- n8n workflow test scenarios
+#### Flutter Mobile App — Wired ✅
+- Auth: Custom JWT via /api/auth/mobile, FlutterSecureStorage
+- All 5 pages wired to real API: login, dashboard, jobs, profile, document viewer
+- Dio client with auth interceptor (auto-logout on 401)
+- File picker for CV upload
+- Riverpod state management
 
-#### Additional Missing Features
-- Legal pages (Terms of Service, Privacy Policy) — need actual page content
-- GDPR data export and deletion endpoint
-- Cookie consent banner
-- Stripe checkout flow integration in the frontend (pricing page → checkout)
-- Email notification templates
-- User onboarding flow
+#### n8n Workflows — Built ✅
+- Job Discovery Pipeline (7 sources: Adzuna, The Muse, Remotive, Arbeitnow, JSearch, Jooble, Reed)
+- Single Job Tailoring (webhook-triggered)
+- HTML templates for CV/cover letter PDFs
+
+#### Testing — 121 Tests ✅
+- 20 test files across API routes, integrations, and workflows
+- Vitest + mocked Clerk/Prisma/Stripe/Resend
+- All passing
+
+#### Email System ✅
+- Resend SDK: welcome, job match, tailoring complete, weekly digest, credits low
+- Contact form via /api/contact
+
+#### Branding & Social ✅
+- OG images, Twitter cards, app icons, logo component
+- Twitter @AutoApplyWorks, LinkedIn company page, ProductHunt maker account, GitHub org
+
+### REMAINING WORK:
+
+#### Operations (PRIORITY 1)
+- Import n8n workflow JSON files into running Render n8n instance
+- Get remaining job API keys: JSearch (RapidAPI), Jooble, Reed
+- End-to-end test: paste job → n8n tailors → view documents
+- Adzuna API key already configured (App ID: e2af75b6)
+
+#### Launch Preparation (PRIORITY 2)
+- ProductHunt product listing with screenshots + demo video
+- Flutter native builds (iOS/Android testing)
+- Monitor Stripe live payments
+- Set up production monitoring/logging
+
+#### Nice-to-Have Enhancements
+- Loading skeletons (shimmer) instead of spinners
+- Real-time updates via WebSocket or SSE for new applications
+- Component tests for key UI components
+- Flutter widget tests
+- Cookie consent banner improvements
 
 ---
 
@@ -115,7 +144,7 @@ Build an AI-powered career assistant that:
 - **Framework**: Next.js 14 (App Router)
 - **Auth**: Clerk
 - **Payments**: Stripe (subscription + one-time credit packs)
-- **Database ORM**: Prisma → PostgreSQL (Supabase)
+- **Database ORM**: Prisma → PostgreSQL (Neon)
 - **UI**: Tailwind CSS + shadcn/ui components
 - **Key Pages**:
   - Landing page with value proposition + pricing ✅
@@ -134,9 +163,9 @@ Build an AI-powered career assistant that:
 
 ### Backend — API
 - **Runtime**: Next.js API routes (auth-gated) ✅
-- **Database**: PostgreSQL via Supabase ✅
-- **Storage**: Supabase Storage or AWS S3 for generated PDFs
-- **Auth**: Clerk (JWT verification on all API routes) ✅
+- **Database**: PostgreSQL via Neon (Frankfurt) ✅
+- **Storage**: Generated PDFs via Gotenberg on Render
+- **Auth**: Clerk sessions (web) + Bearer JWT (mobile) on all API routes ✅
 
 ### Backend — Automation Engine (n8n)
 - **Hosting**: Self-hosted n8n on Docker ✅
@@ -175,28 +204,18 @@ See `apps/web/prisma/schema.prisma` for full definitions.
 ## REMAINING EXECUTION ORDER
 1. ~~Set up monorepo structure and Docker compose~~ ✅
 2. ~~Deploy database schema via Prisma~~ ✅
-3. **Build Next.js web app frontend functionality** ← CURRENT PRIORITY
-   a. Add API routes for CRUD operations (GET/POST/PUT/DELETE for profiles, preferences, applications, jobs)
-   b. Wire dashboard page to fetch real stats and applications
-   c. Build functional Kanban board with drag-drop status updates
-   d. Wire job feed page with search, filters, and "Paste Job" dialog
-   e. Build CV upload + parsing (PDF/DOCX → text extraction → structured JSON)
-   f. Wire settings page to save preferences and toggle automation
-   g. Build document viewer with PDF loading and download
-   h. Add Stripe checkout button to pricing section
-   i. Build onboarding flow for new users
+3. ~~Build Next.js web app frontend functionality~~ ✅ (all pages wired, all API routes built)
 4. ~~Build and test n8n workflows~~ ✅
 5. ~~Connect web app to n8n via webhook triggers~~ ✅
-6. **Build Flutter mobile app functionality**
-   a. Integrate Clerk Flutter SDK
-   b. Build repository + provider layer for each feature
-   c. Wire all pages to real API data
-   d. Implement file upload, PDF viewer, forms
-7. **Write tests** for API routes, components, LLM output validation, Flutter
-8. Prepare deployment (Vercel for web, Railway/DO for n8n+services)
-9. Create Stripe products in dashboard and connect billing
-10. Write legal pages (ToS, Privacy Policy, Cookie consent)
-11. Write documentation for resale package
+6. ~~Build Flutter mobile app functionality~~ ✅ (auth, all pages, API layer)
+7. ~~Write tests~~ ✅ (121 tests, 20 files, all passing)
+8. ~~Deploy to production~~ ✅ (Vercel + Render n8n + Render Gotenberg + Neon DB)
+9. ~~Create Stripe products and connect billing~~ ✅ (live mode, 5 products)
+10. ~~Write legal pages~~ ✅ (ToS, Privacy Policy, Contact, Cookie consent)
+11. **Import n8n workflows into running Render instance** ← CURRENT PRIORITY
+12. **Get remaining job API keys** (JSearch, Jooble, Reed)
+13. **End-to-end test** (paste job → n8n tailors → view documents)
+14. **Launch preparation** (ProductHunt, demo video, monitoring)
 
 ## GIT WORKFLOW
 - Branch: `main` for stable, feature branches for new work
