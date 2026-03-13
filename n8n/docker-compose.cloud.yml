@@ -6,7 +6,7 @@
 #   - Railway (Docker Compose support)
 #   - Any Docker host
 #
-# The web app runs on Vercel, database on Supabase.
+# The web app runs on Vercel, database on Neon PostgreSQL.
 # This file only deploys the automation layer.
 #
 # Usage:
@@ -36,19 +36,18 @@ services:
       WEBHOOK_URL: ${N8N_WEBHOOK_URL:?Set N8N_WEBHOOK_URL to your public n8n URL}
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Paris}
 
-      # Database (Supabase PostgreSQL)
+      # n8n Internal Database (Neon PostgreSQL)
       DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: ${DB_POSTGRESDB_HOST:?Set Supabase DB host}
+      DB_POSTGRESDB_HOST: ${DB_POSTGRESDB_HOST:?Set Neon DB host}
       DB_POSTGRESDB_PORT: ${DB_POSTGRESDB_PORT:-5432}
-      DB_POSTGRESDB_DATABASE: ${DB_POSTGRESDB_DATABASE:?Set Supabase DB name}
-      DB_POSTGRESDB_USER: ${DB_POSTGRESDB_USER:?Set Supabase DB user}
-      DB_POSTGRESDB_PASSWORD: ${DB_POSTGRESDB_PASSWORD:?Set Supabase DB password}
+      DB_POSTGRESDB_DATABASE: ${DB_POSTGRESDB_DATABASE:?Set Neon DB name}
+      DB_POSTGRESDB_USER: ${DB_POSTGRESDB_USER:?Set Neon DB user}
+      DB_POSTGRESDB_PASSWORD: ${DB_POSTGRESDB_PASSWORD:?Set Neon DB password}
       DB_POSTGRESDB_SCHEMA: n8n
       DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED: 'false'
 
       # LLM API keys
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
 
       # Job board API keys
       ADZUNA_APP_ID: ${ADZUNA_APP_ID}
@@ -58,16 +57,12 @@ services:
       REED_API_KEY: ${REED_API_KEY}
 
       # App integration
-      APP_DATABASE_URL: ${APP_DATABASE_URL:?Set Supabase connection string}
+      APP_DATABASE_URL: ${APP_DATABASE_URL:?Set Neon connection string}
       N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET:?Set webhook secret}
       APP_URL: ${APP_URL:-https://autoapply.works}
 
       # Gotenberg
       GOTENBERG_URL: http://gotenberg:3000
-
-      # Storage
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
     volumes:
       - n8n_data:/home/node/.n8n
     depends_on:

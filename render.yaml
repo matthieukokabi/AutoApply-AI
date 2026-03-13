@@ -9,7 +9,7 @@
 #   4. Set environment variables in Render dashboard
 #
 # Note: The web app (Next.js) is deployed separately on Vercel.
-# The PostgreSQL database is managed by Supabase.
+# The PostgreSQL database is managed by Neon (Frankfurt).
 # ──────────────────────────────────────────────────────────────
 
 services:
@@ -47,19 +47,20 @@ services:
       - key: GENERIC_TIMEZONE
         value: Europe/Paris
 
-      # n8n Database (Supabase PostgreSQL)
+      # n8n Internal Database (Neon PostgreSQL)
+      # Uses a separate "n8n" schema to avoid conflicts with app tables
       - key: DB_TYPE
         value: postgresdb
       - key: DB_POSTGRESDB_HOST
-        sync: false  # Set to Supabase host
+        sync: false  # Set to Neon host: ep-morning-meadow-ag8qe5hq-pooler.c-2.eu-central-1.aws.neon.tech
       - key: DB_POSTGRESDB_PORT
         value: "5432"
       - key: DB_POSTGRESDB_DATABASE
-        sync: false  # Set to Supabase database name
+        sync: false  # Set to Neon database name (neondb)
       - key: DB_POSTGRESDB_USER
-        sync: false  # Set to Supabase user
+        sync: false  # Set to Neon username
       - key: DB_POSTGRESDB_PASSWORD
-        sync: false  # Set to Supabase password
+        sync: false  # Set to Neon password
       - key: DB_POSTGRESDB_SCHEMA
         value: n8n
       - key: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
@@ -67,8 +68,6 @@ services:
 
       # LLM API Keys
       - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
         sync: false
 
       # Job Board API Keys
@@ -85,7 +84,7 @@ services:
 
       # App Integration
       - key: APP_DATABASE_URL
-        sync: false  # Supabase connection string for workflow DB queries
+        sync: false  # Neon connection string for workflow Postgres queries
       - key: N8N_WEBHOOK_SECRET
         generateValue: true
       - key: APP_URL
@@ -97,12 +96,6 @@ services:
           name: autoapply-gotenberg
           type: web
           property: hostport
-
-      # Storage (Supabase or S3)
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
 
   # ─── Gotenberg PDF Engine ──────────────────────────────────
   - type: web

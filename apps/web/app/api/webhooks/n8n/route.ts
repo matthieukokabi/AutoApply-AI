@@ -20,40 +20,61 @@ export async function POST(req: Request) {
 
         switch (type) {
             case "new_applications": {
-                // n8n sends newly tailored applications
+                // n8n sends discovered/tailored jobs from automated pipeline
                 const { userId, applications } = data;
 
                 const createdApps = [];
 
                 for (const app of applications) {
+                    // First, create/upsert the Job record (discovery pipeline finds NEW jobs)
+                    const job = await prisma.job.upsert({
+                        where: { externalId: app.externalId || `manual-${Date.now()}` },
+                        create: {
+                            externalId: app.externalId || `manual-${Date.now()}`,
+                            title: app.title || "Untitled Position",
+                            company: app.company || "Unknown Company",
+                            location: app.location || "Not specified",
+                            description: app.description || "",
+                            source: app.source || "manual",
+                            url: app.url || "",
+                            salary: app.salary || null,
+                            postedAt: app.postedAt ? new Date(app.postedAt) : null,
+                        },
+                        update: {
+                            title: app.title || "Untitled Position",
+                            company: app.company || "Unknown Company",
+                        },
+                    });
+
+                    // Then, create/upsert the Application record
                     const result = await prisma.application.upsert({
                         where: {
                             userId_jobId: {
                                 userId,
-                                jobId: app.jobId,
+                                jobId: job.id,
                             },
                         },
                         create: {
                             userId,
-                            jobId: app.jobId,
-                            compatibilityScore: app.compatibilityScore,
+                            jobId: job.id,
+                            compatibilityScore: app.compatibilityScore || 0,
                             atsKeywords: app.atsKeywords || [],
                             matchingStrengths: app.matchingStrengths || [],
                             gaps: app.gaps || [],
-                            recommendation: app.recommendation,
-                            tailoredCvUrl: app.tailoredCvUrl,
-                            coverLetterUrl: app.coverLetterUrl,
-                            tailoredCvMarkdown: app.tailoredCvMarkdown,
-                            coverLetterMarkdown: app.coverLetterMarkdown,
-                            status: "tailored",
+                            recommendation: app.recommendation || "skip",
+                            tailoredCvMarkdown: app.tailoredCvMarkdown || null,
+                            coverLetterMarkdown: app.coverLetterMarkdown || null,
+                            status: app.status || (app.tailoredCvMarkdown ? "tailored" : "discovered"),
                         },
                         update: {
-                            compatibilityScore: app.compatibilityScore,
-                            tailoredCvUrl: app.tailoredCvUrl,
-                            coverLetterUrl: app.coverLetterUrl,
-                            tailoredCvMarkdown: app.tailoredCvMarkdown,
-                            coverLetterMarkdown: app.coverLetterMarkdown,
-                            status: "tailored",
+                            compatibilityScore: app.compatibilityScore || 0,
+                            atsKeywords: app.atsKeywords || [],
+                            matchingStrengths: app.matchingStrengths || [],
+                            gaps: app.gaps || [],
+                            recommendation: app.recommendation || "skip",
+                            tailoredCvMarkdown: app.tailoredCvMarkdown || null,
+                            coverLetterMarkdown: app.coverLetterMarkdown || null,
+                            status: app.status || (app.tailoredCvMarkdown ? "tailored" : "discovered"),
                         },
                         include: { job: true },
                     });
@@ -92,14 +113,58 @@ export async function POST(req: Request) {
             }
 
             case "single_tailoring_complete": {
-                // Single job tailoring result from user-initiated request
-                const { userId, applicationId, jobId } = data;
+                // Single job tailoring result — save data + send email
+                const {
+                    userId: tailorUserId,
+                    jobId: tailorJobId,
+                    jobTitle,
+                    company,
+                    compatibilityScore,
+                    atsKeywords,
+                    matchingStrengths,
+                    gaps,
+                    recommendation,
+                    tailoredCvMarkdown,
+                    coverLetterMarkdown,
+                } = data;
 
+                // Save tailoring results to database
+                const application = await prisma.application.upsert({
+                    where: {
+                        userId_jobId: {
+                            userId: tailorUserId,
+                            jobId: tailorJobId,
+                        },
+                    },
+                    create: {
+                        userId: tailorUserId,
+                        jobId: tailorJobId,
+                        compatibilityScore: compatibilityScore || 0,
+                        atsKeywords: atsKeywords || [],
+                        matchingStrengths: matchingStrengths || [],
+                        gaps: gaps || [],
+                        recommendation: recommendation || "stretch",
+                        tailoredCvMarkdown: tailoredCvMarkdown || null,
+                        coverLetterMarkdown: coverLetterMarkdown || null,
+                        status: tailoredCvMarkdown ? "tailored" : "discovered",
+                    },
+                    update: {
+                        compatibilityScore: compatibilityScore || 0,
+                        atsKeywords: atsKeywords || [],
+                        matchingStrengths: matchingStrengths || [],
+                        gaps: gaps || [],
+                        recommendation: recommendation || "stretch",
+                        tailoredCvMarkdown: tailoredCvMarkdown || null,
+                        coverLetterMarkdown: coverLetterMarkdown || null,
+                        status: tailoredCvMarkdown ? "tailored" : "discovered",
+                    },
+                    include: { job: true },
+                });
+
+                // Send email notification (non-blocking)
                 try {
-                    const user = await prisma.user.findUnique({ where: { id: userId } });
-                    const application = await prisma.application.findUnique({
-                        where: { id: applicationId },
-                        include: { job: true },
+                    const user = await prisma.user.findUnique({
+                        where: { id: tailorUserId },
                     });
 
                     if (user && application) {
@@ -113,10 +178,13 @@ export async function POST(req: Request) {
                         );
                     }
                 } catch (emailError) {
-                    console.error("Tailoring email notification failed (non-blocking):", emailError);
+                    console.error("Tailoring email failed (non-blocking):", emailError);
                 }
 
-                return NextResponse.json({ message: "Tailoring notification sent" });
+                return NextResponse.json({
+                    message: "Tailoring results saved",
+                    applicationId: application.id,
+                });
             }
 
             case "workflow_error": {

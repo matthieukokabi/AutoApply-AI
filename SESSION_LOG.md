@@ -772,3 +772,82 @@ Read SESSION_LOG.md in the project root and continue from where the last session
 - n8n is running on Render but workflow JSON files need to be imported
 - Need JSearch (RapidAPI), Jooble, Reed API keys for full job discovery
 - Adzuna free trial plan — monitor for rate limits in production
+
+---
+
+## Session 14 — 2026-03-13
+
+### Completed
+
+**n8n Workflow Architecture Overhaul — Critical Bugs Fixed:**
+
+Both workflow JSON files were completely rewritten due to 5 critical issues:
+1. **SQL column name mismatch** — All SQL used `snake_case` but Prisma creates `camelCase` columns
+2. **LLM node type wrong** — Used LangChain sub-node type that can't work standalone
+3. **Merge node broken** — Configured for 2 inputs but 7 job sources connected
+4. **No job data normalization** — Each API returns different formats
+5. **SQL injection risk** — Raw SQL with large markdown content would break on special characters
+
+**Architecture Decision — Callback-Based Writes:**
+- n8n no longer writes directly to the database (except one read query for active users)
+- All write operations go through the web app API (`/api/webhooks/n8n`) using Prisma
+- This eliminates SQL injection risk and ensures proper parameterized queries
+- Tailor route uses fire-and-forget pattern (user doesn't wait 30-60s for n8n)
+
+**`n8n/workflows/single-job-tailoring.json` — Full Rewrite:**
+- Replaced LangChain sub-nodes with direct Anthropic HTTP API calls (`claude-sonnet-4-5-20250514`)
+- Removed Postgres node — all writes go through web app callback
+- Flow: Webhook → Validate Input → LLM Scoring (HTTP) → Parse Scoring → LLM Tailoring (HTTP) → Parse Tailored → Save Results via App API
+- `responseMode: "lastNode"` for immediate response, data saved via callback
+
+**`n8n/workflows/job-discovery-pipeline.json` — Full Rewrite:**
+- Single SQL JOIN query with correct camelCase column names (`"automationEnabled"`, `"targetTitles"`, etc.)
+- Single Code node fetches ALL 7 job APIs (Adzuna, The Muse, Remotive, Arbeitnow, JSearch, Jooble, Reed), normalizes data, and deduplicates
+- Direct Anthropic HTTP API calls for scoring and tailoring
+- Score Router: >=70 → tailor branch, <70 → discovered branch
+- Batch callback to web app API for data persistence
+- Error handler logs via web app API
+
+**`apps/web/app/api/webhooks/n8n/route.ts` — Updated:**
+- `single_tailoring_complete`: Now SAVES all tailoring data via `prisma.application.upsert` before sending email (was only sending email before)
+- `new_applications`: Now CREATES Job records first via `prisma.job.upsert` (by externalId) before creating Application records (discovery pipeline finds NEW jobs not in DB)
+
+**`apps/web/app/api/tailor/route.ts` — Updated:**
+- Changed from `await fetch(n8n)` to fire-and-forget `fetch(...).catch(...)` pattern
+- Added `jobTitle` and `company` to the payload sent to n8n
+- User no longer waits 30-60 seconds for n8n pipeline to complete
+
+**Environment Configs — Supabase → Neon Migration:**
+- `n8n/.env.n8n.example` — Updated all DB references to Neon (host, database, comments)
+- `render.yaml` — Updated all Supabase references to Neon, removed Supabase storage vars
+- `n8n/docker-compose.cloud.yml` — Updated all Supabase references to Neon
+
+**Tests Updated — 121/121 Passing:**
+- `__tests__/api/webhooks-n8n.test.ts` — Updated 4 tests:
+  - `new_applications` tests now mock `prisma.job.upsert` (Job creation) before `prisma.application.upsert`
+  - `single_tailoring_complete` test now expects `prisma.application.upsert` (not `findUnique`), new response message "Tailoring results saved", and full tailoring data payload
+- All 20 test files, 121 tests passing
+
+### Files Modified This Session
+- `n8n/workflows/single-job-tailoring.json` — Complete rewrite
+- `n8n/workflows/job-discovery-pipeline.json` — Complete rewrite
+- `apps/web/app/api/webhooks/n8n/route.ts` — Updated both handlers
+- `apps/web/app/api/tailor/route.ts` — Fire-and-forget pattern
+- `n8n/.env.n8n.example` — Neon references
+- `render.yaml` — Neon references
+- `n8n/docker-compose.cloud.yml` — Neon references
+- `__tests__/api/webhooks-n8n.test.ts` — Updated for new handler behavior
+
+### What's Next
+1. **Import n8n workflows** — Upload JSON files to running Render n8n instance
+2. **Configure Neon credentials** on Render n8n (for discovery pipeline Postgres reads)
+3. **Get remaining API keys** — JSearch (RapidAPI), Jooble, Reed
+4. **End-to-end test** — Paste job → n8n tailors → callback saves → view documents
+5. **ProductHunt product listing** — Screenshots + demo video
+6. **Flutter native builds** — iOS/Android testing
+
+### Blockers / Decisions
+- n8n is running on Render but workflow JSON files still need to be imported
+- Neon DB credentials need to be added to Render n8n env vars (for discovery pipeline)
+- Need JSearch (RapidAPI), Jooble, Reed API keys for full job discovery
+- Adzuna free trial plan — monitor for rate limits in production

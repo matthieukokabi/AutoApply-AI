@@ -78,7 +78,8 @@ describe("POST /api/webhooks/n8n", () => {
     });
 
     describe("new_applications", () => {
-        it("creates applications from n8n payload", async () => {
+        it("creates job and application from n8n payload", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
             vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 
@@ -86,14 +87,18 @@ describe("POST /api/webhooks/n8n", () => {
                 userId: "user_1",
                 applications: [
                     {
-                        jobId: "job_1",
+                        externalId: "adzuna-123",
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                        location: "Berlin",
+                        description: "Job description",
+                        source: "adzuna",
+                        url: "https://example.com/job",
                         compatibilityScore: 85,
                         atsKeywords: ["React", "TypeScript"],
                         matchingStrengths: ["Frontend experience"],
                         gaps: [],
                         recommendation: "apply",
-                        tailoredCvUrl: "/docs/cv-1.pdf",
-                        coverLetterUrl: "/docs/cl-1.pdf",
                         tailoredCvMarkdown: "# CV Content",
                         coverLetterMarkdown: "# Cover Letter",
                     },
@@ -106,6 +111,18 @@ describe("POST /api/webhooks/n8n", () => {
             expect(response.status).toBe(200);
             expect(data.message).toContain("1 applications");
 
+            // Job should be upserted first
+            expect(prisma.job.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { externalId: "adzuna-123" },
+                    create: expect.objectContaining({
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                    }),
+                })
+            );
+
+            // Then application with the job ID
             expect(prisma.application.upsert).toHaveBeenCalledWith(
                 expect.objectContaining({
                     where: { userId_jobId: { userId: "user_1", jobId: "job_1" } },
@@ -120,6 +137,7 @@ describe("POST /api/webhooks/n8n", () => {
         });
 
         it("sends job match email notification", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
             vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 
@@ -127,7 +145,9 @@ describe("POST /api/webhooks/n8n", () => {
                 userId: "user_1",
                 applications: [
                     {
-                        jobId: "job_1",
+                        externalId: "adzuna-123",
+                        title: "Senior Developer",
+                        company: "Tech Corp",
                         compatibilityScore: 85,
                     },
                 ],
@@ -149,6 +169,7 @@ describe("POST /api/webhooks/n8n", () => {
         });
 
         it("sends credits-low email when credits are low", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
             vi.mocked(prisma.user.findUnique).mockResolvedValue({
                 ...mockUser,
@@ -158,7 +179,7 @@ describe("POST /api/webhooks/n8n", () => {
 
             const request = createWebhookRequest("new_applications", {
                 userId: "user_1",
-                applications: [{ jobId: "job_1", compatibilityScore: 85 }],
+                applications: [{ externalId: "adzuna-123", compatibilityScore: 85 }],
             });
 
             await POST(request);
@@ -171,6 +192,7 @@ describe("POST /api/webhooks/n8n", () => {
         });
 
         it("does not send credits-low email for unlimited users", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
             vi.mocked(prisma.user.findUnique).mockResolvedValue({
                 ...mockUser,
@@ -180,7 +202,7 @@ describe("POST /api/webhooks/n8n", () => {
 
             const request = createWebhookRequest("new_applications", {
                 userId: "user_1",
-                applications: [{ jobId: "job_1", compatibilityScore: 85 }],
+                applications: [{ externalId: "adzuna-123", compatibilityScore: 85 }],
             });
 
             await POST(request);
@@ -190,25 +212,49 @@ describe("POST /api/webhooks/n8n", () => {
     });
 
     describe("single_tailoring_complete", () => {
-        it("sends tailoring complete email", async () => {
-            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
-            vi.mocked(prisma.application.findUnique).mockResolvedValue({
+        it("saves tailoring results and sends email", async () => {
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
                 ...mockApplication,
                 compatibilityScore: 92,
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: "# Cover Letter",
             } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 
             const request = createWebhookRequest("single_tailoring_complete", {
                 userId: "user_1",
-                applicationId: "app_1",
                 jobId: "job_1",
+                jobTitle: "Senior Developer",
+                company: "Tech Corp",
+                compatibilityScore: 92,
+                atsKeywords: ["React", "TypeScript"],
+                matchingStrengths: ["Frontend experience"],
+                gaps: [],
+                recommendation: "apply",
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: "# Cover Letter",
             });
 
             const response = await POST(request);
             const data = await response.json();
 
             expect(response.status).toBe(200);
-            expect(data.message).toContain("notification sent");
+            expect(data.message).toBe("Tailoring results saved");
+            expect(data.applicationId).toBe("app_1");
 
+            // Should upsert application with tailoring data
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { userId_jobId: { userId: "user_1", jobId: "job_1" } },
+                    create: expect.objectContaining({
+                        compatibilityScore: 92,
+                        tailoredCvMarkdown: "# Tailored CV",
+                        coverLetterMarkdown: "# Cover Letter",
+                    }),
+                })
+            );
+
+            // Should send email notification
             expect(sendTailoringCompleteEmail).toHaveBeenCalledWith(
                 "test@example.com",
                 "Test User",

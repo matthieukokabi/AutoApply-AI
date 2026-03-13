@@ -66,27 +66,24 @@ export async function POST(req: Request) {
             update: {},
         });
 
-        // Trigger n8n single-job tailoring webhook
+        // Trigger n8n single-job tailoring webhook (fire-and-forget)
+        // n8n processes asynchronously and calls back to /api/webhooks/n8n when done
         const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
         if (n8nWebhookUrl) {
-            const webhookResponse = await fetch(
-                `${n8nWebhookUrl}/webhook/single-job-tailor`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        userId: user.id,
-                        jobId: job.id,
-                        jobDescription,
-                        masterCvText: user.masterProfile.rawText,
-                        masterCvJson: user.masterProfile.structuredJson,
-                    }),
-                }
+            fetch(`${n8nWebhookUrl}/webhook/single-job-tailor`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: user.id,
+                    jobId: job.id,
+                    jobTitle: jobTitle || "Untitled Position",
+                    company: company || "Unknown Company",
+                    jobDescription,
+                    masterCvText: user.masterProfile.rawText,
+                }),
+            }).catch((err) =>
+                console.error("n8n webhook trigger failed:", err.message)
             );
-
-            if (!webhookResponse.ok) {
-                console.error("n8n webhook failed:", await webhookResponse.text());
-            }
         }
 
         // Deduct credit

@@ -4,22 +4,14 @@
         {
             "parameters": {
                 "rule": {
-                    "interval": [
-                        {
-                            "field": "hours",
-                            "hoursInterval": 4
-                        }
-                    ]
+                    "interval": [{ "field": "hours", "hoursInterval": 4 }]
                 }
             },
             "id": "schedule-trigger",
             "name": "Schedule Trigger",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
-            "position": [
-                0,
-                0
-            ]
+            "position": [0, 0]
         },
         {
             "parameters": {
@@ -30,950 +22,197 @@
             "name": "Random Jitter Wait",
             "type": "n8n-nodes-base.wait",
             "typeVersion": 1.1,
-            "position": [
-                220,
-                0
-            ]
+            "position": [220, 0]
         },
         {
             "parameters": {
                 "operation": "executeQuery",
-                "query": "SELECT id, email, name, automation_enabled, subscription_status FROM users WHERE automation_enabled = true AND subscription_status IN ('pro', 'unlimited')",
+                "query": "SELECT u.\"id\", u.\"email\", u.\"name\", u.\"subscriptionStatus\", u.\"creditsRemaining\", jp.\"targetTitles\", jp.\"locations\", jp.\"remotePreference\", jp.\"salaryMin\", jp.\"industries\", mp.\"rawText\" AS \"masterCvText\" FROM \"users\" u LEFT JOIN \"job_preferences\" jp ON jp.\"userId\" = u.\"id\" LEFT JOIN \"master_profiles\" mp ON mp.\"userId\" = u.\"id\" WHERE u.\"automationEnabled\" = true AND u.\"subscriptionStatus\" IN ('pro', 'unlimited') AND mp.\"rawText\" IS NOT NULL AND jp.\"id\" IS NOT NULL",
                 "additionalFields": {}
             },
             "id": "fetch-active-users",
-            "name": "Fetch Active Users",
+            "name": "Fetch Active Users with Prefs & CV",
             "type": "n8n-nodes-base.postgres",
             "typeVersion": 2.3,
-            "position": [
-                440,
-                0
-            ],
+            "position": [440, 0],
             "credentials": {
                 "postgres": {
                     "id": "app-db",
-                    "name": "App Database"
+                    "name": "AutoApply Neon DB"
                 }
             }
         },
         {
             "parameters": {
-                "fieldToSplitOut": "id",
-                "options": {}
+                "jsCode": "// Split users into individual items for processing\nconst items = $input.all();\nconst users = [];\n\nfor (const item of items) {\n  // Each row from the JOIN query is one user\n  const row = item.json;\n  if (row.id && row.masterCvText) {\n    users.push({\n      json: {\n        userId: row.id,\n        email: row.email,\n        name: row.name,\n        subscriptionStatus: row.subscriptionStatus,\n        creditsRemaining: row.creditsRemaining,\n        targetTitles: row.targetTitles || ['software engineer'],\n        locations: row.locations || ['remote'],\n        remotePreference: row.remotePreference || 'any',\n        salaryMin: row.salaryMin || 0,\n        industries: row.industries || [],\n        masterCvText: row.masterCvText\n      }\n    });\n  }\n}\n\nif (users.length === 0) {\n  // No active users — stop the workflow gracefully\n  return [];\n}\n\nreturn users;"
             },
-            "id": "split-users",
-            "name": "Split Into Users",
-            "type": "n8n-nodes-base.splitOut",
-            "typeVersion": 1,
-            "position": [
-                660,
-                0
-            ]
+            "id": "prepare-users",
+            "name": "Prepare User Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [660, 0]
         },
         {
             "parameters": {
-                "operation": "executeQuery",
-                "query": "SELECT target_titles, locations, remote_preference, salary_min, industries FROM job_preferences WHERE user_id = '{{ $json.id }}'",
-                "additionalFields": {}
+                "jsCode": "// Fetch jobs from ALL sources for this user, normalize, and deduplicate\nconst user = $input.first().json;\nconst searchTitle = (user.targetTitles[0] || 'software engineer').trim();\nconst searchLocation = (user.locations[0] || '').trim();\n\nconst allJobs = [];\n\n// Helper: safe fetch with timeout\nasync function safeFetch(url, options = {}) {\n  const controller = new AbortController();\n  const timeout = setTimeout(() => controller.abort(), 15000);\n  try {\n    const resp = await fetch(url, { ...options, signal: controller.signal });\n    clearTimeout(timeout);\n    if (!resp.ok) return null;\n    return await resp.json();\n  } catch (e) {\n    clearTimeout(timeout);\n    return null;\n  }\n}\n\n// 1. ADZUNA\nif ($env.ADZUNA_APP_ID && $env.ADZUNA_APP_KEY) {\n  try {\n    const adzunaUrl = `https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=${$env.ADZUNA_APP_ID}&app_key=${$env.ADZUNA_APP_KEY}&what=${encodeURIComponent(searchTitle)}&where=${encodeURIComponent(searchLocation)}&results_per_page=15&content-type=application/json`;\n    const data = await safeFetch(adzunaUrl);\n    if (data?.results) {\n      for (const j of data.results) {\n        allJobs.push({\n          externalId: `adzuna-${j.id}`,\n          title: j.title || '',\n          company: j.company?.display_name || 'Unknown',\n          location: j.location?.display_name || '',\n          description: j.description || '',\n          source: 'adzuna',\n          url: j.redirect_url || '',\n          salary: j.salary_is_predicted === '0' ? `${j.salary_min}-${j.salary_max}` : null,\n          postedAt: j.created ? new Date(j.created).toISOString() : null\n        });\n      }\n    }\n  } catch (e) { /* adzuna failed, continue */ }\n}\n\n// 2. THE MUSE (free, no key needed)\ntry {\n  const museUrl = `https://www.themuse.com/api/public/jobs?category=Engineering&level=Mid%20Level&page=1`;\n  const data = await safeFetch(museUrl);\n  if (data?.results) {\n    for (const j of data.results) {\n      allJobs.push({\n        externalId: `themuse-${j.id}`,\n        title: j.name || '',\n        company: j.company?.name || 'Unknown',\n        location: j.locations?.map(l => l.name).join(', ') || '',\n        description: (j.contents || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'themuse',\n        url: j.refs?.landing_page || '',\n        salary: null,\n        postedAt: j.publication_date || null\n      });\n    }\n  }\n} catch (e) { /* themuse failed */ }\n\n// 3. REMOTIVE (free, no key needed)\ntry {\n  const remotiveUrl = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(searchTitle)}&limit=15`;\n  const data = await safeFetch(remotiveUrl);\n  if (data?.jobs) {\n    for (const j of data.jobs) {\n      allJobs.push({\n        externalId: `remotive-${j.id}`,\n        title: j.title || '',\n        company: j.company_name || 'Unknown',\n        location: j.candidate_required_location || 'Remote',\n        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'remotive',\n        url: j.url || '',\n        salary: j.salary || null,\n        postedAt: j.publication_date || null\n      });\n    }\n  }\n} catch (e) { /* remotive failed */ }\n\n// 4. ARBEITNOW (free, no key needed)\ntry {\n  const arbeitnowUrl = `https://www.arbeitnow.com/api/job-board-api?search=${encodeURIComponent(searchTitle)}&page=1`;\n  const data = await safeFetch(arbeitnowUrl);\n  if (data?.data) {\n    for (const j of data.data) {\n      allJobs.push({\n        externalId: `arbeitnow-${j.slug || j.id || Date.now()}`,\n        title: j.title || '',\n        company: j.company_name || 'Unknown',\n        location: j.location || '',\n        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'arbeitnow',\n        url: j.url || '',\n        salary: null,\n        postedAt: j.created_at || null\n      });\n    }\n  }\n} catch (e) { /* arbeitnow failed */ }\n\n// 5. JSEARCH (RapidAPI, needs key)\nif ($env.JSEARCH_API_KEY) {\n  try {\n    const query = `${searchTitle} in ${searchLocation || 'remote'}`;\n    const jsearchUrl = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1`;\n    const data = await safeFetch(jsearchUrl, {\n      headers: {\n        'X-RapidAPI-Key': $env.JSEARCH_API_KEY,\n        'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'\n      }\n    });\n    if (data?.data) {\n      for (const j of data.data) {\n        allJobs.push({\n          externalId: `jsearch-${j.job_id}`,\n          title: j.job_title || '',\n          company: j.employer_name || 'Unknown',\n          location: j.job_city ? `${j.job_city}, ${j.job_state || j.job_country}` : (j.job_country || ''),\n          description: (j.job_description || '').substring(0, 3000),\n          source: 'jsearch',\n          url: j.job_apply_link || j.job_google_link || '',\n          salary: j.job_min_salary ? `${j.job_min_salary}-${j.job_max_salary}` : null,\n          postedAt: j.job_posted_at_datetime_utc || null\n        });\n      }\n    }\n  } catch (e) { /* jsearch failed */ }\n}\n\n// 6. JOOBLE (needs key)\nif ($env.JOOBLE_API_KEY) {\n  try {\n    const data = await safeFetch(`https://jooble.org/api/${$env.JOOBLE_API_KEY}`, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ keywords: searchTitle, location: searchLocation, page: 1 })\n    });\n    if (data?.jobs) {\n      for (const j of data.jobs) {\n        allJobs.push({\n          externalId: `jooble-${j.id || Date.now()}`,\n          title: j.title || '',\n          company: j.company || 'Unknown',\n          location: j.location || '',\n          description: (j.snippet || '').substring(0, 3000),\n          source: 'jooble',\n          url: j.link || '',\n          salary: j.salary || null,\n          postedAt: j.updated || null\n        });\n      }\n    }\n  } catch (e) { /* jooble failed */ }\n}\n\n// 7. REED (needs key, basic auth)\nif ($env.REED_API_KEY) {\n  try {\n    const reedAuth = Buffer.from($env.REED_API_KEY + ':').toString('base64');\n    const reedUrl = `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(searchTitle)}&locationName=${encodeURIComponent(searchLocation)}&resultsToTake=15`;\n    const data = await safeFetch(reedUrl, {\n      headers: { 'Authorization': `Basic ${reedAuth}` }\n    });\n    if (data?.results) {\n      for (const j of data.results) {\n        allJobs.push({\n          externalId: `reed-${j.jobId}`,\n          title: j.jobTitle || '',\n          company: j.employerName || 'Unknown',\n          location: j.locationName || '',\n          description: (j.jobDescription || '').substring(0, 3000),\n          source: 'reed',\n          url: j.jobUrl || '',\n          salary: j.minimumSalary ? `${j.minimumSalary}-${j.maximumSalary}` : null,\n          postedAt: j.date || null\n        });\n      }\n    }\n  } catch (e) { /* reed failed */ }\n}\n\n// Deduplicate by externalId\nconst seen = new Set();\nconst uniqueJobs = [];\nfor (const job of allJobs) {\n  if (!seen.has(job.externalId) && job.title && job.description.length > 50) {\n    seen.add(job.externalId);\n    uniqueJobs.push(job);\n  }\n}\n\n// Return each job as a separate item with user context\nif (uniqueJobs.length === 0) return [];\n\nreturn uniqueJobs.map(job => ({\n  json: {\n    ...job,\n    userId: user.userId,\n    masterCvText: user.masterCvText,\n    subscriptionStatus: user.subscriptionStatus,\n    creditsRemaining: user.creditsRemaining\n  }\n}));"
             },
-            "id": "fetch-user-prefs",
-            "name": "Fetch User Preferences",
-            "type": "n8n-nodes-base.postgres",
-            "typeVersion": 2.3,
-            "position": [
-                880,
-                0
-            ],
-            "credentials": {
-                "postgres": {
-                    "id": "app-db",
-                    "name": "App Database"
-                }
-            }
-        },
-        {
-            "parameters": {
-                "operation": "executeQuery",
-                "query": "SELECT raw_text, structured_json FROM master_profiles WHERE user_id = '{{ $json.id }}'",
-                "additionalFields": {}
-            },
-            "id": "fetch-master-cv",
-            "name": "Fetch Master CV",
-            "type": "n8n-nodes-base.postgres",
-            "typeVersion": 2.3,
-            "position": [
-                1100,
-                0
-            ],
-            "credentials": {
-                "postgres": {
-                    "id": "app-db",
-                    "name": "App Database"
-                }
-            }
-        },
-        {
-            "parameters": {
-                "url": "https://api.adzuna.com/v1/api/jobs/us/search/1",
-                "sendQuery": true,
-                "queryParameters": {
-                    "parameters": [
-                        {
-                            "name": "app_id",
-                            "value": "={{ $env.ADZUNA_APP_ID }}"
-                        },
-                        {
-                            "name": "app_key",
-                            "value": "={{ $env.ADZUNA_APP_KEY }}"
-                        },
-                        {
-                            "name": "what",
-                            "value": "={{ $json.target_titles[0] || 'software engineer' }}"
-                        },
-                        {
-                            "name": "where",
-                            "value": "={{ $json.locations[0] || '' }}"
-                        },
-                        {
-                            "name": "results_per_page",
-                            "value": "20"
-                        },
-                        {
-                            "name": "content-type",
-                            "value": "application/json"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "fetch-adzuna",
-            "name": "Fetch Adzuna Jobs",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                1320,
-                -200
-            ]
-        },
-        {
-            "parameters": {
-                "url": "https://www.themuse.com/api/public/jobs",
-                "sendQuery": true,
-                "queryParameters": {
-                    "parameters": [
-                        {
-                            "name": "category",
-                            "value": "Engineering"
-                        },
-                        {
-                            "name": "level",
-                            "value": "Mid Level"
-                        },
-                        {
-                            "name": "page",
-                            "value": "1"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "fetch-themuse",
-            "name": "Fetch The Muse Jobs",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                1320,
-                0
-            ]
-        },
-        {
-            "parameters": {
-                "url": "https://remotive.com/api/remote-jobs",
-                "sendQuery": true,
-                "queryParameters": {
-                    "parameters": [
-                        {
-                            "name": "search",
-                            "value": "={{ $json.target_titles[0] || 'developer' }}"
-                        },
-                        {
-                            "name": "limit",
-                            "value": "20"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "fetch-remotive",
-            "name": "Fetch Remotive Jobs",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                1320,
-                200
-            ]
-        },
-        {
-            "parameters": {
-                "url": "https://www.arbeitnow.com/api/job-board-api",
-                "sendQuery": true,
-                "queryParameters": {
-                    "parameters": [
-                        {
-                            "name": "search",
-                            "value": "={{ $json.target_titles[0] || 'developer' }}"
-                        },
-                        {
-                            "name": "page",
-                            "value": "1"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "fetch-arbeitnow",
-            "name": "Fetch Arbeitnow Jobs",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                1320,
-                400
-            ]
-        },
-        {
-            "parameters": {
-                "url": "https://jsearch.p.rapidapi.com/search",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "X-RapidAPI-Key",
-                            "value": "={{ $env.JSEARCH_API_KEY }}"
-                        },
-                        {
-                            "name": "X-RapidAPI-Host",
-                            "value": "jsearch.p.rapidapi.com"
-                        }
-                    ]
-                },
-                "sendQuery": true,
-                "queryParameters": {
-                    "parameters": [
-                        {
-                            "name": "query",
-                            "value": "={{ ($json.target_titles[0] || 'software engineer') + ' in ' + ($json.locations[0] || 'remote') }}"
-                        },
-                        {
-                            "name": "page",
-                            "value": "1"
-                        },
-                        {
-                            "name": "num_pages",
-                            "value": "1"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "fetch-jsearch",
-            "name": "Fetch JSearch Jobs",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                1320,
-                600
-            ]
+            "id": "fetch-and-normalize",
+            "name": "Fetch & Normalize All Job Sources",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [880, 0]
         },
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ 'https://jooble.org/api/' + $env.JOOBLE_API_KEY }}",
+                "url": "https://api.anthropic.com/v1/messages",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+                        { "name": "anthropic-version", "value": "2023-06-01" },
+                        { "name": "content-type", "value": "application/json" }
+                    ]
+                },
                 "sendBody": true,
-                "bodyParameters": {
-                    "parameters": [
-                        {
-                            "name": "keywords",
-                            "value": "={{ $json.target_titles[0] || 'software engineer' }}"
-                        },
-                        {
-                            "name": "location",
-                            "value": "={{ $json.locations[0] || '' }}"
-                        },
-                        {
-                            "name": "page",
-                            "value": "1"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "fetch-jooble",
-            "name": "Fetch Jooble Jobs",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                1320,
-                800
-            ]
-        },
-        {
-            "parameters": {
-                "url": "https://www.reed.co.uk/api/1.0/search",
-                "authentication": "genericCredentialType",
-                "genericAuthType": "httpBasicAuth",
-                "sendQuery": true,
-                "queryParameters": {
-                    "parameters": [
-                        {
-                            "name": "keywords",
-                            "value": "={{ $json.target_titles[0] || 'software engineer' }}"
-                        },
-                        {
-                            "name": "locationName",
-                            "value": "={{ $json.locations[0] || '' }}"
-                        },
-                        {
-                            "name": "resultsToTake",
-                            "value": "20"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "fetch-reed",
-            "name": "Fetch Reed Jobs",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                1320,
-                1000
-            ],
-            "credentials": {
-                "httpBasicAuth": {
-                    "id": "reed-api",
-                    "name": "Reed API"
-                }
-            }
-        },
-        {
-            "parameters": {
-                "mode": "combine",
-                "mergeByFields": {},
-                "options": {}
-            },
-            "id": "merge-jobs",
-            "name": "Merge All Jobs",
-            "type": "n8n-nodes-base.merge",
-            "typeVersion": 2.1,
-            "position": [
-                1540,
-                400
-            ]
-        },
-        {
-            "parameters": {
-                "jsCode": "// Deduplication node\n// Remove jobs we've already processed for this user\nconst items = $input.all();\nconst seen = new Set();\nconst uniqueJobs = [];\n\nfor (const item of items) {\n  const id = item.json.external_id || item.json.id || item.json.url;\n  if (id && !seen.has(id)) {\n    seen.add(id);\n    uniqueJobs.push(item);\n  }\n}\n\nreturn uniqueJobs;"
-            },
-            "id": "dedup",
-            "name": "Deduplicate Jobs",
-            "type": "n8n-nodes-base.code",
-            "typeVersion": 2,
-            "position": [
-                1760,
-                400
-            ]
-        },
-        {
-            "parameters": {
-                "model": "claude-sonnet-4-5-20250514",
-                "messages": {
-                    "values": [
-                        {
-                            "role": "system",
-                            "content": "You are an expert ATS analyst and career advisor.\n\nINPUT: You will receive a JSON object with two keys:\n- \"job_description\": the full text of a job posting\n- \"master_cv\": the candidate's complete CV\n\nTASK:\n1. Calculate a compatibility_score (0-100) based on:\n   - Required skills match (weight: 40%)\n   - Experience years match (weight: 25%)\n   - Education match (weight: 15%)\n   - Industry/domain relevance (weight: 20%)\n\n2. Extract the top 10 critical ATS keywords from the job description\n\n3. Identify gaps: skills or qualifications the candidate lacks\n\nOUTPUT: Return ONLY valid JSON:\n{\n  \"compatibility_score\": <number>,\n  \"ats_keywords\": [<strings>],\n  \"matching_strengths\": [<strings>],\n  \"gaps\": [<strings>],\n  \"recommendation\": \"apply\" | \"stretch\" | \"skip\"\n}\n\nRULES:\n- Be conservative with scoring. Do not inflate.\n- If the job requires 5+ years and the candidate has 2, that's a significant gap.\n- \"stretch\" means score 60-79. \"apply\" means 80+. \"skip\" means <60."
-                        },
-                        {
-                            "role": "user",
-                            "content": "={{ JSON.stringify({ job_description: $json.description, master_cv: $json.master_cv_text }) }}"
-                        }
-                    ]
-                },
-                "options": {
-                    "temperature": 0.1,
-                    "maxTokens": 1000
-                }
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-5-20250514', max_tokens: 1024, temperature: 0.1, messages: [{ role: 'user', content: 'You are an expert ATS analyst. Analyze this job against the candidate CV.\\n\\nReturn ONLY raw JSON (no markdown, no code blocks):\\n{\"compatibility_score\":<0-100>,\"ats_keywords\":[<up to 10>],\"matching_strengths\":[<up to 5>],\"gaps\":[<up to 5>],\"recommendation\":\"apply\"|\"stretch\"|\"skip\"}\\n\\nScoring: skills 40%, experience 25%, education 15%, industry 20%. apply=80+, stretch=60-79, skip=<60.\\n\\nJOB TITLE: ' + $json.title + '\\nCOMPANY: ' + $json.company + '\\nJOB DESCRIPTION:\\n' + $json.description.substring(0, 3000) + '\\n\\nCANDIDATE CV:\\n' + $json.masterCvText.substring(0, 5000) }] }) }}",
+                "options": { "timeout": 30000 }
             },
             "id": "llm-scoring",
             "name": "LLM Relevance Scoring",
-            "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-            "typeVersion": 1.1,
-            "position": [
-                1980,
-                400
-            ],
-            "credentials": {
-                "anthropicApi": {
-                    "id": "anthropic",
-                    "name": "Anthropic API"
-                }
-            }
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [1100, 0]
         },
         {
             "parameters": {
-                "jsCode": "// Parse LLM JSON response\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  try {\n    let responseText = item.json.message?.content || item.json.text || '';\n    // Extract JSON from potential markdown code blocks\n    const jsonMatch = responseText.match(/```json?\\s*([\\s\\S]*?)```/) || [null, responseText];\n    const parsed = JSON.parse(jsonMatch[1].trim());\n    results.push({ json: { ...item.json, ...parsed, parse_error: false } });\n  } catch (e) {\n    results.push({ json: { ...item.json, compatibility_score: 0, parse_error: true, error: e.message } });\n  }\n}\n\nreturn results;"
+                "jsCode": "// Parse scoring response, carry forward job + user data\nconst item = $input.first();\nconst prev = $('Fetch & Normalize All Job Sources').item;\n\ntry {\n  const text = item.json.content?.[0]?.text || '';\n  let jsonStr = text;\n  const m = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (m) jsonStr = m[1];\n  const p = JSON.parse(jsonStr.trim());\n\n  return [{ json: {\n    ...prev.json,\n    compatibilityScore: p.compatibility_score || 0,\n    atsKeywords: p.ats_keywords || [],\n    matchingStrengths: p.matching_strengths || [],\n    gaps: p.gaps || [],\n    recommendation: p.recommendation || 'skip'\n  }}];\n} catch (e) {\n  return [{ json: {\n    ...prev.json,\n    compatibilityScore: 0,\n    atsKeywords: [],\n    matchingStrengths: [],\n    gaps: [],\n    recommendation: 'skip'\n  }}];\n}"
             },
             "id": "parse-scoring",
             "name": "Parse Scoring Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [
-                2200,
-                400
-            ]
+            "position": [1320, 0]
         },
         {
             "parameters": {
                 "conditions": {
                     "number": [
                         {
-                            "value1": "={{ $json.compatibility_score }}",
+                            "value1": "={{ $json.compatibilityScore }}",
                             "operation": "largerEqual",
-                            "value2": 75
+                            "value2": 70
                         }
                     ]
                 }
             },
             "id": "score-router",
-            "name": "Score >= 75?",
+            "name": "Score >= 70?",
             "type": "n8n-nodes-base.if",
             "typeVersion": 1,
-            "position": [
-                2420,
-                400
-            ]
+            "position": [1540, 0]
         },
         {
             "parameters": {
-                "operation": "executeQuery",
-                "query": "INSERT INTO applications (id, user_id, job_id, compatibility_score, ats_keywords, matching_strengths, gaps, recommendation, status, created_at) VALUES (gen_random_uuid(), '{{ $json.user_id }}', '{{ $json.job_id }}', {{ $json.compatibility_score }}, ARRAY{{ $json.ats_keywords }}, ARRAY{{ $json.matching_strengths }}, ARRAY{{ $json.gaps }}, '{{ $json.recommendation }}', 'discovered', NOW()) ON CONFLICT (user_id, job_id) DO NOTHING",
-                "additionalFields": {}
-            },
-            "id": "log-skipped",
-            "name": "Log Skipped Job",
-            "type": "n8n-nodes-base.postgres",
-            "typeVersion": 2.3,
-            "position": [
-                2640,
-                600
-            ],
-            "credentials": {
-                "postgres": {
-                    "id": "app-db",
-                    "name": "App Database"
-                }
-            }
-        },
-        {
-            "parameters": {
-                "model": "claude-sonnet-4-5-20250514",
-                "messages": {
-                    "values": [
-                        {
-                            "role": "system",
-                            "content": "You are an expert resume writer specializing in ATS optimization.\n\nINPUT: JSON with \"job_description\", \"master_cv\", and \"ats_keywords\"\n\nTASK: Rewrite the CV to maximize ATS compatibility for this specific role.\n\nRULES — CRITICAL:\n1. NEVER invent, fabricate, or hallucinate any experience, skill, company, date, or credential\n2. ONLY use information present in the master_cv\n3. You MAY: reorder bullet points, rephrase using ATS keywords (synonymous mapping only), adjust the professional summary, emphasize relevant experience\n4. You MUST NOT: add skills the candidate doesn't have, change employment dates, invent metrics or achievements, add certifications not listed\n5. Output clean Markdown with standard sections: Contact, Summary, Experience, Education, Skills\n6. Use single-column format, no tables, no images, no graphics\n7. Keep to 1-2 pages maximum\n\nOUTPUT: JSON with two keys:\n{\n  \"tailored_cv_markdown\": \"<full CV in markdown>\",\n  \"motivation_letter_markdown\": \"<targeted cover letter in markdown>\"\n}\n\nFor the motivation letter:\n- Reference the company name and specific role\n- Connect candidate's top 3 relevant experiences to the job's stated needs\n- Keep to 250-350 words\n- Professional but not generic — avoid clichés\n- Again: NEVER fabricate any claims"
-                        },
-                        {
-                            "role": "user",
-                            "content": "={{ JSON.stringify({ job_description: $json.description, master_cv: $json.master_cv_text, ats_keywords: $json.ats_keywords }) }}"
-                        }
+                "method": "POST",
+                "url": "https://api.anthropic.com/v1/messages",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+                        { "name": "anthropic-version", "value": "2023-06-01" },
+                        { "name": "content-type", "value": "application/json" }
                     ]
                 },
-                "options": {
-                    "temperature": 0.2,
-                    "maxTokens": 4000
-                }
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-5-20250514', max_tokens: 4096, temperature: 0.2, messages: [{ role: 'user', content: 'You are an expert ATS resume writer. Rewrite this CV for the job below.\\n\\nReturn ONLY raw JSON (no markdown fences):\\n{\"tailored_cv_markdown\":\"<CV in markdown>\",\"motivation_letter_markdown\":\"<cover letter in markdown>\"}\\n\\nRULES: NEVER fabricate. ONLY use info from CV. MAY reorder/rephrase with ATS keywords. Clean Markdown, single-column, max 2 pages. Cover letter: 250-350 words, reference company+role, no cliches.\\n\\nATS KEYWORDS: ' + JSON.stringify($json.atsKeywords) + '\\n\\nJOB: ' + $json.title + ' at ' + $json.company + '\\n' + $json.description.substring(0, 3000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 5000) }] }) }}",
+                "options": { "timeout": 60000 }
             },
             "id": "llm-tailoring",
             "name": "LLM CV Tailoring",
-            "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-            "typeVersion": 1.1,
-            "position": [
-                2640,
-                200
-            ],
-            "credentials": {
-                "anthropicApi": {
-                    "id": "anthropic",
-                    "name": "Anthropic API"
-                }
-            }
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [1760, -100]
         },
         {
             "parameters": {
-                "jsCode": "// Parse tailored CV response\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  try {\n    let responseText = item.json.message?.content || item.json.text || '';\n    const jsonMatch = responseText.match(/```json?\\s*([\\s\\S]*?)```/) || [null, responseText];\n    const parsed = JSON.parse(jsonMatch[1].trim());\n    results.push({ json: { ...item.json, ...parsed, tailoring_error: false } });\n  } catch (e) {\n    results.push({ json: { ...item.json, tailoring_error: true, error: e.message } });\n  }\n}\n\nreturn results;"
+                "jsCode": "// Parse tailoring response\nconst item = $input.first();\nconst prev = $('Score >= 70?').first().json;\n\ntry {\n  const text = item.json.content?.[0]?.text || '';\n  let jsonStr = text;\n  const m = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (m) jsonStr = m[1];\n  const p = JSON.parse(jsonStr.trim());\n\n  return [{ json: {\n    ...prev,\n    tailoredCvMarkdown: p.tailored_cv_markdown || '',\n    coverLetterMarkdown: p.motivation_letter_markdown || '',\n    status: 'tailored'\n  }}];\n} catch (e) {\n  return [{ json: {\n    ...prev,\n    tailoredCvMarkdown: '',\n    coverLetterMarkdown: '',\n    status: 'discovered'\n  }}];\n}"
             },
             "id": "parse-tailored",
             "name": "Parse Tailored Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [
-                2860,
-                200
-            ]
+            "position": [1980, -100]
         },
         {
             "parameters": {
-                "method": "POST",
-                "url": "={{ $env.GOTENBERG_URL }}/forms/chromium/convert/html",
-                "sendBody": true,
-                "contentType": "multipart-form-data",
-                "bodyParameters": {
-                    "parameters": [
-                        {
-                            "name": "files",
-                            "value": "={{ '<html><head><style>body{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;margin:40px;color:#333}h1{font-size:18px;margin-bottom:4px}h2{font-size:14px;border-bottom:1px solid #ccc;padding-bottom:4px;margin-top:16px}ul{padding-left:20px}li{margin-bottom:4px}</style></head><body>' + $json.tailored_cv_markdown.replace(/\\n/g, '<br>') + '</body></html>' }}"
-                        }
-                    ]
-                },
-                "options": {}
+                "jsCode": "// For low-scoring jobs (score < 70), mark as discovered only\nconst item = $input.first().json;\n\nreturn [{ json: {\n  ...item,\n  tailoredCvMarkdown: null,\n  coverLetterMarkdown: null,\n  status: 'discovered'\n}}];"
             },
-            "id": "cv-to-pdf",
-            "name": "Generate CV PDF",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                3080,
-                100
-            ]
+            "id": "mark-discovered",
+            "name": "Mark as Discovered",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [1760, 200]
         },
         {
             "parameters": {
-                "method": "POST",
-                "url": "={{ $env.GOTENBERG_URL }}/forms/chromium/convert/html",
-                "sendBody": true,
-                "contentType": "multipart-form-data",
-                "bodyParameters": {
-                    "parameters": [
-                        {
-                            "name": "files",
-                            "value": "={{ '<html><head><style>body{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;margin:60px;color:#333}p{margin-bottom:12px}</style></head><body>' + $json.motivation_letter_markdown.replace(/\\n/g, '<br>') + '</body></html>' }}"
-                        }
-                    ]
-                },
-                "options": {}
+                "jsCode": "// Collect all processed jobs (tailored + discovered) for this user\n// and send them to the web app in a single batch callback\nconst items = $input.all();\n\nif (items.length === 0) return [];\n\n// Group by userId\nconst byUser = {};\nfor (const item of items) {\n  const d = item.json;\n  if (!byUser[d.userId]) byUser[d.userId] = [];\n  byUser[d.userId].push({\n    externalId: d.externalId,\n    title: d.title,\n    company: d.company,\n    location: d.location,\n    description: d.description,\n    source: d.source,\n    url: d.url,\n    salary: d.salary,\n    postedAt: d.postedAt,\n    compatibilityScore: d.compatibilityScore,\n    atsKeywords: d.atsKeywords,\n    matchingStrengths: d.matchingStrengths,\n    gaps: d.gaps,\n    recommendation: d.recommendation,\n    tailoredCvMarkdown: d.tailoredCvMarkdown || null,\n    coverLetterMarkdown: d.coverLetterMarkdown || null,\n    status: d.status\n  });\n}\n\nconst appUrl = $env.APP_URL || 'https://autoapply.works';\nconst secret = $env.N8N_WEBHOOK_SECRET || '';\n\nfor (const [userId, apps] of Object.entries(byUser)) {\n  try {\n    await fetch(`${appUrl}/api/webhooks/n8n`, {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n        'x-webhook-secret': secret\n      },\n      body: JSON.stringify({\n        type: 'new_applications',\n        data: { userId, applications: apps }\n      })\n    });\n  } catch (e) {\n    console.log(`Callback failed for user ${userId}:`, e.message);\n  }\n}\n\nreturn [{ json: { processed: items.length, users: Object.keys(byUser).length } }];"
             },
-            "id": "letter-to-pdf",
-            "name": "Generate Letter PDF",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                3080,
-                300
-            ]
+            "id": "batch-callback",
+            "name": "Batch Save via App API",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [2200, 50]
         },
         {
             "parameters": {
-                "operation": "executeQuery",
-                "query": "INSERT INTO applications (id, user_id, job_id, compatibility_score, ats_keywords, matching_strengths, gaps, recommendation, tailored_cv_markdown, cover_letter_markdown, status, created_at, updated_at) VALUES (gen_random_uuid(), '{{ $json.user_id }}', '{{ $json.job_id }}', {{ $json.compatibility_score }}, ARRAY{{ $json.ats_keywords }}, ARRAY{{ $json.matching_strengths }}, ARRAY{{ $json.gaps }}, '{{ $json.recommendation }}', '{{ $json.tailored_cv_markdown }}', '{{ $json.motivation_letter_markdown }}', 'tailored', NOW(), NOW()) ON CONFLICT (user_id, job_id) DO UPDATE SET compatibility_score = EXCLUDED.compatibility_score, tailored_cv_markdown = EXCLUDED.tailored_cv_markdown, cover_letter_markdown = EXCLUDED.cover_letter_markdown, status = 'tailored', updated_at = NOW()",
-                "additionalFields": {}
-            },
-            "id": "update-db",
-            "name": "Update Database",
-            "type": "n8n-nodes-base.postgres",
-            "typeVersion": 2.3,
-            "position": [
-                3300,
-                200
-            ],
-            "credentials": {
-                "postgres": {
-                    "id": "app-db",
-                    "name": "App Database"
-                }
-            }
-        },
-        {
-            "parameters": {
-                "method": "POST",
-                "url": "={{ $env.APP_URL || 'http://web:3000' }}/api/webhooks/n8n",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "x-webhook-secret",
-                            "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
-                        },
-                        {
-                            "name": "Content-Type",
-                            "value": "application/json"
-                        }
-                    ]
-                },
-                "sendBody": true,
-                "bodyParameters": {
-                    "parameters": [
-                        {
-                            "name": "type",
-                            "value": "new_applications"
-                        },
-                        {
-                            "name": "data",
-                            "value": "={{ JSON.stringify({ userId: $json.user_id, count: 1 }) }}"
-                        }
-                    ]
-                },
-                "options": {}
-            },
-            "id": "notify-user",
-            "name": "Notify User",
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.1,
-            "position": [
-                3520,
-                200
-            ]
-        },
-        {
-            "parameters": {
-                "jsCode": "// Error handler — log to workflow_errors table\nconst error = $input.first().json;\nreturn [{\n  json: {\n    workflowId: 'job-discovery-pipeline',\n    nodeName: error.node?.name || 'unknown',\n    errorType: error.type || 'UNKNOWN',\n    message: error.message || 'Unknown error',\n    payload: JSON.stringify(error),\n    timestamp: new Date().toISOString()\n  }\n}];"
+                "jsCode": "// Error handler — log to workflow_errors via web app\nconst error = $input.first().json;\nconst appUrl = $env.APP_URL || 'https://autoapply.works';\nconst secret = $env.N8N_WEBHOOK_SECRET || '';\n\ntry {\n  await fetch(`${appUrl}/api/webhooks/n8n`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'x-webhook-secret': secret\n    },\n    body: JSON.stringify({\n      type: 'workflow_error',\n      data: {\n        workflowId: 'job-discovery-pipeline',\n        nodeName: error.node?.name || 'unknown',\n        errorType: error.type || 'UNKNOWN',\n        message: error.message || 'Unknown error',\n        payload: JSON.stringify(error)\n      }\n    })\n  });\n} catch (e) {\n  console.log('Error logging failed:', e.message);\n}\n\nreturn [{ json: { logged: true } }];"
             },
             "id": "error-handler",
             "name": "Error Handler",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [
-                3300,
-                600
-            ]
-        },
-        {
-            "parameters": {
-                "operation": "executeQuery",
-                "query": "INSERT INTO workflow_errors (id, workflow_id, node_name, error_type, message, payload, created_at) VALUES (gen_random_uuid(), '{{ $json.workflowId }}', '{{ $json.nodeName }}', '{{ $json.errorType }}', '{{ $json.message }}', '{{ $json.payload }}'::jsonb, NOW())",
-                "additionalFields": {}
-            },
-            "id": "log-error",
-            "name": "Log Error to DB",
-            "type": "n8n-nodes-base.postgres",
-            "typeVersion": 2.3,
-            "position": [
-                3520,
-                600
-            ],
-            "credentials": {
-                "postgres": {
-                    "id": "app-db",
-                    "name": "App Database"
-                }
-            }
+            "position": [2200, 400]
         }
     ],
     "connections": {
         "Schedule Trigger": {
-            "main": [
-                [
-                    {
-                        "node": "Random Jitter Wait",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+            "main": [[{ "node": "Random Jitter Wait", "type": "main", "index": 0 }]]
         },
         "Random Jitter Wait": {
-            "main": [
-                [
-                    {
-                        "node": "Fetch Active Users",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+            "main": [[{ "node": "Fetch Active Users with Prefs & CV", "type": "main", "index": 0 }]]
         },
-        "Fetch Active Users": {
-            "main": [
-                [
-                    {
-                        "node": "Split Into Users",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+        "Fetch Active Users with Prefs & CV": {
+            "main": [[{ "node": "Prepare User Data", "type": "main", "index": 0 }]]
         },
-        "Split Into Users": {
-            "main": [
-                [
-                    {
-                        "node": "Fetch User Preferences",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+        "Prepare User Data": {
+            "main": [[{ "node": "Fetch & Normalize All Job Sources", "type": "main", "index": 0 }]]
         },
-        "Fetch User Preferences": {
-            "main": [
-                [
-                    {
-                        "node": "Fetch Master CV",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Fetch Master CV": {
-            "main": [
-                [
-                    {
-                        "node": "Fetch Adzuna Jobs",
-                        "type": "main",
-                        "index": 0
-                    },
-                    {
-                        "node": "Fetch The Muse Jobs",
-                        "type": "main",
-                        "index": 0
-                    },
-                    {
-                        "node": "Fetch Remotive Jobs",
-                        "type": "main",
-                        "index": 0
-                    },
-                    {
-                        "node": "Fetch Arbeitnow Jobs",
-                        "type": "main",
-                        "index": 0
-                    },
-                    {
-                        "node": "Fetch JSearch Jobs",
-                        "type": "main",
-                        "index": 0
-                    },
-                    {
-                        "node": "Fetch Jooble Jobs",
-                        "type": "main",
-                        "index": 0
-                    },
-                    {
-                        "node": "Fetch Reed Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Fetch Adzuna Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "Merge All Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Fetch The Muse Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "Merge All Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Fetch Remotive Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "Merge All Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Fetch Arbeitnow Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "Merge All Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Fetch JSearch Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "Merge All Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Fetch Jooble Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "Merge All Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Fetch Reed Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "Merge All Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Merge All Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "Deduplicate Jobs",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Deduplicate Jobs": {
-            "main": [
-                [
-                    {
-                        "node": "LLM Relevance Scoring",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+        "Fetch & Normalize All Job Sources": {
+            "main": [[{ "node": "LLM Relevance Scoring", "type": "main", "index": 0 }]]
         },
         "LLM Relevance Scoring": {
-            "main": [
-                [
-                    {
-                        "node": "Parse Scoring Response",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+            "main": [[{ "node": "Parse Scoring Response", "type": "main", "index": 0 }]]
         },
         "Parse Scoring Response": {
-            "main": [
-                [
-                    {
-                        "node": "Score >= 75?",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+            "main": [[{ "node": "Score >= 70?", "type": "main", "index": 0 }]]
         },
-        "Score >= 75?": {
+        "Score >= 70?": {
             "main": [
-                [
-                    {
-                        "node": "LLM CV Tailoring",
-                        "type": "main",
-                        "index": 0
-                    }
-                ],
-                [
-                    {
-                        "node": "Log Skipped Job",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
+                [{ "node": "LLM CV Tailoring", "type": "main", "index": 0 }],
+                [{ "node": "Mark as Discovered", "type": "main", "index": 0 }]
             ]
         },
         "LLM CV Tailoring": {
-            "main": [
-                [
-                    {
-                        "node": "Parse Tailored Response",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+            "main": [[{ "node": "Parse Tailored Response", "type": "main", "index": 0 }]]
         },
         "Parse Tailored Response": {
-            "main": [
-                [
-                    {
-                        "node": "Generate CV PDF",
-                        "type": "main",
-                        "index": 0
-                    },
-                    {
-                        "node": "Generate Letter PDF",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+            "main": [[{ "node": "Batch Save via App API", "type": "main", "index": 0 }]]
         },
-        "Generate CV PDF": {
-            "main": [
-                [
-                    {
-                        "node": "Update Database",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Generate Letter PDF": {
-            "main": [
-                [
-                    {
-                        "node": "Update Database",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Update Database": {
-            "main": [
-                [
-                    {
-                        "node": "Notify User",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
-        "Error Handler": {
-            "main": [
-                [
-                    {
-                        "node": "Log Error to DB",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
+        "Mark as Discovered": {
+            "main": [[{ "node": "Batch Save via App API", "type": "main", "index": 0 }]]
         }
     },
     "settings": {
@@ -983,11 +222,7 @@
         "errorWorkflow": "error-handler"
     },
     "tags": [
-        {
-            "name": "production"
-        },
-        {
-            "name": "job-discovery"
-        }
+        { "name": "production" },
+        { "name": "job-discovery" }
     ]
 }
