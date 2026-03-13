@@ -851,3 +851,56 @@ Both workflow JSON files were completely rewritten due to 5 critical issues:
 - Neon DB credentials need to be added to Render n8n env vars (for discovery pipeline)
 - Need JSearch (RapidAPI), Jooble, Reed API keys for full job discovery
 - Adzuna free trial plan — monitor for rate limits in production
+
+---
+
+## Session 15 — 2026-03-13 (continued)
+
+### Completed
+
+**CRITICAL FIX: n8n `$env` Access Denied — Eliminated All `$env` Usage:**
+
+Root cause: n8n blocks `$env` (environment variable access) in workflow expressions and Code nodes. This is a security restriction in modern n8n versions (Task Runner sandbox). Neither `N8N_COMMUNITY_EDITION_ALLOW_ENV_ACCESS=true` nor `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` resolved it.
+
+**Solution: "Load Config" Code node pattern — zero `$env` references anywhere.**
+
+Both workflow JSON files were rewritten to use a **"Load Config" Code node** at the start of each pipeline. This node defines all API keys and configuration as JavaScript variables. Downstream nodes access config via `$json.xxx` or `$('Load Config').first().json.xxx` — standard n8n APIs that are NOT blocked by the sandbox.
+
+**`n8n/workflows/single-job-tailoring.json` — Updated:**
+- Added "Load Config" Code node between Webhook Trigger and Validate Input
+- Config contains: `anthropicApiKey`, `appUrl`, `webhookSecret` (user fills in actual values in n8n UI)
+- Load Config passes webhook data through with `_config` attached
+- Validate Input extracts both webhook body and config, passes config fields through pipeline
+- All HTTP Request nodes use `$json.anthropicApiKey` instead of `$env.ANTHROPIC_API_KEY`
+- Callback node uses `$json.appUrl` and `$json.webhookSecret`
+- Config values propagate through all Parse nodes via `...prev` spread
+
+**`n8n/workflows/job-discovery-pipeline.json` — Updated:**
+- Added "Load Config" Code node between Schedule Trigger and Random Jitter Wait
+- Config contains: `anthropicApiKey`, `appUrl`, `webhookSecret`, `adzunaAppId`, `adzunaAppKey`, `jsearchApiKey`, `joobleApiKey`, `reedApiKey`
+- All HTTP Request nodes use `$('Load Config').first().json.anthropicApiKey`
+- All Code nodes use `const config = $('Load Config').first().json;` then `config.xxx`
+- Changed `Buffer.from()` to `btoa()` for Reed API auth (broader compatibility in sandbox)
+- Batch Save and Error Handler Code nodes both use `$('Load Config')` for appUrl and webhookSecret
+
+**Verification:**
+- `grep -r '$env' n8n/workflows/` → **zero matches** (all eliminated)
+- Both JSON files validated as valid JSON
+- All 121 tests passing (20 files, 0 failures)
+
+### Files Modified This Session
+- `n8n/workflows/single-job-tailoring.json` — Added Load Config, replaced all `$env`
+- `n8n/workflows/job-discovery-pipeline.json` — Added Load Config, replaced all `$env`
+
+### What's Next — User Action Required
+The user needs to **re-import** both workflow JSONs into the Render n8n instance:
+1. Go to n8n UI → delete existing "Single Job Tailoring" workflow
+2. Import `n8n/workflows/single-job-tailoring.json` (copy-paste or upload)
+3. Double-click "Load Config" node → replace placeholder values with actual keys
+4. Repeat for "Job Discovery Pipeline"
+5. Publish both workflows
+6. Test: paste a job on autoapply.works → click "Tailor CV" → verify documents appear
+
+### Blockers / Decisions
+- User must manually enter API keys in Load Config nodes (one-time setup per workflow)
+- Need JSearch, Jooble, Reed API keys for full job discovery pipeline

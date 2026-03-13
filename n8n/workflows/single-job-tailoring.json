@@ -17,13 +17,23 @@
         },
         {
             "parameters": {
-                "jsCode": "// Validate and extract incoming webhook payload\nconst body = $input.first().json.body;\n\nif (!body || !body.jobDescription || !body.masterCvText || !body.userId || !body.jobId) {\n  throw new Error('Missing required fields: jobDescription, masterCvText, userId, jobId');\n}\n\nreturn [{\n  json: {\n    userId: body.userId,\n    jobId: body.jobId,\n    jobTitle: body.jobTitle || '',\n    company: body.company || '',\n    jobDescription: body.jobDescription,\n    masterCvText: body.masterCvText\n  }\n}];"
+                "jsCode": "// =============================================\n// CONFIGURATION — Edit values below in n8n UI\n// Double-click this node and replace placeholders\n// with your actual API keys and URLs.\n// =============================================\n\nconst CONFIG = {\n  anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY_HERE',\n  appUrl: 'https://autoapply.works',\n  webhookSecret: 'YOUR_N8N_WEBHOOK_SECRET_HERE'\n};\n\n// Pass through incoming webhook data with config attached\nconst input = $input.first().json;\nreturn [{\n  json: {\n    ...input,\n    _config: CONFIG\n  }\n}];"
+            },
+            "id": "load-config",
+            "name": "Load Config",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [200, 0]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Validate and extract incoming webhook payload\nconst body = $input.first().json.body;\nconst config = $input.first().json._config;\n\nif (!body || !body.jobDescription || !body.masterCvText || !body.userId || !body.jobId) {\n  throw new Error('Missing required fields: jobDescription, masterCvText, userId, jobId');\n}\n\nreturn [{\n  json: {\n    userId: body.userId,\n    jobId: body.jobId,\n    jobTitle: body.jobTitle || '',\n    company: body.company || '',\n    jobDescription: body.jobDescription,\n    masterCvText: body.masterCvText,\n    anthropicApiKey: config.anthropicApiKey,\n    appUrl: config.appUrl,\n    webhookSecret: config.webhookSecret\n  }\n}];"
             },
             "id": "validate-input",
             "name": "Validate Input",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [220, 0]
+            "position": [400, 0]
         },
         {
             "parameters": {
@@ -32,7 +42,7 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+                        { "name": "x-api-key", "value": "={{ $json.anthropicApiKey }}" },
                         { "name": "anthropic-version", "value": "2023-06-01" },
                         { "name": "content-type", "value": "application/json" }
                     ]
@@ -46,7 +56,7 @@
             "name": "LLM Relevance Scoring",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [440, 0]
+            "position": [600, 0]
         },
         {
             "parameters": {
@@ -56,7 +66,7 @@
             "name": "Parse Scoring Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [660, 0]
+            "position": [800, 0]
         },
         {
             "parameters": {
@@ -65,7 +75,7 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+                        { "name": "x-api-key", "value": "={{ $json.anthropicApiKey }}" },
                         { "name": "anthropic-version", "value": "2023-06-01" },
                         { "name": "content-type", "value": "application/json" }
                     ]
@@ -79,7 +89,7 @@
             "name": "LLM CV Tailoring",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [880, 0]
+            "position": [1000, 0]
         },
         {
             "parameters": {
@@ -89,16 +99,16 @@
             "name": "Parse Tailored Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [1100, 0]
+            "position": [1200, 0]
         },
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ ($env.APP_URL || 'https://autoapply.works') + '/api/webhooks/n8n' }}",
+                "url": "={{ ($json.appUrl || 'https://autoapply.works') + '/api/webhooks/n8n' }}",
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-webhook-secret", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" },
+                        { "name": "x-webhook-secret", "value": "={{ $json.webhookSecret }}" },
                         { "name": "content-type", "value": "application/json" }
                     ]
                 },
@@ -111,11 +121,14 @@
             "name": "Save Results via App API",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [1320, 0]
+            "position": [1400, 0]
         }
     ],
     "connections": {
         "Webhook Trigger": {
+            "main": [[{ "node": "Load Config", "type": "main", "index": 0 }]]
+        },
+        "Load Config": {
             "main": [[{ "node": "Validate Input", "type": "main", "index": 0 }]]
         },
         "Validate Input": {

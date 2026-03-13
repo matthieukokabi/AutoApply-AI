@@ -15,6 +15,16 @@
         },
         {
             "parameters": {
+                "jsCode": "// =============================================\n// CONFIGURATION — Edit values below in n8n UI\n// Double-click this node and replace placeholders\n// with your actual API keys and URLs.\n// =============================================\n\nreturn [{\n  json: {\n    // REQUIRED: Your Anthropic API key for Claude LLM\n    anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY_HERE',\n\n    // Your app URL and webhook secret\n    appUrl: 'https://autoapply.works',\n    webhookSecret: 'YOUR_N8N_WEBHOOK_SECRET_HERE',\n\n    // Job source API keys (leave empty string if not yet available)\n    adzunaAppId: 'YOUR_ADZUNA_APP_ID',\n    adzunaAppKey: 'YOUR_ADZUNA_APP_KEY',\n    jsearchApiKey: '',\n    joobleApiKey: '',\n    reedApiKey: ''\n  }\n}];"
+            },
+            "id": "load-config",
+            "name": "Load Config",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [200, 0]
+        },
+        {
+            "parameters": {
                 "amount": "={{ Math.floor(Math.random() * 30) }}",
                 "unit": "minutes"
             },
@@ -22,7 +32,7 @@
             "name": "Random Jitter Wait",
             "type": "n8n-nodes-base.wait",
             "typeVersion": 1.1,
-            "position": [220, 0]
+            "position": [400, 0]
         },
         {
             "parameters": {
@@ -34,7 +44,7 @@
             "name": "Fetch Active Users with Prefs & CV",
             "type": "n8n-nodes-base.postgres",
             "typeVersion": 2.3,
-            "position": [440, 0],
+            "position": [600, 0],
             "credentials": {
                 "postgres": {
                     "id": "app-db",
@@ -44,23 +54,23 @@
         },
         {
             "parameters": {
-                "jsCode": "// Split users into individual items for processing\nconst items = $input.all();\nconst users = [];\n\nfor (const item of items) {\n  // Each row from the JOIN query is one user\n  const row = item.json;\n  if (row.id && row.masterCvText) {\n    users.push({\n      json: {\n        userId: row.id,\n        email: row.email,\n        name: row.name,\n        subscriptionStatus: row.subscriptionStatus,\n        creditsRemaining: row.creditsRemaining,\n        targetTitles: row.targetTitles || ['software engineer'],\n        locations: row.locations || ['remote'],\n        remotePreference: row.remotePreference || 'any',\n        salaryMin: row.salaryMin || 0,\n        industries: row.industries || [],\n        masterCvText: row.masterCvText\n      }\n    });\n  }\n}\n\nif (users.length === 0) {\n  // No active users — stop the workflow gracefully\n  return [];\n}\n\nreturn users;"
+                "jsCode": "// Split users into individual items for processing\nconst items = $input.all();\nconst users = [];\n\nfor (const item of items) {\n  const row = item.json;\n  if (row.id && row.masterCvText) {\n    users.push({\n      json: {\n        userId: row.id,\n        email: row.email,\n        name: row.name,\n        subscriptionStatus: row.subscriptionStatus,\n        creditsRemaining: row.creditsRemaining,\n        targetTitles: row.targetTitles || ['software engineer'],\n        locations: row.locations || ['remote'],\n        remotePreference: row.remotePreference || 'any',\n        salaryMin: row.salaryMin || 0,\n        industries: row.industries || [],\n        masterCvText: row.masterCvText\n      }\n    });\n  }\n}\n\nif (users.length === 0) {\n  return [];\n}\n\nreturn users;"
             },
             "id": "prepare-users",
             "name": "Prepare User Data",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [660, 0]
+            "position": [800, 0]
         },
         {
             "parameters": {
-                "jsCode": "// Fetch jobs from ALL sources for this user, normalize, and deduplicate\nconst user = $input.first().json;\nconst searchTitle = (user.targetTitles[0] || 'software engineer').trim();\nconst searchLocation = (user.locations[0] || '').trim();\n\nconst allJobs = [];\n\n// Helper: safe fetch with timeout\nasync function safeFetch(url, options = {}) {\n  const controller = new AbortController();\n  const timeout = setTimeout(() => controller.abort(), 15000);\n  try {\n    const resp = await fetch(url, { ...options, signal: controller.signal });\n    clearTimeout(timeout);\n    if (!resp.ok) return null;\n    return await resp.json();\n  } catch (e) {\n    clearTimeout(timeout);\n    return null;\n  }\n}\n\n// 1. ADZUNA\nif ($env.ADZUNA_APP_ID && $env.ADZUNA_APP_KEY) {\n  try {\n    const adzunaUrl = `https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=${$env.ADZUNA_APP_ID}&app_key=${$env.ADZUNA_APP_KEY}&what=${encodeURIComponent(searchTitle)}&where=${encodeURIComponent(searchLocation)}&results_per_page=15&content-type=application/json`;\n    const data = await safeFetch(adzunaUrl);\n    if (data?.results) {\n      for (const j of data.results) {\n        allJobs.push({\n          externalId: `adzuna-${j.id}`,\n          title: j.title || '',\n          company: j.company?.display_name || 'Unknown',\n          location: j.location?.display_name || '',\n          description: j.description || '',\n          source: 'adzuna',\n          url: j.redirect_url || '',\n          salary: j.salary_is_predicted === '0' ? `${j.salary_min}-${j.salary_max}` : null,\n          postedAt: j.created ? new Date(j.created).toISOString() : null\n        });\n      }\n    }\n  } catch (e) { /* adzuna failed, continue */ }\n}\n\n// 2. THE MUSE (free, no key needed)\ntry {\n  const museUrl = `https://www.themuse.com/api/public/jobs?category=Engineering&level=Mid%20Level&page=1`;\n  const data = await safeFetch(museUrl);\n  if (data?.results) {\n    for (const j of data.results) {\n      allJobs.push({\n        externalId: `themuse-${j.id}`,\n        title: j.name || '',\n        company: j.company?.name || 'Unknown',\n        location: j.locations?.map(l => l.name).join(', ') || '',\n        description: (j.contents || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'themuse',\n        url: j.refs?.landing_page || '',\n        salary: null,\n        postedAt: j.publication_date || null\n      });\n    }\n  }\n} catch (e) { /* themuse failed */ }\n\n// 3. REMOTIVE (free, no key needed)\ntry {\n  const remotiveUrl = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(searchTitle)}&limit=15`;\n  const data = await safeFetch(remotiveUrl);\n  if (data?.jobs) {\n    for (const j of data.jobs) {\n      allJobs.push({\n        externalId: `remotive-${j.id}`,\n        title: j.title || '',\n        company: j.company_name || 'Unknown',\n        location: j.candidate_required_location || 'Remote',\n        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'remotive',\n        url: j.url || '',\n        salary: j.salary || null,\n        postedAt: j.publication_date || null\n      });\n    }\n  }\n} catch (e) { /* remotive failed */ }\n\n// 4. ARBEITNOW (free, no key needed)\ntry {\n  const arbeitnowUrl = `https://www.arbeitnow.com/api/job-board-api?search=${encodeURIComponent(searchTitle)}&page=1`;\n  const data = await safeFetch(arbeitnowUrl);\n  if (data?.data) {\n    for (const j of data.data) {\n      allJobs.push({\n        externalId: `arbeitnow-${j.slug || j.id || Date.now()}`,\n        title: j.title || '',\n        company: j.company_name || 'Unknown',\n        location: j.location || '',\n        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'arbeitnow',\n        url: j.url || '',\n        salary: null,\n        postedAt: j.created_at || null\n      });\n    }\n  }\n} catch (e) { /* arbeitnow failed */ }\n\n// 5. JSEARCH (RapidAPI, needs key)\nif ($env.JSEARCH_API_KEY) {\n  try {\n    const query = `${searchTitle} in ${searchLocation || 'remote'}`;\n    const jsearchUrl = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1`;\n    const data = await safeFetch(jsearchUrl, {\n      headers: {\n        'X-RapidAPI-Key': $env.JSEARCH_API_KEY,\n        'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'\n      }\n    });\n    if (data?.data) {\n      for (const j of data.data) {\n        allJobs.push({\n          externalId: `jsearch-${j.job_id}`,\n          title: j.job_title || '',\n          company: j.employer_name || 'Unknown',\n          location: j.job_city ? `${j.job_city}, ${j.job_state || j.job_country}` : (j.job_country || ''),\n          description: (j.job_description || '').substring(0, 3000),\n          source: 'jsearch',\n          url: j.job_apply_link || j.job_google_link || '',\n          salary: j.job_min_salary ? `${j.job_min_salary}-${j.job_max_salary}` : null,\n          postedAt: j.job_posted_at_datetime_utc || null\n        });\n      }\n    }\n  } catch (e) { /* jsearch failed */ }\n}\n\n// 6. JOOBLE (needs key)\nif ($env.JOOBLE_API_KEY) {\n  try {\n    const data = await safeFetch(`https://jooble.org/api/${$env.JOOBLE_API_KEY}`, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ keywords: searchTitle, location: searchLocation, page: 1 })\n    });\n    if (data?.jobs) {\n      for (const j of data.jobs) {\n        allJobs.push({\n          externalId: `jooble-${j.id || Date.now()}`,\n          title: j.title || '',\n          company: j.company || 'Unknown',\n          location: j.location || '',\n          description: (j.snippet || '').substring(0, 3000),\n          source: 'jooble',\n          url: j.link || '',\n          salary: j.salary || null,\n          postedAt: j.updated || null\n        });\n      }\n    }\n  } catch (e) { /* jooble failed */ }\n}\n\n// 7. REED (needs key, basic auth)\nif ($env.REED_API_KEY) {\n  try {\n    const reedAuth = Buffer.from($env.REED_API_KEY + ':').toString('base64');\n    const reedUrl = `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(searchTitle)}&locationName=${encodeURIComponent(searchLocation)}&resultsToTake=15`;\n    const data = await safeFetch(reedUrl, {\n      headers: { 'Authorization': `Basic ${reedAuth}` }\n    });\n    if (data?.results) {\n      for (const j of data.results) {\n        allJobs.push({\n          externalId: `reed-${j.jobId}`,\n          title: j.jobTitle || '',\n          company: j.employerName || 'Unknown',\n          location: j.locationName || '',\n          description: (j.jobDescription || '').substring(0, 3000),\n          source: 'reed',\n          url: j.jobUrl || '',\n          salary: j.minimumSalary ? `${j.minimumSalary}-${j.maximumSalary}` : null,\n          postedAt: j.date || null\n        });\n      }\n    }\n  } catch (e) { /* reed failed */ }\n}\n\n// Deduplicate by externalId\nconst seen = new Set();\nconst uniqueJobs = [];\nfor (const job of allJobs) {\n  if (!seen.has(job.externalId) && job.title && job.description.length > 50) {\n    seen.add(job.externalId);\n    uniqueJobs.push(job);\n  }\n}\n\n// Return each job as a separate item with user context\nif (uniqueJobs.length === 0) return [];\n\nreturn uniqueJobs.map(job => ({\n  json: {\n    ...job,\n    userId: user.userId,\n    masterCvText: user.masterCvText,\n    subscriptionStatus: user.subscriptionStatus,\n    creditsRemaining: user.creditsRemaining\n  }\n}));"
+                "jsCode": "// Fetch jobs from ALL sources for this user, normalize, and deduplicate\nconst user = $input.first().json;\nconst config = $('Load Config').first().json;\nconst searchTitle = (user.targetTitles[0] || 'software engineer').trim();\nconst searchLocation = (user.locations[0] || '').trim();\n\nconst allJobs = [];\n\n// Helper: safe fetch with timeout\nasync function safeFetch(url, options = {}) {\n  const controller = new AbortController();\n  const timeout = setTimeout(() => controller.abort(), 15000);\n  try {\n    const resp = await fetch(url, { ...options, signal: controller.signal });\n    clearTimeout(timeout);\n    if (!resp.ok) return null;\n    return await resp.json();\n  } catch (e) {\n    clearTimeout(timeout);\n    return null;\n  }\n}\n\n// 1. ADZUNA\nif (config.adzunaAppId && config.adzunaAppKey) {\n  try {\n    const adzunaUrl = `https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=${config.adzunaAppId}&app_key=${config.adzunaAppKey}&what=${encodeURIComponent(searchTitle)}&where=${encodeURIComponent(searchLocation)}&results_per_page=15&content-type=application/json`;\n    const data = await safeFetch(adzunaUrl);\n    if (data?.results) {\n      for (const j of data.results) {\n        allJobs.push({\n          externalId: `adzuna-${j.id}`,\n          title: j.title || '',\n          company: j.company?.display_name || 'Unknown',\n          location: j.location?.display_name || '',\n          description: j.description || '',\n          source: 'adzuna',\n          url: j.redirect_url || '',\n          salary: j.salary_is_predicted === '0' ? `${j.salary_min}-${j.salary_max}` : null,\n          postedAt: j.created ? new Date(j.created).toISOString() : null\n        });\n      }\n    }\n  } catch (e) { /* adzuna failed, continue */ }\n}\n\n// 2. THE MUSE (free, no key needed)\ntry {\n  const museUrl = `https://www.themuse.com/api/public/jobs?category=Engineering&level=Mid%20Level&page=1`;\n  const data = await safeFetch(museUrl);\n  if (data?.results) {\n    for (const j of data.results) {\n      allJobs.push({\n        externalId: `themuse-${j.id}`,\n        title: j.name || '',\n        company: j.company?.name || 'Unknown',\n        location: j.locations?.map(l => l.name).join(', ') || '',\n        description: (j.contents || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'themuse',\n        url: j.refs?.landing_page || '',\n        salary: null,\n        postedAt: j.publication_date || null\n      });\n    }\n  }\n} catch (e) { /* themuse failed */ }\n\n// 3. REMOTIVE (free, no key needed)\ntry {\n  const remotiveUrl = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(searchTitle)}&limit=15`;\n  const data = await safeFetch(remotiveUrl);\n  if (data?.jobs) {\n    for (const j of data.jobs) {\n      allJobs.push({\n        externalId: `remotive-${j.id}`,\n        title: j.title || '',\n        company: j.company_name || 'Unknown',\n        location: j.candidate_required_location || 'Remote',\n        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'remotive',\n        url: j.url || '',\n        salary: j.salary || null,\n        postedAt: j.publication_date || null\n      });\n    }\n  }\n} catch (e) { /* remotive failed */ }\n\n// 4. ARBEITNOW (free, no key needed)\ntry {\n  const arbeitnowUrl = `https://www.arbeitnow.com/api/job-board-api?search=${encodeURIComponent(searchTitle)}&page=1`;\n  const data = await safeFetch(arbeitnowUrl);\n  if (data?.data) {\n    for (const j of data.data) {\n      allJobs.push({\n        externalId: `arbeitnow-${j.slug || j.id || Date.now()}`,\n        title: j.title || '',\n        company: j.company_name || 'Unknown',\n        location: j.location || '',\n        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'arbeitnow',\n        url: j.url || '',\n        salary: null,\n        postedAt: j.created_at || null\n      });\n    }\n  }\n} catch (e) { /* arbeitnow failed */ }\n\n// 5. JSEARCH (RapidAPI, needs key)\nif (config.jsearchApiKey) {\n  try {\n    const query = `${searchTitle} in ${searchLocation || 'remote'}`;\n    const jsearchUrl = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1`;\n    const data = await safeFetch(jsearchUrl, {\n      headers: {\n        'X-RapidAPI-Key': config.jsearchApiKey,\n        'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'\n      }\n    });\n    if (data?.data) {\n      for (const j of data.data) {\n        allJobs.push({\n          externalId: `jsearch-${j.job_id}`,\n          title: j.job_title || '',\n          company: j.employer_name || 'Unknown',\n          location: j.job_city ? `${j.job_city}, ${j.job_state || j.job_country}` : (j.job_country || ''),\n          description: (j.job_description || '').substring(0, 3000),\n          source: 'jsearch',\n          url: j.job_apply_link || j.job_google_link || '',\n          salary: j.job_min_salary ? `${j.job_min_salary}-${j.job_max_salary}` : null,\n          postedAt: j.job_posted_at_datetime_utc || null\n        });\n      }\n    }\n  } catch (e) { /* jsearch failed */ }\n}\n\n// 6. JOOBLE (needs key)\nif (config.joobleApiKey) {\n  try {\n    const data = await safeFetch(`https://jooble.org/api/${config.joobleApiKey}`, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ keywords: searchTitle, location: searchLocation, page: 1 })\n    });\n    if (data?.jobs) {\n      for (const j of data.jobs) {\n        allJobs.push({\n          externalId: `jooble-${j.id || Date.now()}`,\n          title: j.title || '',\n          company: j.company || 'Unknown',\n          location: j.location || '',\n          description: (j.snippet || '').substring(0, 3000),\n          source: 'jooble',\n          url: j.link || '',\n          salary: j.salary || null,\n          postedAt: j.updated || null\n        });\n      }\n    }\n  } catch (e) { /* jooble failed */ }\n}\n\n// 7. REED (needs key, basic auth)\nif (config.reedApiKey) {\n  try {\n    const reedAuth = btoa(config.reedApiKey + ':');\n    const reedUrl = `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(searchTitle)}&locationName=${encodeURIComponent(searchLocation)}&resultsToTake=15`;\n    const data = await safeFetch(reedUrl, {\n      headers: { 'Authorization': `Basic ${reedAuth}` }\n    });\n    if (data?.results) {\n      for (const j of data.results) {\n        allJobs.push({\n          externalId: `reed-${j.jobId}`,\n          title: j.jobTitle || '',\n          company: j.employerName || 'Unknown',\n          location: j.locationName || '',\n          description: (j.jobDescription || '').substring(0, 3000),\n          source: 'reed',\n          url: j.jobUrl || '',\n          salary: j.minimumSalary ? `${j.minimumSalary}-${j.maximumSalary}` : null,\n          postedAt: j.date || null\n        });\n      }\n    }\n  } catch (e) { /* reed failed */ }\n}\n\n// Deduplicate by externalId\nconst seen = new Set();\nconst uniqueJobs = [];\nfor (const job of allJobs) {\n  if (!seen.has(job.externalId) && job.title && job.description.length > 50) {\n    seen.add(job.externalId);\n    uniqueJobs.push(job);\n  }\n}\n\nif (uniqueJobs.length === 0) return [];\n\nreturn uniqueJobs.map(job => ({\n  json: {\n    ...job,\n    userId: user.userId,\n    masterCvText: user.masterCvText,\n    subscriptionStatus: user.subscriptionStatus,\n    creditsRemaining: user.creditsRemaining\n  }\n}));"
             },
             "id": "fetch-and-normalize",
             "name": "Fetch & Normalize All Job Sources",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [880, 0]
+            "position": [1000, 0]
         },
         {
             "parameters": {
@@ -69,7 +79,7 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+                        { "name": "x-api-key", "value": "={{ $('Load Config').first().json.anthropicApiKey }}" },
                         { "name": "anthropic-version", "value": "2023-06-01" },
                         { "name": "content-type", "value": "application/json" }
                     ]
@@ -83,7 +93,7 @@
             "name": "LLM Relevance Scoring",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [1100, 0]
+            "position": [1200, 0]
         },
         {
             "parameters": {
@@ -93,7 +103,7 @@
             "name": "Parse Scoring Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [1320, 0]
+            "position": [1400, 0]
         },
         {
             "parameters": {
@@ -111,7 +121,7 @@
             "name": "Score >= 70?",
             "type": "n8n-nodes-base.if",
             "typeVersion": 1,
-            "position": [1540, 0]
+            "position": [1600, 0]
         },
         {
             "parameters": {
@@ -120,7 +130,7 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+                        { "name": "x-api-key", "value": "={{ $('Load Config').first().json.anthropicApiKey }}" },
                         { "name": "anthropic-version", "value": "2023-06-01" },
                         { "name": "content-type", "value": "application/json" }
                     ]
@@ -134,7 +144,7 @@
             "name": "LLM CV Tailoring",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [1760, -100]
+            "position": [1800, -100]
         },
         {
             "parameters": {
@@ -144,7 +154,7 @@
             "name": "Parse Tailored Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [1980, -100]
+            "position": [2000, -100]
         },
         {
             "parameters": {
@@ -154,11 +164,11 @@
             "name": "Mark as Discovered",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [1760, 200]
+            "position": [1800, 200]
         },
         {
             "parameters": {
-                "jsCode": "// Collect all processed jobs (tailored + discovered) for this user\n// and send them to the web app in a single batch callback\nconst items = $input.all();\n\nif (items.length === 0) return [];\n\n// Group by userId\nconst byUser = {};\nfor (const item of items) {\n  const d = item.json;\n  if (!byUser[d.userId]) byUser[d.userId] = [];\n  byUser[d.userId].push({\n    externalId: d.externalId,\n    title: d.title,\n    company: d.company,\n    location: d.location,\n    description: d.description,\n    source: d.source,\n    url: d.url,\n    salary: d.salary,\n    postedAt: d.postedAt,\n    compatibilityScore: d.compatibilityScore,\n    atsKeywords: d.atsKeywords,\n    matchingStrengths: d.matchingStrengths,\n    gaps: d.gaps,\n    recommendation: d.recommendation,\n    tailoredCvMarkdown: d.tailoredCvMarkdown || null,\n    coverLetterMarkdown: d.coverLetterMarkdown || null,\n    status: d.status\n  });\n}\n\nconst appUrl = $env.APP_URL || 'https://autoapply.works';\nconst secret = $env.N8N_WEBHOOK_SECRET || '';\n\nfor (const [userId, apps] of Object.entries(byUser)) {\n  try {\n    await fetch(`${appUrl}/api/webhooks/n8n`, {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n        'x-webhook-secret': secret\n      },\n      body: JSON.stringify({\n        type: 'new_applications',\n        data: { userId, applications: apps }\n      })\n    });\n  } catch (e) {\n    console.log(`Callback failed for user ${userId}:`, e.message);\n  }\n}\n\nreturn [{ json: { processed: items.length, users: Object.keys(byUser).length } }];"
+                "jsCode": "// Collect all processed jobs (tailored + discovered) for this user\n// and send them to the web app in a single batch callback\nconst items = $input.all();\nconst config = $('Load Config').first().json;\n\nif (items.length === 0) return [];\n\n// Group by userId\nconst byUser = {};\nfor (const item of items) {\n  const d = item.json;\n  if (!byUser[d.userId]) byUser[d.userId] = [];\n  byUser[d.userId].push({\n    externalId: d.externalId,\n    title: d.title,\n    company: d.company,\n    location: d.location,\n    description: d.description,\n    source: d.source,\n    url: d.url,\n    salary: d.salary,\n    postedAt: d.postedAt,\n    compatibilityScore: d.compatibilityScore,\n    atsKeywords: d.atsKeywords,\n    matchingStrengths: d.matchingStrengths,\n    gaps: d.gaps,\n    recommendation: d.recommendation,\n    tailoredCvMarkdown: d.tailoredCvMarkdown || null,\n    coverLetterMarkdown: d.coverLetterMarkdown || null,\n    status: d.status\n  });\n}\n\nconst appUrl = config.appUrl || 'https://autoapply.works';\nconst secret = config.webhookSecret || '';\n\nfor (const [userId, apps] of Object.entries(byUser)) {\n  try {\n    await fetch(`${appUrl}/api/webhooks/n8n`, {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n        'x-webhook-secret': secret\n      },\n      body: JSON.stringify({\n        type: 'new_applications',\n        data: { userId, applications: apps }\n      })\n    });\n  } catch (e) {\n    console.log(`Callback failed for user ${userId}:`, e.message);\n  }\n}\n\nreturn [{ json: { processed: items.length, users: Object.keys(byUser).length } }];"
             },
             "id": "batch-callback",
             "name": "Batch Save via App API",
@@ -168,7 +178,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// Error handler — log to workflow_errors via web app\nconst error = $input.first().json;\nconst appUrl = $env.APP_URL || 'https://autoapply.works';\nconst secret = $env.N8N_WEBHOOK_SECRET || '';\n\ntry {\n  await fetch(`${appUrl}/api/webhooks/n8n`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'x-webhook-secret': secret\n    },\n    body: JSON.stringify({\n      type: 'workflow_error',\n      data: {\n        workflowId: 'job-discovery-pipeline',\n        nodeName: error.node?.name || 'unknown',\n        errorType: error.type || 'UNKNOWN',\n        message: error.message || 'Unknown error',\n        payload: JSON.stringify(error)\n      }\n    })\n  });\n} catch (e) {\n  console.log('Error logging failed:', e.message);\n}\n\nreturn [{ json: { logged: true } }];"
+                "jsCode": "// Error handler — log to workflow_errors via web app\nconst error = $input.first().json;\nconst config = $('Load Config').first().json;\nconst appUrl = config.appUrl || 'https://autoapply.works';\nconst secret = config.webhookSecret || '';\n\ntry {\n  await fetch(`${appUrl}/api/webhooks/n8n`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'x-webhook-secret': secret\n    },\n    body: JSON.stringify({\n      type: 'workflow_error',\n      data: {\n        workflowId: 'job-discovery-pipeline',\n        nodeName: error.node?.name || 'unknown',\n        errorType: error.type || 'UNKNOWN',\n        message: error.message || 'Unknown error',\n        payload: JSON.stringify(error)\n      }\n    })\n  });\n} catch (e) {\n  console.log('Error logging failed:', e.message);\n}\n\nreturn [{ json: { logged: true } }];"
             },
             "id": "error-handler",
             "name": "Error Handler",
@@ -179,6 +189,9 @@
     ],
     "connections": {
         "Schedule Trigger": {
+            "main": [[{ "node": "Load Config", "type": "main", "index": 0 }]]
+        },
+        "Load Config": {
             "main": [[{ "node": "Random Jitter Wait", "type": "main", "index": 0 }]]
         },
         "Random Jitter Wait": {
