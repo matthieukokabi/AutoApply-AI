@@ -1,5 +1,3 @@
-import { auth } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Button } from "@/components/ui/button";
@@ -41,11 +39,8 @@ export async function generateMetadata({ params: { locale } }: { params: { local
 export default async function LandingPage({ params: { locale } }: { params: { locale: string } }) {
     setRequestLocale(locale);
 
-    // If user is already signed in, redirect to dashboard
-    const { userId } = auth();
-    if (userId) {
-        redirect("/dashboard");
-    }
+    // NOTE: Signed-in user redirect is handled by middleware (afterAuth)
+    // to avoid making this page dynamic (saves serverless function invocations)
 
     const t = await getTranslations();
 

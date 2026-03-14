@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Calendar, Clock, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
-
 export async function generateMetadata({
     params: { locale },
 }: {

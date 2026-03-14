@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
-import { getPostBySlug, getAllPosts } from "@/lib/blog";
+import { getPostBySlug, getAllPosts, getAllSlugs } from "@/lib/blog";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,15 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, User, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import ReactMarkdown from "react-markdown";
+/**
+ * Pre-render all blog post slugs at build time.
+ * Combined with parent layout's locale params, this generates all locale × slug pages.
+ * Eliminates Function Invocations for blog traffic.
+ */
+export function generateStaticParams() {
+    const slugs = getAllSlugs();
+    return slugs.map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
     params: { locale, slug },

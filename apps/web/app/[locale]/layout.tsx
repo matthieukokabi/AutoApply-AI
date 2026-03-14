@@ -32,6 +32,14 @@ const seoByLocale: Record<string, { title: string; description: string; keywords
     },
 };
 
+/**
+ * Pre-generate all locale variants at build time.
+ * Enables static generation for public pages (blog, terms, privacy, landing).
+ */
+export function generateStaticParams() {
+    return locales.map((locale) => ({ locale }));
+}
+
 export async function generateMetadata({ params: { locale } }: { params: { locale: string } }): Promise<Metadata> {
     const seo = seoByLocale[locale] || seoByLocale.en;
     return {

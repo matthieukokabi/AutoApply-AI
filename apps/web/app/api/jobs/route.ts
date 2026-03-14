@@ -72,7 +72,10 @@ export async function GET(req: Request) {
             applications: undefined,
         }));
 
-        return NextResponse.json({ jobs: result });
+        const response = NextResponse.json({ jobs: result });
+        // Cache: browser may reuse for 30s, revalidate in background
+        response.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+        return response;
     } catch (error) {
         console.error("GET /api/jobs error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

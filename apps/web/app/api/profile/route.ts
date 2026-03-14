@@ -16,9 +16,11 @@ export async function GET(req: Request) {
             where: { userId: user.id },
         });
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             profile: profile || null,
         });
+        response.headers.set("Cache-Control", "private, max-age=60, stale-while-revalidate=120");
+        return response;
     } catch (error) {
         console.error("GET /api/profile error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

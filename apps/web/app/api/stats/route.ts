@@ -59,7 +59,7 @@ export async function GET(req: Request) {
         // Pending review = tailored but not yet applied
         const pendingReview = byStatus["tailored"] || 0;
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             totalApplications,
             tailoredDocs,
             avgScore: Math.round(avgResult._avg.compatibilityScore || 0),
@@ -69,6 +69,9 @@ export async function GET(req: Request) {
             subscriptionStatus: user.subscriptionStatus,
             byStatus,
         });
+        // Cache: browser may reuse for 30s, revalidate in background
+        response.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+        return response;
     } catch (error) {
         console.error("GET /api/stats error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

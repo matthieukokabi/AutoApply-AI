@@ -65,6 +65,15 @@ export default authMiddleware({
         );
         const localePrefix = pathLocale && pathLocale !== defaultLocale ? `/${pathLocale}` : "";
 
+        // If signed-in user visits landing page, redirect to dashboard
+        if (
+            userId &&
+            !isClerkInternalRoute &&
+            (url.pathname === "/" || locales.some((l) => url.pathname === `/${l}`))
+        ) {
+            return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
+        }
+
         // If user is signed in and on sign-in/sign-up page, redirect to dashboard
         if (
             userId &&
@@ -82,13 +91,41 @@ export default authMiddleware({
 
         // CRITICAL: Return void (not NextResponse.next()) to preserve
         // the intlMiddleware rewrite response from beforeAuth.
-        // NextResponse.next() would override the locale rewrite from
-        // intlMiddleware, causing a 404 on routes like "/" that need
-        // to be internally rewritten to "/en" for the [locale] segment.
         return;
     },
 });
 
 export const config = {
-    matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+    // OPTIMIZED: Only run middleware on routes that actually need it.
+    // Previously matched EVERYTHING ("/((?!.+\\.[\\w]+$|_next).*)") — caused
+    // 1.2M+ edge invocations/month from bots, crawlers, and prefetches.
+    // Now only matches specific route patterns that need auth or i18n.
+    matcher: [
+        // Landing page (locale routing + signed-in redirect)
+        "/",
+        "/en",
+        "/fr",
+        "/de",
+        "/es",
+        "/it",
+        // Dashboard routes (protected — need auth)
+        "/(en|fr|de|es|it)/dashboard/:path*",
+        "/(en|fr|de|es|it)/profile/:path*",
+        "/(en|fr|de|es|it)/jobs/:path*",
+        "/(en|fr|de|es|it)/settings/:path*",
+        "/(en|fr|de|es|it)/documents/:path*",
+        "/(en|fr|de|es|it)/onboarding/:path*",
+        // Auth pages
+        "/(en|fr|de|es|it)/sign-in/:path*",
+        "/(en|fr|de|es|it)/sign-up/:path*",
+        "/sign-in/:path*",
+        "/sign-up/:path*",
+        // Public pages that need locale routing
+        "/(en|fr|de|es|it)/blog/:path*",
+        "/(en|fr|de|es|it)/terms",
+        "/(en|fr|de|es|it)/privacy",
+        "/(en|fr|de|es|it)/contact",
+        // API routes
+        "/api/:path*",
+    ],
 };
