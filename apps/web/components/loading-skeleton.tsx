@@ -73,6 +73,49 @@ export function JobsSkeleton() {
     );
 }
 
+export function SettingsSkeleton() {
+    return (
+        <div className="space-y-8 max-w-3xl">
+            <div>
+                <Skeleton className="h-9 w-36 mb-2" />
+                <Skeleton className="h-5 w-80" />
+            </div>
+            {/* Preferences card */}
+            <div className="border rounded-lg p-6 space-y-4">
+                <Skeleton className="h-6 w-40 mb-1" />
+                <Skeleton className="h-4 w-64 mb-4" />
+                <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-3/4" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            </div>
+            {/* Automation card */}
+            <div className="border rounded-lg p-6">
+                <Skeleton className="h-6 w-32 mb-2" />
+                <Skeleton className="h-4 w-56 mb-4" />
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-9 w-24" />
+                </div>
+            </div>
+            {/* Subscription card */}
+            <div className="border rounded-lg p-6">
+                <Skeleton className="h-6 w-36 mb-4" />
+                <div className="flex justify-between items-center mb-3">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-9 w-24" />
+                </div>
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-9 w-28" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function ProfileSkeleton() {
     return (
         <div className="space-y-8">

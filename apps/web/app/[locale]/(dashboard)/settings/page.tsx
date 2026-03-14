@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, AlertCircle } from "lucide-react";
+import { SettingsSkeleton } from "@/components/loading-skeleton";
 
 interface UserInfo {
     automationEnabled: boolean;
@@ -240,11 +241,7 @@ export default function SettingsPage() {
     }
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center py-24">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-        );
+        return <SettingsSkeleton />;
     }
 
     return (

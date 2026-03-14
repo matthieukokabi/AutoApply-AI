@@ -10,6 +10,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Upload, FileText, Loader2, Check, AlertCircle } from "lucide-react";
+import { ProfileSkeleton } from "@/components/loading-skeleton";
 
 interface StructuredCV {
     contact: {
@@ -167,11 +168,7 @@ export default function ProfilePage() {
     }
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center py-24">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-        );
+        return <ProfileSkeleton />;
     }
 
     return (

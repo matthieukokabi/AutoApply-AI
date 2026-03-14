@@ -20,6 +20,7 @@ import {
     X,
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
+import { Skeleton } from "@/components/loading-skeleton";
 
 interface JobWithApplication {
     id: string;
@@ -266,12 +267,29 @@ export default function JobsPage() {
             {/* Jobs List */}
             <div className="space-y-4">
                 {loading ? (
-                    <Card>
-                        <CardContent className="py-12 text-center">
-                            <Loader2 className="h-8 w-8 mx-auto animate-spin text-muted-foreground mb-4" />
-                            <p className="text-muted-foreground">Loading jobs...</p>
-                        </CardContent>
-                    </Card>
+                    <>
+                        {[...Array(4)].map((_, i) => (
+                            <Card key={i}>
+                                <CardContent className="p-6">
+                                    <div className="flex items-start justify-between">
+                                        <div className="space-y-2 flex-1">
+                                            <Skeleton className="h-5 w-48" />
+                                            <Skeleton className="h-4 w-32" />
+                                            <div className="flex gap-3">
+                                                <Skeleton className="h-4 w-24" />
+                                                <Skeleton className="h-4 w-20" />
+                                                <Skeleton className="h-5 w-16 rounded-full" />
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2 ml-4">
+                                            <Skeleton className="h-8 w-16" />
+                                            <Skeleton className="h-8 w-20" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </>
                 ) : jobs.length === 0 ? (
                     <Card>
                         <CardContent className="py-12 text-center">
