@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ClerkProvider, ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsent } from "@/components/cookie-consent";
@@ -72,18 +72,8 @@ export default function RootLayout({
                         enableSystem
                         disableTransitionOnChange
                     >
-                        <ClerkLoading>
-                            <div className="min-h-screen flex items-center justify-center">
-                                <div className="flex flex-col items-center gap-3">
-                                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                                    <p className="text-sm text-muted-foreground">Loading...</p>
-                                </div>
-                            </div>
-                        </ClerkLoading>
-                        <ClerkLoaded>
-                            {children}
-                            <CookieConsent />
-                        </ClerkLoaded>
+                        {children}
+                        <CookieConsent />
                     </ThemeProvider>
                 </body>
             </html>
