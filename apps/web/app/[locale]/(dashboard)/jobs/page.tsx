@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     Card,
     CardContent,
@@ -56,13 +56,21 @@ export default function JobsPage() {
     const [submitting, setSubmitting] = useState(false);
     const [tailoringJobId, setTailoringJobId] = useState<string | null>(null);
 
+    // Use refs to avoid unstable closure dependencies in the debounced effect
+    const searchRef = useRef(search);
+    const sourceRef = useRef(source);
+    const minScoreRef = useRef(minScore);
+    searchRef.current = search;
+    sourceRef.current = source;
+    minScoreRef.current = minScore;
+
     const fetchJobs = useCallback(async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
-            if (search) params.set("search", search);
-            if (source) params.set("source", source);
-            if (minScore) params.set("minScore", minScore);
+            if (searchRef.current) params.set("search", searchRef.current);
+            if (sourceRef.current) params.set("source", sourceRef.current);
+            if (minScoreRef.current) params.set("minScore", minScoreRef.current);
 
             const res = await fetch(`/api/jobs?${params.toString()}`);
             if (res.ok) {
@@ -74,12 +82,14 @@ export default function JobsPage() {
         } finally {
             setLoading(false);
         }
-    }, [search, source, minScore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
+    // Debounced fetch: 300ms delay on filter changes, immediate on mount
     useEffect(() => {
         const timeout = setTimeout(fetchJobs, 300);
         return () => clearTimeout(timeout);
-    }, [fetchJobs]);
+    }, [search, source, minScore, fetchJobs]);
 
     async function handlePasteSubmit() {
         if (!pasteForm.jobDescription.trim()) return;

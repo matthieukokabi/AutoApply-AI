@@ -12,6 +12,16 @@ const nextConfig = {
             },
         ],
     },
+    async rewrites() {
+        return [
+            {
+                // Clerk proxy: routes Clerk API requests through your own domain
+                // to avoid third-party cookie blocking in Arc, Brave, Safari, etc.
+                source: "/__clerk/:path*",
+                destination: "https://clerk.autoapply.works/:path*",
+            },
+        ];
+    },
 };
 
 module.exports = withNextIntl(nextConfig);
