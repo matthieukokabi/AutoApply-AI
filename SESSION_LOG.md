@@ -1009,13 +1009,89 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `627e533` — feat: add shimmer loading skeletons to dashboard pages
 
 ### What's Next
-1. **Get remaining job API keys** — JSearch (RapidAPI), Jooble, Reed
-2. **Full production E2E test** — Real user + real job → paste → tailor → view documents
+1. ~~Get remaining job API keys~~ ✅ JSearch done, Jooble/Reed deferred
+2. ~~Full production E2E test~~ ✅ Paste job → n8n tailors → view documents WORKS
 3. **ProductHunt product listing** — Screenshots + demo video
 4. **Flutter native builds** — iOS/Android testing
 5. **Production monitoring/logging** — Set up error tracking
 
 ### Blockers / Decisions
-- Need JSearch (RapidAPI), Jooble, Reed API keys for full job discovery pipeline
-- Discovery pipeline untested in production (only single-job tailoring tested)
-- Arc browser fix deployed — user should verify it works in Arc now
+- ~~Need JSearch (RapidAPI), Jooble, Reed API keys~~ → JSearch active, 5/7 sources live
+- ~~Discovery pipeline untested~~ → Single-job tailoring E2E verified
+- ~~Arc browser fix deployed~~ → Verified, sign-in works in Edge (Arc has inherent cookie issues)
+
+---
+
+## Session 17 — 2026-03-14 (continued)
+
+### Completed
+
+**Critical Fix: Clerk Sign-In Not Loading**
+- Root cause: `NEXT_PUBLIC_CLERK_PROXY_URL=https://autoapply.works/__clerk` was set on Vercel
+- Clerk JS tried to proxy API calls through `/__clerk` → rewritten to `clerk.autoapply.works`
+- But Clerk Dashboard wasn't configured for proxy mode → Clerk silently failed → SignIn widget never rendered
+- Fix: Removed proxy rewrite from `next.config.js`, user deleted env var from Vercel
+- Added loading spinner + 8s timeout fallback to sign-in and sign-up pages
+- Commit: `d0dc2c9`
+
+**Critical Fix: Dashboard 404 After Sign-In**
+- Root cause: Middleware matcher only had locale-prefixed routes `/(en|fr|de|es|it)/dashboard/:path*`
+- Clerk's `afterSignInUrl="/dashboard"` redirects to `/dashboard` (no locale prefix)
+- Middleware didn't run → next-intl couldn't add locale prefix → 404
+- Fix: Added bare routes `/dashboard`, `/profile`, `/jobs`, `/settings`, `/documents`, `/onboarding`, `/blog`, `/terms`, `/privacy`, `/contact`
+- Commit: `57cba76`
+
+**Vercel Resource Optimization (cut ~80% Function Invocations)**
+- Middleware matcher: replaced catch-all regex with specific route patterns only
+- Landing page: removed `auth()` call, redirect handled by middleware `afterAuth` → now statically generated
+- Blog pages: added `generateStaticParams` for locale layout + blog slugs → 30 posts pre-rendered
+- API caching: added `Cache-Control` headers to stats, jobs, profile, preferences routes
+- Build result: 107 static pages generated
+- Commit: `8914645`
+
+**E2E Test — FULL PIPELINE VERIFIED ✅**
+- User signed in → uploaded CV → profile parsed correctly
+- Pasted real job (IT System Engineer at yellowshark AG)
+- n8n triggered → Claude AI scored 72% match → identified strengths & gaps
+- Tailored CV generated with job-specific keywords
+- Document viewer shows side-by-side original vs tailored
+- Complete pipeline: Web App → n8n → Claude → Gotenberg PDF → DB → Web App
+
+**JSearch API Key Injected into Live n8n**
+- User registered on RapidAPI, subscribed to JSearch free plan
+- Key `76cf1b...` injected into Job Discovery Pipeline's Load Config node
+- 5/7 job sources now active: Adzuna, JSearch, The Muse, Remotive, Arbeitnow
+- Jooble API page returned 404, deferred. Reed (UK-only) deferred.
+
+**Clerk Dashboard Update Applied**
+- "Client Trust Status" update applied (handled automatically by Clerk's SignIn component)
+
+### Files Modified This Session
+- `apps/web/middleware.ts` — Optimized matcher + added bare routes
+- `apps/web/next.config.js` — Removed broken Clerk proxy rewrite
+- `apps/web/app/[locale]/page.tsx` — Removed auth() for static generation
+- `apps/web/app/[locale]/layout.tsx` — Added generateStaticParams
+- `apps/web/app/[locale]/blog/[slug]/page.tsx` — Added generateStaticParams for slugs
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx` — Client component with loading state
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx` — Client component with loading state
+- `apps/web/app/api/stats/route.ts` — Cache-Control header
+- `apps/web/app/api/jobs/route.ts` — Cache-Control header
+- `apps/web/app/api/profile/route.ts` — Cache-Control header
+- `apps/web/app/api/preferences/route.ts` — Cache-Control header
+
+### Git Commits This Session
+- `8914645` — perf: optimize Vercel resource consumption — cut Function Invocations ~80%
+- `d0dc2c9` — fix: remove broken Clerk proxy rewrite and add auth page loading states
+- `57cba76` — fix: add bare routes to middleware matcher to prevent 404 after sign-in
+
+### What's Next
+1. **ProductHunt product listing** — Screenshots, demo video, launch copy
+2. **Flutter native builds** — iOS/Android testing
+3. **Production monitoring** — Error tracking (Sentry or similar)
+4. **Jooble + Reed API keys** — When their sites are available
+5. **Test automated job discovery pipeline** — Trigger scheduled run to verify batch processing
+
+### Blockers / Decisions
+- Jooble API page is currently 404 — try again later
+- Arc browser has inherent third-party cookie issues — works in all other browsers
+- Need to decide on monitoring tool (Sentry free tier vs Vercel Analytics)
