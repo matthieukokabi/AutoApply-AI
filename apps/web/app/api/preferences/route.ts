@@ -56,30 +56,42 @@ export async function PUT(req: Request) {
         // Validate currency
         const currency = VALID_CURRENCIES.includes(salaryCurrency) ? salaryCurrency : "USD";
 
+        // Coerce salaryMin to integer or null
+        const parsedSalary = salaryMin != null && salaryMin !== ""
+            ? parseInt(String(salaryMin), 10)
+            : null;
+        const safeSalary = parsedSalary != null && !isNaN(parsedSalary) ? parsedSalary : null;
+
+        // Ensure arrays are arrays (not strings)
+        const safeTargetTitles = Array.isArray(targetTitles) ? targetTitles : [];
+        const safeLocations = Array.isArray(locations) ? locations : [];
+        const safeIndustries = Array.isArray(industries) ? industries : [];
+
         const preferences = await prisma.jobPreferences.upsert({
             where: { userId: user.id },
             create: {
                 userId: user.id,
-                targetTitles,
-                locations,
+                targetTitles: safeTargetTitles,
+                locations: safeLocations,
                 remotePreference,
-                salaryMin: salaryMin ? parseInt(salaryMin, 10) : null,
+                salaryMin: safeSalary,
                 salaryCurrency: currency,
-                industries,
+                industries: safeIndustries,
             },
             update: {
-                targetTitles,
-                locations,
+                targetTitles: safeTargetTitles,
+                locations: safeLocations,
                 remotePreference,
-                salaryMin: salaryMin ? parseInt(salaryMin, 10) : null,
+                salaryMin: safeSalary,
                 salaryCurrency: currency,
-                industries,
+                industries: safeIndustries,
             },
         });
 
         return NextResponse.json({ preferences });
-    } catch (error) {
-        console.error("PUT /api/preferences error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error("PUT /api/preferences error:", message, error);
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
