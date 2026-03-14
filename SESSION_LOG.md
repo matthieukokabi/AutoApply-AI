@@ -901,6 +901,57 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 5. Publish both workflows
 6. Test: paste a job on autoapply.works → click "Tailor CV" → verify documents appear
 
+**n8n Workflows — Programmatic Import via REST API:**
+- Used n8n REST API (`X-N8N-API-KEY` header) to manage workflows entirely from CLI
+- Deleted all 4 old workflows (2 archived + 2 active)
+- Imported both updated workflow JSONs via `POST /api/v1/workflows` (stripped read-only `tags` field)
+- Workflow IDs: `3iUzBukfS6TME2yn` (Single Job Tailoring), `eddfsS251UHbmNIj` (Job Discovery Pipeline)
+- Activated both workflows via `POST /api/v1/workflows/{id}/activate`
+
+**API Keys — Injected Programmatically:**
+- Used Python script to GET workflow → update Load Config node code → PUT back (stripped read-only fields: `active`, non-writable properties)
+- Real API keys injected into both workflows' Load Config nodes:
+  - Anthropic API key
+  - N8N Webhook Secret: `e398a1c2b63259f396e61b08736f5d10`
+  - Adzuna App ID: `e2af75b6`, App Key configured
+- No manual n8n UI editing required
+
+**CRITICAL FIX: Claude Model Name:**
+- `claude-sonnet-4-5-20250514` → `claude-sonnet-4-20250514` (the `-5` was wrong)
+- Fixed in both local JSON files and live n8n workflows
+- Verified correct model via direct Anthropic API test
+
+**E2E Pipeline Test — Full Success ✅:**
+- Triggered single-job-tailoring webhook with test payload
+- All 8 nodes executed successfully: Webhook Trigger → Load Config → Validate Input → LLM Scoring → Parse Scoring → LLM Tailoring → Parse Tailored → Save Results
+- Scoring: compatibility score 85, recommendation "apply"
+- Tailored CV: 1845 chars of markdown
+- Cover letter: 2053 chars of markdown
+- Callback to autoapply.works: returned 500 (expected — test used fake userId/jobId that don't exist in DB; real flow creates real IDs first)
+
+**Bug Fix: N8N_WEBHOOK_URL Double Path:**
+- Local `.env` had full path `https://autoapply-n8n.onrender.com/webhook/single-job-tailor`
+- But `api/tailor/route.ts` appends `/webhook/single-job-tailor` again → double path
+- Fixed local `.env` to base URL only: `https://autoapply-n8n.onrender.com`
+- User confirmed Vercel env var was already correct, redeployed, and verified everything works
+
+### Git Commits This Session
+- `57cf891` — fix: eliminate all $env usage from n8n workflows
+- `0917a7d` — fix: correct Claude model name from claude-sonnet-4-5 to claude-sonnet-4
+
+### Live n8n State
+- Workflow `3iUzBukfS6TME2yn` (Single Job Tailoring) — **Active** ✅
+- Workflow `eddfsS251UHbmNIj` (Job Discovery Pipeline) — **Active** ✅
+- Both have real API keys injected
+
+### What's Next
+1. **Get remaining job API keys** — JSearch (RapidAPI), Jooble, Reed
+2. **Full production E2E test** — Create real user + real job → paste → tailor → view documents
+3. **ProductHunt product listing** — Screenshots + demo video
+4. **Flutter native builds** — iOS/Android testing
+5. **Production monitoring/logging** — Set up error tracking
+
 ### Blockers / Decisions
-- User must manually enter API keys in Load Config nodes (one-time setup per workflow)
-- Need JSearch, Jooble, Reed API keys for full job discovery pipeline
+- Need JSearch (RapidAPI), Jooble, Reed API keys for full job discovery pipeline
+- Discovery pipeline untested in production (only single-job tailoring tested)
+- Arc browser issue reported (app stays stuck) — needs investigation
