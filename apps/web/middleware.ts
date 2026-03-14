@@ -108,23 +108,35 @@ export const config = {
         "/de",
         "/es",
         "/it",
-        // Dashboard routes (protected — need auth)
+        // Dashboard routes — with locale prefix (protected — need auth)
         "/(en|fr|de|es|it)/dashboard/:path*",
         "/(en|fr|de|es|it)/profile/:path*",
         "/(en|fr|de|es|it)/jobs/:path*",
         "/(en|fr|de|es|it)/settings/:path*",
         "/(en|fr|de|es|it)/documents/:path*",
         "/(en|fr|de|es|it)/onboarding/:path*",
+        // Dashboard routes — bare (no locale) so intlMiddleware can add locale prefix
+        // Required because Clerk redirects to /dashboard after sign-in
+        "/dashboard/:path*",
+        "/profile/:path*",
+        "/jobs/:path*",
+        "/settings/:path*",
+        "/documents/:path*",
+        "/onboarding/:path*",
         // Auth pages
         "/(en|fr|de|es|it)/sign-in/:path*",
         "/(en|fr|de|es|it)/sign-up/:path*",
         "/sign-in/:path*",
         "/sign-up/:path*",
-        // Public pages that need locale routing
+        // Public pages that need locale routing (with and without locale prefix)
         "/(en|fr|de|es|it)/blog/:path*",
         "/(en|fr|de|es|it)/terms",
         "/(en|fr|de|es|it)/privacy",
         "/(en|fr|de|es|it)/contact",
+        "/blog/:path*",
+        "/terms",
+        "/privacy",
+        "/contact",
         // API routes
         "/api/:path*",
     ],
