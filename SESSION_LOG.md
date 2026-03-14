@@ -955,3 +955,67 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - Need JSearch (RapidAPI), Jooble, Reed API keys for full job discovery pipeline
 - Discovery pipeline untested in production (only single-job tailoring tested)
 - Arc browser issue reported (app stays stuck) — needs investigation
+
+---
+
+## Session 16 — 2026-03-14
+
+### Completed
+
+**Arc Browser Stuck Issue — Fixed (4 improvements):**
+
+1. **Clerk Proxy via Next.js Rewrites (Critical Fix)**
+   - Root cause: Arc blocks third-party cookies from `*.clerk.accounts.dev`
+   - Added rewrite rule in `next.config.js`: `/__clerk/:path*` → `https://clerk.autoapply.works/:path*`
+   - User set `NEXT_PUBLIC_CLERK_PROXY_URL=https://autoapply.works/__clerk` on Vercel and redeployed
+   - All Clerk auth requests now route through the user's own domain — no third-party cookies needed
+
+2. **Clerk Loading/Loaded States**
+   - Added `ClerkLoading` / `ClerkLoaded` wrappers in `app/layout.tsx`
+   - Users now see a spinner while Clerk initializes instead of a blank white page
+   - Works as a fallback for any browser where Clerk JS loads slowly
+
+3. **Jobs Page Re-render Fix**
+   - `fetchJobs` useCallback had `[search, source, minScore]` dependencies
+   - This created a new function reference on every filter change, causing the debounce effect to fire too often
+   - Fixed using refs (`searchRef`, `sourceRef`, `minScoreRef`) to read current values without creating unstable dependencies
+   - `fetchJobs` now has `[]` dependencies (stable reference), effect depends on actual state values
+
+4. **Cookie Consent localStorage Hardening**
+   - Added try-catch around all `localStorage.getItem/setItem` calls
+   - Prevents errors in Arc/Brave/Safari private browsing mode where localStorage may be blocked
+
+**Loading Skeletons — Shimmer UI:**
+- Replaced Loader2 spinners with animated shimmer skeleton placeholders
+- Profile page → `ProfileSkeleton` (2 cards with shimmer blocks)
+- Settings page → `SettingsSkeleton` (new component: preferences, automation, subscription cards)
+- Jobs page → 4 skeleton job cards with shimmer title, company, badges, buttons
+- Components defined in `components/loading-skeleton.tsx`
+
+**Environment Fix:**
+- Added missing `N8N_WEBHOOK_SECRET` to local `.env`
+
+### Files Modified This Session
+- `apps/web/next.config.js` — Clerk proxy rewrite rule
+- `apps/web/app/layout.tsx` — ClerkLoading/ClerkLoaded wrappers
+- `apps/web/app/[locale]/(dashboard)/jobs/page.tsx` — Stable useCallback, skeleton loading
+- `apps/web/app/[locale]/(dashboard)/profile/page.tsx` — ProfileSkeleton loading
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx` — SettingsSkeleton loading
+- `apps/web/components/cookie-consent.tsx` — Defensive localStorage
+- `apps/web/components/loading-skeleton.tsx` — New SettingsSkeleton component
+
+### Git Commits This Session
+- `dd6ef5a` — fix: resolve Arc browser stuck issue and improve browser compatibility
+- `627e533` — feat: add shimmer loading skeletons to dashboard pages
+
+### What's Next
+1. **Get remaining job API keys** — JSearch (RapidAPI), Jooble, Reed
+2. **Full production E2E test** — Real user + real job → paste → tailor → view documents
+3. **ProductHunt product listing** — Screenshots + demo video
+4. **Flutter native builds** — iOS/Android testing
+5. **Production monitoring/logging** — Set up error tracking
+
+### Blockers / Decisions
+- Need JSearch (RapidAPI), Jooble, Reed API keys for full job discovery pipeline
+- Discovery pipeline untested in production (only single-job tailoring tested)
+- Arc browser fix deployed — user should verify it works in Arc now
