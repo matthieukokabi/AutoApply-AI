@@ -12,6 +12,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SignOutButton } from "@/components/sign-out-button";
 
 const sidebarItems = [
     { href: "/dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
@@ -106,6 +107,7 @@ export default async function DashboardLayout({
                         </div>
                         <ThemeToggle />
                     </div>
+                    <SignOutButton />
                 </div>
             </aside>
 

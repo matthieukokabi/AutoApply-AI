@@ -1,19 +1,8 @@
 "use client";
 
-import { SignIn, useClerk } from "@clerk/nextjs";
-import { useState, useEffect } from "react";
+import { SignIn } from "@clerk/nextjs";
 
 export default function SignInPage() {
-    const { loaded } = useClerk();
-    const [showFallback, setShowFallback] = useState(false);
-
-    // If Clerk hasn't loaded after 8 seconds, show a helpful message
-    useEffect(() => {
-        if (loaded) return;
-        const timer = setTimeout(() => setShowFallback(true), 8000);
-        return () => clearTimeout(timer);
-    }, [loaded]);
-
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
             <div className="w-full max-w-md">
@@ -26,43 +15,22 @@ export default function SignInPage() {
                     </p>
                 </div>
 
-                {/* Loading spinner while Clerk initializes */}
-                {!loaded && (
-                    <div className="flex flex-col items-center gap-4 py-8">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
-                        <p className="text-sm text-slate-500">Loading sign-in...</p>
-                        {showFallback && (
-                            <div className="mt-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-center">
-                                <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">
-                                    Sign-in is taking longer than expected.
-                                </p>
-                                <p className="text-xs text-amber-600 dark:text-amber-400">
-                                    Try refreshing the page, disabling ad blockers, or using a different browser.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Clerk SignIn widget — renders once Clerk JS initializes */}
-                <div style={{ display: loaded ? "block" : "none" }}>
-                    <SignIn
-                        afterSignInUrl="/dashboard"
-                        signUpUrl="/sign-up"
-                        appearance={{
-                            elements: {
-                                rootBox: "mx-auto w-full",
-                                card: "shadow-xl rounded-xl",
-                                socialButtonsBlockButton:
-                                    "border border-slate-200 hover:bg-slate-50",
-                                formButtonPrimary:
-                                    "bg-blue-600 hover:bg-blue-700 text-sm",
-                                footerActionLink:
-                                    "text-blue-600 hover:text-blue-700",
-                            },
-                        }}
-                    />
-                </div>
+                <SignIn
+                    afterSignInUrl="/dashboard"
+                    signUpUrl="/sign-up"
+                    appearance={{
+                        elements: {
+                            rootBox: "mx-auto w-full",
+                            card: "shadow-xl rounded-xl",
+                            socialButtonsBlockButton:
+                                "border border-slate-200 hover:bg-slate-50",
+                            formButtonPrimary:
+                                "bg-blue-600 hover:bg-blue-700 text-sm",
+                            footerActionLink:
+                                "text-blue-600 hover:text-blue-700",
+                        },
+                    }}
+                />
             </div>
         </div>
     );
