@@ -60,6 +60,7 @@ export default async function DocumentViewerPage({
                 recommendation: application.recommendation || "stretch",
                 status: application.status,
             }}
+            jobId={application.jobId}
             job={{
                 title: application.job.title,
                 company: application.job.company,

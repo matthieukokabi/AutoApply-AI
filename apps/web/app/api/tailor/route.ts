@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { jobDescription, jobUrl, jobTitle, company, additionalContext } = body;
+        const { jobDescription, jobUrl, jobTitle, company, additionalContext, jobId: existingJobId } = body;
 
         if (!jobDescription) {
             return NextResponse.json(
@@ -50,21 +50,33 @@ export async function POST(req: Request) {
             );
         }
 
-        // Create or find the job record
-        const externalId = jobUrl || `manual-${Date.now()}`;
-        const job = await prisma.job.upsert({
-            where: { externalId },
-            create: {
-                externalId,
-                title: jobTitle || "Untitled Position",
-                company: company || "Unknown Company",
-                location: "Not specified",
-                description: jobDescription,
-                source: "manual",
-                url: jobUrl || "",
-            },
-            update: {},
-        });
+        // If re-tailoring an existing job, use the existing job record directly
+        let job;
+        if (existingJobId) {
+            job = await prisma.job.findUnique({ where: { id: existingJobId } });
+            if (!job) {
+                return NextResponse.json(
+                    { error: "Job not found" },
+                    { status: 404 }
+                );
+            }
+        } else {
+            // Create or find the job record for new tailoring
+            const externalId = jobUrl || `manual-${Date.now()}`;
+            job = await prisma.job.upsert({
+                where: { externalId },
+                create: {
+                    externalId,
+                    title: jobTitle || "Untitled Position",
+                    company: company || "Unknown Company",
+                    location: "Not specified",
+                    description: jobDescription,
+                    source: "manual",
+                    url: jobUrl || "",
+                },
+                update: {},
+            });
+        }
 
         // Trigger n8n single-job tailoring webhook (fire-and-forget)
         // n8n processes asynchronously and calls back to /api/webhooks/n8n when done

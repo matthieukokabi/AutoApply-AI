@@ -34,6 +34,7 @@ interface DocumentViewerProps {
         recommendation: string;
         status: string;
     };
+    jobId: string;
     job: {
         title: string;
         company: string;
@@ -48,6 +49,7 @@ type Tab = "cv" | "letter" | "original";
 
 export function DocumentViewer({
     application,
+    jobId,
     job,
     jobDescription,
     photoBase64,
@@ -117,6 +119,7 @@ export function DocumentViewer({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    jobId,
                     jobTitle: job.title,
                     company: job.company,
                     jobDescription: jobDescription || "",
@@ -127,10 +130,15 @@ export function DocumentViewer({
             if (res.ok) {
                 setRetailorMessage({
                     type: "success",
-                    text: "Re-tailoring started! Your updated CV will appear shortly. Refresh the page in a few seconds.",
+                    text: "Re-tailoring started! Your updated documents will appear in ~30 seconds. The page will refresh automatically.",
                 });
                 setGapResponses({});
                 setActiveGapIndex(null);
+
+                // Auto-refresh the page after a delay to show updated results
+                setTimeout(() => {
+                    window.location.reload();
+                }, 30000);
             } else {
                 const data = await res.json();
                 setRetailorMessage({
