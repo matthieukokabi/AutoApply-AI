@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Upload, FileText, Loader2, Check, AlertCircle } from "lucide-react";
 import { ProfileSkeleton } from "@/components/loading-skeleton";
+import { PhotoUpload } from "@/components/photo-upload";
 
 interface StructuredCV {
     contact: {
@@ -37,6 +38,7 @@ interface StructuredCV {
         graduationDate?: string;
     }>;
     skills: string[];
+    photoBase64?: string;
 }
 
 const emptyStructured: StructuredCV = {
@@ -290,6 +292,20 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-6">
+                        {/* CV Photo */}
+                        <div>
+                            <h3 className="font-semibold mb-2">CV Photo</h3>
+                            <p className="text-sm text-muted-foreground mb-3">
+                                Standard for Swiss and European CVs. Your photo will appear on tailored CVs.
+                            </p>
+                            <PhotoUpload
+                                value={structured.photoBase64}
+                                onChange={(base64) =>
+                                    setStructured((s) => ({ ...s, photoBase64: base64 }))
+                                }
+                            />
+                        </div>
+
                         {/* Contact */}
                         <div>
                             <h3 className="font-semibold mb-2">Contact Information</h3>

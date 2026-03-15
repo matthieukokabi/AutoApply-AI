@@ -57,3 +57,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Print styles for CV and Cover Letter PDF downloads */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cv-print-target,
+  .cover-letter-print-target {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: none !important;
+  }
+}
