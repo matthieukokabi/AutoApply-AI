@@ -15,6 +15,10 @@ import {
     CheckCircle,
     AlertTriangle,
     Sparkles,
+    RefreshCw,
+    Plus,
+    X,
+    Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -35,6 +39,7 @@ interface DocumentViewerProps {
         company: string;
         location: string;
     };
+    jobDescription?: string;
     photoBase64?: string;
     originalCvText?: string;
 }
@@ -44,12 +49,24 @@ type Tab = "cv" | "letter" | "original";
 export function DocumentViewer({
     application,
     job,
+    jobDescription,
     photoBase64,
     originalCvText,
 }: DocumentViewerProps) {
     const [activeTab, setActiveTab] = useState<Tab>("cv");
     const cvRef = useRef<HTMLDivElement>(null);
     const letterRef = useRef<HTMLDivElement>(null);
+
+    // Gap-filling state
+    const [gapResponses, setGapResponses] = useState<Record<number, string>>(
+        {}
+    );
+    const [activeGapIndex, setActiveGapIndex] = useState<number | null>(null);
+    const [retailoring, setRetailoring] = useState(false);
+    const [retailorMessage, setRetailorMessage] = useState<{
+        type: "success" | "error";
+        text: string;
+    } | null>(null);
 
     const handlePrintCV = useReactToPrint({
         contentRef: cvRef,
@@ -74,6 +91,66 @@ export function DocumentViewer({
             }
         `,
     });
+
+    const handleRetailor = async () => {
+        // Build additional context from gap responses
+        const filledGaps = Object.entries(gapResponses)
+            .filter(([, response]) => response.trim())
+            .map(([idx, response]) => {
+                const gap = application.gaps[Number(idx)];
+                return `Regarding "${gap}": ${response}`;
+            });
+
+        if (filledGaps.length === 0) {
+            setRetailorMessage({
+                type: "error",
+                text: "Please fill in at least one gap before re-tailoring.",
+            });
+            return;
+        }
+
+        setRetailoring(true);
+        setRetailorMessage(null);
+
+        try {
+            const res = await fetch("/api/tailor", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    jobTitle: job.title,
+                    company: job.company,
+                    jobDescription: jobDescription || "",
+                    additionalContext: filledGaps.join("\n"),
+                }),
+            });
+
+            if (res.ok) {
+                setRetailorMessage({
+                    type: "success",
+                    text: "Re-tailoring started! Your updated CV will appear shortly. Refresh the page in a few seconds.",
+                });
+                setGapResponses({});
+                setActiveGapIndex(null);
+            } else {
+                const data = await res.json();
+                setRetailorMessage({
+                    type: "error",
+                    text: data.error || "Failed to start re-tailoring.",
+                });
+            }
+        } catch {
+            setRetailorMessage({
+                type: "error",
+                text: "Network error. Please try again.",
+            });
+        } finally {
+            setRetailoring(false);
+        }
+    };
+
+    const filledCount = Object.values(gapResponses).filter(
+        (r) => r.trim()
+    ).length;
 
     const scoreColor =
         application.compatibilityScore >= 80
@@ -270,7 +347,7 @@ export function DocumentViewer({
                         </Card>
                     )}
 
-                    {/* Gaps */}
+                    {/* Gaps — with "I have this" feature */}
                     {application.gaps.length > 0 && (
                         <Card>
                             <CardHeader className="pb-3">
@@ -280,19 +357,158 @@ export function DocumentViewer({
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <ul className="space-y-2">
+                                <ul className="space-y-3">
                                     {application.gaps.map((gap, i) => (
-                                        <li
-                                            key={i}
-                                            className="text-xs text-muted-foreground flex items-start gap-2"
-                                        >
-                                            <span className="text-amber-500 mt-0.5">
-                                                !
-                                            </span>
-                                            {gap}
+                                        <li key={i} className="space-y-1.5">
+                                            <div className="flex items-start gap-2">
+                                                <span className="text-amber-500 mt-0.5 text-xs">
+                                                    !
+                                                </span>
+                                                <span className="text-xs text-muted-foreground flex-1">
+                                                    {gap}
+                                                </span>
+                                                {!gapResponses[i] &&
+                                                    activeGapIndex !== i && (
+                                                        <button
+                                                            onClick={() =>
+                                                                setActiveGapIndex(
+                                                                    i
+                                                                )
+                                                            }
+                                                            className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap flex-shrink-0"
+                                                        >
+                                                            <Plus className="w-3 h-3 inline mr-0.5" />
+                                                            I have this
+                                                        </button>
+                                                    )}
+                                            </div>
+
+                                            {/* Gap response input */}
+                                            {activeGapIndex === i && (
+                                                <div className="ml-4 space-y-1.5">
+                                                    <textarea
+                                                        className="w-full p-2 text-xs border rounded-md resize-none bg-muted/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                                                        rows={2}
+                                                        placeholder="Describe your experience..."
+                                                        value={
+                                                            gapResponses[i] ||
+                                                            ""
+                                                        }
+                                                        onChange={(e) =>
+                                                            setGapResponses(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    [i]: e
+                                                                        .target
+                                                                        .value,
+                                                                })
+                                                            )
+                                                        }
+                                                        autoFocus
+                                                    />
+                                                    <div className="flex gap-1">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-6 text-[10px] px-2"
+                                                            onClick={() => {
+                                                                setActiveGapIndex(
+                                                                    null
+                                                                );
+                                                                if (
+                                                                    !gapResponses[
+                                                                        i
+                                                                    ]?.trim()
+                                                                ) {
+                                                                    setGapResponses(
+                                                                        (
+                                                                            prev
+                                                                        ) => {
+                                                                            const next =
+                                                                                {
+                                                                                    ...prev,
+                                                                                };
+                                                                            delete next[
+                                                                                i
+                                                                            ];
+                                                                            return next;
+                                                                        }
+                                                                    );
+                                                                }
+                                                            }}
+                                                        >
+                                                            Done
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Filled response badge */}
+                                            {gapResponses[i]?.trim() &&
+                                                activeGapIndex !== i && (
+                                                    <div className="ml-4 flex items-start gap-1.5 p-1.5 bg-green-50 dark:bg-green-950/30 rounded text-[10px] text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                                                        <CheckCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                                        <span className="flex-1">
+                                                            {gapResponses[i]}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => {
+                                                                setGapResponses(
+                                                                    (prev) => {
+                                                                        const next =
+                                                                            {
+                                                                                ...prev,
+                                                                            };
+                                                                        delete next[
+                                                                            i
+                                                                        ];
+                                                                        return next;
+                                                                    }
+                                                                );
+                                                            }}
+                                                            className="text-green-500 hover:text-red-500"
+                                                        >
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                )}
                                         </li>
                                     ))}
                                 </ul>
+
+                                {/* Re-tailor button */}
+                                {filledCount > 0 && (
+                                    <div className="mt-4 pt-3 border-t">
+                                        <Button
+                                            onClick={handleRetailor}
+                                            disabled={retailoring}
+                                            size="sm"
+                                            className="w-full gap-2"
+                                        >
+                                            {retailoring ? (
+                                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            ) : (
+                                                <RefreshCw className="w-3.5 h-3.5" />
+                                            )}
+                                            {retailoring
+                                                ? "Re-tailoring..."
+                                                : `Re-tailor with ${filledCount} update${filledCount > 1 ? "s" : ""}`}
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {/* Re-tailor status message */}
+                                {retailorMessage && (
+                                    <div
+                                        className={`mt-3 p-2 rounded text-[10px] ${
+                                            retailorMessage.type === "success"
+                                                ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 border border-green-200 dark:border-green-800"
+                                                : "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border border-red-200 dark:border-red-800"
+                                        }`}
+                                    >
+                                        {retailorMessage.text}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     )}
@@ -320,11 +536,11 @@ export function DocumentViewer({
                                     }`}
                                 >
                                     {application.recommendation === "apply"
-                                        ? "✅ Apply"
+                                        ? "Apply"
                                         : application.recommendation ===
                                             "stretch"
-                                          ? "🔄 Stretch"
-                                          : "⏭️ Skip"}
+                                          ? "Stretch"
+                                          : "Skip"}
                                 </Badge>
                             </div>
                         </CardContent>

@@ -65,6 +65,7 @@ export default async function DocumentViewerPage({
                 company: application.job.company,
                 location: application.job.location,
             }}
+            jobDescription={application.job.description || undefined}
             photoBase64={(structured?.photoBase64 as string) || undefined}
             originalCvText={masterProfile?.rawText || undefined}
         />

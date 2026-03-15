@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { jobDescription, jobUrl, jobTitle, company } = body;
+        const { jobDescription, jobUrl, jobTitle, company, additionalContext } = body;
 
         if (!jobDescription) {
             return NextResponse.json(
@@ -80,6 +80,7 @@ export async function POST(req: Request) {
                     company: company || "Unknown Company",
                     jobDescription,
                     masterCvText: user.masterProfile.rawText,
+                    additionalContext: additionalContext || "",
                 }),
             }).catch((err) =>
                 console.error("n8n webhook trigger failed:", err.message)
