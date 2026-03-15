@@ -1,5 +1,11 @@
 {
+    "updatedAt": "2026-03-14T00:07:37.360Z",
+    "createdAt": "2026-03-13T23:39:07.998Z",
+    "id": "3iUzBukfS6TME2yn",
     "name": "User-Initiated Single Job Tailoring",
+    "description": null,
+    "active": true,
+    "isArchived": false,
     "nodes": [
         {
             "parameters": {
@@ -12,18 +18,24 @@
             "name": "Webhook Trigger",
             "type": "n8n-nodes-base.webhook",
             "typeVersion": 1.1,
-            "position": [0, 0],
+            "position": [
+                0,
+                0
+            ],
             "webhookId": "single-job-tailor"
         },
         {
             "parameters": {
-                "jsCode": "// =============================================\n// CONFIGURATION — Edit values below in n8n UI\n// Double-click this node and replace placeholders\n// with your actual API keys and URLs.\n// =============================================\n\nconst CONFIG = {\n  anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY_HERE',\n  appUrl: 'https://autoapply.works',\n  webhookSecret: 'YOUR_N8N_WEBHOOK_SECRET_HERE'\n};\n\n// Pass through incoming webhook data with config attached\nconst input = $input.first().json;\nreturn [{\n  json: {\n    ...input,\n    _config: CONFIG\n  }\n}];"
+                "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nconst CONFIG = {\n  anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n  appUrl: 'https://autoapply.works',\n  webhookSecret: 'e398a1c2b63259f396e61b08736f5d10'\n};\n\nconst input = $input.first().json;\nreturn [{ json: { ...input, _config: CONFIG } }];"
             },
             "id": "load-config",
             "name": "Load Config",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [200, 0]
+            "position": [
+                200,
+                0
+            ]
         },
         {
             "parameters": {
@@ -33,7 +45,10 @@
             "name": "Validate Input",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [400, 0]
+            "position": [
+                400,
+                0
+            ]
         },
         {
             "parameters": {
@@ -42,21 +57,35 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-api-key", "value": "={{ $json.anthropicApiKey }}" },
-                        { "name": "anthropic-version", "value": "2023-06-01" },
-                        { "name": "content-type", "value": "application/json" }
+                        {
+                            "name": "x-api-key",
+                            "value": "={{ $json.anthropicApiKey }}"
+                        },
+                        {
+                            "name": "anthropic-version",
+                            "value": "2023-06-01"
+                        },
+                        {
+                            "name": "content-type",
+                            "value": "application/json"
+                        }
                     ]
                 },
                 "sendBody": true,
                 "specifyBody": "json",
                 "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1024, temperature: 0.1, messages: [{ role: 'user', content: 'You are an expert ATS analyst. Analyze this job posting against the candidate CV.\\n\\nReturn ONLY raw JSON (no markdown fences, no explanation):\\n{\"compatibility_score\":<0-100>,\"ats_keywords\":[<up to 10 strings>],\"matching_strengths\":[<up to 5 strings>],\"gaps\":[<up to 5 strings>],\"recommendation\":\"apply\"|\"stretch\"|\"skip\"}\\n\\nScoring: skills 40%, experience 25%, education 15%, industry 20%. apply=80+, stretch=60-79, skip=<60. Be conservative.\\n\\nJOB:\\n' + $json.jobDescription.substring(0, 4000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 6000) }] }) }}",
-                "options": { "timeout": 30000 }
+                "options": {
+                    "timeout": 30000
+                }
             },
             "id": "llm-scoring",
             "name": "LLM Relevance Scoring",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [600, 0]
+            "position": [
+                600,
+                0
+            ]
         },
         {
             "parameters": {
@@ -66,7 +95,10 @@
             "name": "Parse Scoring Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [800, 0]
+            "position": [
+                800,
+                0
+            ]
         },
         {
             "parameters": {
@@ -75,21 +107,35 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-api-key", "value": "={{ $json.anthropicApiKey }}" },
-                        { "name": "anthropic-version", "value": "2023-06-01" },
-                        { "name": "content-type", "value": "application/json" }
+                        {
+                            "name": "x-api-key",
+                            "value": "={{ $json.anthropicApiKey }}"
+                        },
+                        {
+                            "name": "anthropic-version",
+                            "value": "2023-06-01"
+                        },
+                        {
+                            "name": "content-type",
+                            "value": "application/json"
+                        }
                     ]
                 },
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, temperature: 0.2, messages: [{ role: 'user', content: 'You are an expert ATS resume writer.\\n\\nRewrite this CV for the specific job below. Return ONLY raw JSON (no markdown fences):\\n{\"tailored_cv_markdown\":\"<full CV in markdown>\",\"motivation_letter_markdown\":\"<cover letter in markdown>\"}\\n\\nCRITICAL RULES:\\n1. NEVER fabricate experience, skills, companies, dates, or credentials\\n2. ONLY use information from the candidate CV\\n3. You MAY reorder bullets, rephrase with ATS keywords, adjust summary\\n4. You MUST NOT add skills not present, change dates, invent metrics\\n5. Clean Markdown: Contact, Summary, Experience, Education, Skills\\n6. Single-column, no tables/images, max 2 pages\\n\\nCover letter: reference company + role, connect top 3 experiences, 250-350 words, professional, no cliches, NEVER fabricate.\\n\\nATS KEYWORDS: ' + JSON.stringify($json.atsKeywords) + '\\n\\nJOB:\\n' + $json.jobDescription.substring(0, 4000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 6000) }] }) }}",
-                "options": { "timeout": 60000 }
+                "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, temperature: 0.2, messages: [{ role: 'user', content: 'You are an expert ATS resume writer.\\n\\nRewrite this CV for the specific job below. Return ONLY raw JSON (no markdown fences):\\n{\"tailored_cv_markdown\":\"<full CV in markdown>\",\"motivation_letter_markdown\":\"<cover letter in markdown>\"}\\n\\nCRITICAL RULES:\\n1. NEVER fabricate experience, skills, companies, dates, or credentials\\n2. ONLY use information from the candidate CV\\n3. You MAY reorder bullets, rephrase with ATS keywords, adjust summary\\n4. You MUST NOT add skills not present, change dates, invent metrics\\n5. Clean Markdown: Contact, Summary, Experience, Education, Skills\\n6. Single-column, no tables/images, max 2 pages\\n\\nCover letter: reference company + role, connect top 3 experiences, 250-350 words, professional, no cliches, NEVER fabricate.\\n\\nLANGUAGE RULE: Detect the language of the job description. Generate the ENTIRE CV and cover letter in that SAME language. French job = French output. German job = German output. English job = English output. Section headers, summary, experience descriptions, and cover letter must ALL be in the detected language.\\n\\nATS KEYWORDS: ' + JSON.stringify($json.atsKeywords) + '\\n\\nJOB:\\n' + $json.jobDescription.substring(0, 4000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 6000) }] }) }}",
+                "options": {
+                    "timeout": 60000
+                }
             },
             "id": "llm-tailoring",
             "name": "LLM CV Tailoring",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [1000, 0]
+            "position": [
+                1000,
+                0
+            ]
         },
         {
             "parameters": {
@@ -99,7 +145,10 @@
             "name": "Parse Tailored Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [1200, 0]
+            "position": [
+                1200,
+                0
+            ]
         },
         {
             "parameters": {
@@ -108,52 +157,421 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-webhook-secret", "value": "={{ $json.webhookSecret }}" },
-                        { "name": "content-type", "value": "application/json" }
+                        {
+                            "name": "x-webhook-secret",
+                            "value": "={{ $json.webhookSecret }}"
+                        },
+                        {
+                            "name": "content-type",
+                            "value": "application/json"
+                        }
                     ]
                 },
                 "sendBody": true,
                 "specifyBody": "json",
                 "jsonBody": "={{ JSON.stringify({ type: 'single_tailoring_complete', data: { userId: $json.userId, jobId: $json.jobId, jobTitle: $json.jobTitle, company: $json.company, compatibilityScore: $json.compatibilityScore, atsKeywords: $json.atsKeywords, matchingStrengths: $json.matchingStrengths, gaps: $json.gaps, recommendation: $json.recommendation, tailoredCvMarkdown: $json.tailoredCvMarkdown, coverLetterMarkdown: $json.coverLetterMarkdown } }) }}",
-                "options": { "timeout": 10000 }
+                "options": {
+                    "timeout": 10000
+                }
             },
             "id": "callback-save",
             "name": "Save Results via App API",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [1400, 0]
+            "position": [
+                1400,
+                0
+            ]
         }
     ],
     "connections": {
         "Webhook Trigger": {
-            "main": [[{ "node": "Load Config", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Load Config",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Load Config": {
-            "main": [[{ "node": "Validate Input", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Validate Input",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Validate Input": {
-            "main": [[{ "node": "LLM Relevance Scoring", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "LLM Relevance Scoring",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "LLM Relevance Scoring": {
-            "main": [[{ "node": "Parse Scoring Response", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Parse Scoring Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Parse Scoring Response": {
-            "main": [[{ "node": "LLM CV Tailoring", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "LLM CV Tailoring",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "LLM CV Tailoring": {
-            "main": [[{ "node": "Parse Tailored Response", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Parse Tailored Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Parse Tailored Response": {
-            "main": [[{ "node": "Save Results via App API", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Save Results via App API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         }
     },
     "settings": {
         "executionOrder": "v1",
         "saveManualExecutions": true,
-        "errorWorkflow": ""
+        "errorWorkflow": "",
+        "callerPolicy": "workflowsFromSameOwner",
+        "availableInMCP": false
     },
-    "tags": [
-        { "name": "production" },
-        { "name": "user-triggered" }
-    ]
+    "staticData": null,
+    "meta": null,
+    "pinData": null,
+    "versionId": "843cce50-e8e2-435b-8ae6-54e4f739e97c",
+    "activeVersionId": "843cce50-e8e2-435b-8ae6-54e4f739e97c",
+    "versionCounter": 20,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-03-13T23:39:07.998Z",
+            "createdAt": "2026-03-13T23:39:07.998Z",
+            "role": "workflow:owner",
+            "workflowId": "3iUzBukfS6TME2yn",
+            "projectId": "r8GANyjun2ycDcwv",
+            "project": {
+                "updatedAt": "2026-03-08T13:52:12.422Z",
+                "createdAt": "2026-03-08T00:41:41.369Z",
+                "id": "r8GANyjun2ycDcwv",
+                "name": "Matthieu Kokabi <matthieu.kokabi@gmail.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "9ccaef6c-2fa4-4c73-9515-c3ca4179de8c"
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": {
+        "updatedAt": "2026-03-14T00:07:37.366Z",
+        "createdAt": "2026-03-14T00:07:37.366Z",
+        "versionId": "843cce50-e8e2-435b-8ae6-54e4f739e97c",
+        "workflowId": "3iUzBukfS6TME2yn",
+        "nodes": [
+            {
+                "parameters": {
+                    "httpMethod": "POST",
+                    "path": "single-job-tailor",
+                    "responseMode": "lastNode",
+                    "options": {}
+                },
+                "id": "webhook-trigger",
+                "name": "Webhook Trigger",
+                "type": "n8n-nodes-base.webhook",
+                "typeVersion": 1.1,
+                "position": [
+                    0,
+                    0
+                ],
+                "webhookId": "single-job-tailor"
+            },
+            {
+                "parameters": {
+                    "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nconst CONFIG = {\n  anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n  appUrl: 'https://autoapply.works',\n  webhookSecret: 'e398a1c2b63259f396e61b08736f5d10'\n};\n\nconst input = $input.first().json;\nreturn [{ json: { ...input, _config: CONFIG } }];"
+                },
+                "id": "load-config",
+                "name": "Load Config",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    200,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Validate and extract incoming webhook payload\nconst body = $input.first().json.body;\nconst config = $input.first().json._config;\n\nif (!body || !body.jobDescription || !body.masterCvText || !body.userId || !body.jobId) {\n  throw new Error('Missing required fields: jobDescription, masterCvText, userId, jobId');\n}\n\nreturn [{\n  json: {\n    userId: body.userId,\n    jobId: body.jobId,\n    jobTitle: body.jobTitle || '',\n    company: body.company || '',\n    jobDescription: body.jobDescription,\n    masterCvText: body.masterCvText,\n    anthropicApiKey: config.anthropicApiKey,\n    appUrl: config.appUrl,\n    webhookSecret: config.webhookSecret\n  }\n}];"
+                },
+                "id": "validate-input",
+                "name": "Validate Input",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    400,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://api.anthropic.com/v1/messages",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "x-api-key",
+                                "value": "={{ $json.anthropicApiKey }}"
+                            },
+                            {
+                                "name": "anthropic-version",
+                                "value": "2023-06-01"
+                            },
+                            {
+                                "name": "content-type",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "sendBody": true,
+                    "specifyBody": "json",
+                    "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1024, temperature: 0.1, messages: [{ role: 'user', content: 'You are an expert ATS analyst. Analyze this job posting against the candidate CV.\\n\\nReturn ONLY raw JSON (no markdown fences, no explanation):\\n{\"compatibility_score\":<0-100>,\"ats_keywords\":[<up to 10 strings>],\"matching_strengths\":[<up to 5 strings>],\"gaps\":[<up to 5 strings>],\"recommendation\":\"apply\"|\"stretch\"|\"skip\"}\\n\\nScoring: skills 40%, experience 25%, education 15%, industry 20%. apply=80+, stretch=60-79, skip=<60. Be conservative.\\n\\nJOB:\\n' + $json.jobDescription.substring(0, 4000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 6000) }] }) }}",
+                    "options": {
+                        "timeout": 30000
+                    }
+                },
+                "id": "llm-scoring",
+                "name": "LLM Relevance Scoring",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.1,
+                "position": [
+                    600,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Parse Anthropic scoring response, carry forward original data\nconst item = $input.first();\nconst prev = $('Validate Input').first().json;\n\ntry {\n  const text = item.json.content?.[0]?.text || '';\n  let jsonStr = text;\n  const m = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (m) jsonStr = m[1];\n  const p = JSON.parse(jsonStr.trim());\n\n  return [{ json: {\n    ...prev,\n    compatibilityScore: p.compatibility_score || 0,\n    atsKeywords: p.ats_keywords || [],\n    matchingStrengths: p.matching_strengths || [],\n    gaps: p.gaps || [],\n    recommendation: p.recommendation || 'skip',\n    scoringError: false\n  }}];\n} catch (e) {\n  return [{ json: {\n    ...prev,\n    compatibilityScore: 50,\n    atsKeywords: [],\n    matchingStrengths: [],\n    gaps: ['Unable to fully analyze - manual review recommended'],\n    recommendation: 'stretch',\n    scoringError: true,\n    scoringErrorMsg: e.message\n  }}];\n}"
+                },
+                "id": "parse-scoring",
+                "name": "Parse Scoring Response",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    800,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://api.anthropic.com/v1/messages",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "x-api-key",
+                                "value": "={{ $json.anthropicApiKey }}"
+                            },
+                            {
+                                "name": "anthropic-version",
+                                "value": "2023-06-01"
+                            },
+                            {
+                                "name": "content-type",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "sendBody": true,
+                    "specifyBody": "json",
+                    "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, temperature: 0.2, messages: [{ role: 'user', content: 'You are an expert ATS resume writer.\\n\\nRewrite this CV for the specific job below. Return ONLY raw JSON (no markdown fences):\\n{\"tailored_cv_markdown\":\"<full CV in markdown>\",\"motivation_letter_markdown\":\"<cover letter in markdown>\"}\\n\\nCRITICAL RULES:\\n1. NEVER fabricate experience, skills, companies, dates, or credentials\\n2. ONLY use information from the candidate CV\\n3. You MAY reorder bullets, rephrase with ATS keywords, adjust summary\\n4. You MUST NOT add skills not present, change dates, invent metrics\\n5. Clean Markdown: Contact, Summary, Experience, Education, Skills\\n6. Single-column, no tables/images, max 2 pages\\n\\nCover letter: reference company + role, connect top 3 experiences, 250-350 words, professional, no cliches, NEVER fabricate.\\n\\nATS KEYWORDS: ' + JSON.stringify($json.atsKeywords) + '\\n\\nJOB:\\n' + $json.jobDescription.substring(0, 4000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 6000) }] }) }}",
+                    "options": {
+                        "timeout": 60000
+                    }
+                },
+                "id": "llm-tailoring",
+                "name": "LLM CV Tailoring",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.1,
+                "position": [
+                    1000,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Parse Anthropic tailoring response\nconst item = $input.first();\nconst prev = $('Parse Scoring Response').first().json;\n\ntry {\n  const text = item.json.content?.[0]?.text || '';\n  let jsonStr = text;\n  const m = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (m) jsonStr = m[1];\n  const p = JSON.parse(jsonStr.trim());\n\n  return [{ json: {\n    ...prev,\n    tailoredCvMarkdown: p.tailored_cv_markdown || '',\n    coverLetterMarkdown: p.motivation_letter_markdown || '',\n    tailoringError: false\n  }}];\n} catch (e) {\n  return [{ json: {\n    ...prev,\n    tailoredCvMarkdown: '',\n    coverLetterMarkdown: '',\n    tailoringError: true,\n    tailoringErrorMsg: e.message\n  }}];\n}"
+                },
+                "id": "parse-tailored",
+                "name": "Parse Tailored Response",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    1200,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "={{ ($json.appUrl || 'https://autoapply.works') + '/api/webhooks/n8n' }}",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "x-webhook-secret",
+                                "value": "={{ $json.webhookSecret }}"
+                            },
+                            {
+                                "name": "content-type",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "sendBody": true,
+                    "specifyBody": "json",
+                    "jsonBody": "={{ JSON.stringify({ type: 'single_tailoring_complete', data: { userId: $json.userId, jobId: $json.jobId, jobTitle: $json.jobTitle, company: $json.company, compatibilityScore: $json.compatibilityScore, atsKeywords: $json.atsKeywords, matchingStrengths: $json.matchingStrengths, gaps: $json.gaps, recommendation: $json.recommendation, tailoredCvMarkdown: $json.tailoredCvMarkdown, coverLetterMarkdown: $json.coverLetterMarkdown } }) }}",
+                    "options": {
+                        "timeout": 10000
+                    }
+                },
+                "id": "callback-save",
+                "name": "Save Results via App API",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.1,
+                "position": [
+                    1400,
+                    0
+                ]
+            }
+        ],
+        "connections": {
+            "Webhook Trigger": {
+                "main": [
+                    [
+                        {
+                            "node": "Load Config",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Load Config": {
+                "main": [
+                    [
+                        {
+                            "node": "Validate Input",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Validate Input": {
+                "main": [
+                    [
+                        {
+                            "node": "LLM Relevance Scoring",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "LLM Relevance Scoring": {
+                "main": [
+                    [
+                        {
+                            "node": "Parse Scoring Response",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Parse Scoring Response": {
+                "main": [
+                    [
+                        {
+                            "node": "LLM CV Tailoring",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "LLM CV Tailoring": {
+                "main": [
+                    [
+                        {
+                            "node": "Parse Tailored Response",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Parse Tailored Response": {
+                "main": [
+                    [
+                        {
+                            "node": "Save Results via App API",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
+        },
+        "authors": "Matthieu Kokabi",
+        "name": null,
+        "description": null,
+        "autosaved": false,
+        "workflowPublishHistory": [
+            {
+                "createdAt": "2026-03-14T00:07:37.600Z",
+                "id": 26,
+                "workflowId": "3iUzBukfS6TME2yn",
+                "versionId": "843cce50-e8e2-435b-8ae6-54e4f739e97c",
+                "event": "activated",
+                "userId": "9ccaef6c-2fa4-4c73-9515-c3ca4179de8c"
+            }
+        ]
+    }
 }

@@ -1,27 +1,44 @@
 {
+    "updatedAt": "2026-03-15T09:24:28.284Z",
+    "createdAt": "2026-03-13T23:39:08.192Z",
+    "id": "eddfsS251UHbmNIj",
     "name": "Job Discovery & Tailoring Pipeline",
+    "description": null,
+    "active": true,
+    "isArchived": false,
     "nodes": [
         {
             "parameters": {
                 "rule": {
-                    "interval": [{ "field": "hours", "hoursInterval": 4 }]
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "hoursInterval": 4
+                        }
+                    ]
                 }
             },
             "id": "schedule-trigger",
             "name": "Schedule Trigger",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
-            "position": [0, 0]
+            "position": [
+                0,
+                0
+            ]
         },
         {
             "parameters": {
-                "jsCode": "// =============================================\n// CONFIGURATION — Edit values below in n8n UI\n// Double-click this node and replace placeholders\n// with your actual API keys and URLs.\n// =============================================\n\nreturn [{\n  json: {\n    // REQUIRED: Your Anthropic API key for Claude LLM\n    anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY_HERE',\n\n    // Your app URL and webhook secret\n    appUrl: 'https://autoapply.works',\n    webhookSecret: 'YOUR_N8N_WEBHOOK_SECRET_HERE',\n\n    // Job source API keys (leave empty string if not yet available)\n    adzunaAppId: 'YOUR_ADZUNA_APP_ID',\n    adzunaAppKey: 'YOUR_ADZUNA_APP_KEY',\n    jsearchApiKey: '',\n    joobleApiKey: '',\n    reedApiKey: ''\n  }\n}];"
+                "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nreturn [{\n  json: {\n    anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n    appUrl: 'https://autoapply.works',\n    webhookSecret: 'e398a1c2b63259f396e61b08736f5d10',\n    adzunaAppId: 'e2af75b6',\n    adzunaAppKey: 'c26a8ecf9af040f21ee9e0c2b863aa48',\n    jsearchApiKey: '76cf1b39a6msh38432550938e460p14b9fejsn84790223133b',\n    joobleApiKey: '',\n    reedApiKey: ''\n  }\n}];"
             },
             "id": "load-config",
             "name": "Load Config",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [200, 0]
+            "position": [
+                200,
+                0
+            ]
         },
         {
             "parameters": {
@@ -32,7 +49,10 @@
             "name": "Random Jitter Wait",
             "type": "n8n-nodes-base.wait",
             "typeVersion": 1.1,
-            "position": [400, 0]
+            "position": [
+                400,
+                0
+            ]
         },
         {
             "parameters": {
@@ -44,11 +64,14 @@
             "name": "Fetch Active Users with Prefs & CV",
             "type": "n8n-nodes-base.postgres",
             "typeVersion": 2.3,
-            "position": [600, 0],
+            "position": [
+                600,
+                0
+            ],
             "credentials": {
                 "postgres": {
-                    "id": "app-db",
-                    "name": "AutoApply Neon DB"
+                    "id": "WQS6PNsONFUq13eS",
+                    "name": "Neon Postgres (AutoApply)"
                 }
             }
         },
@@ -60,7 +83,10 @@
             "name": "Prepare User Data",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [800, 0]
+            "position": [
+                800,
+                0
+            ]
         },
         {
             "parameters": {
@@ -70,7 +96,10 @@
             "name": "Fetch & Normalize All Job Sources",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [1000, 0]
+            "position": [
+                1000,
+                0
+            ]
         },
         {
             "parameters": {
@@ -79,21 +108,35 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-api-key", "value": "={{ $('Load Config').first().json.anthropicApiKey }}" },
-                        { "name": "anthropic-version", "value": "2023-06-01" },
-                        { "name": "content-type", "value": "application/json" }
+                        {
+                            "name": "x-api-key",
+                            "value": "={{ $('Load Config').first().json.anthropicApiKey }}"
+                        },
+                        {
+                            "name": "anthropic-version",
+                            "value": "2023-06-01"
+                        },
+                        {
+                            "name": "content-type",
+                            "value": "application/json"
+                        }
                     ]
                 },
                 "sendBody": true,
                 "specifyBody": "json",
                 "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1024, temperature: 0.1, messages: [{ role: 'user', content: 'You are an expert ATS analyst. Analyze this job against the candidate CV.\\n\\nReturn ONLY raw JSON (no markdown, no code blocks):\\n{\"compatibility_score\":<0-100>,\"ats_keywords\":[<up to 10>],\"matching_strengths\":[<up to 5>],\"gaps\":[<up to 5>],\"recommendation\":\"apply\"|\"stretch\"|\"skip\"}\\n\\nScoring: skills 40%, experience 25%, education 15%, industry 20%. apply=80+, stretch=60-79, skip=<60.\\n\\nJOB TITLE: ' + $json.title + '\\nCOMPANY: ' + $json.company + '\\nJOB DESCRIPTION:\\n' + $json.description.substring(0, 3000) + '\\n\\nCANDIDATE CV:\\n' + $json.masterCvText.substring(0, 5000) }] }) }}",
-                "options": { "timeout": 30000 }
+                "options": {
+                    "timeout": 30000
+                }
             },
             "id": "llm-scoring",
             "name": "LLM Relevance Scoring",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [1200, 0]
+            "position": [
+                1200,
+                0
+            ]
         },
         {
             "parameters": {
@@ -103,7 +146,10 @@
             "name": "Parse Scoring Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [1400, 0]
+            "position": [
+                1400,
+                0
+            ]
         },
         {
             "parameters": {
@@ -121,7 +167,10 @@
             "name": "Score >= 70?",
             "type": "n8n-nodes-base.if",
             "typeVersion": 1,
-            "position": [1600, 0]
+            "position": [
+                1600,
+                0
+            ]
         },
         {
             "parameters": {
@@ -130,21 +179,35 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        { "name": "x-api-key", "value": "={{ $('Load Config').first().json.anthropicApiKey }}" },
-                        { "name": "anthropic-version", "value": "2023-06-01" },
-                        { "name": "content-type", "value": "application/json" }
+                        {
+                            "name": "x-api-key",
+                            "value": "={{ $('Load Config').first().json.anthropicApiKey }}"
+                        },
+                        {
+                            "name": "anthropic-version",
+                            "value": "2023-06-01"
+                        },
+                        {
+                            "name": "content-type",
+                            "value": "application/json"
+                        }
                     ]
                 },
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, temperature: 0.2, messages: [{ role: 'user', content: 'You are an expert ATS resume writer. Rewrite this CV for the job below.\\n\\nReturn ONLY raw JSON (no markdown fences):\\n{\"tailored_cv_markdown\":\"<CV in markdown>\",\"motivation_letter_markdown\":\"<cover letter in markdown>\"}\\n\\nRULES: NEVER fabricate. ONLY use info from CV. MAY reorder/rephrase with ATS keywords. Clean Markdown, single-column, max 2 pages. Cover letter: 250-350 words, reference company+role, no cliches.\\n\\nATS KEYWORDS: ' + JSON.stringify($json.atsKeywords) + '\\n\\nJOB: ' + $json.title + ' at ' + $json.company + '\\n' + $json.description.substring(0, 3000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 5000) }] }) }}",
-                "options": { "timeout": 60000 }
+                "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, temperature: 0.2, messages: [{ role: 'user', content: 'You are an expert ATS resume writer. Rewrite this CV for the job below.\\n\\nReturn ONLY raw JSON (no markdown fences):\\n{\"tailored_cv_markdown\":\"<CV in markdown>\",\"motivation_letter_markdown\":\"<cover letter in markdown>\"}\\n\\nRULES: NEVER fabricate. ONLY use info from CV. MAY reorder/rephrase with ATS keywords. Clean Markdown, single-column, max 2 pages. Cover letter: 250-350 words, reference company+role, no cliches.\\n\\nLANGUAGE RULE: Detect the language of the job description. Generate the ENTIRE CV and cover letter in that SAME language. French job = French output. German job = German output. English job = English output. Section headers, summary, experience descriptions, and cover letter must ALL be in the detected language.\\n\\nATS KEYWORDS: ' + JSON.stringify($json.atsKeywords) + '\\n\\nJOB: ' + $json.title + ' at ' + $json.company + '\\n' + $json.description.substring(0, 3000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 5000) }] }) }}",
+                "options": {
+                    "timeout": 60000
+                }
             },
             "id": "llm-tailoring",
             "name": "LLM CV Tailoring",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [1800, -100]
+            "position": [
+                1800,
+                -100
+            ]
         },
         {
             "parameters": {
@@ -154,7 +217,10 @@
             "name": "Parse Tailored Response",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [2000, -100]
+            "position": [
+                2000,
+                -100
+            ]
         },
         {
             "parameters": {
@@ -164,7 +230,10 @@
             "name": "Mark as Discovered",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [1800, 200]
+            "position": [
+                1800,
+                200
+            ]
         },
         {
             "parameters": {
@@ -174,68 +243,629 @@
             "name": "Batch Save via App API",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [2200, 50]
+            "position": [
+                2200,
+                50
+            ]
         },
         {
             "parameters": {
-                "jsCode": "// Error handler — log to workflow_errors via web app\nconst error = $input.first().json;\nconst config = $('Load Config').first().json;\nconst appUrl = config.appUrl || 'https://autoapply.works';\nconst secret = config.webhookSecret || '';\n\ntry {\n  await fetch(`${appUrl}/api/webhooks/n8n`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'x-webhook-secret': secret\n    },\n    body: JSON.stringify({\n      type: 'workflow_error',\n      data: {\n        workflowId: 'job-discovery-pipeline',\n        nodeName: error.node?.name || 'unknown',\n        errorType: error.type || 'UNKNOWN',\n        message: error.message || 'Unknown error',\n        payload: JSON.stringify(error)\n      }\n    })\n  });\n} catch (e) {\n  console.log('Error logging failed:', e.message);\n}\n\nreturn [{ json: { logged: true } }];"
+                "jsCode": "// Error handler \u2014 log to workflow_errors via web app\nconst error = $input.first().json;\nconst config = $('Load Config').first().json;\nconst appUrl = config.appUrl || 'https://autoapply.works';\nconst secret = config.webhookSecret || '';\n\ntry {\n  await fetch(`${appUrl}/api/webhooks/n8n`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'x-webhook-secret': secret\n    },\n    body: JSON.stringify({\n      type: 'workflow_error',\n      data: {\n        workflowId: 'job-discovery-pipeline',\n        nodeName: error.node?.name || 'unknown',\n        errorType: error.type || 'UNKNOWN',\n        message: error.message || 'Unknown error',\n        payload: JSON.stringify(error)\n      }\n    })\n  });\n} catch (e) {\n  console.log('Error logging failed:', e.message);\n}\n\nreturn [{ json: { logged: true } }];"
             },
             "id": "error-handler",
             "name": "Error Handler",
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
-            "position": [2200, 400]
+            "position": [
+                2200,
+                400
+            ]
         }
     ],
     "connections": {
         "Schedule Trigger": {
-            "main": [[{ "node": "Load Config", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Load Config",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Load Config": {
-            "main": [[{ "node": "Random Jitter Wait", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Random Jitter Wait",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Random Jitter Wait": {
-            "main": [[{ "node": "Fetch Active Users with Prefs & CV", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Fetch Active Users with Prefs & CV",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Fetch Active Users with Prefs & CV": {
-            "main": [[{ "node": "Prepare User Data", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Prepare User Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Prepare User Data": {
-            "main": [[{ "node": "Fetch & Normalize All Job Sources", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Fetch & Normalize All Job Sources",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Fetch & Normalize All Job Sources": {
-            "main": [[{ "node": "LLM Relevance Scoring", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "LLM Relevance Scoring",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "LLM Relevance Scoring": {
-            "main": [[{ "node": "Parse Scoring Response", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Parse Scoring Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Parse Scoring Response": {
-            "main": [[{ "node": "Score >= 70?", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Score >= 70?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Score >= 70?": {
             "main": [
-                [{ "node": "LLM CV Tailoring", "type": "main", "index": 0 }],
-                [{ "node": "Mark as Discovered", "type": "main", "index": 0 }]
+                [
+                    {
+                        "node": "LLM CV Tailoring",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Mark as Discovered",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
             ]
         },
         "LLM CV Tailoring": {
-            "main": [[{ "node": "Parse Tailored Response", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Parse Tailored Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Parse Tailored Response": {
-            "main": [[{ "node": "Batch Save via App API", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Batch Save via App API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         },
         "Mark as Discovered": {
-            "main": [[{ "node": "Batch Save via App API", "type": "main", "index": 0 }]]
+            "main": [
+                [
+                    {
+                        "node": "Batch Save via App API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         }
     },
     "settings": {
         "executionOrder": "v1",
         "saveManualExecutions": true,
         "callerPolicy": "workflowsFromSameOwner",
-        "errorWorkflow": "error-handler"
+        "errorWorkflow": "error-handler",
+        "availableInMCP": false
     },
-    "tags": [
-        { "name": "production" },
-        { "name": "job-discovery" }
-    ]
+    "staticData": {
+        "node:Schedule Trigger": {
+            "recurrenceRules": [
+                20
+            ]
+        }
+    },
+    "meta": null,
+    "pinData": null,
+    "versionId": "3c04a0a7-1e88-4859-95f0-afde2cf0d7bf",
+    "activeVersionId": "3c04a0a7-1e88-4859-95f0-afde2cf0d7bf",
+    "versionCounter": 35,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-03-13T23:39:08.192Z",
+            "createdAt": "2026-03-13T23:39:08.192Z",
+            "role": "workflow:owner",
+            "workflowId": "eddfsS251UHbmNIj",
+            "projectId": "r8GANyjun2ycDcwv",
+            "project": {
+                "updatedAt": "2026-03-08T13:52:12.422Z",
+                "createdAt": "2026-03-08T00:41:41.369Z",
+                "id": "r8GANyjun2ycDcwv",
+                "name": "Matthieu Kokabi <matthieu.kokabi@gmail.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "9ccaef6c-2fa4-4c73-9515-c3ca4179de8c"
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": {
+        "updatedAt": "2026-03-15T09:24:28.292Z",
+        "createdAt": "2026-03-15T09:24:28.292Z",
+        "versionId": "3c04a0a7-1e88-4859-95f0-afde2cf0d7bf",
+        "workflowId": "eddfsS251UHbmNIj",
+        "nodes": [
+            {
+                "parameters": {
+                    "rule": {
+                        "interval": [
+                            {
+                                "field": "hours",
+                                "hoursInterval": 4
+                            }
+                        ]
+                    }
+                },
+                "id": "schedule-trigger",
+                "name": "Schedule Trigger",
+                "type": "n8n-nodes-base.scheduleTrigger",
+                "typeVersion": 1.1,
+                "position": [
+                    0,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nreturn [{\n  json: {\n    anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n    appUrl: 'https://autoapply.works',\n    webhookSecret: 'e398a1c2b63259f396e61b08736f5d10',\n    adzunaAppId: 'e2af75b6',\n    adzunaAppKey: 'c26a8ecf9af040f21ee9e0c2b863aa48',\n    jsearchApiKey: '76cf1b39a6msh38432550938e460p14b9fejsn84790223133b',\n    joobleApiKey: '',\n    reedApiKey: ''\n  }\n}];"
+                },
+                "id": "load-config",
+                "name": "Load Config",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    200,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "amount": "={{ Math.floor(Math.random() * 30) }}",
+                    "unit": "minutes"
+                },
+                "id": "jitter-wait",
+                "name": "Random Jitter Wait",
+                "type": "n8n-nodes-base.wait",
+                "typeVersion": 1.1,
+                "position": [
+                    400,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "operation": "executeQuery",
+                    "query": "SELECT u.\"id\", u.\"email\", u.\"name\", u.\"subscriptionStatus\", u.\"creditsRemaining\", jp.\"targetTitles\", jp.\"locations\", jp.\"remotePreference\", jp.\"salaryMin\", jp.\"industries\", mp.\"rawText\" AS \"masterCvText\" FROM \"users\" u LEFT JOIN \"job_preferences\" jp ON jp.\"userId\" = u.\"id\" LEFT JOIN \"master_profiles\" mp ON mp.\"userId\" = u.\"id\" WHERE u.\"automationEnabled\" = true AND u.\"subscriptionStatus\" IN ('pro', 'unlimited') AND mp.\"rawText\" IS NOT NULL AND jp.\"id\" IS NOT NULL",
+                    "additionalFields": {}
+                },
+                "id": "fetch-active-users",
+                "name": "Fetch Active Users with Prefs & CV",
+                "type": "n8n-nodes-base.postgres",
+                "typeVersion": 2.3,
+                "position": [
+                    600,
+                    0
+                ],
+                "credentials": {
+                    "postgres": {
+                        "id": "WQS6PNsONFUq13eS",
+                        "name": "Neon Postgres (AutoApply)"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Split users into individual items for processing\nconst items = $input.all();\nconst users = [];\n\nfor (const item of items) {\n  const row = item.json;\n  if (row.id && row.masterCvText) {\n    users.push({\n      json: {\n        userId: row.id,\n        email: row.email,\n        name: row.name,\n        subscriptionStatus: row.subscriptionStatus,\n        creditsRemaining: row.creditsRemaining,\n        targetTitles: row.targetTitles || ['software engineer'],\n        locations: row.locations || ['remote'],\n        remotePreference: row.remotePreference || 'any',\n        salaryMin: row.salaryMin || 0,\n        industries: row.industries || [],\n        masterCvText: row.masterCvText\n      }\n    });\n  }\n}\n\nif (users.length === 0) {\n  return [];\n}\n\nreturn users;"
+                },
+                "id": "prepare-users",
+                "name": "Prepare User Data",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    800,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Fetch jobs from ALL sources for this user, normalize, and deduplicate\nconst user = $input.first().json;\nconst config = $('Load Config').first().json;\nconst searchTitle = (user.targetTitles[0] || 'software engineer').trim();\nconst searchLocation = (user.locations[0] || '').trim();\n\nconst allJobs = [];\n\n// Helper: safe fetch with timeout\nasync function safeFetch(url, options = {}) {\n  const controller = new AbortController();\n  const timeout = setTimeout(() => controller.abort(), 15000);\n  try {\n    const resp = await fetch(url, { ...options, signal: controller.signal });\n    clearTimeout(timeout);\n    if (!resp.ok) return null;\n    return await resp.json();\n  } catch (e) {\n    clearTimeout(timeout);\n    return null;\n  }\n}\n\n// 1. ADZUNA\nif (config.adzunaAppId && config.adzunaAppKey) {\n  try {\n    const adzunaUrl = `https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=${config.adzunaAppId}&app_key=${config.adzunaAppKey}&what=${encodeURIComponent(searchTitle)}&where=${encodeURIComponent(searchLocation)}&results_per_page=15&content-type=application/json`;\n    const data = await safeFetch(adzunaUrl);\n    if (data?.results) {\n      for (const j of data.results) {\n        allJobs.push({\n          externalId: `adzuna-${j.id}`,\n          title: j.title || '',\n          company: j.company?.display_name || 'Unknown',\n          location: j.location?.display_name || '',\n          description: j.description || '',\n          source: 'adzuna',\n          url: j.redirect_url || '',\n          salary: j.salary_is_predicted === '0' ? `${j.salary_min}-${j.salary_max}` : null,\n          postedAt: j.created ? new Date(j.created).toISOString() : null\n        });\n      }\n    }\n  } catch (e) { /* adzuna failed, continue */ }\n}\n\n// 2. THE MUSE (free, no key needed)\ntry {\n  const museUrl = `https://www.themuse.com/api/public/jobs?category=Engineering&level=Mid%20Level&page=1`;\n  const data = await safeFetch(museUrl);\n  if (data?.results) {\n    for (const j of data.results) {\n      allJobs.push({\n        externalId: `themuse-${j.id}`,\n        title: j.name || '',\n        company: j.company?.name || 'Unknown',\n        location: j.locations?.map(l => l.name).join(', ') || '',\n        description: (j.contents || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'themuse',\n        url: j.refs?.landing_page || '',\n        salary: null,\n        postedAt: j.publication_date || null\n      });\n    }\n  }\n} catch (e) { /* themuse failed */ }\n\n// 3. REMOTIVE (free, no key needed)\ntry {\n  const remotiveUrl = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(searchTitle)}&limit=15`;\n  const data = await safeFetch(remotiveUrl);\n  if (data?.jobs) {\n    for (const j of data.jobs) {\n      allJobs.push({\n        externalId: `remotive-${j.id}`,\n        title: j.title || '',\n        company: j.company_name || 'Unknown',\n        location: j.candidate_required_location || 'Remote',\n        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'remotive',\n        url: j.url || '',\n        salary: j.salary || null,\n        postedAt: j.publication_date || null\n      });\n    }\n  }\n} catch (e) { /* remotive failed */ }\n\n// 4. ARBEITNOW (free, no key needed)\ntry {\n  const arbeitnowUrl = `https://www.arbeitnow.com/api/job-board-api?search=${encodeURIComponent(searchTitle)}&page=1`;\n  const data = await safeFetch(arbeitnowUrl);\n  if (data?.data) {\n    for (const j of data.data) {\n      allJobs.push({\n        externalId: `arbeitnow-${j.slug || j.id || Date.now()}`,\n        title: j.title || '',\n        company: j.company_name || 'Unknown',\n        location: j.location || '',\n        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),\n        source: 'arbeitnow',\n        url: j.url || '',\n        salary: null,\n        postedAt: j.created_at || null\n      });\n    }\n  }\n} catch (e) { /* arbeitnow failed */ }\n\n// 5. JSEARCH (RapidAPI, needs key)\nif (config.jsearchApiKey) {\n  try {\n    const query = `${searchTitle} in ${searchLocation || 'remote'}`;\n    const jsearchUrl = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1`;\n    const data = await safeFetch(jsearchUrl, {\n      headers: {\n        'X-RapidAPI-Key': config.jsearchApiKey,\n        'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'\n      }\n    });\n    if (data?.data) {\n      for (const j of data.data) {\n        allJobs.push({\n          externalId: `jsearch-${j.job_id}`,\n          title: j.job_title || '',\n          company: j.employer_name || 'Unknown',\n          location: j.job_city ? `${j.job_city}, ${j.job_state || j.job_country}` : (j.job_country || ''),\n          description: (j.job_description || '').substring(0, 3000),\n          source: 'jsearch',\n          url: j.job_apply_link || j.job_google_link || '',\n          salary: j.job_min_salary ? `${j.job_min_salary}-${j.job_max_salary}` : null,\n          postedAt: j.job_posted_at_datetime_utc || null\n        });\n      }\n    }\n  } catch (e) { /* jsearch failed */ }\n}\n\n// 6. JOOBLE (needs key)\nif (config.joobleApiKey) {\n  try {\n    const data = await safeFetch(`https://jooble.org/api/${config.joobleApiKey}`, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ keywords: searchTitle, location: searchLocation, page: 1 })\n    });\n    if (data?.jobs) {\n      for (const j of data.jobs) {\n        allJobs.push({\n          externalId: `jooble-${j.id || Date.now()}`,\n          title: j.title || '',\n          company: j.company || 'Unknown',\n          location: j.location || '',\n          description: (j.snippet || '').substring(0, 3000),\n          source: 'jooble',\n          url: j.link || '',\n          salary: j.salary || null,\n          postedAt: j.updated || null\n        });\n      }\n    }\n  } catch (e) { /* jooble failed */ }\n}\n\n// 7. REED (needs key, basic auth)\nif (config.reedApiKey) {\n  try {\n    const reedAuth = btoa(config.reedApiKey + ':');\n    const reedUrl = `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(searchTitle)}&locationName=${encodeURIComponent(searchLocation)}&resultsToTake=15`;\n    const data = await safeFetch(reedUrl, {\n      headers: { 'Authorization': `Basic ${reedAuth}` }\n    });\n    if (data?.results) {\n      for (const j of data.results) {\n        allJobs.push({\n          externalId: `reed-${j.jobId}`,\n          title: j.jobTitle || '',\n          company: j.employerName || 'Unknown',\n          location: j.locationName || '',\n          description: (j.jobDescription || '').substring(0, 3000),\n          source: 'reed',\n          url: j.jobUrl || '',\n          salary: j.minimumSalary ? `${j.minimumSalary}-${j.maximumSalary}` : null,\n          postedAt: j.date || null\n        });\n      }\n    }\n  } catch (e) { /* reed failed */ }\n}\n\n// Deduplicate by externalId\nconst seen = new Set();\nconst uniqueJobs = [];\nfor (const job of allJobs) {\n  if (!seen.has(job.externalId) && job.title && job.description.length > 50) {\n    seen.add(job.externalId);\n    uniqueJobs.push(job);\n  }\n}\n\nif (uniqueJobs.length === 0) return [];\n\nreturn uniqueJobs.map(job => ({\n  json: {\n    ...job,\n    userId: user.userId,\n    masterCvText: user.masterCvText,\n    subscriptionStatus: user.subscriptionStatus,\n    creditsRemaining: user.creditsRemaining\n  }\n}));"
+                },
+                "id": "fetch-and-normalize",
+                "name": "Fetch & Normalize All Job Sources",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    1000,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://api.anthropic.com/v1/messages",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "x-api-key",
+                                "value": "={{ $('Load Config').first().json.anthropicApiKey }}"
+                            },
+                            {
+                                "name": "anthropic-version",
+                                "value": "2023-06-01"
+                            },
+                            {
+                                "name": "content-type",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "sendBody": true,
+                    "specifyBody": "json",
+                    "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1024, temperature: 0.1, messages: [{ role: 'user', content: 'You are an expert ATS analyst. Analyze this job against the candidate CV.\\n\\nReturn ONLY raw JSON (no markdown, no code blocks):\\n{\"compatibility_score\":<0-100>,\"ats_keywords\":[<up to 10>],\"matching_strengths\":[<up to 5>],\"gaps\":[<up to 5>],\"recommendation\":\"apply\"|\"stretch\"|\"skip\"}\\n\\nScoring: skills 40%, experience 25%, education 15%, industry 20%. apply=80+, stretch=60-79, skip=<60.\\n\\nJOB TITLE: ' + $json.title + '\\nCOMPANY: ' + $json.company + '\\nJOB DESCRIPTION:\\n' + $json.description.substring(0, 3000) + '\\n\\nCANDIDATE CV:\\n' + $json.masterCvText.substring(0, 5000) }] }) }}",
+                    "options": {
+                        "timeout": 30000
+                    }
+                },
+                "id": "llm-scoring",
+                "name": "LLM Relevance Scoring",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.1,
+                "position": [
+                    1200,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Parse scoring response, carry forward job + user data\nconst item = $input.first();\nconst prev = $('Fetch & Normalize All Job Sources').item;\n\ntry {\n  const text = item.json.content?.[0]?.text || '';\n  let jsonStr = text;\n  const m = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (m) jsonStr = m[1];\n  const p = JSON.parse(jsonStr.trim());\n\n  return [{ json: {\n    ...prev.json,\n    compatibilityScore: p.compatibility_score || 0,\n    atsKeywords: p.ats_keywords || [],\n    matchingStrengths: p.matching_strengths || [],\n    gaps: p.gaps || [],\n    recommendation: p.recommendation || 'skip'\n  }}];\n} catch (e) {\n  return [{ json: {\n    ...prev.json,\n    compatibilityScore: 0,\n    atsKeywords: [],\n    matchingStrengths: [],\n    gaps: [],\n    recommendation: 'skip'\n  }}];\n}"
+                },
+                "id": "parse-scoring",
+                "name": "Parse Scoring Response",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    1400,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "conditions": {
+                        "number": [
+                            {
+                                "value1": "={{ $json.compatibilityScore }}",
+                                "operation": "largerEqual",
+                                "value2": 70
+                            }
+                        ]
+                    }
+                },
+                "id": "score-router",
+                "name": "Score >= 70?",
+                "type": "n8n-nodes-base.if",
+                "typeVersion": 1,
+                "position": [
+                    1600,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://api.anthropic.com/v1/messages",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "x-api-key",
+                                "value": "={{ $('Load Config').first().json.anthropicApiKey }}"
+                            },
+                            {
+                                "name": "anthropic-version",
+                                "value": "2023-06-01"
+                            },
+                            {
+                                "name": "content-type",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "sendBody": true,
+                    "specifyBody": "json",
+                    "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, temperature: 0.2, messages: [{ role: 'user', content: 'You are an expert ATS resume writer. Rewrite this CV for the job below.\\n\\nReturn ONLY raw JSON (no markdown fences):\\n{\"tailored_cv_markdown\":\"<CV in markdown>\",\"motivation_letter_markdown\":\"<cover letter in markdown>\"}\\n\\nRULES: NEVER fabricate. ONLY use info from CV. MAY reorder/rephrase with ATS keywords. Clean Markdown, single-column, max 2 pages. Cover letter: 250-350 words, reference company+role, no cliches.\\n\\nATS KEYWORDS: ' + JSON.stringify($json.atsKeywords) + '\\n\\nJOB: ' + $json.title + ' at ' + $json.company + '\\n' + $json.description.substring(0, 3000) + '\\n\\nCV:\\n' + $json.masterCvText.substring(0, 5000) }] }) }}",
+                    "options": {
+                        "timeout": 60000
+                    }
+                },
+                "id": "llm-tailoring",
+                "name": "LLM CV Tailoring",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.1,
+                "position": [
+                    1800,
+                    -100
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Parse tailoring response\nconst item = $input.first();\nconst prev = $('Score >= 70?').first().json;\n\ntry {\n  const text = item.json.content?.[0]?.text || '';\n  let jsonStr = text;\n  const m = text.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  if (m) jsonStr = m[1];\n  const p = JSON.parse(jsonStr.trim());\n\n  return [{ json: {\n    ...prev,\n    tailoredCvMarkdown: p.tailored_cv_markdown || '',\n    coverLetterMarkdown: p.motivation_letter_markdown || '',\n    status: 'tailored'\n  }}];\n} catch (e) {\n  return [{ json: {\n    ...prev,\n    tailoredCvMarkdown: '',\n    coverLetterMarkdown: '',\n    status: 'discovered'\n  }}];\n}"
+                },
+                "id": "parse-tailored",
+                "name": "Parse Tailored Response",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    2000,
+                    -100
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// For low-scoring jobs (score < 70), mark as discovered only\nconst item = $input.first().json;\n\nreturn [{ json: {\n  ...item,\n  tailoredCvMarkdown: null,\n  coverLetterMarkdown: null,\n  status: 'discovered'\n}}];"
+                },
+                "id": "mark-discovered",
+                "name": "Mark as Discovered",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    1800,
+                    200
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Collect all processed jobs (tailored + discovered) for this user\n// and send them to the web app in a single batch callback\nconst items = $input.all();\nconst config = $('Load Config').first().json;\n\nif (items.length === 0) return [];\n\n// Group by userId\nconst byUser = {};\nfor (const item of items) {\n  const d = item.json;\n  if (!byUser[d.userId]) byUser[d.userId] = [];\n  byUser[d.userId].push({\n    externalId: d.externalId,\n    title: d.title,\n    company: d.company,\n    location: d.location,\n    description: d.description,\n    source: d.source,\n    url: d.url,\n    salary: d.salary,\n    postedAt: d.postedAt,\n    compatibilityScore: d.compatibilityScore,\n    atsKeywords: d.atsKeywords,\n    matchingStrengths: d.matchingStrengths,\n    gaps: d.gaps,\n    recommendation: d.recommendation,\n    tailoredCvMarkdown: d.tailoredCvMarkdown || null,\n    coverLetterMarkdown: d.coverLetterMarkdown || null,\n    status: d.status\n  });\n}\n\nconst appUrl = config.appUrl || 'https://autoapply.works';\nconst secret = config.webhookSecret || '';\n\nfor (const [userId, apps] of Object.entries(byUser)) {\n  try {\n    await fetch(`${appUrl}/api/webhooks/n8n`, {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n        'x-webhook-secret': secret\n      },\n      body: JSON.stringify({\n        type: 'new_applications',\n        data: { userId, applications: apps }\n      })\n    });\n  } catch (e) {\n    console.log(`Callback failed for user ${userId}:`, e.message);\n  }\n}\n\nreturn [{ json: { processed: items.length, users: Object.keys(byUser).length } }];"
+                },
+                "id": "batch-callback",
+                "name": "Batch Save via App API",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    2200,
+                    50
+                ]
+            },
+            {
+                "parameters": {
+                    "jsCode": "// Error handler \u2014 log to workflow_errors via web app\nconst error = $input.first().json;\nconst config = $('Load Config').first().json;\nconst appUrl = config.appUrl || 'https://autoapply.works';\nconst secret = config.webhookSecret || '';\n\ntry {\n  await fetch(`${appUrl}/api/webhooks/n8n`, {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'x-webhook-secret': secret\n    },\n    body: JSON.stringify({\n      type: 'workflow_error',\n      data: {\n        workflowId: 'job-discovery-pipeline',\n        nodeName: error.node?.name || 'unknown',\n        errorType: error.type || 'UNKNOWN',\n        message: error.message || 'Unknown error',\n        payload: JSON.stringify(error)\n      }\n    })\n  });\n} catch (e) {\n  console.log('Error logging failed:', e.message);\n}\n\nreturn [{ json: { logged: true } }];"
+                },
+                "id": "error-handler",
+                "name": "Error Handler",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    2200,
+                    400
+                ]
+            }
+        ],
+        "connections": {
+            "Schedule Trigger": {
+                "main": [
+                    [
+                        {
+                            "node": "Load Config",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Load Config": {
+                "main": [
+                    [
+                        {
+                            "node": "Random Jitter Wait",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Random Jitter Wait": {
+                "main": [
+                    [
+                        {
+                            "node": "Fetch Active Users with Prefs & CV",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Fetch Active Users with Prefs & CV": {
+                "main": [
+                    [
+                        {
+                            "node": "Prepare User Data",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Prepare User Data": {
+                "main": [
+                    [
+                        {
+                            "node": "Fetch & Normalize All Job Sources",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Fetch & Normalize All Job Sources": {
+                "main": [
+                    [
+                        {
+                            "node": "LLM Relevance Scoring",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "LLM Relevance Scoring": {
+                "main": [
+                    [
+                        {
+                            "node": "Parse Scoring Response",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Parse Scoring Response": {
+                "main": [
+                    [
+                        {
+                            "node": "Score >= 70?",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Score >= 70?": {
+                "main": [
+                    [
+                        {
+                            "node": "LLM CV Tailoring",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ],
+                    [
+                        {
+                            "node": "Mark as Discovered",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "LLM CV Tailoring": {
+                "main": [
+                    [
+                        {
+                            "node": "Parse Tailored Response",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Parse Tailored Response": {
+                "main": [
+                    [
+                        {
+                            "node": "Batch Save via App API",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Mark as Discovered": {
+                "main": [
+                    [
+                        {
+                            "node": "Batch Save via App API",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
+        },
+        "authors": "Matthieu Kokabi",
+        "name": null,
+        "description": null,
+        "autosaved": false,
+        "workflowPublishHistory": [
+            {
+                "createdAt": "2026-03-15T09:24:28.408Z",
+                "id": 37,
+                "workflowId": "eddfsS251UHbmNIj",
+                "versionId": "3c04a0a7-1e88-4859-95f0-afde2cf0d7bf",
+                "event": "deactivated",
+                "userId": "9ccaef6c-2fa4-4c73-9515-c3ca4179de8c"
+            },
+            {
+                "createdAt": "2026-03-15T09:24:28.458Z",
+                "id": 38,
+                "workflowId": "eddfsS251UHbmNIj",
+                "versionId": "3c04a0a7-1e88-4859-95f0-afde2cf0d7bf",
+                "event": "activated",
+                "userId": "9ccaef6c-2fa4-4c73-9515-c3ca4179de8c"
+            }
+        ]
+    }
 }
