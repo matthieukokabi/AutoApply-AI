@@ -1095,3 +1095,94 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - Jooble API page is currently 404 — try again later
 - Arc browser has inherent third-party cookie issues — works in all other browsers
 - Need to decide on monitoring tool (Sentry free tier vs Vercel Analytics)
+
+---
+
+## Session 18 — 2026-03-14 / 2026-03-15
+
+### Completed
+
+**ProductHunt Listing — Draft Created:**
+- Name: "AutoApply AI", Tagline: "AI tailors your CV & cover letter for every job"
+- Description: 436/500 chars, focused on value proposition
+- Tags: Artificial Intelligence, Productivity, SaaS
+- First comment: Maker intro with link to autoapply.works
+- Shoutouts: Vercel, Clerk, Stripe
+- Pricing: Paid with free trial, promo code PRODUCTHUNT50
+- Draft saved and ready for launch
+
+**Stripe PRODUCTHUNT50 Coupon Created:**
+- 50% off, duration 3 months (repeating)
+- 100 redemption limit
+- Expires April 15, 2026
+- First-time order only
+
+**n8n Job Discovery Pipeline — Postgres Credential Fixed:**
+- All scheduled executions were failing: `Credential with ID "app-db" does not exist`
+- Root cause: Workflow was imported with credential reference "app-db" but actual n8n credential is `4sfJMhOnXiFUU41x` ("Postgres account")
+- Fixed via n8n PUT API — updated all Postgres nodes to reference correct credential ID
+- Workflow `eddfsS251UHbmNIj` updated successfully
+
+**Settings Page Preferences API — Error Handling Improved:**
+- Settings page was showing generic "Internal server error" when saving
+- Improved `/api/preferences/route.ts`:
+  - Safer type coercion for salaryMin (parseInt with NaN check)
+  - Array field validation (ensure always arrays)
+  - Error response now returns actual Prisma error message
+- Commit: `f355dcb`
+
+**Production Database Migration — salaryCurrency Column Added:**
+- Real error revealed: `"The column salaryCurrency does not exist in the current database"`
+- Prisma schema had `salaryCurrency` field but production Neon DB never had migration run
+- Fix approach: Created temporary `/api/migrate` endpoint that runs `ALTER TABLE job_preferences ADD COLUMN IF NOT EXISTS "salaryCurrency" VARCHAR(10) NOT NULL DEFAULT 'USD'`
+- Deployed to Vercel, called endpoint, migration succeeded ✅
+- Removed temporary endpoint and pushed cleanup commit
+- Settings page now saves preferences correctly
+
+**n8n Credential Encryption Issue Discovered:**
+- While attempting to use n8n Postgres credential directly for migration, discovered:
+  `"Credentials could not be decrypted. The likely reason is that a different encryptionKey was used to encrypt the data."`
+- This means the Postgres credential `4sfJMhOnXiFUU41x` needs to be re-created in n8n with the current encryption key
+- **This will also affect the Job Discovery Pipeline** (which uses this credential for SQL queries)
+- Two temp n8n workflows created and cleaned up during debugging
+
+### Files Modified This Session
+- `apps/web/app/api/preferences/route.ts` — Improved error handling and type safety
+- `apps/web/app/api/migrate/route.ts` — Created and removed (temporary migration)
+
+### Git Commits This Session
+- `f355dcb` — fix: improve preferences API error handling and type safety
+- `5f56d09` — chore: add temporary migration endpoint for salaryCurrency column
+- `c588aa2` — chore: remove temporary migration endpoint
+
+**n8n Postgres Credential — Fixed Programmatically:**
+- Old credential `4sfJMhOnXiFUU41x` ("Postgres account") had encryption key mismatch — could not decrypt
+- Logged into Neon console via Google SSO (Chrome MCP) to get connection string
+- Connection details: `neondb_owner@ep-morning-meadow-ag8qe5hq-pooler.c-2.eu-central-1.aws.neon.tech/neondb`
+- Deleted broken credential via n8n API: `DELETE /api/v1/credentials/4sfJMhOnXiFUU41x`
+- Created new credential via n8n API: `POST /api/v1/credentials` with correct Neon details
+- New credential ID: `WQS6PNsONFUq13eS` ("Neon Postgres (AutoApply)")
+- Updated Job Discovery Pipeline workflow to reference new credential ID
+- Verified with test webhook: `SELECT COUNT(*) FROM users` returned `user_count: 2` ✅
+- Test workflow cleaned up
+
+**Settings Page Save — Verified Working ✅:**
+- Clicked "Save Preferences" on autoapply.works/settings
+- Green success message: "Preferences saved."
+- No more salaryCurrency column error
+
+### Live n8n State
+- Workflow `3iUzBukfS6TME2yn` (Single Job Tailoring) — **Active** ✅
+- Workflow `eddfsS251UHbmNIj` (Job Discovery Pipeline) — **Active** ✅ (credential fixed)
+- Credential `WQS6PNsONFUq13eS` — Neon Postgres (AutoApply) — **Working** ✅
+- Credential `U3gdBgkvMcSxBLgY` — Anthropic account — Active
+
+### What's Next
+1. **Pick ProductHunt launch date** — Recommended: Tuesday March 17 or Wednesday March 18
+2. **Share app with family** — For beta testing before public launch
+3. **Flutter native builds** — iOS/Android testing
+4. **Production monitoring** — Error tracking
+
+### Blockers / Decisions
+- ProductHunt draft ready, just needs launch date selection
+- Neon free tier at 86.1% compute usage — monitor closely, may need upgrade before launch

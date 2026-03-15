@@ -17,6 +17,7 @@ import {
     Check,
     Twitter,
     Linkedin,
+    Rocket,
 } from "lucide-react";
 
 export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
@@ -108,6 +109,9 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
                         </Link>
                         <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
                             {t("nav.blog")}
+                        </Link>
+                        <Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors">
+                            {t("nav.roadmap")}
                         </Link>
                     </nav>
                     <div className="flex flex-1 items-center justify-end space-x-2">
@@ -240,6 +244,26 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
                             </Card>
                         ))}
                     </div>
+                </div>
+            </section>
+
+            {/* Built in Public */}
+            <section className="container py-10">
+                <div className="rounded-xl border bg-gradient-to-r from-primary/5 via-blue-500/5 to-purple-500/5 p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Rocket className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-lg">{t("roadmap.builtInPublic")}</h3>
+                            <p className="text-sm text-muted-foreground">{t("roadmap.builtInPublicDesc")}</p>
+                        </div>
+                    </div>
+                    <Link href="/roadmap">
+                        <Button variant="outline" className="gap-2 whitespace-nowrap">
+                            {t("roadmap.viewRoadmap")} <ArrowRight className="h-4 w-4" />
+                        </Button>
+                    </Link>
                 </div>
             </section>
 
@@ -436,6 +460,7 @@ export default async function LandingPage({ params: { locale } }: { params: { lo
                                 <Link href="#pricing" className="hover:text-foreground transition-colors">{t("nav.pricing")}</Link>
                                 <Link href="#how-it-works" className="hover:text-foreground transition-colors">{t("nav.howItWorks")}</Link>
                                 <Link href="/blog" className="hover:text-foreground transition-colors">{t("nav.blog")}</Link>
+                                <Link href="/roadmap" className="hover:text-foreground transition-colors">{t("footer.roadmap")}</Link>
                             </div>
                         </div>
                         <div>

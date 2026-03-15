@@ -28,6 +28,8 @@ export default authMiddleware({
         "/:locale/blog/(.*)",
         "/blog",
         "/blog/(.*)",
+        "/:locale/roadmap",
+        "/roadmap",
     ],
 
     beforeAuth(req) {
@@ -133,10 +135,12 @@ export const config = {
         "/(en|fr|de|es|it)/terms",
         "/(en|fr|de|es|it)/privacy",
         "/(en|fr|de|es|it)/contact",
+        "/(en|fr|de|es|it)/roadmap",
         "/blog/:path*",
         "/terms",
         "/privacy",
         "/contact",
+        "/roadmap",
         // API routes
         "/api/:path*",
     ],

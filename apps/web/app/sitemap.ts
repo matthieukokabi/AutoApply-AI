@@ -5,7 +5,7 @@ import { getAllPosts } from "@/lib/blog";
 export default function sitemap(): MetadataRoute.Sitemap {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://autoapply-ai.com";
 
-    const staticPages = ["", "/blog", "/terms", "/privacy", "/contact"];
+    const staticPages = ["", "/blog", "/roadmap", "/terms", "/privacy", "/contact"];
 
     const entries: MetadataRoute.Sitemap = [];
 
@@ -17,7 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
                 url: `${baseUrl}${prefix}${page}`,
                 lastModified: new Date(),
                 changeFrequency: page === "" ? "weekly" : "monthly",
-                priority: page === "" ? 1.0 : page === "/blog" ? 0.8 : 0.5,
+                priority: page === "" ? 1.0 : page === "/blog" ? 0.8 : page === "/roadmap" ? 0.7 : 0.5,
             });
         }
     }
