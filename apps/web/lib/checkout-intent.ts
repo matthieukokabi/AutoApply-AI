@@ -10,6 +10,9 @@ export const CHECKOUT_PLANS = [
 
 export type CheckoutPlan = (typeof CHECKOUT_PLANS)[number];
 const CHECKOUT_ERROR_FALLBACK = "Failed to start checkout. Please try again.";
+export const CHECKOUT_TIMEOUT_MS = 15_000;
+export const CHECKOUT_TIMEOUT_ERROR =
+    "Checkout request timed out. Please check your connection and try again.";
 
 const supportedLocaleSet = new Set<string>(SUPPORTED_LOCALES);
 const checkoutPlanSet = new Set<string>(CHECKOUT_PLANS);
@@ -136,4 +139,8 @@ export function getCheckoutErrorMessage(errorMessage: string | null | undefined)
     const normalizedError =
         typeof errorMessage === "string" ? errorMessage.trim() : "";
     return normalizedError || CHECKOUT_ERROR_FALLBACK;
+}
+
+export function isAbortError(error: unknown) {
+    return error instanceof Error && error.name === "AbortError";
 }

@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import {
     buildAuthIntentUrl,
+    CHECKOUT_TIMEOUT_ERROR,
+    CHECKOUT_TIMEOUT_MS,
     getCheckoutErrorMessage,
     getLocalizedPathForRoute,
+    isAbortError,
     isUnauthorizedCheckoutError,
     shouldRedirectToAuthBeforeCheckout,
     type CheckoutPlan,
@@ -46,11 +49,22 @@ export function CheckoutButton({ plan, children, variant = "default", className 
                 return;
             }
 
-            const res = await fetch("/api/checkout", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ plan }),
-            });
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(
+                () => controller.abort(),
+                CHECKOUT_TIMEOUT_MS
+            );
+            let res: Response;
+            try {
+                res = await fetch("/api/checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan }),
+                    signal: controller.signal,
+                });
+            } finally {
+                window.clearTimeout(timeoutId);
+            }
             const data = await res
                 .json()
                 .catch(() => ({})) as { url?: string; error?: string };
@@ -65,7 +79,11 @@ export function CheckoutButton({ plan, children, variant = "default", className 
             } else {
                 setErrorMessage(getCheckoutErrorMessage(data.error));
             }
-        } catch {
+        } catch (error) {
+            if (isAbortError(error)) {
+                setErrorMessage(CHECKOUT_TIMEOUT_ERROR);
+                return;
+            }
             setErrorMessage("Something went wrong. Please try again.");
         } finally {
             setLoading(false);

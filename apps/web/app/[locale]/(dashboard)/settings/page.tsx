@@ -15,7 +15,10 @@ import { Loader2, Check, AlertCircle } from "lucide-react";
 import { SettingsSkeleton } from "@/components/loading-skeleton";
 import {
     buildAuthIntentUrl,
+    CHECKOUT_TIMEOUT_ERROR,
+    CHECKOUT_TIMEOUT_MS,
     getLocalizedPathForRoute,
+    isAbortError,
     isUnauthorizedCheckoutError,
     resolveCheckoutIntentPlan,
     type CheckoutPlan,
@@ -216,11 +219,22 @@ export default function SettingsPage() {
 
     const handleCheckout = useCallback(async (plan: CheckoutPlan) => {
         try {
-            const res = await fetch("/api/checkout", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ plan }),
-            });
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(
+                () => controller.abort(),
+                CHECKOUT_TIMEOUT_MS
+            );
+            let res: Response;
+            try {
+                res = await fetch("/api/checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan }),
+                    signal: controller.signal,
+                });
+            } finally {
+                window.clearTimeout(timeoutId);
+            }
             const data = await res
                 .json()
                 .catch(() => ({})) as { url?: string; error?: string };
@@ -243,7 +257,11 @@ export default function SettingsPage() {
             } else {
                 setMessage({ type: "error", text: data.error || "Checkout failed." });
             }
-        } catch {
+        } catch (error) {
+            if (isAbortError(error)) {
+                setMessage({ type: "error", text: CHECKOUT_TIMEOUT_ERROR });
+                return;
+            }
             setMessage({ type: "error", text: "Network error." });
         }
     }, []);

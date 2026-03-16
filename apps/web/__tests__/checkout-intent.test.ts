@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest";
 import {
+    CHECKOUT_TIMEOUT_ERROR,
+    CHECKOUT_TIMEOUT_MS,
     buildAuthIntentUrl,
     buildPostAuthRedirectUrl,
     getCheckoutErrorMessage,
     getAuthPathsForLocale,
     getLocalizedPathForRoute,
+    isAbortError,
     isCheckoutPlan,
     isUnauthorizedCheckoutError,
     shouldRedirectToAuthBeforeCheckout,
@@ -110,5 +113,14 @@ describe("checkout intent helpers", () => {
         expect(getCheckoutErrorMessage(null)).toBe(
             "Failed to start checkout. Please try again."
         );
+    });
+
+    it("exposes checkout timeout constants and abort detection", () => {
+        const abortError = new Error("Aborted");
+        abortError.name = "AbortError";
+        expect(CHECKOUT_TIMEOUT_MS).toBe(15000);
+        expect(CHECKOUT_TIMEOUT_ERROR).toContain("timed out");
+        expect(isAbortError(abortError)).toBe(true);
+        expect(isAbortError(new Error("Other error"))).toBe(false);
     });
 });

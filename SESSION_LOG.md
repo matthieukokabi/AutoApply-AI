@@ -2663,3 +2663,27 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/components/checkout-button.tsx`
 - `apps/web/lib/checkout-intent.ts`
 - `apps/web/__tests__/checkout-intent.test.ts`
+
+---
+
+## Session 71 — 2026-03-16
+
+### Completed
+
+**Checkout Timeout Recovery (Mobile/Weak Network Resilience):**
+- Added shared checkout timeout constants and abort-error helper in checkout intent utilities.
+- Added client-side timeout (`15s`) to landing pricing checkout CTA request.
+- Added the same timeout handling to settings-page checkout flow.
+- Added explicit timeout recovery message for users when checkout request stalls.
+- Added regression tests for timeout constants and abort-error detection.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 205 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/checkout-intent.ts`
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+- `apps/web/__tests__/checkout-intent.test.ts`
