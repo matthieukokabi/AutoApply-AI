@@ -139,7 +139,20 @@ export const config = {
         "/privacy",
         "/contact",
         "/roadmap",
-        // API routes
-        "/api/:path*",
+        // Authenticated API routes only (avoid unnecessary middleware invocations
+        // on public webhooks/OG image routes to reduce edge usage on Vercel)
+        "/api/account",
+        "/api/applications",
+        "/api/applications/:path*",
+        "/api/checkout",
+        "/api/debug/auth",
+        "/api/jobs",
+        "/api/onboarding",
+        "/api/preferences",
+        "/api/profile",
+        "/api/profile/:path*",
+        "/api/stats",
+        "/api/tailor",
+        "/api/user",
     ],
 };

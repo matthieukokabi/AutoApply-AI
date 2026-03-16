@@ -1815,3 +1815,22 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/api/social/producthunt/route.tsx`
 - `apps/web/app/api/social/profile-pic/route.tsx`
 - `apps/web/app/api/social/twitter-header/route.tsx`
+
+---
+
+## Session 35 — 2026-03-16
+
+### Completed
+
+**Middleware Scope Optimization (Vercel Edge Cost):**
+- Replaced broad middleware API matcher (`/api/:path*`) with explicit authenticated API route matchers only.
+- Excluded public routes (webhooks, OG/social image endpoints, and other public APIs) from middleware interception.
+- Goal: reduce unnecessary edge middleware executions and lower Vercel edge function usage without changing authenticated route protection.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 155 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
