@@ -357,4 +357,90 @@ describe("POST /api/tailor", () => {
         expect(body.jobDescription).toBe("React developer needed.");
         expect(body.masterCvText).toBeDefined();
     });
+
+    it("returns 400 when job URL is invalid", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobDescription: "Valid description",
+                jobUrl: "javascript:alert(1)",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Job URL");
+        expect(prisma.job.upsert).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 when job description exceeds the max length", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobDescription: "x".repeat(12001),
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("exceed");
+        expect(prisma.job.upsert).not.toHaveBeenCalled();
+    });
+
+    it("returns 429 when one IP exceeds tailoring request limits", async () => {
+        const headers = {
+            "Content-Type": "application/json",
+            "x-forwarded-for": "198.51.100.77",
+        };
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+            ...mockUser,
+            creditsRemaining: 9,
+        } as any);
+
+        for (let i = 0; i < 8; i += 1) {
+            const response = await POST(
+                new Request("http://localhost/api/tailor", {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                        jobDescription: `Looking for a developer ${i}`,
+                        jobTitle: "Developer",
+                    }),
+                })
+            );
+            expect(response.status).toBe(200);
+        }
+
+        const limitedResponse = await POST(
+            new Request("http://localhost/api/tailor", {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    jobDescription: "This should be rate limited",
+                    jobTitle: "Developer",
+                }),
+            })
+        );
+        const data = await limitedResponse.json();
+
+        expect(limitedResponse.status).toBe(429);
+        expect(data.error).toContain("Too many tailoring requests");
+        expect(global.fetch).toHaveBeenCalledTimes(8);
+    });
 });

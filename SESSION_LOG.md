@@ -1635,3 +1635,32 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `apps/web/package.json`
+
+---
+
+## Session 28 — 2026-03-16
+
+### Completed
+
+**Tailor API Hardening (Input + Abuse Controls):**
+- Added per-IP throttling to `POST /api/tailor`:
+  - limit: 8 requests per 10 minutes per IP
+  - response on limit: `429 Too Many Requests`
+- Added strict payload sanitization and validation:
+  - trims all free-text fields
+  - validates `jobUrl` format/protocol (`http/https` only)
+  - enforces max lengths on `jobDescription`, `additionalContext`, `jobTitle`, `company`, and `jobId`
+- Preserved existing tailoring flow and credit deduction behavior for valid requests.
+- Added targeted test coverage for:
+  - invalid `jobUrl`
+  - oversized `jobDescription`
+  - rate-limit exceeded for same IP
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 149 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/tailor/route.ts`
+- `apps/web/__tests__/api/tailor.test.ts`

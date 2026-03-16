@@ -3,6 +3,40 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { sendCreditsLowEmail } from "@/lib/email";
 
+const TAILOR_RATE_LIMIT_MAX_REQUESTS = 8;
+const TAILOR_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_JOB_DESCRIPTION_LENGTH = 12000;
+const MAX_ADDITIONAL_CONTEXT_LENGTH = 3000;
+const MAX_JOB_TITLE_LENGTH = 200;
+const MAX_COMPANY_LENGTH = 200;
+const MAX_JOB_ID_LENGTH = 100;
+const tailorRequestLog = new Map<string, number[]>();
+
+function getClientIp(req: Request): string | null {
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    if (forwardedFor) {
+        return forwardedFor.split(",")[0]?.trim() || null;
+    }
+
+    return req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || null;
+}
+
+function isRateLimited(clientIp: string, now = Date.now()): boolean {
+    const windowStart = now - TAILOR_RATE_LIMIT_WINDOW_MS;
+    const recentRequests = (tailorRequestLog.get(clientIp) || []).filter(
+        (timestamp) => timestamp > windowStart
+    );
+
+    if (recentRequests.length >= TAILOR_RATE_LIMIT_MAX_REQUESTS) {
+        tailorRequestLog.set(clientIp, recentRequests);
+        return true;
+    }
+
+    recentRequests.push(now);
+    tailorRequestLog.set(clientIp, recentRequests);
+    return false;
+}
+
 /**
  * POST /api/tailor
  * User-initiated single job tailoring.
@@ -23,6 +57,14 @@ export async function POST(req: Request) {
 
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        const clientIp = getClientIp(req);
+        if (clientIp && isRateLimited(clientIp)) {
+            return NextResponse.json(
+                { error: "Too many tailoring requests. Please try again shortly." },
+                { status: 429 }
+            );
         }
 
         if (!user.masterProfile) {
@@ -58,7 +100,48 @@ export async function POST(req: Request) {
             jobId: existingJobId,
         } = body;
 
-        if (!existingJobId && !jobDescription) {
+        const sanitizedJobDescription =
+            typeof jobDescription === "string" ? jobDescription.trim() : "";
+        const sanitizedJobUrl = typeof jobUrl === "string" ? jobUrl.trim() : "";
+        const sanitizedJobTitle = typeof jobTitle === "string" ? jobTitle.trim() : "";
+        const sanitizedCompany = typeof company === "string" ? company.trim() : "";
+        const sanitizedAdditionalContext =
+            typeof additionalContext === "string" ? additionalContext.trim() : "";
+        const sanitizedExistingJobId =
+            typeof existingJobId === "string" ? existingJobId.trim() : "";
+
+        if (
+            sanitizedJobDescription.length > MAX_JOB_DESCRIPTION_LENGTH ||
+            sanitizedAdditionalContext.length > MAX_ADDITIONAL_CONTEXT_LENGTH ||
+            sanitizedJobTitle.length > MAX_JOB_TITLE_LENGTH ||
+            sanitizedCompany.length > MAX_COMPANY_LENGTH ||
+            sanitizedExistingJobId.length > MAX_JOB_ID_LENGTH
+        ) {
+            return NextResponse.json(
+                { error: "One or more fields exceed maximum allowed length" },
+                { status: 400 }
+            );
+        }
+
+        if (sanitizedJobUrl) {
+            try {
+                const parsedUrl = new URL(sanitizedJobUrl);
+                const isHttpUrl = parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+                if (!isHttpUrl) {
+                    return NextResponse.json(
+                        { error: "Job URL must use HTTP or HTTPS" },
+                        { status: 400 }
+                    );
+                }
+            } catch {
+                return NextResponse.json(
+                    { error: "Job URL is invalid" },
+                    { status: 400 }
+                );
+            }
+        }
+
+        if (!sanitizedExistingJobId && !sanitizedJobDescription) {
             return NextResponse.json(
                 { error: "Job description is required" },
                 { status: 400 }
@@ -67,11 +150,9 @@ export async function POST(req: Request) {
 
         // If re-tailoring an existing job, use the existing job record directly
         let job;
-        let effectiveJobDescription = typeof jobDescription === "string"
-            ? jobDescription.trim()
-            : "";
-        if (existingJobId) {
-            job = await prisma.job.findUnique({ where: { id: existingJobId } });
+        let effectiveJobDescription = sanitizedJobDescription;
+        if (sanitizedExistingJobId) {
+            job = await prisma.job.findUnique({ where: { id: sanitizedExistingJobId } });
             if (!job) {
                 return NextResponse.json(
                     { error: "Job not found" },
@@ -91,17 +172,17 @@ export async function POST(req: Request) {
             }
         } else {
             // Create or find the job record for new tailoring
-            const externalId = jobUrl || `manual-${Date.now()}`;
+            const externalId = sanitizedJobUrl || `manual-${Date.now()}`;
             job = await prisma.job.upsert({
                 where: { externalId },
                 create: {
                     externalId,
-                    title: jobTitle || "Untitled Position",
-                    company: company || "Unknown Company",
+                    title: sanitizedJobTitle || "Untitled Position",
+                    company: sanitizedCompany || "Unknown Company",
                     location: "Not specified",
                     description: effectiveJobDescription,
                     source: "manual",
-                    url: jobUrl || "",
+                    url: sanitizedJobUrl || "",
                 },
                 update: {},
             });
@@ -115,11 +196,11 @@ export async function POST(req: Request) {
             body: JSON.stringify({
                 userId: user.id,
                 jobId: job.id,
-                jobTitle: jobTitle || job.title || "Untitled Position",
-                company: company || job.company || "Unknown Company",
+                jobTitle: sanitizedJobTitle || job.title || "Untitled Position",
+                company: sanitizedCompany || job.company || "Unknown Company",
                 jobDescription: effectiveJobDescription,
                 masterCvText: user.masterProfile.rawText,
-                additionalContext: additionalContext || "",
+                additionalContext: sanitizedAdditionalContext || "",
             }),
         }).catch((err) => {
             console.error("n8n webhook trigger failed:", err.message);
