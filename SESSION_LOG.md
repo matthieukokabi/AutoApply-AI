@@ -2188,3 +2188,29 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/profile/route.ts`
 - `apps/web/__tests__/api/profile.test.ts`
+
+---
+
+## Session 52 — 2026-03-16
+
+### Completed
+
+**Application Detail PATCH Validation Hardening:**
+- Added strict payload validation in `PATCH /api/applications/[id]`:
+  - request must include at least one of `status` or `notes`
+  - `status` must be a string and one of allowed application statuses
+  - `notes` must be a string or null
+  - `notes` max length set to 5000 chars
+- Added type guard for application status to satisfy strict type checks during build.
+- Added regression tests for:
+  - empty PATCH payload
+  - invalid `notes` payload type
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 181 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/applications/[id]/route.ts`
+- `apps/web/__tests__/api/application-detail.test.ts`

@@ -113,6 +113,44 @@ describe("PATCH /api/applications/[id]", () => {
         expect(response.status).toBe(400);
     });
 
+    it("rejects payloads without status or notes", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
+
+        const request = new Request("http://localhost/api/applications/app_1", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+        });
+
+        const params = { id: "app_1" };
+        const response = await PATCH(request, { params });
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("At least one");
+        expect(prisma.application.update).not.toHaveBeenCalled();
+    });
+
+    it("rejects non-string notes payloads", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
+
+        const request = new Request("http://localhost/api/applications/app_1", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ notes: { value: "nope" } }),
+        });
+
+        const params = { id: "app_1" };
+        const response = await PATCH(request, { params });
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("notes must be");
+        expect(prisma.application.update).not.toHaveBeenCalled();
+    });
+
     it("updates notes without changing status", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
