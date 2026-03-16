@@ -184,6 +184,22 @@
 - `npm run lint` → success (0 warnings, 0 errors)
 - `npm run build` → success
 
+**Dependency security hardening — upgraded Next.js patch line (atomic step):**
+- Updated web dependencies in `apps/web/package.json`:
+  - `next` `14.1.0` → `14.2.35`
+  - `eslint-config-next` `14.1.0` → `14.2.35`
+- Updated lockfile and generated Next environment typings:
+  - `apps/web/package-lock.json`
+  - `apps/web/next-env.d.ts`
+
+**Verification run for this step:**
+- `npm run lint` → success
+- `npm test` → 21 files, 139 tests passing
+- `npm run build` → success on Next.js `14.2.35`
+- `npm audit --json`:
+  - Critical vulnerabilities reduced from 1 → 0
+  - Remaining advisories are low/high and require major upgrades (not applied in this atomic patch step)
+
 ---
 
 ## Session 1 — 2026-02-20
