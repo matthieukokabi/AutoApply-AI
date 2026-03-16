@@ -2861,3 +2861,29 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `SESSION_LOG.md`
+
+---
+
+## Session 80 — 2026-03-16
+
+### Completed
+
+**Onboarding Auth Reliability (No Blank Sign-In/Sign-Up State):**
+- Fixed auth page rendering flow to avoid a blank UI when Clerk reports loaded but widget mount is delayed/blocked.
+- Added explicit auth widget state resolver to guarantee one visible state at all times:
+  - loading card, or
+  - Clerk widget, or
+  - recovery card.
+- Added widget-mount tracking state on both localized sign-in and sign-up pages and gated Clerk component rendering when recovery fallback is active.
+- Added regression tests covering all auth widget state transitions.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 217 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/auth-widget-state.ts`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/__tests__/auth-widget-state.test.ts`
