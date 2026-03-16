@@ -25,19 +25,43 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { type, data } = body;
+        const type = typeof body?.type === "string" ? body.type : "";
+        const data =
+            body?.data && typeof body.data === "object" && !Array.isArray(body.data)
+                ? (body.data as Record<string, unknown>)
+                : null;
+
+        if (!type || !data) {
+            return NextResponse.json(
+                { error: "Invalid webhook payload" },
+                { status: 400 }
+            );
+        }
 
         switch (type) {
             case "new_applications": {
                 // n8n sends discovered/tailored jobs from automated pipeline
-                const { userId, applications } = data;
+                const userId = typeof data.userId === "string" ? data.userId.trim() : "";
+                const applications = Array.isArray(data.applications) ? data.applications : null;
+
+                if (!userId || !applications) {
+                    return NextResponse.json(
+                        { error: "Invalid new_applications payload" },
+                        { status: 400 }
+                    );
+                }
 
                 const createdApps = [];
 
-                for (const [index, app] of applications.entries()) {
+                for (let index = 0; index < applications.length; index += 1) {
+                    const app = applications[index];
+                    const appData =
+                        app && typeof app === "object" && !Array.isArray(app)
+                            ? (app as Record<string, any>)
+                            : {};
                     const externalId =
-                        app.externalId ||
-                        app.url ||
+                        appData.externalId ||
+                        appData.url ||
                         `manual-${userId}-${Date.now()}-${index}`;
 
                     // First, create/upsert the Job record (discovery pipeline finds NEW jobs)
@@ -45,18 +69,18 @@ export async function POST(req: Request) {
                         where: { externalId },
                         create: {
                             externalId,
-                            title: app.title || "Untitled Position",
-                            company: app.company || "Unknown Company",
-                            location: app.location || "Not specified",
-                            description: app.description || "",
-                            source: app.source || "manual",
-                            url: app.url || "",
-                            salary: app.salary || null,
-                            postedAt: app.postedAt ? new Date(app.postedAt) : null,
+                            title: appData.title || "Untitled Position",
+                            company: appData.company || "Unknown Company",
+                            location: appData.location || "Not specified",
+                            description: appData.description || "",
+                            source: appData.source || "manual",
+                            url: appData.url || "",
+                            salary: appData.salary || null,
+                            postedAt: appData.postedAt ? new Date(appData.postedAt) : null,
                         },
                         update: {
-                            title: app.title || "Untitled Position",
-                            company: app.company || "Unknown Company",
+                            title: appData.title || "Untitled Position",
+                            company: appData.company || "Unknown Company",
                         },
                     });
 
@@ -71,24 +95,24 @@ export async function POST(req: Request) {
                         create: {
                             userId,
                             jobId: job.id,
-                            compatibilityScore: app.compatibilityScore || 0,
-                            atsKeywords: app.atsKeywords || [],
-                            matchingStrengths: app.matchingStrengths || [],
-                            gaps: app.gaps || [],
-                            recommendation: app.recommendation || "skip",
-                            tailoredCvMarkdown: app.tailoredCvMarkdown || null,
-                            coverLetterMarkdown: app.coverLetterMarkdown || null,
-                            status: app.status || (app.tailoredCvMarkdown ? "tailored" : "discovered"),
+                            compatibilityScore: appData.compatibilityScore || 0,
+                            atsKeywords: appData.atsKeywords || [],
+                            matchingStrengths: appData.matchingStrengths || [],
+                            gaps: appData.gaps || [],
+                            recommendation: appData.recommendation || "skip",
+                            tailoredCvMarkdown: appData.tailoredCvMarkdown || null,
+                            coverLetterMarkdown: appData.coverLetterMarkdown || null,
+                            status: appData.status || (appData.tailoredCvMarkdown ? "tailored" : "discovered"),
                         },
                         update: {
-                            compatibilityScore: app.compatibilityScore || 0,
-                            atsKeywords: app.atsKeywords || [],
-                            matchingStrengths: app.matchingStrengths || [],
-                            gaps: app.gaps || [],
-                            recommendation: app.recommendation || "skip",
-                            tailoredCvMarkdown: app.tailoredCvMarkdown || null,
-                            coverLetterMarkdown: app.coverLetterMarkdown || null,
-                            status: app.status || (app.tailoredCvMarkdown ? "tailored" : "discovered"),
+                            compatibilityScore: appData.compatibilityScore || 0,
+                            atsKeywords: appData.atsKeywords || [],
+                            matchingStrengths: appData.matchingStrengths || [],
+                            gaps: appData.gaps || [],
+                            recommendation: appData.recommendation || "skip",
+                            tailoredCvMarkdown: appData.tailoredCvMarkdown || null,
+                            coverLetterMarkdown: appData.coverLetterMarkdown || null,
+                            status: appData.status || (appData.tailoredCvMarkdown ? "tailored" : "discovered"),
                         },
                         include: { job: true },
                     });
@@ -140,19 +164,34 @@ export async function POST(req: Request) {
                     recommendation,
                     tailoredCvMarkdown,
                     coverLetterMarkdown,
-                } = data;
+                } = data as Record<string, any>;
+
+                if (
+                    typeof tailorUserId !== "string" ||
+                    !tailorUserId.trim() ||
+                    typeof tailorJobId !== "string" ||
+                    !tailorJobId.trim()
+                ) {
+                    return NextResponse.json(
+                        { error: "Invalid single_tailoring_complete payload" },
+                        { status: 400 }
+                    );
+                }
+
+                const normalizedTailorUserId = tailorUserId.trim();
+                const normalizedTailorJobId = tailorJobId.trim();
 
                 // Save tailoring results to database
                 const application = await prisma.application.upsert({
                     where: {
                         userId_jobId: {
-                            userId: tailorUserId,
-                            jobId: tailorJobId,
+                            userId: normalizedTailorUserId,
+                            jobId: normalizedTailorJobId,
                         },
                     },
                     create: {
-                        userId: tailorUserId,
-                        jobId: tailorJobId,
+                        userId: normalizedTailorUserId,
+                        jobId: normalizedTailorJobId,
                         compatibilityScore: compatibilityScore || 0,
                         atsKeywords: atsKeywords || [],
                         matchingStrengths: matchingStrengths || [],
@@ -178,7 +217,7 @@ export async function POST(req: Request) {
                 // Send email notification (non-blocking)
                 try {
                     const user = await prisma.user.findUnique({
-                        where: { id: tailorUserId },
+                        where: { id: normalizedTailorUserId },
                     });
 
                     if (user && application) {
@@ -203,14 +242,30 @@ export async function POST(req: Request) {
 
             case "workflow_error": {
                 // Log workflow errors
+                if (
+                    typeof data.workflowId !== "string" ||
+                    typeof data.nodeName !== "string" ||
+                    typeof data.errorType !== "string" ||
+                    typeof data.message !== "string" ||
+                    !data.workflowId.trim() ||
+                    !data.nodeName.trim() ||
+                    !data.errorType.trim() ||
+                    !data.message.trim()
+                ) {
+                    return NextResponse.json(
+                        { error: "Invalid workflow_error payload" },
+                        { status: 400 }
+                    );
+                }
+
                 await prisma.workflowError.create({
                     data: {
-                        workflowId: data.workflowId,
-                        nodeName: data.nodeName,
-                        errorType: data.errorType,
-                        message: data.message,
-                        payload: data.payload,
-                        userId: data.userId,
+                        workflowId: data.workflowId.trim(),
+                        nodeName: data.nodeName.trim(),
+                        errorType: data.errorType.trim(),
+                        message: data.message.trim(),
+                        payload: data.payload as any,
+                        userId: typeof data.userId === "string" ? data.userId : undefined,
                     },
                 });
 

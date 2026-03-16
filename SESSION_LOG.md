@@ -2089,3 +2089,28 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/tailor/route.ts`
 - `apps/web/__tests__/api/tailor.test.ts`
+
+---
+
+## Session 48 — 2026-03-16
+
+### Completed
+
+**n8n Webhook Payload Validation Hardening:**
+- Added strict request-envelope validation (`type` + object `data`) for `POST /api/webhooks/n8n`.
+- Added per-event payload validation to fail malformed webhooks with `400` instead of surfacing internal errors:
+  - `new_applications`: requires non-empty `userId` and `applications` array
+  - `single_tailoring_complete`: requires non-empty `userId` and `jobId`
+  - `workflow_error`: requires non-empty `workflowId`, `nodeName`, `errorType`, `message`
+- Hardened application-loop parsing to handle non-object entries safely.
+- Added targeted regression tests for invalid payloads across all supported webhook event types.
+- Resolved build-time TypeScript constraints from the validation refactor.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 172 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/webhooks/n8n/route.ts`
+- `apps/web/__tests__/api/webhooks-n8n.test.ts`

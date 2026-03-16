@@ -93,7 +93,38 @@ describe("POST /api/webhooks/n8n", () => {
         expect(data.error).toContain("Unknown webhook type");
     });
 
+    it("returns 400 for invalid webhook payload envelope", async () => {
+        const request = new Request("http://localhost/api/webhooks/n8n", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-webhook-secret": "test_webhook_secret",
+            },
+            body: JSON.stringify({ type: "new_applications", data: null }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Invalid webhook payload");
+    });
+
     describe("new_applications", () => {
+        it("returns 400 when applications payload is invalid", async () => {
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: "invalid",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Invalid new_applications payload");
+            expect(prisma.job.upsert).not.toHaveBeenCalled();
+        });
+
         it("creates job and application from n8n payload", async () => {
             vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
@@ -264,6 +295,20 @@ describe("POST /api/webhooks/n8n", () => {
     });
 
     describe("single_tailoring_complete", () => {
+        it("returns 400 when required IDs are missing", async () => {
+            const request = createWebhookRequest("single_tailoring_complete", {
+                userId: "",
+                jobId: "",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Invalid single_tailoring_complete payload");
+            expect(prisma.application.upsert).not.toHaveBeenCalled();
+        });
+
         it("saves tailoring results and sends email", async () => {
             vi.mocked(prisma.application.upsert).mockResolvedValue({
                 ...mockApplication,
@@ -319,6 +364,20 @@ describe("POST /api/webhooks/n8n", () => {
     });
 
     describe("workflow_error", () => {
+        it("returns 400 when required workflow error fields are missing", async () => {
+            const request = createWebhookRequest("workflow_error", {
+                workflowId: "wf_1",
+                nodeName: "LLM Scoring",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Invalid workflow_error payload");
+            expect(prisma.workflowError.create).not.toHaveBeenCalled();
+        });
+
         it("logs workflow error to database", async () => {
             vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
 
