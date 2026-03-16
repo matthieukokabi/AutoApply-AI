@@ -56,7 +56,46 @@ open_case() {
 }
 
 click_upgrade_cta() {
-  return 0
+  local session="$1"
+  local click_json
+  if ! click_json="$(eval_json "$session" "() => {
+    const getText = (el) => (el?.textContent || '').trim();
+    window.name = 'qaCheckoutCalls:0';
+    if (!(window).__qaCheckoutFetchWrapped) {
+      const originalFetch = window.fetch.bind(window);
+      let checkoutCalls = 0;
+      window.fetch = (...args) => {
+        const firstArg = args[0];
+        const requestUrl =
+          typeof firstArg === 'string'
+            ? firstArg
+            : (firstArg && typeof firstArg.url === 'string' ? firstArg.url : '');
+        if (requestUrl.includes('/api/checkout')) {
+          checkoutCalls += 1;
+          window.name = 'qaCheckoutCalls:' + checkoutCalls;
+        }
+        return originalFetch(...args);
+      };
+      (window).__qaCheckoutFetchWrapped = true;
+    }
+
+    const buttons = Array.from(document.querySelectorAll('#pricing button'));
+    const target = buttons.find((button) => {
+      const text = getText(button).toLowerCase();
+      return text.includes('pro') && text.includes('29');
+    });
+
+    if (!target) {
+      return { clicked: false };
+    }
+
+    target.click();
+    return { clicked: true, label: getText(target) };
+  }")"; then
+    return 1
+  fi
+
+  json_bool_true "$click_json" '.clicked == true'
 }
 
 write_report_line() {
@@ -112,14 +151,29 @@ for locale in $LOCALES; do
     fi
 
     if [[ "$status" == "pass" ]]; then
-      if ! run_pw "$session" goto "$sign_up_intent_url" >/dev/null; then
+      if ! click_upgrade_cta "$session"; then
         status="fail"
-        reason="goto_signup_intent_failed"
+        reason="click_upgrade_cta_failed"
       fi
     fi
 
     if [[ "$status" == "pass" ]]; then
-      if ! signup_json="$(eval_json "$session" "() => ({ url: location.href, hasOverflow: document.documentElement.scrollWidth > window.innerWidth + 1, hasUnauthorizedText: document.body.innerText.toLowerCase().includes('unauthorized'), hasAuthSurface: Boolean(document.querySelector('input[type=email], button[type=submit], .cl-card, [data-clerk-component]')) || document.body.innerText.toLowerCase().includes('loading secure sign-up') || document.body.innerText.toLowerCase().includes('open diagnostics') })")"; then
+      sleep 2
+      if ! signup_json="$(eval_json "$session" "() => {
+        const marker = String(window.name || '');
+        const match = marker.match(/^qaCheckoutCalls:(\\d+)$/);
+        const checkoutCallsFromLanding = match ? Number(match[1]) : null;
+        return {
+          url: location.href,
+          hasOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+          hasUnauthorizedText: document.body.innerText.toLowerCase().includes('unauthorized'),
+          hasAuthSurface:
+            Boolean(document.querySelector('input[type=email], button[type=submit], .cl-card, [data-clerk-component]')) ||
+            document.body.innerText.toLowerCase().includes('loading secure sign-up') ||
+            document.body.innerText.toLowerCase().includes('open diagnostics'),
+          checkoutCallsFromLanding
+        };
+      }")"; then
         status="fail"
         reason="signup_eval_failed"
       fi
@@ -158,6 +212,9 @@ for locale in $LOCALES; do
       elif json_bool_true "$signup_json" '.hasUnauthorizedText == true'; then
         status="fail"
         reason="signup_unauthorized_text_detected"
+      elif json_bool_true "$signup_json" '.checkoutCallsFromLanding != 0'; then
+        status="fail"
+        reason="signup_checkout_call_detected_for_anonymous_user"
       elif json_bool_true "$signup_json" '.hasAuthSurface == false'; then
         status="fail"
         reason="signup_no_auth_surface"

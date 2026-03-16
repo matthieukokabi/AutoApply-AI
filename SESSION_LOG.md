@@ -3136,3 +3136,28 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/api/checkout/route.ts`
 - `apps/web/__tests__/api/checkout.test.ts`
 - `SESSION_LOG.md`
+
+---
+
+## Session 92 — 2026-03-16
+
+### Completed
+
+**Anonymous Upgrade Flow Hardening (No Pre-Auth Checkout API Call):**
+- Updated landing `CheckoutButton` behavior to route anonymous visitors directly to sign-up intent before any checkout API request.
+- Removed unnecessary signed-out `/api/checkout` round-trip from public pricing clicks, reducing 401 noise and avoiding wasted serverless invocations.
+- Expanded onboarding smoke matrix to validate real CTA behavior:
+  - clicks pricing Pro CTA from landing
+  - confirms redirect to sign-up auth surface
+  - asserts no `/api/checkout` call was made before auth.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/scripts/onboarding_smoke_matrix.sh`
+- `SESSION_LOG.md`

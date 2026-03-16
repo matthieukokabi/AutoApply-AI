@@ -12,7 +12,6 @@ import {
     getLocalizedPathForRoute,
     isAbortError,
     isUnauthorizedCheckoutError,
-    shouldRedirectToAuthBeforeCheckout,
     type CheckoutPlan,
 } from "@/lib/checkout-intent";
 
@@ -44,15 +43,9 @@ export function CheckoutButton({ plan, children, variant = "default", className 
         setLoading(true);
         setErrorMessage(null);
         try {
-            const cookieHeader =
-                typeof document !== "undefined" ? document.cookie : "";
-            if (
-                shouldRedirectToAuthBeforeCheckout(
-                    isLoaded,
-                    userId,
-                    cookieHeader
-                )
-            ) {
+            // Landing-page pricing should route anonymous visitors straight to sign-up,
+            // avoiding unnecessary checkout API calls and 401 noise.
+            if (!isLoaded || !userId) {
                 redirectToSignUpWithIntent();
                 return;
             }
