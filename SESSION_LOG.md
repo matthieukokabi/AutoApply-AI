@@ -30,6 +30,16 @@
 - `npm test -- __tests__/api/debug-auth.test.ts` → 4/4 passing
 - `npm run build` → success
 
+**Security hardening — cron auth now fail-closed on missing secret (atomic step):**
+- Updated `apps/web/app/api/cron/weekly-digest/route.ts`:
+  - Endpoint now returns `503` when `CRON_SECRET` is unset
+  - Authorization comparison uses resolved `cronSecret` value (no `Bearer undefined` bypass path)
+- Added regression test in `apps/web/__tests__/api/cron-weekly-digest.test.ts` for missing-secret behavior
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/cron-weekly-digest.test.ts` → 8/8 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

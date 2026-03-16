@@ -48,6 +48,20 @@ beforeEach(() => {
 });
 
 describe("POST /api/cron/weekly-digest", () => {
+    it("returns 503 when CRON_SECRET is not configured", async () => {
+        delete process.env.CRON_SECRET;
+
+        const request = new Request("http://localhost/api/cron/weekly-digest", {
+            method: "POST",
+            headers: { authorization: "Bearer any-value" },
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+        expect(response.status).toBe(503);
+        expect(data.error).toContain("misconfigured");
+    });
+
     it("returns 401 for missing authorization", async () => {
         const request = new Request("http://localhost/api/cron/weekly-digest", {
             method: "POST",

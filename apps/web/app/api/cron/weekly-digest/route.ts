@@ -10,8 +10,14 @@ import { sendWeeklyDigestEmail } from "@/lib/email";
 export async function POST(req: Request) {
     try {
         // Verify cron secret
+        const cronSecret = process.env.CRON_SECRET;
+        if (!cronSecret) {
+            console.error("CRON_SECRET is required for /api/cron/weekly-digest");
+            return NextResponse.json({ error: "Cron endpoint misconfigured" }, { status: 503 });
+        }
+
         const authHeader = req.headers.get("authorization");
-        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        if (authHeader !== `Bearer ${cronSecret}`) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
