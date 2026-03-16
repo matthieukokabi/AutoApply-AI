@@ -3438,3 +3438,33 @@ Included in this rollout:
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
 - `SESSION_LOG.md`
+
+---
+
+## Session 103 — 2026-03-16
+
+### Completed
+
+**Auth Entry Scroll-Reset Hardening (Mobile/Browser Alignment):**
+- Added a dedicated `resetViewportScroll` helper to reset horizontal and vertical offsets on page mount.
+- Applied scroll reset on both auth entry pages:
+  - `/[locale]/sign-in/[[...sign-in]]`
+  - `/[locale]/sign-up/[[...sign-up]]`
+- Goal: prevent right-shifted auth screens on browsers that preserve horizontal scroll offset from previous pages.
+- Added unit tests for both modern and fallback `scrollTo` behavior.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_230024.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260316_230122.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/scroll-reset.ts`
+- `apps/web/__tests__/scroll-reset.test.ts`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `SESSION_LOG.md`

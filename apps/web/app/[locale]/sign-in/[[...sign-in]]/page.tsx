@@ -19,6 +19,7 @@ import {
 } from "@/lib/checkout-intent";
 import { getAuthWidgetState } from "@/lib/auth-widget-state";
 import { hasMountedClerkWidget } from "@/lib/clerk-widget-monitor";
+import { resetViewportScroll } from "@/lib/scroll-reset";
 
 const CLERK_LOAD_TIMEOUT_MS = 8000;
 const CLERK_WIDGET_MOUNT_TIMEOUT_MS = 5000;
@@ -44,6 +45,10 @@ export default function SignInPage() {
     const [showWidgetFallback, setShowWidgetFallback] = useState(false);
     const [hasWidgetMounted, setHasWidgetMounted] = useState(false);
     const widgetHostRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        resetViewportScroll();
+    }, []);
 
     useEffect(() => {
         if (!isLoaded || !userId) {
