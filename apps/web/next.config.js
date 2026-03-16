@@ -21,6 +21,41 @@ const nextConfig = {
                 destination: "/en",
                 permanent: false,
             },
+            {
+                source: "/blog",
+                destination: "/en/blog",
+                permanent: false,
+            },
+            {
+                source: "/blog/:path*",
+                destination: "/en/blog/:path*",
+                permanent: false,
+            },
+            {
+                source: "/terms",
+                destination: "/en/terms",
+                permanent: false,
+            },
+            {
+                source: "/privacy",
+                destination: "/en/privacy",
+                permanent: false,
+            },
+            {
+                source: "/contact",
+                destination: "/en/contact",
+                permanent: false,
+            },
+            {
+                source: "/roadmap",
+                destination: "/en/roadmap",
+                permanent: false,
+            },
+            {
+                source: "/auth-diagnostics",
+                destination: "/en/auth-diagnostics",
+                permanent: false,
+            },
         ];
     },
 };

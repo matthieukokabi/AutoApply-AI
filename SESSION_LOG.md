@@ -3261,3 +3261,36 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
 - `SESSION_LOG.md`
+
+---
+
+## Session 97 — 2026-03-16
+
+### Completed
+
+**Middleware Cost Optimization (Move Bare Public Locale Routing to Static Redirects):**
+- Added static redirects in Next config for bare public routes:
+  - `/blog` -> `/en/blog`
+  - `/blog/:path*` -> `/en/blog/:path*`
+  - `/terms` -> `/en/terms`
+  - `/privacy` -> `/en/privacy`
+  - `/contact` -> `/en/contact`
+  - `/roadmap` -> `/en/roadmap`
+  - `/auth-diagnostics` -> `/en/auth-diagnostics`
+- Removed these bare public routes from middleware matcher scope, since locale handling is now done via static redirects in `next.config.js`.
+- Updated middleware scope tests to enforce the narrower matcher.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_222048.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260316_222048.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/next.config.js`
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`
+- `SESSION_LOG.md`

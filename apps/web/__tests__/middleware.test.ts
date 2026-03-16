@@ -146,8 +146,12 @@ describe("middleware auth + i18n routing", () => {
         expect(matcher).not.toContain("/de");
         expect(matcher).not.toContain("/es");
         expect(matcher).not.toContain("/it");
-        expect(matcher).toContain("/blog/:path*");
-        expect(matcher).toContain("/auth-diagnostics");
+        expect(matcher).not.toContain("/blog/:path*");
+        expect(matcher).not.toContain("/auth-diagnostics");
+        expect(matcher).not.toContain("/terms");
+        expect(matcher).not.toContain("/privacy");
+        expect(matcher).not.toContain("/contact");
+        expect(matcher).not.toContain("/roadmap");
         expect(matcher).not.toContain("/(en|fr|de|es|it)/blog/:path*");
         expect(matcher).not.toContain("/(en|fr|de|es|it)/terms");
         expect(matcher).not.toContain("/(en|fr|de|es|it)/privacy");

@@ -160,16 +160,8 @@ export const config = {
         // excluded here to reduce edge middleware invocations.
         "/sign-in/:path*",
         "/sign-up/:path*",
-        // Public pages that need locale routing from non-prefixed URLs.
-        // Locale-prefixed variants (e.g. /fr/blog, /de/privacy) are served
-        // directly by app routes and are intentionally excluded to reduce
-        // middleware edge invocations from crawler traffic.
-        "/blog/:path*",
-        "/terms",
-        "/privacy",
-        "/contact",
-        "/roadmap",
-        "/auth-diagnostics",
+        // Public bare pages are now handled by static Next.js redirects in
+        // next.config.js, so they are excluded from middleware matcher scope.
         // Authenticated API routes only (avoid unnecessary middleware invocations
         // on public webhooks/OG image routes to reduce edge usage on Vercel)
         "/api/account",
