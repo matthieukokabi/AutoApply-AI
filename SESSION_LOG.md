@@ -2927,3 +2927,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `SESSION_LOG.md`
+
+---
+
+## Session 83 — 2026-03-16
+
+### Completed
+
+**Mobile UX Hardening (Cookie Banner Overflow Guard):**
+- Refined cookie consent banner layout for narrow/mobile browsers to eliminate horizontal spill risk:
+  - switched wrapper to `inset-x-0` + `overflow-x-clip`
+  - enforced `min-w-0` and wrapping behavior on consent text block
+  - changed action buttons to a 2-column mobile grid with full-width buttons, then desktop flex layout.
+- This targets cross-browser mobile rendering inconsistencies (including Samsung Internet/Chrome variants) reported with rightward scroll.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 217 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/cookie-consent.tsx`
