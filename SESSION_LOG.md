@@ -2687,3 +2687,29 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/components/checkout-button.tsx`
 - `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
 - `apps/web/__tests__/checkout-intent.test.ts`
+
+---
+
+## Session 72 — 2026-03-16
+
+### Completed
+
+**Profile Photo Upload UX Hardening (No Browser Alerts):**
+- Removed remaining `alert()` usage from photo upload validation/processing flow.
+- Added inline error messaging (`role="alert"`) for:
+  - invalid file type
+  - oversized file
+  - image processing failures.
+- Added shared photo upload validation helper in `lib`.
+- Reset file input on validation errors so users can retry immediately with the same file name.
+- Added regression tests for photo upload validation rules.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (26 files, 208 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/photo-upload.tsx`
+- `apps/web/lib/photo-upload.ts`
+- `apps/web/__tests__/photo-upload.test.ts`

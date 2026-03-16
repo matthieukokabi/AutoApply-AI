@@ -4,6 +4,7 @@ import { useRef, useState, useCallback } from "react";
 import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { Camera, X, User } from "lucide-react";
+import { getPhotoUploadValidationError } from "@/lib/photo-upload";
 
 interface PhotoUploadProps {
     value?: string;
@@ -17,24 +18,21 @@ interface PhotoUploadProps {
 export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [processing, setProcessing] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const handleFileChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0];
             if (!file) return;
 
-            // Validate file type
-            if (!file.type.startsWith("image/")) {
-                alert("Please select an image file.");
+            const validationError = getPhotoUploadValidationError(file);
+            if (validationError) {
+                setErrorMessage(validationError);
+                if (inputRef.current) inputRef.current.value = "";
                 return;
             }
 
-            // Validate file size (max 5MB input)
-            if (file.size > 5 * 1024 * 1024) {
-                alert("Image must be under 5MB.");
-                return;
-            }
-
+            setErrorMessage(null);
             setProcessing(true);
 
             try {
@@ -42,7 +40,7 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
                 onChange(base64);
             } catch (err) {
                 console.error("Photo processing failed:", err);
-                alert("Failed to process image. Please try a different file.");
+                setErrorMessage("Failed to process image. Please try a different file.");
             } finally {
                 setProcessing(false);
                 // Reset input so same file can be re-selected
@@ -99,7 +97,10 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
                         variant="ghost"
                         size="sm"
                         className="text-destructive hover:text-destructive"
-                        onClick={() => onChange(undefined)}
+                        onClick={() => {
+                            setErrorMessage(null);
+                            onChange(undefined);
+                        }}
                     >
                         <X className="w-3 h-3 mr-1" />
                         Remove
@@ -108,6 +109,11 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
                 <p className="text-xs text-muted-foreground">
                     Recommended for Swiss CVs. Max 5MB.
                 </p>
+                {errorMessage ? (
+                    <p role="alert" className="text-xs text-destructive">
+                        {errorMessage}
+                    </p>
+                ) : null}
             </div>
 
             {/* Hidden file input */}
