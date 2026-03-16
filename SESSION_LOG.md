@@ -3107,3 +3107,32 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/scripts/onboarding_smoke_matrix.sh`
 - `apps/web/package.json`
 - `SESSION_LOG.md`
+
+---
+
+## Session 91 — 2026-03-16
+
+### Completed
+
+**Checkout Diagnostics Hardening (Traceable Unauthorized/Failure Paths):**
+- Added per-request `requestId` generation in `POST /api/checkout`.
+- Added structured server logs for critical failure paths:
+  - unauthorized requests
+  - checkout rate limiting
+  - Stripe misconfiguration
+  - invalid `NEXT_PUBLIC_APP_URL`
+  - unexpected checkout exceptions.
+- Added `x-request-id` response header for success and error responses.
+- Added `requestId` to checkout error payloads for support/debug triage.
+- Extended checkout API tests to validate request ID behavior on key responses.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/checkout/route.ts`
+- `apps/web/__tests__/api/checkout.test.ts`
+- `SESSION_LOG.md`

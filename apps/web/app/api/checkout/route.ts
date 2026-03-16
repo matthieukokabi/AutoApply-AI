@@ -6,6 +6,21 @@ import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 const CHECKOUT_RATE_LIMIT_MAX_REQUESTS = 5;
 const CHECKOUT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const checkoutRequestLog = new Map<string, number[]>();
+const KNOWN_AUTH_COOKIE_PATTERN = /__session|__client_uat|__clerk_/;
+
+function withRequestId<T extends Record<string, unknown>>(
+    payload: T,
+    status: number,
+    requestId: string
+) {
+    const response = NextResponse.json(
+        { ...payload, requestId },
+        { status }
+    );
+    response.headers.set("x-request-id", requestId);
+    response.headers.set("Cache-Control", "no-store");
+    return response;
+}
 
 /**
  * POST /api/checkout
@@ -13,18 +28,44 @@ const checkoutRequestLog = new Map<string, number[]>();
  * Body: { plan: "pro_monthly" | "pro_yearly" | "unlimited" | "credit_pack" }
  */
 export async function POST(req: Request) {
+    const requestId = crypto.randomUUID();
+    const url = new URL(req.url);
+    const clientIp = getClientIp(req);
+    const cookieHeader = req.headers.get("cookie") ?? "";
+    const hasSessionCookie = /(?:^|;\s*)__session=/.test(cookieHeader);
+    const hasKnownAuthCookie = KNOWN_AUTH_COOKIE_PATTERN.test(cookieHeader);
+    const requestHost =
+        req.headers.get("x-forwarded-host") ||
+        req.headers.get("host") ||
+        url.host;
+    const userAgent = req.headers.get("user-agent") ?? "unknown";
+    const referer = req.headers.get("referer") ?? null;
+
     try {
         const user = await getAuthUser(req);
         if (!user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            console.warn("[checkout] Unauthorized request", {
+                requestId,
+                host: requestHost,
+                path: url.pathname,
+                clientIp,
+                referer,
+                hasSessionCookie,
+                hasKnownAuthCookie,
+                userAgent,
+            });
+            return withRequestId({ error: "Unauthorized" }, 401, requestId);
         }
 
         if (!process.env.STRIPE_SECRET_KEY) {
-            console.error("STRIPE_SECRET_KEY is required for /api/checkout");
-            return NextResponse.json({ error: "Checkout handler misconfigured" }, { status: 503 });
+            console.error("[checkout] STRIPE_SECRET_KEY is required", { requestId });
+            return withRequestId(
+                { error: "Checkout handler misconfigured" },
+                503,
+                requestId
+            );
         }
 
-        const clientIp = getClientIp(req);
         if (
             clientIp &&
             isRateLimited({
@@ -34,9 +75,15 @@ export async function POST(req: Request) {
                 windowMs: CHECKOUT_RATE_LIMIT_WINDOW_MS,
             })
         ) {
-            return NextResponse.json(
+            console.warn("[checkout] Rate limited", {
+                requestId,
+                userId: user.id,
+                clientIp,
+            });
+            return withRequestId(
                 { error: "Too many checkout attempts. Please try again shortly." },
-                { status: 429 }
+                429,
+                requestId
             );
         }
 
@@ -64,20 +111,27 @@ export async function POST(req: Request) {
                 mode = "payment";
                 break;
             default:
-                return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+                return withRequestId({ error: "Invalid plan" }, 400, requestId);
         }
 
         if (!priceId || priceId === "price_placeholder") {
-            return NextResponse.json(
+            return withRequestId(
                 { error: "Stripe is not configured yet. Please set up price IDs in your environment." },
-                { status: 503 }
+                503,
+                requestId
             );
         }
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL;
         if (!appUrl) {
-            console.error("NEXT_PUBLIC_APP_URL is required for checkout redirects");
-            return NextResponse.json({ error: "Checkout handler misconfigured" }, { status: 503 });
+            console.error("[checkout] NEXT_PUBLIC_APP_URL is required for redirects", {
+                requestId,
+            });
+            return withRequestId(
+                { error: "Checkout handler misconfigured" },
+                503,
+                requestId
+            );
         }
 
         let successUrl: URL;
@@ -88,8 +142,15 @@ export async function POST(req: Request) {
             cancelUrl = new URL("/dashboard", appUrl);
             cancelUrl.searchParams.set("checkout", "cancelled");
         } catch {
-            console.error("NEXT_PUBLIC_APP_URL is invalid:", appUrl);
-            return NextResponse.json({ error: "Checkout handler misconfigured" }, { status: 503 });
+            console.error("[checkout] NEXT_PUBLIC_APP_URL is invalid", {
+                requestId,
+                appUrl,
+            });
+            return withRequestId(
+                { error: "Checkout handler misconfigured" },
+                503,
+                requestId
+            );
         }
 
         const sessionParams: any = {
@@ -110,12 +171,19 @@ export async function POST(req: Request) {
 
         const session = await stripe.checkout.sessions.create(sessionParams);
 
-        return NextResponse.json({ url: session.url });
+        const response = NextResponse.json({ url: session.url });
+        response.headers.set("x-request-id", requestId);
+        response.headers.set("Cache-Control", "no-store");
+        return response;
     } catch (error: any) {
-        console.error("Checkout error:", error);
-        return NextResponse.json(
+        console.error("[checkout] Checkout error", {
+            requestId,
+            error,
+        });
+        return withRequestId(
             { error: error.message || "Failed to create checkout session" },
-            { status: 500 }
+            500,
+            requestId
         );
     }
 }

@@ -34,6 +34,7 @@ describe("POST /api/checkout", () => {
 
         expect(response.status).toBe(200);
         expect(data.url).toBe("https://checkout.stripe.com/test_session");
+        expect(response.headers.get("x-request-id")).toBeTruthy();
         expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 mode: "subscription",
@@ -73,7 +74,12 @@ describe("POST /api/checkout", () => {
         });
 
         const response = await POST(request);
+        const data = await response.json();
+
         expect(response.status).toBe(400);
+        expect(data.error).toBe("Invalid plan");
+        expect(data.requestId).toBeTruthy();
+        expect(response.headers.get("x-request-id")).toBe(data.requestId);
     });
 
     it("returns 400 when plan is not a string", async () => {
@@ -189,6 +195,11 @@ describe("POST /api/checkout", () => {
         });
 
         const response = await POST(request);
+        const data = await response.json();
+
         expect(response.status).toBe(401);
+        expect(data.error).toBe("Unauthorized");
+        expect(data.requestId).toBeTruthy();
+        expect(response.headers.get("x-request-id")).toBe(data.requestId);
     });
 });
