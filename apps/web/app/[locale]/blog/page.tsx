@@ -8,10 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Calendar, Clock, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 export async function generateMetadata({
-    params: { locale },
+    params,
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
+    const { locale } = await params;
     const t = await getTranslations({ locale, namespace: "blog" });
     return {
         title: `${t("title")} — AutoApply AI`,
@@ -29,10 +30,11 @@ export async function generateMetadata({
 }
 
 export default async function BlogPage({
-    params: { locale },
+    params,
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }) {
+    const { locale } = await params;
     setRequestLocale(locale);
     const t = await getTranslations("blog");
     const posts = getAllPosts(locale);

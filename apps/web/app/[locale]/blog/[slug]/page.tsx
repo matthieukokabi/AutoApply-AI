@@ -20,10 +20,11 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({
-    params: { locale, slug },
+    params,
 }: {
-    params: { locale: string; slug: string };
+    params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
+    const { locale, slug } = await params;
     const post = getPostBySlug(locale, slug);
     if (!post) {
         return { title: "Post Not Found" };
@@ -54,10 +55,11 @@ export async function generateMetadata({
 }
 
 export default async function BlogPostPage({
-    params: { locale, slug },
+    params,
 }: {
-    params: { locale: string; slug: string };
+    params: Promise<{ locale: string; slug: string }>;
 }) {
+    const { locale, slug } = await params;
     setRequestLocale(locale);
     const t = await getTranslations("blog");
     const post = getPostBySlug(locale, slug);

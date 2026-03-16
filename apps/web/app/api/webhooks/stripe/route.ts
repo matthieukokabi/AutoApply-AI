@@ -21,7 +21,8 @@ function resolvePlanFromPriceId(priceId?: string): "pro" | "unlimited" {
  */
 export async function POST(req: Request) {
     const body = await req.text();
-    const signature = headers().get("Stripe-Signature")!;
+    const requestHeaders = await headers();
+    const signature = requestHeaders.get("Stripe-Signature")!;
 
     let event: Stripe.Event;
 

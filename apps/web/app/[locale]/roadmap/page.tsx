@@ -34,7 +34,8 @@ import {
     GraduationCap,
 } from "lucide-react";
 
-export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
     const t = await getTranslations({ locale, namespace: "roadmap" });
     return {
         title: `${t("title")} — AutoApply AI`,
@@ -85,7 +86,8 @@ const consideringItems = [
     { key: "skills", icon: GraduationCap },
 ];
 
-export default async function RoadmapPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function RoadmapPage({ params }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
     setRequestLocale(locale);
     const t = await getTranslations();
 

@@ -33,12 +33,13 @@ async function getApplication(clerkId: string, applicationId: string) {
 export default async function DocumentViewerPage({
     params,
 }: {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }) {
     const { userId } = auth();
     if (!userId) redirect("/sign-in");
+    const { id } = await params;
 
-    const data = await getApplication(userId, params.id);
+    const data = await getApplication(userId, id);
 
     if (!data) {
         notFound();

@@ -20,7 +20,8 @@ import {
     Rocket,
 } from "lucide-react";
 
-export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
     const t = await getTranslations({ locale, namespace: "hero" });
     return {
         title: `AutoApply AI — ${t("badge")}`,
@@ -37,7 +38,8 @@ export async function generateMetadata({ params: { locale } }: { params: { local
     };
 }
 
-export default async function LandingPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function LandingPage({ params }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
     setRequestLocale(locale);
 
     // NOTE: Signed-in user redirect is handled by middleware (afterAuth)

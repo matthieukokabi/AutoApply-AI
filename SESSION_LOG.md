@@ -214,6 +214,35 @@
   - No critical vulnerabilities
   - Remaining fixes require major upgrades (`next@16.x`, `eslint-config-next@16.x`, `@clerk/nextjs@7.x`)
 
+**Dependency security hardening — upgraded web stack to Next.js 15 patch line (atomic step):**
+- Updated web dependencies:
+  - `apps/web/package.json`
+  - `apps/web/package-lock.json`
+  - `apps/web/next-env.d.ts`
+- Upgrade applied:
+  - `next` → `15.5.10`
+  - `eslint-config-next` → `15.5.10`
+- Compatibility fixes for Next 15 runtime/type changes:
+  - Promise-based `params` handling in App Router pages/layouts/metadata:
+    - `apps/web/app/[locale]/page.tsx`
+    - `apps/web/app/[locale]/layout.tsx`
+    - `apps/web/app/[locale]/blog/page.tsx`
+    - `apps/web/app/[locale]/blog/[slug]/page.tsx`
+    - `apps/web/app/[locale]/roadmap/page.tsx`
+    - `apps/web/app/[locale]/(dashboard)/documents/[id]/page.tsx`
+  - Promise-based `context.params` in dynamic API route:
+    - `apps/web/app/api/applications/[id]/route.ts`
+  - Async `headers()` usage fix in:
+    - `apps/web/app/api/webhooks/stripe/route.ts`
+
+**Verification run for this step:**
+- `npm run lint` → success
+- `npm test` → 21 files, 139 tests passing
+- `npm run build` → success on Next.js `15.5.10`
+- `npm audit --json` summary after upgrade:
+  - Remaining vulnerabilities: 4 total (4 low, 0 moderate, 0 high, 0 critical)
+  - Remaining low findings are tied to `@clerk/nextjs` major upgrade path (`7.x`)
+
 ---
 
 ## Session 1 — 2026-02-20

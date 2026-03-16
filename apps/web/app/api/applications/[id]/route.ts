@@ -8,16 +8,17 @@ import { APPLICATION_STATUSES } from "@/lib/utils";
  */
 export async function GET(
     req: Request,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getAuthUser(req);
         if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const { id } = await context.params;
 
         const application = await prisma.application.findFirst({
-            where: { id: params.id, userId: user.id },
+            where: { id, userId: user.id },
             include: { job: true },
         });
 
@@ -38,17 +39,18 @@ export async function GET(
  */
 export async function PATCH(
     req: Request,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getAuthUser(req);
         if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const { id } = await context.params;
 
         // Verify ownership
         const existing = await prisma.application.findFirst({
-            where: { id: params.id, userId: user.id },
+            where: { id, userId: user.id },
         });
 
         if (!existing) {
@@ -77,7 +79,7 @@ export async function PATCH(
         }
 
         const application = await prisma.application.update({
-            where: { id: params.id },
+            where: { id },
             data: updateData,
             include: { job: true },
         });
