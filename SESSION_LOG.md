@@ -2824,3 +2824,22 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `SESSION_LOG.md`
+
+---
+
+## Session 78 — 2026-03-16
+
+### Completed
+
+**Vercel Cost Optimization (Skip Non-Affected Deployments):**
+- Enabled Vercel project setting `enableAffectedProjectsDeployments=true` for `auto-apply-ai`.
+- This allows Vercel to skip builds when commits do not affect the configured root directory (`apps/web`) or its dependency graph.
+- Expected impact: fewer unnecessary build-minute charges for monorepo commits that only touch unrelated files.
+
+### Verification
+- Confirmed via Vercel Project API response:
+  - `enableAffectedProjectsDeployments: true`
+  - `rootDirectory: "apps/web"`
+
+### Files Modified This Session
+- `SESSION_LOG.md`
