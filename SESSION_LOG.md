@@ -2305,3 +2305,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/components/language-switcher.tsx`
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+
+---
+
+## Session 57 — 2026-03-16
+
+### Completed
+
+**Auth Loading Timeout Recovery (Stuck-Loading Guard):**
+- Added timeout-based recovery on both auth pages:
+  - if Clerk remains unloaded for 8 seconds, users are shown the fallback recovery card instead of an indefinite loading state.
+- Preserved existing degraded/failed Clerk fallbacks and localized auth routing behavior.
+- Ensures users always get a clear retry path even when auth initialization hangs on specific browsers/networks.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 182 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
