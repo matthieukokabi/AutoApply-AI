@@ -1783,3 +1783,35 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/webhooks/n8n/route.ts`
 - `apps/web/__tests__/api/webhooks-n8n.test.ts`
+
+---
+
+## Session 34 — 2026-03-16
+
+### Completed
+
+**Vercel Edge Usage Optimization (OG/Social Images):**
+- Added shared cache header utility for generated social/OG images.
+- Applied CDN-friendly cache headers to all edge image routes:
+  - `/api/og`
+  - `/api/social/linkedin-banner`
+  - `/api/social/producthunt`
+  - `/api/social/profile-pic`
+  - `/api/social/twitter-header`
+- Cache policy:
+  - `s-maxage=86400` (1 day edge cache)
+  - `stale-while-revalidate=604800` (7 days)
+- Goal: reduce repeated edge function invocations from crawlers/social scrapers and lower Vercel usage.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 155 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/og-cache.ts`
+- `apps/web/app/api/og/route.tsx`
+- `apps/web/app/api/social/linkedin-banner/route.tsx`
+- `apps/web/app/api/social/producthunt/route.tsx`
+- `apps/web/app/api/social/profile-pic/route.tsx`
+- `apps/web/app/api/social/twitter-header/route.tsx`
