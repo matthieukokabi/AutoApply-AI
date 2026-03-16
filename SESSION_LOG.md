@@ -2478,3 +2478,28 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `apps/web/__tests__/clerk-widget-monitor.test.ts`
+
+---
+
+## Session 63 — 2026-03-16
+
+### Completed
+
+**Mobile Horizontal Overflow Hardening (Landing + Consent Banner):**
+- Added global viewport overflow guards to prevent accidental horizontal page panning:
+  - `html { max-width: 100%; overflow-x: hidden; }`
+  - `body` now includes `overflow-x-hidden` and `max-width: 100%`.
+- Hardened cookie-consent banner layout for narrow/mobile browsers:
+  - removed `container` dependency in the banner wrapper
+  - switched to explicit `w-full` + `max-w-4xl` + controlled horizontal padding
+  - added `break-words` on consent text
+  - made action buttons responsive (`w-full` on mobile, auto width on larger screens).
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 198 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/globals.css`
+- `apps/web/components/cookie-consent.tsx`

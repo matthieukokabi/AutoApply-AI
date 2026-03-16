@@ -34,16 +34,16 @@ export function CookieConsent() {
     if (!visible) return null;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background border-t shadow-lg">
-            <div className="container flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl">
-                <p className="text-sm text-muted-foreground text-center sm:text-left">
+        <div className="fixed bottom-0 left-0 right-0 z-50 overflow-x-hidden border-t bg-background p-4 shadow-lg">
+            <div className="mx-auto flex w-full max-w-4xl flex-col items-center justify-between gap-4 px-1 sm:flex-row sm:px-0">
+                <p className="break-words text-center text-sm text-muted-foreground sm:text-left">
                     We use essential cookies for authentication and session management.
                     No third-party tracking.{" "}
                     <Link href="/privacy" className="underline text-foreground">
                         Privacy Policy
                     </Link>
                 </p>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex w-full shrink-0 justify-center gap-2 sm:w-auto">
                     <Button variant="outline" size="sm" onClick={decline}>
                         Decline
                     </Button>

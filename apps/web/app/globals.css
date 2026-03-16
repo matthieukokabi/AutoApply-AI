@@ -53,8 +53,13 @@
   * {
     @apply border-border;
   }
+  html {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
+    max-width: 100%;
   }
 }
 
