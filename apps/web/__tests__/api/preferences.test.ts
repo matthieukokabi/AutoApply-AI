@@ -84,4 +84,62 @@ describe("PUT /api/preferences", () => {
         expect(data.preferences).toBeDefined();
         expect(prisma.jobPreferences.upsert).toHaveBeenCalled();
     });
+
+    it("returns 400 for invalid remotePreference", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/preferences", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                targetTitles: ["Frontend Engineer"],
+                remotePreference: "satellite",
+            }),
+        });
+
+        const response = await PUT(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Invalid remotePreference");
+        expect(prisma.jobPreferences.upsert).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 when salaryMin is negative", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/preferences", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                salaryMin: -1,
+            }),
+        });
+
+        const response = await PUT(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("salaryMin");
+        expect(prisma.jobPreferences.upsert).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 when too many target titles are submitted", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/preferences", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                targetTitles: Array.from({ length: 26 }, (_, index) => `Role ${index + 1}`),
+            }),
+        });
+
+        const response = await PUT(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Too many items");
+        expect(prisma.jobPreferences.upsert).not.toHaveBeenCalled();
+    });
 });

@@ -2134,3 +2134,30 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/user/route.ts`
 - `apps/web/__tests__/api/user.test.ts`
+
+---
+
+## Session 50 — 2026-03-16
+
+### Completed
+
+**Preferences Input Validation Hardening:**
+- Added strict `remotePreference` validation in `PUT /api/preferences` (`any | remote | hybrid | onsite`).
+- Added non-negative validation for `salaryMin`.
+- Added safe string-array sanitization for `targetTitles`, `locations`, and `industries`.
+- Added guardrails for list payload size:
+  - max 25 entries per list
+  - max 120 chars per entry
+- Added regression tests for:
+  - invalid `remotePreference`
+  - negative `salaryMin`
+  - oversized preference arrays
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 176 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/preferences/route.ts`
+- `apps/web/__tests__/api/preferences.test.ts`
