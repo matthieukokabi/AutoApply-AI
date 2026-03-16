@@ -3182,3 +3182,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/scripts/onboarding_smoke_matrix.sh`
 - `SESSION_LOG.md`
+
+---
+
+## Session 94 — 2026-03-16
+
+### Completed
+
+**Production Rollout (Batched Onboarding Fixes):**
+- Performed a single manual production deployment to apply Sessions 90–93 onboarding fixes in one build (cost-controlled batch release).
+- Deployment URL:
+  - `https://auto-apply-jav0lamgx-matts-projects-d33e5f04.vercel.app`
+- Production alias updated:
+  - `https://autoapply.works`
+
+### Verification
+- `npm run smoke:onboarding` (apps/web, against `https://autoapply.works`) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_220237.jsonl`
+
+### Files Modified This Session
+- `SESSION_LOG.md`
