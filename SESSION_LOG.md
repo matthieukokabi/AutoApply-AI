@@ -164,6 +164,14 @@
 - `npm test -- __tests__/api/webhooks-n8n.test.ts` → 10/10 passing
 - `npm run build` → success
 
+**CI readiness — lint is now non-interactive in `apps/web` (atomic step):**
+- Added `apps/web/.eslintrc.json` with `next/core-web-vitals` baseline
+- `npm run lint` no longer prompts for interactive setup
+
+**Verification run for this step:**
+- `npm run lint` → success (2 warnings: `@next/next/no-img-element` in `components/cv-display.tsx` and `components/photo-upload.tsx`)
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20
