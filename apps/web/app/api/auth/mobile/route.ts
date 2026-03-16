@@ -14,7 +14,6 @@ const mobileAuthRequestLog = new Map<string, number[]>();
  */
 export async function POST(req: Request) {
   try {
-    const client = await clerkClient();
     const body = await req.json();
     const { email, password, action = 'sign-in' } = body;
     const clientIp = getClientIp(req);
@@ -48,6 +47,7 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.trim().toLowerCase();
     const requestedAction = action === 'sign-up' ? 'sign-up' : 'sign-in';
+    const client = await clerkClient();
 
     if (requestedAction === 'sign-up') {
       // Create a new user via Clerk Backend API

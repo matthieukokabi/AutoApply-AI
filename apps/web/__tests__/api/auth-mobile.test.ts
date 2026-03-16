@@ -29,6 +29,19 @@ describe("POST /api/auth/mobile", () => {
         expect(data.error).toContain("required");
     });
 
+    it("does not initialize Clerk client for invalid payloads", async () => {
+        const request = new Request("http://localhost/api/auth/mobile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: "password123" }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(400);
+        expect(clerkClient).not.toHaveBeenCalled();
+    });
+
     it("returns 400 when password is missing", async () => {
         const request = new Request("http://localhost/api/auth/mobile", {
             method: "POST",

@@ -1945,3 +1945,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/contact/route.ts`
 - `apps/web/__tests__/api/contact.test.ts`
+
+---
+
+## Session 41 — 2026-03-16
+
+### Completed
+
+**Mobile Auth Efficiency Optimization:**
+- Moved `clerkClient()` initialization in `POST /api/auth/mobile` to run only after input validation and per-IP rate-limit checks pass.
+- This avoids unnecessary Clerk backend client setup on invalid or abusive requests.
+- Added regression test to ensure invalid payloads do not initialize the Clerk client.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 162 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/auth/mobile/route.ts`
+- `apps/web/__tests__/api/auth-mobile.test.ts`
