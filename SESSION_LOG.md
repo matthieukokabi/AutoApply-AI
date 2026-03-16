@@ -3054,3 +3054,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `SESSION_LOG.md`
+
+---
+
+## Session 89 — 2026-03-16
+
+### Completed
+
+**Vercel Auto-Deploy Hard Stop (Repo-Level Branch Rule):**
+- Observed that project API toggle alone (`gitProviderOptions.createDeployments=disabled`) did not fully prevent short-lived Git-triggered deployment entries.
+- Added repo-level Vercel config guard in `apps/web/vercel.json`:
+  - `git.deploymentEnabled.main = false`
+- This enforces branch-level auto-deploy disable from source control for `main`, aligned with cost-control policy while keeping manual deploys available when needed.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/vercel.json`
+- `SESSION_LOG.md`
