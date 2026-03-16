@@ -1720,3 +1720,22 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/profile/upload/route.ts`
 - `apps/web/__tests__/api/profile-upload.test.ts`
+
+---
+
+## Session 31 — 2026-03-16
+
+### Completed
+
+**CI Execution Hardening:**
+- Added least-privilege workflow permissions to web CI (`contents: read`).
+- Added workflow-level concurrency cancellation to avoid stale duplicate runs on the same ref.
+- Added a 20-minute timeout to the web quality job to cap runaway CI usage.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 152 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `.github/workflows/web-ci.yml`
