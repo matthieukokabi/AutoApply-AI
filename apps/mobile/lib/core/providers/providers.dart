@@ -58,7 +58,7 @@ final applicationDetailProvider =
 final jobsProvider = FutureProvider<List<Job>>((ref) async {
   final api = ref.watch(apiServiceProvider);
   try {
-    return await api.getJobs(take: 50);
+    return await api.getJobs(limit: 50);
   } catch (_) {
     return [];
   }

@@ -107,6 +107,20 @@
 - `npm test -- __tests__/api/jobs.test.ts __tests__/api/applications.test.ts` → 11/11 passing
 - `npm run build` → success
 
+**Mobile contract fix — align job actions with supported backend endpoints (atomic step):**
+- Updated `apps/mobile/lib/core/services/api_service.dart`:
+  - `getJobs()` now sends `limit` query param (was unsupported `skip/take`)
+  - `tailorForJob()` now posts full payload to `/tailor` (`jobId`, `jobDescription`, metadata)
+  - `pasteJob()` now uses `/tailor` (manual job flow) instead of unsupported `POST /jobs`
+- Updated mobile call sites:
+  - `apps/mobile/lib/core/providers/providers.dart` now calls `getJobs(limit: 50)`
+  - `apps/mobile/lib/features/jobs/presentation/pages/jobs_page.dart` now passes full `Job` to `tailorForJob()`
+
+**Verification run for this step:**
+- Tooling check: `flutter` not found in environment PATH
+- Tooling check: `dart` not found in environment PATH
+- Mobile analyze/test/build could not be executed in this environment due missing SDK
+
 ---
 
 ## Session 1 — 2026-02-20

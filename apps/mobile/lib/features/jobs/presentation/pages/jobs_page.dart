@@ -275,7 +275,7 @@ class _JobCard extends StatelessWidget {
                 onPressed: () async {
                   try {
                     final api = ref.read(apiServiceProvider);
-                    await api.tailorForJob(job.id);
+                    await api.tailorForJob(job);
                     ref.invalidate(applicationsProvider(null));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(

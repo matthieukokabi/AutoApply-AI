@@ -104,10 +104,9 @@ class ApiService {
   }
 
   // ─── Jobs ───
-  Future<List<Job>> getJobs({int? skip, int? take}) async {
+  Future<List<Job>> getJobs({int? limit}) async {
     final params = <String, dynamic>{};
-    if (skip != null) params['skip'] = skip;
-    if (take != null) params['take'] = take;
+    if (limit != null) params['limit'] = limit;
     final res = await _dio.get('/jobs', queryParameters: params);
     final data = res.data as Map<String, dynamic>;
     final list = data['jobs'] as List<dynamic>;
@@ -115,29 +114,39 @@ class ApiService {
   }
 
   // ─── Tailor ───
-  Future<Application> tailorForJob(String jobId) async {
-    final res = await _dio.post('/tailor', data: {'jobId': jobId});
-    final data = res.data as Map<String, dynamic>;
-    return Application.fromJson(data['application'] as Map<String, dynamic>);
+  Future<void> tailorForJob(Job job) async {
+    final fallbackDescription =
+        'Job title: ${job.title}\nCompany: ${job.company}\nLocation: ${job.location}';
+    final safeDescription = (job.description?.trim().isNotEmpty ?? false)
+        ? job.description!.trim()
+        : fallbackDescription;
+
+    await _dio.post('/tailor', data: {
+      'jobId': job.id,
+      'jobDescription': safeDescription,
+      'jobTitle': job.title,
+      'company': job.company,
+      'jobUrl': job.url,
+    });
   }
 
   // ─── Paste Job ───
-  Future<Job> pasteJob({
+  Future<void> pasteJob({
     required String title,
     required String company,
     required String location,
     String? description,
     String? url,
   }) async {
-    final res = await _dio.post('/jobs', data: {
-      'title': title,
+    final safeDescription =
+        (description?.trim().isNotEmpty ?? false) ? description!.trim() : 'Job title: $title';
+
+    await _dio.post('/tailor', data: {
+      'jobTitle': title,
       'company': company,
-      'location': location,
-      'description': description,
-      'url': url,
-    },);
-    final data = res.data as Map<String, dynamic>;
-    return Job.fromJson(data['job'] as Map<String, dynamic>);
+      'jobUrl': url,
+      'jobDescription': '$safeDescription\nLocation: $location',
+    });
   }
 
   // ─── Onboarding ───
