@@ -1498,6 +1498,30 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ---
 
+## Session 25 — 2026-03-16
+
+### Completed
+
+**Middleware Test Coverage Added:**
+- Added dedicated middleware test suite for auth + locale redirect behavior:
+  - signed-in redirect from `/` to `/dashboard`
+  - signed-in redirect from locale root to locale dashboard
+  - signed-out redirect from protected locale routes to locale sign-in
+  - public auth route passthrough
+  - API route passthrough
+- Improved `createRouteMatcher` mock in test setup so public-route checks behave closer to real Clerk matching.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 144 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/__tests__/setup.ts`
+- `apps/web/__tests__/middleware.test.ts`
+
+---
+
 ## Session 24 — 2026-03-16
 
 ### Completed

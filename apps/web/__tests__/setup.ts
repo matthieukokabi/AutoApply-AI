@@ -6,6 +6,14 @@ const mockClerkUsers = {
     verifyPassword: vi.fn(),
 };
 
+function patternToRegExp(pattern: string) {
+    const escapedPattern = pattern
+        .replace(/[.+?^${}|\[\]\\]/g, "\\$&")
+        .replace(/:[^/()]+/g, "[^/]+");
+
+    return new RegExp(`^${escapedPattern}$`);
+}
+
 // Mock Clerk client-side utilities/components
 vi.mock("@clerk/nextjs", () => ({
     ClerkProvider: ({ children }: any) => children,
@@ -27,7 +35,25 @@ vi.mock("@clerk/nextjs/server", () => ({
         users: mockClerkUsers,
     })),
     clerkMiddleware: vi.fn((handler: any) => handler),
-    createRouteMatcher: vi.fn(() => vi.fn(() => false)),
+    createRouteMatcher: vi.fn((routes: any) => {
+        const routeMatchers = (Array.isArray(routes) ? routes : [routes]).map((route: any) => {
+            if (route instanceof RegExp) {
+                return (pathname: string) => route.test(pathname);
+            }
+
+            if (typeof route === "function") {
+                return (_pathname: string, req: any) => route(req);
+            }
+
+            const routeRegex = patternToRegExp(String(route));
+            return (pathname: string) => routeRegex.test(pathname);
+        });
+
+        return (req: any) => {
+            const pathname = req?.nextUrl?.pathname || "";
+            return routeMatchers.some((matcher: any) => matcher(pathname, req));
+        };
+    }),
 }));
 
 // Mock Prisma
