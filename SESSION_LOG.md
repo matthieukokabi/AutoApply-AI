@@ -1456,6 +1456,26 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `apps/web/package.json`
+
+---
+
+## Session 22 — 2026-03-16
+
+### Completed
+
+**Repository Hygiene (Generated Artifacts):**
+- Added `*.tsbuildinfo` to root `.gitignore`.
+- Removed tracked generated file `apps/web/tsconfig.tsbuildinfo` from the repository.
+- Prevents future noisy diffs from TypeScript incremental build output.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (21 files, 139 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `.gitignore`
+- `apps/web/tsconfig.tsbuildinfo` (deleted)
 - `apps/web/package-lock.json`
 - `apps/web/middleware.ts`
 - `apps/web/lib/auth.ts`

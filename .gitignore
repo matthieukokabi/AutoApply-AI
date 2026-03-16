@@ -64,6 +64,7 @@ apps/mobile/web/
 # Generated files
 *.g.dart
 *.freezed.dart
+*.tsbuildinfo
 
 # OS
 .DS_Store
