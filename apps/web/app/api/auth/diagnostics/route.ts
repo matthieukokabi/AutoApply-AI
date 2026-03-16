@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 const AUTH_COOKIE_NAMES = [
     "__session",
@@ -8,6 +9,9 @@ const AUTH_COOKIE_NAMES = [
     "__client",
     "__clerk_handshake",
 ];
+const AUTH_DIAGNOSTICS_RATE_LIMIT_MAX_REQUESTS = 10;
+const AUTH_DIAGNOSTICS_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const authDiagnosticsRequestLog = new Map<string, number[]>();
 
 function parseCookieNames(cookieHeader: string) {
     if (!cookieHeader) return [];
@@ -98,6 +102,7 @@ function buildRecommendations(input: {
  */
 export async function GET(req: Request) {
     const url = new URL(req.url);
+    const clientIp = getClientIp(req);
     const cookieHeader = req.headers.get("cookie") || "";
     const cookieNames = parseCookieNames(cookieHeader);
     const reqHost =
@@ -107,6 +112,23 @@ export async function GET(req: Request) {
     const reqProto =
         req.headers.get("x-forwarded-proto") ||
         url.protocol.replace(":", "");
+
+    if (
+        clientIp &&
+        isRateLimited({
+            store: authDiagnosticsRequestLog,
+            key: clientIp,
+            maxRequests: AUTH_DIAGNOSTICS_RATE_LIMIT_MAX_REQUESTS,
+            windowMs: AUTH_DIAGNOSTICS_RATE_LIMIT_WINDOW_MS,
+        })
+    ) {
+        const response = NextResponse.json(
+            { error: "Too many diagnostics requests. Please try again shortly." },
+            { status: 429 }
+        );
+        response.headers.set("Cache-Control", "no-store, max-age=0");
+        return response;
+    }
 
     const hasSessionCookie = hasCookie(cookieNames, "__session");
     const hasKnownAuthCookie = AUTH_COOKIE_NAMES.some((name) => hasCookie(cookieNames, name));

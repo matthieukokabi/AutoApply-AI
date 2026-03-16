@@ -55,4 +55,26 @@ describe("GET /api/auth/diagnostics", () => {
         expect(Array.isArray(data.recommendations)).toBe(true);
         expect(data.recommendations.length).toBeGreaterThan(0);
     });
+
+    it("returns 429 when diagnostics is called too frequently from one IP", async () => {
+        vi.mocked(auth).mockResolvedValue({ userId: null } as any);
+
+        const makeReq = () =>
+            new Request("https://autoapply.works/api/auth/diagnostics", {
+                headers: {
+                    "x-forwarded-for": "203.0.113.55",
+                },
+            });
+
+        for (let i = 0; i < 10; i += 1) {
+            const res = await GET(makeReq());
+            expect(res.status).toBe(200);
+        }
+
+        const limitedRes = await GET(makeReq());
+        const data = await limitedRes.json();
+
+        expect(limitedRes.status).toBe(429);
+        expect(data.error).toContain("Too many diagnostics requests");
+    });
 });

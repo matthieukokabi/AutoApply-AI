@@ -3361,3 +3361,30 @@ Included in this rollout:
 
 ### Files Modified This Session
 - `SESSION_LOG.md`
+
+---
+
+## Session 100 — 2026-03-16
+
+### Completed
+
+**Auth Diagnostics Hardening (Rate Limit):**
+- Added IP-based rate limiting for `GET /api/auth/diagnostics`:
+  - limit: 10 requests per 60 seconds per client IP
+  - response on limit hit: HTTP `429` with a clear retry-later message
+- Kept existing auth diagnostics behavior intact outside throttling.
+- Added automated API test coverage for the rate-limit path to prevent regressions.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_224100.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260316_224212.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 219 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/auth/diagnostics/route.ts`
+- `apps/web/__tests__/api/auth-diagnostics.test.ts`
+- `SESSION_LOG.md`
