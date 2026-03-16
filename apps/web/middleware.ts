@@ -44,6 +44,14 @@ function isLikelyBot(userAgent: string | null) {
     );
 }
 
+function hasLikelySessionCookie(cookieHeader: string | null) {
+    if (!cookieHeader) {
+        return false;
+    }
+
+    return /(?:^|;\s*)__session=/.test(cookieHeader);
+}
+
 export default clerkMiddleware(async (auth, req) => {
     const url = req.nextUrl;
 
@@ -68,8 +76,11 @@ export default clerkMiddleware(async (auth, req) => {
         url.pathname === "/sign-up";
     const isLandingRoot = url.pathname === "/" || isLocaleRoot;
     const isBotRequest = isLikelyBot(req.headers.get("user-agent"));
+    const hasSessionCookie = hasLikelySessionCookie(req.headers.get("cookie"));
     const requiresPublicAuthLookup =
-        (isAuthPage || isLandingRoot) && !isBotRequest;
+        (isAuthPage || isLandingRoot) &&
+        !isBotRequest &&
+        hasSessionCookie;
     const needsAuthLookup =
         !isPublicRoute(req) ||
         requiresPublicAuthLookup;

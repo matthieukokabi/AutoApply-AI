@@ -10,11 +10,17 @@ vi.mock("@/i18n/routing", () => ({
 
 import middleware from "@/middleware";
 
-function mockRequest(pathname: string, userAgent?: string) {
+function mockRequest(
+    pathname: string,
+    options?: { userAgent?: string; cookie?: string }
+) {
     const url = `https://example.com${pathname}`;
     const headers = new Headers();
-    if (userAgent) {
-        headers.set("user-agent", userAgent);
+    if (options?.userAgent) {
+        headers.set("user-agent", options.userAgent);
+    }
+    if (options?.cookie) {
+        headers.set("cookie", options.cookie);
     }
 
     return {
@@ -28,7 +34,10 @@ describe("middleware auth + i18n routing", () => {
     it("redirects signed-in users from root to dashboard", async () => {
         const auth = vi.fn().mockResolvedValue({ userId: "clerk_user_1" });
 
-        const response = await (middleware as any)(auth, mockRequest("/"));
+        const response = await (middleware as any)(
+            auth,
+            mockRequest("/", { cookie: "__session=session_token" })
+        );
 
         expect(response?.status).toBe(307);
         expect(response?.headers.get("location")).toBe("https://example.com/dashboard");
@@ -37,7 +46,10 @@ describe("middleware auth + i18n routing", () => {
     it("redirects signed-in users from locale root to locale dashboard", async () => {
         const auth = vi.fn().mockResolvedValue({ userId: "clerk_user_1" });
 
-        const response = await (middleware as any)(auth, mockRequest("/fr"));
+        const response = await (middleware as any)(
+            auth,
+            mockRequest("/fr", { cookie: "__session=session_token" })
+        );
 
         expect(response?.status).toBe(307);
         expect(response?.headers.get("location")).toBe("https://example.com/fr/dashboard");
@@ -58,6 +70,7 @@ describe("middleware auth + i18n routing", () => {
         const response = await (middleware as any)(auth, mockRequest("/fr/sign-in"));
 
         expect(response).toBeUndefined();
+        expect(auth).not.toHaveBeenCalled();
     });
 
     it("skips redirects for API routes", async () => {
@@ -91,7 +104,10 @@ describe("middleware auth + i18n routing", () => {
 
         const response = await (middleware as any)(
             auth,
-            mockRequest("/", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
+            mockRequest("/", {
+                userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                cookie: "__session=session_token",
+            })
         );
 
         expect(response).toBeUndefined();
@@ -103,8 +119,20 @@ describe("middleware auth + i18n routing", () => {
 
         const response = await (middleware as any)(
             auth,
-            mockRequest("/sign-in", "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)")
+            mockRequest("/sign-in", {
+                userAgent: "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
+                cookie: "__session=session_token",
+            })
         );
+
+        expect(response).toBeUndefined();
+        expect(auth).not.toHaveBeenCalled();
+    });
+
+    it("does not invoke auth callback for anonymous root requests without session cookie", async () => {
+        const auth = vi.fn().mockResolvedValue({ userId: "clerk_user_1" });
+
+        const response = await (middleware as any)(auth, mockRequest("/"));
 
         expect(response).toBeUndefined();
         expect(auth).not.toHaveBeenCalled();

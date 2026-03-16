@@ -2615,3 +2615,29 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
+
+---
+
+## Session 69 — 2026-03-16
+
+### Completed
+
+**Middleware Cost Optimization (Session-Cookie-Gated Public Auth Lookup):**
+- Added `hasLikelySessionCookie` helper in middleware.
+- Public routes now only perform Clerk auth lookup when both are true:
+  - route needs public-user state (landing root/auth pages), and
+  - a likely Clerk session cookie (`__session`) is present.
+- This keeps protected-route behavior unchanged while reducing unnecessary auth lookups for anonymous/public traffic.
+- Expanded middleware tests for:
+  - signed-in root/locale redirects when session cookie exists,
+  - anonymous root bypass without session cookie,
+  - auth-page bypass assertions for signed-out users.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 203 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`
