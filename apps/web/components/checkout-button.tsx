@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import {
     buildAuthIntentUrl,
+    getCheckoutErrorMessage,
     getLocalizedPathForRoute,
     isUnauthorizedCheckoutError,
     shouldRedirectToAuthBeforeCheckout,
@@ -21,6 +22,7 @@ interface CheckoutButtonProps {
 
 export function CheckoutButton({ plan, children, variant = "default", className }: CheckoutButtonProps) {
     const [loading, setLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const { isLoaded, userId } = useAuth();
 
     function redirectToSignUpWithIntent() {
@@ -37,6 +39,7 @@ export function CheckoutButton({ plan, children, variant = "default", className 
 
     async function handleCheckout() {
         setLoading(true);
+        setErrorMessage(null);
         try {
             if (shouldRedirectToAuthBeforeCheckout(isLoaded, userId)) {
                 redirectToSignUpWithIntent();
@@ -60,24 +63,31 @@ export function CheckoutButton({ plan, children, variant = "default", className 
             if (data.url) {
                 window.location.href = data.url;
             } else {
-                alert(data.error || "Failed to start checkout");
+                setErrorMessage(getCheckoutErrorMessage(data.error));
             }
         } catch {
-            alert("Something went wrong. Please try again.");
+            setErrorMessage("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
     }
 
     return (
-        <Button
-            variant={variant}
-            className={className}
-            onClick={handleCheckout}
-            disabled={loading}
-        >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            {children}
-        </Button>
+        <div className="space-y-2">
+            <Button
+                variant={variant}
+                className={className}
+                onClick={handleCheckout}
+                disabled={loading}
+            >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {children}
+            </Button>
+            {errorMessage ? (
+                <p role="alert" className="text-center text-xs text-destructive">
+                    {errorMessage}
+                </p>
+            ) : null}
+        </div>
     );
 }

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
     buildAuthIntentUrl,
     buildPostAuthRedirectUrl,
+    getCheckoutErrorMessage,
     getAuthPathsForLocale,
     getLocalizedPathForRoute,
     isCheckoutPlan,
@@ -97,5 +98,17 @@ describe("checkout intent helpers", () => {
         expect(shouldRedirectToAuthBeforeCheckout(true, null)).toBe(true);
         expect(shouldRedirectToAuthBeforeCheckout(true, "user_123")).toBe(false);
         expect(shouldRedirectToAuthBeforeCheckout(false, null)).toBe(false);
+    });
+
+    it("normalizes checkout start error messaging", () => {
+        expect(getCheckoutErrorMessage("Stripe temporary issue")).toBe(
+            "Stripe temporary issue"
+        );
+        expect(getCheckoutErrorMessage("   ")).toBe(
+            "Failed to start checkout. Please try again."
+        );
+        expect(getCheckoutErrorMessage(null)).toBe(
+            "Failed to start checkout. Please try again."
+        );
     });
 });

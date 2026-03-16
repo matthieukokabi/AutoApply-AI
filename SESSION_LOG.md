@@ -2641,3 +2641,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
+
+---
+
+## Session 70 — 2026-03-16
+
+### Completed
+
+**Checkout UX Hardening (No Browser Alerts):**
+- Removed browser `alert()` usage from pricing checkout CTA flow.
+- Added inline checkout error state rendering under CTA buttons using accessible `role="alert"` messaging.
+- Added `getCheckoutErrorMessage` helper for consistent fallback messaging when API errors are missing/empty.
+- Added regression coverage for checkout error message normalization.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 204 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/lib/checkout-intent.ts`
+- `apps/web/__tests__/checkout-intent.test.ts`
