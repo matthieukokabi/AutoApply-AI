@@ -67,34 +67,43 @@ export default function SignUpPage() {
             return;
         }
 
-        const monitorRoot = widgetHostRef.current;
-        const hasWidget = () => hasMountedClerkWidget(monitorRoot);
+        const hasWidget = () => hasMountedClerkWidget(widgetHostRef.current);
+        const markMountedIfDetected = () => {
+            if (!hasWidget()) {
+                return false;
+            }
 
-        if (hasWidget()) {
             setHasWidgetMounted(true);
             setShowWidgetFallback(false);
+            return true;
+        };
+
+        if (markMountedIfDetected()) {
             return;
         }
 
         const timeoutId = window.setTimeout(() => {
-            if (!hasWidget()) {
+            if (!markMountedIfDetected()) {
                 setShowWidgetFallback(true);
             }
         }, CLERK_WIDGET_MOUNT_TIMEOUT_MS);
 
+        const pollId = window.setInterval(() => {
+            markMountedIfDetected();
+        }, 250);
+
         const observer = new MutationObserver(() => {
-            if (hasWidget()) {
-                setHasWidgetMounted(true);
-                setShowWidgetFallback(false);
-            }
+            markMountedIfDetected();
         });
 
-        if (monitorRoot) {
-            observer.observe(monitorRoot, { childList: true, subtree: true });
-        }
+        observer.observe(widgetHostRef.current ?? document.body, {
+            childList: true,
+            subtree: true,
+        });
 
         return () => {
             window.clearTimeout(timeoutId);
+            window.clearInterval(pollId);
             observer.disconnect();
         };
     }, [isLoaded]);

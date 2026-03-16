@@ -3012,3 +3012,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+
+---
+
+## Session 87 — 2026-03-16
+
+### Completed
+
+**Auth Widget Detection Hardening (Ref-Safe Late Mount Recovery):**
+- Fixed widget-mount detection on sign-in/sign-up pages to avoid stale-ref checks.
+- Updated detection logic to read `widgetHostRef.current` dynamically, so late DOM mounts are correctly detected.
+- Added short polling + MutationObserver fallback targeting (`widget host` or `document.body`) to recover from delayed widget insertion scenarios.
+- This prevents false fallback lock states on slower mobile browsers where widget host availability can lag.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
