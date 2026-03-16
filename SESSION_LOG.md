@@ -2027,3 +2027,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/api/checkout/route.ts`
 - `apps/web/__tests__/api/checkout.test.ts`
 - `apps/web/__tests__/integration/stripe-workflow.test.ts`
+
+---
+
+## Session 45 — 2026-03-16
+
+### Completed
+
+**Stripe Webhook Secret-Key Misconfiguration Hardening:**
+- Added explicit `STRIPE_SECRET_KEY` guard in `POST /api/webhooks/stripe`.
+- Webhook endpoint now fails closed with `503` when Stripe server key is missing.
+- Added regression test for missing Stripe secret key in webhook handler.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 166 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/webhooks/stripe/route.ts`
+- `apps/web/__tests__/api/webhooks-stripe.test.ts`

@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 
 beforeEach(() => {
     vi.clearAllMocks();
+    process.env.STRIPE_SECRET_KEY = "sk_test_123";
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_secret";
     process.env.STRIPE_PRICE_UNLIMITED_MONTHLY = "price_unlimited_monthly";
     process.env.STRIPE_PRICE_UNLIMITED_YEARLY = "price_unlimited_yearly";
@@ -65,6 +66,22 @@ describe("POST /api/webhooks/stripe", () => {
 
         expect(response.status).toBe(400);
         expect(data.error).toBe("Invalid signature");
+    });
+
+    it("returns 503 when stripe secret key is not configured", async () => {
+        delete process.env.STRIPE_SECRET_KEY;
+
+        const request = new Request("http://localhost/api/webhooks/stripe", {
+            method: "POST",
+            body: "{}",
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toBe("Webhook handler misconfigured");
+        expect(stripe.webhooks.constructEvent).not.toHaveBeenCalled();
     });
 
     it("returns 503 when webhook secret is not configured", async () => {

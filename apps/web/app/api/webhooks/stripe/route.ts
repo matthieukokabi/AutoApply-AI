@@ -20,6 +20,11 @@ function resolvePlanFromPriceId(priceId?: string): "pro" | "unlimited" {
  * Handles Stripe webhook events for subscription management.
  */
 export async function POST(req: Request) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+        console.error("STRIPE_SECRET_KEY is not configured");
+        return NextResponse.json({ error: "Webhook handler misconfigured" }, { status: 503 });
+    }
+
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
         console.error("STRIPE_WEBHOOK_SECRET is not configured");
