@@ -8,16 +8,48 @@ beforeEach(() => {
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_secret";
     process.env.STRIPE_PRICE_UNLIMITED_MONTHLY = "price_unlimited_monthly";
     process.env.STRIPE_PRICE_UNLIMITED_YEARLY = "price_unlimited_yearly";
+    vi.mocked(prisma.stripeWebhookEvent.create).mockResolvedValue({ id: "evt_row" } as any);
 });
 
-function createStripeEvent(type: string, data: any) {
+function createStripeEvent(type: string, data: any, id = "evt_test") {
     return {
+        id,
         type,
         data: { object: data },
     };
 }
 
 describe("POST /api/webhooks/stripe", () => {
+    it("ignores duplicate webhook events", async () => {
+        vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+            createStripeEvent(
+                "checkout.session.completed",
+                {
+                    mode: "payment",
+                    customer: "cus_123",
+                    metadata: { userId: "user_1" },
+                },
+                "evt_duplicate"
+            ) as any
+        );
+
+        vi.mocked(prisma.stripeWebhookEvent.create).mockRejectedValue({
+            code: "P2002",
+        } as any);
+
+        const request = new Request("http://localhost/api/webhooks/stripe", {
+            method: "POST",
+            body: JSON.stringify({}),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.duplicate).toBe(true);
+        expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
     it("returns 400 for invalid signature", async () => {
         vi.mocked(stripe.webhooks.constructEvent).mockImplementation(() => {
             throw new Error("Invalid signature");

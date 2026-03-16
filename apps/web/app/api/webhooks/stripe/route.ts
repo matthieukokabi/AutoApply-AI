@@ -40,6 +40,22 @@ export async function POST(req: Request) {
     }
 
     try {
+        // Idempotency guard: skip duplicate/replayed webhook events.
+        // We insert eventId before processing; on processing failure we delete it to allow retries.
+        try {
+            await prisma.stripeWebhookEvent.create({
+                data: {
+                    eventId: event.id,
+                    eventType: event.type,
+                },
+            });
+        } catch (error: any) {
+            if (error?.code === "P2002") {
+                return NextResponse.json({ received: true, duplicate: true });
+            }
+            throw error;
+        }
+
         switch (event.type) {
             case "checkout.session.completed": {
                 const session = event.data.object as Stripe.Checkout.Session;
@@ -129,6 +145,13 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ received: true });
     } catch (error) {
+        try {
+            await prisma.stripeWebhookEvent.delete({
+                where: { eventId: event.id },
+            });
+        } catch {
+            // no-op: event row may not exist if failure happened before insert
+        }
         console.error("Stripe webhook error:", error);
         return NextResponse.json(
             { error: "Webhook handler failed" },

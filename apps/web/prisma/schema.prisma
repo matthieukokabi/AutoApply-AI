@@ -125,3 +125,16 @@ model WorkflowError {
   @@index([createdAt])
   @@map("workflow_errors")
 }
+
+// ─── Stripe Webhook Idempotency ───────────────────────────────
+
+model StripeWebhookEvent {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  eventType String
+  createdAt DateTime @default(now())
+
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("stripe_webhook_events")
+}

@@ -55,6 +55,21 @@
 - `npm test -- __tests__/api/webhooks-stripe.test.ts __tests__/integration/stripe-workflow.test.ts` → 17/17 passing
 - `npm run build` → success
 
+**Billing correctness — Stripe webhook idempotency added (atomic step):**
+- Added new Prisma model in `apps/web/prisma/schema.prisma`:
+  - `StripeWebhookEvent` (`eventId` unique) for replay protection
+- Updated `apps/web/app/api/webhooks/stripe/route.ts`:
+  - Inserts webhook `event.id` before processing
+  - Returns early with `{ duplicate: true }` on unique-conflict (`P2002`)
+  - Deletes inserted event row on handler failure to allow retries
+- Updated test scaffolding in `apps/web/__tests__/setup.ts` for `prisma.stripeWebhookEvent`
+- Added duplicate-event regression test in `apps/web/__tests__/api/webhooks-stripe.test.ts`
+- Regenerated Prisma client: `npx prisma generate`
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/webhooks-stripe.test.ts __tests__/integration/stripe-workflow.test.ts` → 18/18 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

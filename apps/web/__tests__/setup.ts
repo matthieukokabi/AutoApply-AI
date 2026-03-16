@@ -59,6 +59,10 @@ vi.mock("@/lib/prisma", () => ({
         workflowError: {
             create: vi.fn(),
         },
+        stripeWebhookEvent: {
+            create: vi.fn(),
+            delete: vi.fn(),
+        },
         $transaction: vi.fn(),
     },
 }));
