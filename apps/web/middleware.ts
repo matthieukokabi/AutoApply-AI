@@ -33,23 +33,22 @@ const publicRoutes = [
 const isPublicRoute = createRouteMatcher(publicRoutes);
 
 export default clerkMiddleware(async (auth, req) => {
+    const url = req.nextUrl;
+
+    // API routes still match middleware so Clerk can attach auth context,
+    // but this middleware callback does not need to execute auth/i18n logic for them.
+    if (url.pathname.startsWith("/api/")) {
+        return undefined;
+    }
+
     let intlResponse: ReturnType<typeof intlMiddleware> | undefined;
 
-    // Skip locale routing for API routes and Clerk internals
-    if (
-        !req.nextUrl.pathname.startsWith("/api/") &&
-        !req.nextUrl.pathname.startsWith("/__clerk")
-    ) {
+    // Skip locale routing for Clerk internals
+    if (!url.pathname.startsWith("/__clerk")) {
         intlResponse = intlMiddleware(req);
     }
 
     const { userId } = await auth();
-    const url = req.nextUrl;
-
-    // Skip redirects for API routes and preserve intl response when present
-    if (url.pathname.startsWith("/api/")) {
-        return intlResponse;
-    }
 
     // IMPORTANT: Do NOT redirect Clerk's internal auth routes
     const isClerkInternalRoute =

@@ -61,4 +61,13 @@ describe("middleware auth + i18n routing", () => {
 
         expect(response).toBeUndefined();
     });
+
+    it("does not invoke auth callback for API routes", async () => {
+        const auth = vi.fn().mockResolvedValue({ userId: "clerk_user_1" });
+
+        const response = await (middleware as any)(auth, mockRequest("/api/user"));
+
+        expect(response).toBeUndefined();
+        expect(auth).not.toHaveBeenCalled();
+    });
 });

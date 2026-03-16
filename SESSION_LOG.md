@@ -1834,3 +1834,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `apps/web/middleware.ts`
+
+---
+
+## Session 36 — 2026-03-16
+
+### Completed
+
+**Middleware Execution Optimization for API Requests:**
+- Updated middleware flow to short-circuit API requests before calling `auth()` in the custom callback.
+- Kept API route matcher coverage intact for Clerk context propagation, while removing unnecessary auth callback work on API paths.
+- Added regression test to ensure API middleware path does not invoke auth callback logic.
+- Goal: reduce edge compute per API request and lower Vercel middleware usage without changing API auth behavior.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 156 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`
