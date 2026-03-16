@@ -15,7 +15,8 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "db:seed": "npx tsx prisma/seed.ts",
-        "smoke:onboarding": "bash scripts/onboarding_smoke_matrix.sh"
+        "smoke:onboarding": "bash scripts/onboarding_smoke_matrix.sh",
+        "smoke:onboarding:auth-blocked": "bash scripts/onboarding_auth_blocked_smoke.sh"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"

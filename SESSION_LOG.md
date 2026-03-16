@@ -3202,3 +3202,34 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `SESSION_LOG.md`
+
+---
+
+## Session 95 — 2026-03-16
+
+### Completed
+
+**Auth-Blocked Onboarding Smoke (VPN/Adblock/Private-DNS Resilience):**
+- Added new smoke script to simulate blocked Clerk auth network calls:
+  - `apps/web/scripts/onboarding_auth_blocked_smoke.sh`
+- The script mocks `clerk.autoapply.works` responses and verifies sign-up page behavior under auth-init blockage:
+  - no horizontal overflow
+  - no `Unauthorized` surface text
+  - fallback recovery card is shown (`AUTH_INIT_BLOCKED` path)
+  - diagnostics action remains available.
+- Added npm entrypoint:
+  - `npm run smoke:onboarding:auth-blocked`
+
+### Verification
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260316_221106.jsonl`
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_221226.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/scripts/onboarding_auth_blocked_smoke.sh`
+- `apps/web/package.json`
+- `SESSION_LOG.md`
