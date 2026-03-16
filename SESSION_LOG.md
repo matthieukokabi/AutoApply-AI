@@ -2005,3 +2005,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/cron/weekly-digest/route.ts`
 - `apps/web/__tests__/api/cron-weekly-digest.test.ts`
+
+---
+
+## Session 44 — 2026-03-16
+
+### Completed
+
+**Checkout Secret Misconfiguration Hardening:**
+- Added explicit `STRIPE_SECRET_KEY` guard in `POST /api/checkout`.
+- Checkout endpoint now fails closed with `503` when Stripe server key is missing.
+- Added regression test for missing Stripe secret.
+- Updated Stripe workflow integration test setup with `STRIPE_SECRET_KEY` to reflect the new required config.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 165 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/checkout/route.ts`
+- `apps/web/__tests__/api/checkout.test.ts`
+- `apps/web/__tests__/integration/stripe-workflow.test.ts`

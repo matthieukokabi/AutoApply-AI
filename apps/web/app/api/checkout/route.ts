@@ -19,6 +19,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error("STRIPE_SECRET_KEY is required for /api/checkout");
+            return NextResponse.json({ error: "Checkout handler misconfigured" }, { status: 503 });
+        }
+
         const clientIp = getClientIp(req);
         if (
             clientIp &&

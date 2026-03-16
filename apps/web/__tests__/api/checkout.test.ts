@@ -13,6 +13,7 @@ const mockUser = {
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.test";
+    process.env.STRIPE_SECRET_KEY = "sk_test_123";
 });
 
 describe("POST /api/checkout", () => {
@@ -109,6 +110,24 @@ describe("POST /api/checkout", () => {
     it("returns 503 when NEXT_PUBLIC_APP_URL is invalid", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         process.env.NEXT_PUBLIC_APP_URL = "invalid-url";
+
+        const request = new Request("http://localhost/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: "pro_monthly" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toBe("Checkout handler misconfigured");
+        expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    });
+
+    it("returns 503 when STRIPE_SECRET_KEY is missing", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        delete process.env.STRIPE_SECRET_KEY;
 
         const request = new Request("http://localhost/api/checkout", {
             method: "POST",
