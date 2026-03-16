@@ -1544,6 +1544,31 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ---
 
+## Session 27 — 2026-03-16
+
+### Completed
+
+**Mobile Auth Endpoint Hardening:**
+- Added per-IP request throttling to `POST /api/auth/mobile`:
+  - limit: 10 requests per 10 minutes per IP
+  - response on limit: `429 Too Many Requests`
+- Added stricter request validation and normalization:
+  - enforce `email` and `password` as strings
+  - trim + lowercase email before Clerk lookup/create and token generation
+  - sanitize action to supported values (`sign-in`/`sign-up`)
+- Added test coverage verifying rate limit behavior for repeated auth attempts from one IP.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 146 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/auth/mobile/route.ts`
+- `apps/web/__tests__/api/auth-mobile.test.ts`
+
+---
+
 ## Session 24 — 2026-03-16
 
 ### Completed

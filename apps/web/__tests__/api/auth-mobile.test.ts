@@ -189,4 +189,49 @@ describe("POST /api/auth/mobile", () => {
             expect(mockUsers.createUser).not.toHaveBeenCalled();
         });
     });
+
+    it("returns 429 when a single IP exceeds auth attempt limits", async () => {
+        vi.mocked(mockUsers.createUser).mockResolvedValue({
+            id: "clerk_limited_user",
+        } as any);
+        vi.mocked(createMobileToken).mockResolvedValue("rate_limited_token");
+
+        const headers = {
+            "Content-Type": "application/json",
+            "x-forwarded-for": "198.51.100.20",
+        };
+
+        for (let i = 0; i < 10; i += 1) {
+            const response = await POST(
+                new Request("http://localhost/api/auth/mobile", {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                        email: `limit-${i}@example.com`,
+                        password: "SecurePass123!",
+                        action: "sign-up",
+                    }),
+                })
+            );
+
+            expect(response.status).toBe(200);
+        }
+
+        const limitedResponse = await POST(
+            new Request("http://localhost/api/auth/mobile", {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    email: "limit-final@example.com",
+                    password: "SecurePass123!",
+                    action: "sign-up",
+                }),
+            })
+        );
+        const data = await limitedResponse.json();
+
+        expect(limitedResponse.status).toBe(429);
+        expect(data.error).toContain("Too many authentication attempts");
+        expect(mockUsers.createUser).toHaveBeenCalledTimes(10);
+    });
 });
