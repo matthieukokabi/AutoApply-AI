@@ -18,6 +18,18 @@
 - Secret pattern grep for removed literals: no matches
 - JSON validation: both modified workflow JSON files pass `jq empty`
 
+**Security hardening — debug diagnostics endpoint locked down (atomic step):**
+- Updated `apps/web/app/api/debug/auth/route.ts`:
+  - Endpoint now returns `404` unless `ENABLE_DEBUG_AUTH_ENDPOINT=true`
+  - Requires `DEBUG_AUTH_SECRET` when enabled (fail-closed with `503` if missing)
+  - Requires `x-debug-auth-secret` header match (`401` on mismatch)
+- Added dedicated tests: `apps/web/__tests__/api/debug-auth.test.ts`
+- Expanded shared Prisma test mock with `prisma.user.count` in `apps/web/__tests__/setup.ts`
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/debug-auth.test.ts` → 4/4 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

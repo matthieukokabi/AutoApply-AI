@@ -4,9 +4,25 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/debug/auth — Debug endpoint to check auth + DB status
- * Public route (no auth required) to diagnose connection issues
+ * Disabled by default; guarded with shared secret when enabled.
  */
-export async function GET() {
+export async function GET(req: Request) {
+    const debugEnabled = process.env.ENABLE_DEBUG_AUTH_ENDPOINT === "true";
+    if (!debugEnabled) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const debugSecret = process.env.DEBUG_AUTH_SECRET;
+    if (!debugSecret) {
+        console.error("DEBUG_AUTH_SECRET is required when ENABLE_DEBUG_AUTH_ENDPOINT=true");
+        return NextResponse.json({ error: "Debug endpoint misconfigured" }, { status: 503 });
+    }
+
+    const providedSecret = req.headers.get("x-debug-auth-secret");
+    if (providedSecret !== debugSecret) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const checks: Record<string, unknown> = {
         timestamp: new Date().toISOString(),
     };
