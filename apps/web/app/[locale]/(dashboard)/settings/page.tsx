@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
     Card,
     CardContent,
@@ -45,7 +46,25 @@ const CURRENCIES = [
     { code: "BRL", symbol: "R$", label: "Brazilian Real" },
 ];
 
+const VALID_CHECKOUT_PLANS = new Set([
+    "pro_monthly",
+    "pro_yearly",
+    "unlimited",
+    "unlimited_yearly",
+    "credit_pack",
+]);
+
+function getValidUpgradePlan(plan: string | null) {
+    return plan && VALID_CHECKOUT_PLANS.has(plan) ? plan : null;
+}
+
 export default function SettingsPage() {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const autoUpgradePlan = getValidUpgradePlan(searchParams.get("upgrade"));
+    const autoCheckoutTriggeredRef = useRef(false);
+
     const [user, setUser] = useState<UserInfo | null>(null);
     const [prefs, setPrefs] = useState<Preferences>({
         targetTitles: [],
@@ -200,7 +219,7 @@ export default function SettingsPage() {
         }
     }
 
-    async function handleCheckout(plan: string) {
+    const handleCheckout = useCallback(async (plan: string) => {
         try {
             const res = await fetch("/api/checkout", {
                 method: "POST",
@@ -216,7 +235,23 @@ export default function SettingsPage() {
         } catch {
             setMessage({ type: "error", text: "Network error." });
         }
-    }
+    }, []);
+
+    useEffect(() => {
+        if (!autoUpgradePlan || loading || !user || autoCheckoutTriggeredRef.current) {
+            return;
+        }
+
+        autoCheckoutTriggeredRef.current = true;
+        setMessage({ type: "success", text: "Starting secure checkout..." });
+
+        const nextParams = new URLSearchParams(searchParams.toString());
+        nextParams.delete("upgrade");
+        const nextQuery = nextParams.toString();
+        router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+
+        void handleCheckout(autoUpgradePlan);
+    }, [autoUpgradePlan, loading, user, pathname, router, searchParams, handleCheckout]);
 
     async function handleDeleteAccount() {
         if (!confirmDelete) {

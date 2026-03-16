@@ -8,23 +8,58 @@ import {
     SignIn,
     useAuth,
 } from "@clerk/nextjs";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const SUPPORTED_LOCALES = new Set(["en", "fr", "de", "es", "it"]);
+const CHECKOUT_PLANS = new Set([
+    "pro_monthly",
+    "pro_yearly",
+    "unlimited",
+    "unlimited_yearly",
+    "credit_pack",
+]);
 const CLERK_LOAD_TIMEOUT_MS = 8000;
+
+type SearchParamsLike = { get(name: string): string | null };
 
 function getAuthPaths(localeParam: string | undefined) {
     const locale = localeParam && SUPPORTED_LOCALES.has(localeParam) ? localeParam : null;
     return {
         signInPath: locale ? `/${locale}/sign-in` : "/sign-in",
         signUpPath: locale ? `/${locale}/sign-up` : "/sign-up",
+        settingsPath: locale ? `/${locale}/settings` : "/settings",
         dashboardPath: locale ? `/${locale}/dashboard` : "/dashboard",
     };
 }
 
-function SignInFallback({ signUpPath }: { signUpPath: string }) {
+function getRequestedUpgradePlan(searchParams: SearchParamsLike) {
+    const plan = searchParams.get("upgrade") ?? searchParams.get("plan");
+    return plan && CHECKOUT_PLANS.has(plan) ? plan : null;
+}
+
+function buildAuthIntentUrl(basePath: string, plan: string | null, from: string | null) {
+    if (!plan && !from) return basePath;
+    const params = new URLSearchParams();
+    if (plan) params.set("upgrade", plan);
+    if (from) params.set("from", from);
+    return `${basePath}?${params.toString()}`;
+}
+
+function buildPostAuthRedirectUrl(
+    settingsPath: string,
+    dashboardPath: string,
+    plan: string | null,
+    from: string | null
+) {
+    if (!plan) return dashboardPath;
+    const params = new URLSearchParams({ upgrade: plan });
+    if (from) params.set("from", from);
+    return `${settingsPath}?${params.toString()}`;
+}
+
+function SignInFallback({ signUpUrl }: { signUpUrl: string }) {
     return (
         <div className="rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -46,7 +81,7 @@ function SignInFallback({ signUpPath }: { signUpPath: string }) {
                     variant="outline"
                     className="w-full"
                     onClick={() => {
-                        window.location.href = signUpPath;
+                        window.location.href = signUpUrl;
                     }}
                 >
                     Go to sign up
@@ -58,8 +93,18 @@ function SignInFallback({ signUpPath }: { signUpPath: string }) {
 
 export default function SignInPage() {
     const params = useParams<{ locale?: string }>();
+    const searchParams = useSearchParams();
     const localeParam = typeof params?.locale === "string" ? params.locale : undefined;
-    const { signInPath, signUpPath, dashboardPath } = getAuthPaths(localeParam);
+    const { signInPath, signUpPath, settingsPath, dashboardPath } = getAuthPaths(localeParam);
+    const requestedPlan = getRequestedUpgradePlan(searchParams);
+    const fromParam = searchParams.get("from");
+    const signUpUrl = buildAuthIntentUrl(signUpPath, requestedPlan, fromParam);
+    const postAuthRedirectUrl = buildPostAuthRedirectUrl(
+        settingsPath,
+        dashboardPath,
+        requestedPlan,
+        fromParam
+    );
     const { isLoaded } = useAuth();
     const [showTimeoutFallback, setShowTimeoutFallback] = useState(false);
 
@@ -91,7 +136,7 @@ export default function SignInPage() {
                 </div>
 
                 {showTimeoutFallback && !isLoaded ? (
-                    <SignInFallback signUpPath={signUpPath} />
+                    <SignInFallback signUpUrl={signUpUrl} />
                 ) : (
                     <ClerkLoading>
                         <div className="rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
@@ -106,9 +151,9 @@ export default function SignInPage() {
                     <SignIn
                         path={signInPath}
                         routing="path"
-                        signUpUrl={signUpPath}
-                        forceRedirectUrl={dashboardPath}
-                        fallbackRedirectUrl={dashboardPath}
+                        signUpUrl={signUpUrl}
+                        forceRedirectUrl={postAuthRedirectUrl}
+                        fallbackRedirectUrl={postAuthRedirectUrl}
                         appearance={{
                             elements: {
                                 rootBox: "mx-auto w-full",
@@ -125,11 +170,11 @@ export default function SignInPage() {
                 </ClerkLoaded>
 
                 <ClerkDegraded>
-                    <SignInFallback signUpPath={signUpPath} />
+                    <SignInFallback signUpUrl={signUpUrl} />
                 </ClerkDegraded>
 
                 <ClerkFailed>
-                    <SignInFallback signUpPath={signUpPath} />
+                    <SignInFallback signUpUrl={signUpUrl} />
                 </ClerkFailed>
             </div>
         </div>

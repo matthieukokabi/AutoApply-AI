@@ -2326,3 +2326,32 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+
+---
+
+## Session 58 — 2026-03-16
+
+### Completed
+
+**Post-Auth Checkout Resume (Onboarding Conversion Flow):**
+- Improved anonymous pricing-to-auth handoff by sending checkout intent as `upgrade` query parameter to sign-up.
+- Added checkout intent propagation on both auth pages:
+  - reads `upgrade` (and legacy `plan`) + `from` query params
+  - preserves intent when switching between sign-up and sign-in
+  - redirects authenticated completion to localized settings route with `?upgrade=...` when applicable.
+- Added automatic checkout resume on settings page:
+  - detects valid `upgrade` query param
+  - starts checkout once authenticated user data is loaded
+  - removes `upgrade` from URL before launch to avoid duplicate retries on refresh/navigation
+  - displays “Starting secure checkout...” status message.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 182 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`

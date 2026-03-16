@@ -36,7 +36,7 @@ export function CheckoutButton({ plan, children, variant = "default", className 
 
             if (res.status === 401) {
                 const signUpPath = getLocalizedSignUpPath(window.location.pathname);
-                const params = new URLSearchParams({ plan, from: window.location.pathname });
+                const params = new URLSearchParams({ upgrade: plan, from: window.location.pathname });
                 window.location.href = `${signUpPath}?${params.toString()}`;
                 return;
             }
