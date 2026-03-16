@@ -59,7 +59,7 @@ export default function SignUpPage() {
     const { signInPath, signUpPath, dashboardPath } = getAuthPaths(localeParam);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        <div className="min-h-screen overflow-x-hidden px-4 py-8 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
             <div className="w-full max-w-md">
                 <div className="text-center mb-6">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">

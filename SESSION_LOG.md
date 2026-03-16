@@ -2276,3 +2276,32 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+
+---
+
+## Session 56 — 2026-03-16
+
+### Completed
+
+**Mobile Horizontal Overflow & Pricing CTA Responsiveness:**
+- Added horizontal overflow containment to landing root and auth page wrappers to prevent right-scroll drift on mobile.
+- Reduced mobile header crowding on landing:
+  - compact brand display on small screens
+  - hid top-nav auth buttons on small screens (hero CTA remains primary mobile entry)
+  - preserved language/theme controls with tighter layout constraints.
+- Improved pricing and CTA button responsiveness for long localized labels:
+  - enabled wrapping (`whitespace-normal`) and auto height on pricing plan buttons
+  - tightened yearly button line-height and spacing for narrow screens
+  - prevented roadmap CTA button from forcing width on small screens.
+- Constrained language selector width on mobile to avoid header overflow expansion.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 182 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/page.tsx`
+- `apps/web/components/language-switcher.tsx`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`

@@ -85,7 +85,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
     };
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex min-h-screen flex-col overflow-x-hidden">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -93,10 +93,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             {/* Navigation */}
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-16 items-center">
-                    <div className="mr-4 flex">
-                        <Link href="/" className="mr-6 flex items-center space-x-2">
+                    <div className="mr-2 flex shrink-0">
+                        <Link href="/" className="flex items-center space-x-2">
                             <Sparkles className="h-6 w-6 text-primary" />
-                            <span className="font-bold text-xl">AutoApply AI</span>
+                            <span className="hidden text-xl font-bold sm:inline">AutoApply AI</span>
                         </Link>
                     </div>
                     <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
@@ -116,13 +116,13 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             {t("nav.roadmap")}
                         </Link>
                     </nav>
-                    <div className="flex flex-1 items-center justify-end space-x-2">
+                    <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
-                        <Link href="/sign-in">
+                        <Link href="/sign-in" className="hidden sm:inline-flex">
                             <Button variant="ghost">{t("nav.signIn")}</Button>
                         </Link>
-                        <Link href="/sign-up">
+                        <Link href="/sign-up" className="hidden sm:inline-flex">
                             <Button>{t("nav.getStarted")}</Button>
                         </Link>
                     </div>
@@ -262,7 +262,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         </div>
                     </div>
                     <Link href="/roadmap">
-                        <Button variant="outline" className="gap-2 whitespace-nowrap">
+                        <Button variant="outline" className="gap-2 sm:whitespace-nowrap">
                             {t("roadmap.viewRoadmap")} <ArrowRight className="h-4 w-4" />
                         </Button>
                     </Link>
@@ -310,7 +310,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         </CardContent>
                         <CardFooter>
                             <Link href="/sign-up" className="w-full">
-                                <Button variant="outline" className="w-full">
+                                <Button variant="outline" className="h-auto w-full whitespace-normal py-3 text-center">
                                     {t("hero.startFree")}
                                 </Button>
                             </Link>
@@ -356,10 +356,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </ul>
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
-                            <CheckoutButton plan="pro_monthly" className="w-full">
+                            <CheckoutButton plan="pro_monthly" className="h-auto w-full whitespace-normal py-3 text-center leading-tight">
                                 {t("pricing.getProMonthly")}
                             </CheckoutButton>
-                            <CheckoutButton plan="pro_yearly" variant="ghost" className="w-full text-xs">
+                            <CheckoutButton plan="pro_yearly" variant="ghost" className="h-auto w-full whitespace-normal py-2 text-center text-xs leading-tight">
                                 {t("pricing.proSaveYearly")}
                             </CheckoutButton>
                         </CardFooter>
@@ -397,10 +397,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </ul>
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
-                            <CheckoutButton plan="unlimited" variant="outline" className="w-full">
+                            <CheckoutButton plan="unlimited" variant="outline" className="h-auto w-full whitespace-normal py-3 text-center leading-tight">
                                 {t("pricing.goUnlimited")}
                             </CheckoutButton>
-                            <CheckoutButton plan="unlimited_yearly" variant="ghost" className="w-full text-xs">
+                            <CheckoutButton plan="unlimited_yearly" variant="ghost" className="h-auto w-full whitespace-normal py-2 text-center text-xs leading-tight">
                                 {t("pricing.unlimitedSaveYearly")}
                             </CheckoutButton>
                         </CardFooter>
@@ -411,7 +411,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     <p className="text-sm text-muted-foreground mb-3">
                         {t("pricing.creditPackDesc")}
                     </p>
-                    <CheckoutButton plan="credit_pack" variant="secondary">
+                    <CheckoutButton plan="credit_pack" variant="secondary" className="h-auto whitespace-normal py-3 text-center leading-tight">
                         {t("pricing.buyCreditPack")}
                     </CheckoutButton>
                 </div>
