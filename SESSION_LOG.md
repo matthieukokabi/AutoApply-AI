@@ -3161,3 +3161,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/components/checkout-button.tsx`
 - `apps/web/scripts/onboarding_smoke_matrix.sh`
 - `SESSION_LOG.md`
+
+---
+
+## Session 93 — 2026-03-16
+
+### Completed
+
+**Onboarding Smoke Hardening (Stale Session Cookie Reproduction):**
+- Extended pricing CTA smoke path to simulate a stale `__session` cookie before clicking upgrade.
+- This reproduces the browser state class that previously surfaced `Unauthorized` checkout behavior.
+- Kept assertion that anonymous/stale-cookie flows must still avoid pre-auth `/api/checkout` calls and route directly to sign-up auth surface.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/scripts/onboarding_smoke_matrix.sh`
+- `SESSION_LOG.md`

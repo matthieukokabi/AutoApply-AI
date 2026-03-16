@@ -60,6 +60,8 @@ click_upgrade_cta() {
   local click_json
   if ! click_json="$(eval_json "$session" "() => {
     const getText = (el) => (el?.textContent || '').trim();
+    // Simulate stale session-cookie scenarios reported on some devices.
+    document.cookie = '__session=qa_stale_session_cookie; Path=/; SameSite=Lax';
     window.name = 'qaCheckoutCalls:0';
     if (!(window).__qaCheckoutFetchWrapped) {
       const originalFetch = window.fetch.bind(window);
