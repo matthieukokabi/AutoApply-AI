@@ -123,3 +123,10 @@ export function isUnauthorizedCheckoutError(
         normalizedMessage.includes("not authenticated")
     );
 }
+
+export function shouldRedirectToAuthBeforeCheckout(
+    isAuthLoaded: boolean,
+    userId: string | null | undefined
+) {
+    return isAuthLoaded && !userId;
+}

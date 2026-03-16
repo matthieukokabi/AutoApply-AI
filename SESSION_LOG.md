@@ -2550,3 +2550,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `apps/web/__tests__/checkout-intent.test.ts`
+
+---
+
+## Session 66 — 2026-03-16
+
+### Completed
+
+**Anonymous Checkout Pre-Auth Shortcut (Cost + Reliability):**
+- Added `shouldRedirectToAuthBeforeCheckout` helper to detect when auth is loaded and no user is signed in.
+- Updated pricing `CheckoutButton` flow to skip `/api/checkout` for known signed-out users and redirect directly to sign-up with preserved checkout intent.
+- Kept existing unauthorized-response redirect logic as fallback for uncertain auth states.
+- Added regression tests for pre-check redirect helper behavior.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 200 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/checkout-intent.ts`
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/__tests__/checkout-intent.test.ts`

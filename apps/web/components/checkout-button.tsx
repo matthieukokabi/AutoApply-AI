@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import {
     buildAuthIntentUrl,
     getLocalizedPathForRoute,
     isUnauthorizedCheckoutError,
+    shouldRedirectToAuthBeforeCheckout,
     type CheckoutPlan,
 } from "@/lib/checkout-intent";
 
@@ -19,10 +21,28 @@ interface CheckoutButtonProps {
 
 export function CheckoutButton({ plan, children, variant = "default", className }: CheckoutButtonProps) {
     const [loading, setLoading] = useState(false);
+    const { isLoaded, userId } = useAuth();
+
+    function redirectToSignUpWithIntent() {
+        const signUpPath = getLocalizedPathForRoute(
+            window.location.pathname,
+            "sign-up"
+        );
+        window.location.href = buildAuthIntentUrl(
+            signUpPath,
+            plan,
+            window.location.pathname
+        );
+    }
 
     async function handleCheckout() {
         setLoading(true);
         try {
+            if (shouldRedirectToAuthBeforeCheckout(isLoaded, userId)) {
+                redirectToSignUpWithIntent();
+                return;
+            }
+
             const res = await fetch("/api/checkout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -33,15 +53,7 @@ export function CheckoutButton({ plan, children, variant = "default", className 
                 .catch(() => ({})) as { url?: string; error?: string };
 
             if (isUnauthorizedCheckoutError(res.status, data.error)) {
-                const signUpPath = getLocalizedPathForRoute(
-                    window.location.pathname,
-                    "sign-up"
-                );
-                window.location.href = buildAuthIntentUrl(
-                    signUpPath,
-                    plan,
-                    window.location.pathname
-                );
+                redirectToSignUpWithIntent();
                 return;
             }
 

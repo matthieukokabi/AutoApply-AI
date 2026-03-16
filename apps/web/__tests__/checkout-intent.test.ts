@@ -6,6 +6,7 @@ import {
     getLocalizedPathForRoute,
     isCheckoutPlan,
     isUnauthorizedCheckoutError,
+    shouldRedirectToAuthBeforeCheckout,
     resolveCheckoutIntentPlan,
 } from "@/lib/checkout-intent";
 
@@ -90,5 +91,11 @@ describe("checkout intent helpers", () => {
         expect(isUnauthorizedCheckoutError(500, "Unauthorized")).toBe(true);
         expect(isUnauthorizedCheckoutError(400, "User is not authenticated")).toBe(true);
         expect(isUnauthorizedCheckoutError(500, "Checkout handler misconfigured")).toBe(false);
+    });
+
+    it("redirects known signed-out users before calling checkout API", () => {
+        expect(shouldRedirectToAuthBeforeCheckout(true, null)).toBe(true);
+        expect(shouldRedirectToAuthBeforeCheckout(true, "user_123")).toBe(false);
+        expect(shouldRedirectToAuthBeforeCheckout(false, null)).toBe(false);
     });
 });
