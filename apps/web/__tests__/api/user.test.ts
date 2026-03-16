@@ -81,6 +81,23 @@ describe("PATCH /api/user", () => {
         expect(response.status).toBe(403);
     });
 
+    it("returns 400 when automationEnabled is not a boolean", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockProUser as any);
+
+        const request = new Request("http://localhost/api/user", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ automationEnabled: "true" }),
+        });
+
+        const response = await PATCH(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("boolean");
+        expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
     it("returns 401 when not authenticated", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(null);
 

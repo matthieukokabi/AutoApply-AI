@@ -42,6 +42,13 @@ export async function PATCH(req: Request) {
         const body = await req.json();
         const { automationEnabled } = body;
 
+        if (typeof automationEnabled !== "boolean") {
+            return NextResponse.json(
+                { error: "automationEnabled must be a boolean" },
+                { status: 400 }
+            );
+        }
+
         // Only pro/unlimited users can enable automation
         if (automationEnabled && user.subscriptionStatus === "free") {
             return NextResponse.json(
@@ -52,7 +59,7 @@ export async function PATCH(req: Request) {
 
         const updated = await prisma.user.update({
             where: { id: user.id },
-            data: { automationEnabled: !!automationEnabled },
+            data: { automationEnabled },
         });
 
         return NextResponse.json({

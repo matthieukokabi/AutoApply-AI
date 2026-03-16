@@ -2114,3 +2114,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/webhooks/n8n/route.ts`
 - `apps/web/__tests__/api/webhooks-n8n.test.ts`
+
+---
+
+## Session 49 — 2026-03-16
+
+### Completed
+
+**User Settings Payload Validation Hardening:**
+- Added strict boolean validation for `automationEnabled` in `PATCH /api/user`.
+- Prevents malformed payloads from being silently coerced and unintentionally changing automation state.
+- Added regression test for non-boolean `automationEnabled` payloads.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 173 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/user/route.ts`
+- `apps/web/__tests__/api/user.test.ts`
