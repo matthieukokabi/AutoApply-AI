@@ -1900,3 +1900,27 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/api/checkout/route.ts`
 - `apps/web/__tests__/api/checkout.test.ts`
 - `apps/web/__tests__/integration/stripe-workflow.test.ts`
+
+---
+
+## Session 39 — 2026-03-16
+
+### Completed
+
+**Middleware Auth Lookup Reduction for Public Pages:**
+- Optimized middleware to skip `auth()` lookup on public non-auth content routes (e.g. blog/legal/contact/roadmap pages).
+- Preserved existing behavior where auth lookup is still required:
+  - landing (`/` and locale roots) for signed-in redirect to dashboard,
+  - sign-in/sign-up pages for signed-in redirect,
+  - protected routes for unauthenticated redirect.
+- Added regression test ensuring public content routes do not invoke auth callback.
+- Goal: cut unnecessary edge auth work on high-traffic public pages and reduce Vercel edge usage.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 160 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`

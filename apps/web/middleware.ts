@@ -48,6 +48,18 @@ export default clerkMiddleware(async (auth, req) => {
         intlResponse = intlMiddleware(req);
     }
 
+    const isLocaleRoot = locales.some((l) => url.pathname === `/${l}`);
+    const isAuthPage =
+        url.pathname.endsWith("/sign-in") ||
+        url.pathname.endsWith("/sign-up") ||
+        url.pathname === "/sign-in" ||
+        url.pathname === "/sign-up";
+    const needsAuthLookup = !isPublicRoute(req) || url.pathname === "/" || isLocaleRoot || isAuthPage;
+
+    if (!needsAuthLookup) {
+        return intlResponse;
+    }
+
     const { userId } = await auth();
 
     // IMPORTANT: Do NOT redirect Clerk's internal auth routes
@@ -68,7 +80,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (
         userId &&
         !isClerkInternalRoute &&
-        (url.pathname === "/" || locales.some((l) => url.pathname === `/${l}`))
+        (url.pathname === "/" || isLocaleRoot)
     ) {
         return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
     }
@@ -77,10 +89,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (
         userId &&
         !isClerkInternalRoute &&
-        (url.pathname.endsWith("/sign-in") ||
-            url.pathname.endsWith("/sign-up") ||
-            url.pathname === "/sign-in" ||
-            url.pathname === "/sign-up")
+        isAuthPage
     ) {
         return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
     }
