@@ -21,6 +21,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        if (!process.env.RESEND_API_KEY) {
+            console.error("RESEND_API_KEY is required for /api/cron/weekly-digest");
+            return NextResponse.json({ error: "Digest email misconfigured" }, { status: 503 });
+        }
+
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 

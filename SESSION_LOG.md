@@ -1985,3 +1985,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/auth/mobile/route.ts`
 - `apps/web/__tests__/api/auth-mobile.test.ts`
+
+---
+
+## Session 43 — 2026-03-16
+
+### Completed
+
+**Weekly Digest Cron Misconfiguration Hardening:**
+- Added explicit `RESEND_API_KEY` guard in `POST /api/cron/weekly-digest`.
+- Endpoint now fails closed with `503` when digest email provider config is missing.
+- Added regression test to enforce missing-email-provider behavior.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 164 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/cron/weekly-digest/route.ts`
+- `apps/web/__tests__/api/cron-weekly-digest.test.ts`

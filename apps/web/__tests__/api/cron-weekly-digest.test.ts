@@ -45,6 +45,7 @@ const mockUsers = [
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.CRON_SECRET = "test_cron_secret";
+    process.env.RESEND_API_KEY = "re_test_key";
 });
 
 describe("POST /api/cron/weekly-digest", () => {
@@ -79,6 +80,21 @@ describe("POST /api/cron/weekly-digest", () => {
 
         const response = await POST(request);
         expect(response.status).toBe(401);
+    });
+
+    it("returns 503 when RESEND_API_KEY is not configured", async () => {
+        delete process.env.RESEND_API_KEY;
+
+        const request = new Request("http://localhost/api/cron/weekly-digest", {
+            method: "POST",
+            headers: { authorization: "Bearer test_cron_secret" },
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toContain("misconfigured");
     });
 
     it("sends digest to users with activity", async () => {
