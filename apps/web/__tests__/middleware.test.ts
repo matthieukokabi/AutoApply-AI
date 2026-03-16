@@ -8,7 +8,7 @@ vi.mock("@/i18n/routing", () => ({
     routing: {},
 }));
 
-import middleware from "@/middleware";
+import middleware, { config } from "@/middleware";
 
 function mockRequest(
     pathname: string,
@@ -136,5 +136,17 @@ describe("middleware auth + i18n routing", () => {
 
         expect(response).toBeUndefined();
         expect(auth).not.toHaveBeenCalled();
+    });
+
+    it("keeps matcher scope narrow for locale-prefixed public content routes", () => {
+        const matcher = (config as { matcher: string[] }).matcher;
+        expect(matcher).toContain("/blog/:path*");
+        expect(matcher).toContain("/auth-diagnostics");
+        expect(matcher).not.toContain("/(en|fr|de|es|it)/blog/:path*");
+        expect(matcher).not.toContain("/(en|fr|de|es|it)/terms");
+        expect(matcher).not.toContain("/(en|fr|de|es|it)/privacy");
+        expect(matcher).not.toContain("/(en|fr|de|es|it)/contact");
+        expect(matcher).not.toContain("/(en|fr|de|es|it)/roadmap");
+        expect(matcher).not.toContain("/(en|fr|de|es|it)/auth-diagnostics");
     });
 });

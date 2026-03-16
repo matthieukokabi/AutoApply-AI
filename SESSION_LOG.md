@@ -2763,3 +2763,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `apps/web/app/[locale]/onboarding/page.tsx`
+
+---
+
+## Session 75 — 2026-03-16
+
+### Completed
+
+**Vercel Cost Optimization (Middleware Matcher Scope Reduction):**
+- Reduced middleware matcher coverage by excluding locale-prefixed public-content routes:
+  - `/(en|fr|de|es|it)/blog/:path*`
+  - locale-prefixed `terms/privacy/contact/roadmap/auth-diagnostics` routes.
+- Kept non-prefixed public routes in matcher so locale rewriting remains intact for direct links like `/blog` and `/terms`.
+- Added regression test assertions to guard matcher scope and prevent accidental broadening.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (27 files, 212 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`

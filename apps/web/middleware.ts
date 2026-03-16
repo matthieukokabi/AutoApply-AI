@@ -165,13 +165,10 @@ export const config = {
         "/(en|fr|de|es|it)/sign-up/:path*",
         "/sign-in/:path*",
         "/sign-up/:path*",
-        // Public pages that need locale routing (with and without locale prefix)
-        "/(en|fr|de|es|it)/blog/:path*",
-        "/(en|fr|de|es|it)/terms",
-        "/(en|fr|de|es|it)/privacy",
-        "/(en|fr|de|es|it)/contact",
-        "/(en|fr|de|es|it)/roadmap",
-        "/(en|fr|de|es|it)/auth-diagnostics",
+        // Public pages that need locale routing from non-prefixed URLs.
+        // Locale-prefixed variants (e.g. /fr/blog, /de/privacy) are served
+        // directly by app routes and are intentionally excluded to reduce
+        // middleware edge invocations from crawler traffic.
         "/blog/:path*",
         "/terms",
         "/privacy",
