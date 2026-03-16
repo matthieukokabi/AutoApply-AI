@@ -155,12 +155,7 @@ export const config = {
         "/settings/:path*",
         "/documents/:path*",
         "/onboarding/:path*",
-        // Auth pages (bare only).
-        // Locale-prefixed auth routes are served directly and intentionally
-        // excluded here to reduce edge middleware invocations.
-        "/sign-in/:path*",
-        "/sign-up/:path*",
-        // Public bare pages are now handled by static Next.js redirects in
+        // Public bare pages and auth bare routes are handled by static Next.js redirects in
         // next.config.js, so they are excluded from middleware matcher scope.
         // Authenticated API routes only (avoid unnecessary middleware invocations
         // on public webhooks/OG image routes to reduce edge usage on Vercel)

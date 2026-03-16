@@ -3294,3 +3294,43 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
 - `SESSION_LOG.md`
+
+---
+
+## Session 98 — 2026-03-16
+
+### Completed
+
+**Middleware Cost Optimization (Remove Bare Auth Routes from Matcher):**
+- Added static redirects for bare auth routes in Next config:
+  - `/sign-in` -> `/en/sign-in`
+  - `/sign-in/:path*` -> `/en/sign-in/:path*`
+  - `/sign-up` -> `/en/sign-up`
+  - `/sign-up/:path*` -> `/en/sign-up/:path*`
+- Removed bare auth paths from middleware matcher scope, so middleware no longer runs on auth entry routes.
+- Added client-side signed-in guard on auth pages:
+  - if Clerk session is already loaded, auth pages now redirect to locale dashboard.
+- Updated middleware matcher test assertions to enforce the narrower scope.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+- Local redirect verification (`next dev` + `curl -I`) ✅:
+  - `/sign-in` -> `/en/sign-in`
+  - `/sign-up` -> `/en/sign-up`
+  - `/blog` -> `/en/blog`
+  - `/blog/test-article` -> `/en/blog/test-article`
+  - `/terms` -> `/en/terms`
+  - `/privacy` -> `/en/privacy`
+  - `/contact` -> `/en/contact`
+  - `/roadmap` -> `/en/roadmap`
+  - `/auth-diagnostics` -> `/en/auth-diagnostics`
+
+### Files Modified This Session
+- `apps/web/next.config.js`
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `SESSION_LOG.md`

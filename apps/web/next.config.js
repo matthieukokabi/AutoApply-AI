@@ -56,6 +56,26 @@ const nextConfig = {
                 destination: "/en/auth-diagnostics",
                 permanent: false,
             },
+            {
+                source: "/sign-in",
+                destination: "/en/sign-in",
+                permanent: false,
+            },
+            {
+                source: "/sign-in/:path*",
+                destination: "/en/sign-in/:path*",
+                permanent: false,
+            },
+            {
+                source: "/sign-up",
+                destination: "/en/sign-up",
+                permanent: false,
+            },
+            {
+                source: "/sign-up/:path*",
+                destination: "/en/sign-up/:path*",
+                permanent: false,
+            },
         ];
     },
 };

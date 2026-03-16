@@ -39,11 +39,19 @@ export default function SignInPage() {
         requestedPlan,
         fromParam
     );
-    const { isLoaded } = useAuth();
+    const { isLoaded, userId } = useAuth();
     const [showTimeoutFallback, setShowTimeoutFallback] = useState(false);
     const [showWidgetFallback, setShowWidgetFallback] = useState(false);
     const [hasWidgetMounted, setHasWidgetMounted] = useState(false);
     const widgetHostRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!isLoaded || !userId) {
+            return;
+        }
+
+        window.location.href = dashboardPath;
+    }, [dashboardPath, isLoaded, userId]);
 
     useEffect(() => {
         if (isLoaded) {
