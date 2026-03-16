@@ -1965,3 +1965,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/auth/mobile/route.ts`
 - `apps/web/__tests__/api/auth-mobile.test.ts`
+
+---
+
+## Session 42 — 2026-03-16
+
+### Completed
+
+**Mobile Auth Misconfiguration Fail-Closed Guard:**
+- Added explicit `CLERK_SECRET_KEY` validation to `POST /api/auth/mobile`.
+- Endpoint now returns `503` with a clear error when JWT signing secret is missing, instead of returning a generic `500`.
+- Added regression test for missing `CLERK_SECRET_KEY` and confirmed Clerk client is not initialized in this misconfigured state.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 163 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/auth/mobile/route.ts`
+- `apps/web/__tests__/api/auth-mobile.test.ts`

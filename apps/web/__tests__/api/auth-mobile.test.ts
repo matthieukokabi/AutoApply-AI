@@ -11,6 +11,7 @@ const mockUsers = {
 
 beforeEach(() => {
     vi.clearAllMocks();
+    process.env.CLERK_SECRET_KEY = "sk_test_clerk_secret";
     vi.mocked(clerkClient).mockResolvedValue({ users: mockUsers } as any);
 });
 
@@ -39,6 +40,26 @@ describe("POST /api/auth/mobile", () => {
         const response = await POST(request);
 
         expect(response.status).toBe(400);
+        expect(clerkClient).not.toHaveBeenCalled();
+    });
+
+    it("returns 503 when CLERK_SECRET_KEY is missing", async () => {
+        delete process.env.CLERK_SECRET_KEY;
+
+        const request = new Request("http://localhost/api/auth/mobile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: "test@example.com",
+                password: "password123",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toBe("Mobile auth endpoint misconfigured");
         expect(clerkClient).not.toHaveBeenCalled();
     });
 

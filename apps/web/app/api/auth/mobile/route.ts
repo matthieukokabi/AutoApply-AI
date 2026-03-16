@@ -45,6 +45,14 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!process.env.CLERK_SECRET_KEY) {
+      console.error('CLERK_SECRET_KEY is required for /api/auth/mobile');
+      return NextResponse.json(
+        { error: 'Mobile auth endpoint misconfigured' },
+        { status: 503 }
+      );
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
     const requestedAction = action === 'sign-up' ? 'sign-up' : 'sign-in';
     const client = await clerkClient();
