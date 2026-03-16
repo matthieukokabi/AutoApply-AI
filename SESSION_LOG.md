@@ -2572,3 +2572,26 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/lib/checkout-intent.ts`
 - `apps/web/components/checkout-button.tsx`
 - `apps/web/__tests__/checkout-intent.test.ts`
+
+---
+
+## Session 67 — 2026-03-16
+
+### Completed
+
+**Middleware Cost Optimization (Bot Landing Auth Skip):**
+- Added `isLikelyBot` user-agent detection in middleware.
+- Updated auth-lookup gating to skip Clerk auth checks for bot/crawler requests on landing root routes (`/` and locale roots), while preserving auth checks for:
+  - protected routes
+  - auth pages
+  - human landing traffic.
+- Added middleware regression test to ensure bot landing requests bypass auth callback.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 201 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`

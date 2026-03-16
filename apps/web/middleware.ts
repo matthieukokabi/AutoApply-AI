@@ -34,6 +34,16 @@ const publicRoutes = [
 
 const isPublicRoute = createRouteMatcher(publicRoutes);
 
+function isLikelyBot(userAgent: string | null) {
+    if (!userAgent) {
+        return false;
+    }
+
+    return /bot|crawler|spider|crawl|slurp|bingpreview|facebookexternalhit|whatsapp|telegram|discordbot|linkedinbot|google-structured-data-testing-tool/i.test(
+        userAgent
+    );
+}
+
 export default clerkMiddleware(async (auth, req) => {
     const url = req.nextUrl;
 
@@ -56,7 +66,12 @@ export default clerkMiddleware(async (auth, req) => {
         url.pathname.endsWith("/sign-up") ||
         url.pathname === "/sign-in" ||
         url.pathname === "/sign-up";
-    const needsAuthLookup = !isPublicRoute(req) || url.pathname === "/" || isLocaleRoot || isAuthPage;
+    const isLandingRoot = url.pathname === "/" || isLocaleRoot;
+    const isBotRequest = isLikelyBot(req.headers.get("user-agent"));
+    const needsAuthLookup =
+        !isPublicRoute(req) ||
+        isAuthPage ||
+        (isLandingRoot && !isBotRequest);
 
     if (!needsAuthLookup) {
         return intlResponse;
