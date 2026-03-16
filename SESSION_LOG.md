@@ -2843,3 +2843,21 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `SESSION_LOG.md`
+
+---
+
+## Session 79 — 2026-03-16
+
+### Completed
+
+**Vercel Cost Optimization (Skip Auto Builds on `main`):**
+- Audited deployment history and confirmed repeated **production** builds were being triggered from `main` (high build-minute churn).
+- Configured Vercel `commandForIgnoringBuildStep` for `auto-apply-ai` to skip git-triggered builds when `VERCEL_GIT_COMMIT_REF=main`:
+  - `if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then ... exit 0; fi; exit 1`
+- Result: pushes to `main` are now ignored by auto-build logic; deployments can be triggered later in controlled batches when needed.
+
+### Verification
+- Confirmed Vercel project API now returns the configured `commandForIgnoringBuildStep` string.
+
+### Files Modified This Session
+- `SESSION_LOG.md`
