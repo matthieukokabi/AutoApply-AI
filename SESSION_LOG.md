@@ -2740,3 +2740,26 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/onboarding/page.tsx`
 - `apps/web/lib/onboarding-health.ts`
 - `apps/web/__tests__/onboarding-health.test.ts`
+
+---
+
+## Session 74 — 2026-03-16
+
+### Completed
+
+**Onboarding API Timeout Resilience (No Stuck Steps):**
+- Added timeout-based request guards for onboarding page operations:
+  - health-check API reads
+  - CV file upload
+  - CV text save
+  - preferences save.
+- Added explicit timeout-specific user errors for upload/save actions so users get a recovery path on weak networks instead of indefinite loading.
+- Hardened health-check loader state with `finally` cleanup to avoid lingering loading indicators.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (27 files, 211 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/onboarding/page.tsx`

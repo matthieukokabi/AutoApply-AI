@@ -21,6 +21,9 @@ import {
 import { buildOnboardingHealthSnapshot, type OnboardingHealthSnapshot } from "@/lib/onboarding-health";
 
 type Step = "welcome" | "cv" | "preferences" | "done";
+const ONBOARDING_HEALTH_TIMEOUT_MS = 8000;
+const ONBOARDING_MUTATION_TIMEOUT_MS = 15000;
+const ONBOARDING_UPLOAD_TIMEOUT_MS = 45000;
 
 const CURRENCIES = [
     { code: "USD", symbol: "$", label: "US Dollar" },
@@ -38,6 +41,27 @@ const CURRENCIES = [
     { code: "JPY", symbol: "¥", label: "Japanese Yen" },
     { code: "BRL", symbol: "R$", label: "Brazilian Real" },
 ];
+
+function isAbortError(error: unknown) {
+    return error instanceof Error && error.name === "AbortError";
+}
+
+async function fetchWithTimeout(
+    input: RequestInfo | URL,
+    init: RequestInit,
+    timeoutMs: number
+) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await fetch(input, {
+            ...init,
+            signal: controller.signal,
+        });
+    } finally {
+        window.clearTimeout(timeoutId);
+    }
+}
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -76,42 +100,58 @@ export default function OnboardingPage() {
 
         async function loadHealthSnapshot() {
             setHealthLoading(true);
+            try {
+                const [diagnosticsPayload, profilePayload, preferencesPayload] =
+                    await Promise.all([
+                        fetchWithTimeout(
+                            "/api/auth/diagnostics",
+                            { cache: "no-store" },
+                            ONBOARDING_HEALTH_TIMEOUT_MS
+                        )
+                            .then(async (res) => {
+                                if (!res.ok) return null;
+                                return await res.json();
+                            })
+                            .catch(() => null),
+                        fetchWithTimeout(
+                            "/api/profile",
+                            { cache: "no-store" },
+                            ONBOARDING_HEALTH_TIMEOUT_MS
+                        )
+                            .then(async (res) => {
+                                if (!res.ok) return null;
+                                return await res.json();
+                            })
+                            .catch(() => null),
+                        fetchWithTimeout(
+                            "/api/preferences",
+                            { cache: "no-store" },
+                            ONBOARDING_HEALTH_TIMEOUT_MS
+                        )
+                            .then(async (res) => {
+                                if (!res.ok) return null;
+                                return await res.json();
+                            })
+                            .catch(() => null),
+                    ]);
 
-            const [diagnosticsPayload, profilePayload, preferencesPayload] =
-                await Promise.all([
-                    fetch("/api/auth/diagnostics", { cache: "no-store" })
-                        .then(async (res) => {
-                            if (!res.ok) return null;
-                            return await res.json();
-                        })
-                        .catch(() => null),
-                    fetch("/api/profile", { cache: "no-store" })
-                        .then(async (res) => {
-                            if (!res.ok) return null;
-                            return await res.json();
-                        })
-                        .catch(() => null),
-                    fetch("/api/preferences", { cache: "no-store" })
-                        .then(async (res) => {
-                            if (!res.ok) return null;
-                            return await res.json();
-                        })
-                        .catch(() => null),
-                ]);
+                if (cancelled) {
+                    return;
+                }
 
-            if (cancelled) {
-                return;
+                setHealthSnapshot(
+                    buildOnboardingHealthSnapshot({
+                        isSignedIn: true,
+                        diagnosticsPayload,
+                        profilePayload,
+                        preferencesPayload,
+                    })
+                );
+            } finally {
+                if (!cancelled) {
+                    setHealthLoading(false);
+                }
             }
-
-            setHealthSnapshot(
-                buildOnboardingHealthSnapshot({
-                    isSignedIn: true,
-                    diagnosticsPayload,
-                    profilePayload,
-                    preferencesPayload,
-                })
-            );
-            setHealthLoading(false);
         }
 
         void loadHealthSnapshot();
@@ -127,10 +167,14 @@ export default function OnboardingPage() {
         try {
             const formData = new FormData();
             formData.append("file", file);
-            const res = await fetch("/api/profile/upload", {
-                method: "POST",
-                body: formData,
-            });
+            const res = await fetchWithTimeout(
+                "/api/profile/upload",
+                {
+                    method: "POST",
+                    body: formData,
+                },
+                ONBOARDING_UPLOAD_TIMEOUT_MS
+            );
             if (res.ok) {
                 const data = await res.json();
                 setRawText(data.profile.rawText);
@@ -143,6 +187,10 @@ export default function OnboardingPage() {
                 setError(data.error || `Upload failed (${res.status}). Please try again or paste your CV text instead.`);
             }
         } catch (err) {
+            if (isAbortError(err)) {
+                setError("Upload timed out — please check your connection and try again.");
+                return;
+            }
             console.error("Upload failed:", err);
             setError("Network error — please check your connection and try again.");
         } finally {
@@ -155,11 +203,15 @@ export default function OnboardingPage() {
         setUploading(true);
         setError("");
         try {
-            const res = await fetch("/api/profile/upload", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ rawText, fileName: "paste" }),
-            });
+            const res = await fetchWithTimeout(
+                "/api/profile/upload",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ rawText, fileName: "paste" }),
+                },
+                ONBOARDING_MUTATION_TIMEOUT_MS
+            );
             if (res.ok) {
                 setCvUploaded(true);
                 setHealthSnapshot((current) =>
@@ -170,6 +222,10 @@ export default function OnboardingPage() {
                 setError(data.error || "Failed to save CV text. Please try again.");
             }
         } catch (err) {
+            if (isAbortError(err)) {
+                setError("Save timed out — please check your connection and try again.");
+                return;
+            }
             console.error("Save failed:", err);
             setError("Network error — please check your connection and try again.");
         } finally {
@@ -181,18 +237,22 @@ export default function OnboardingPage() {
         setSaving(true);
         setError("");
         try {
-            const res = await fetch("/api/preferences", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    targetTitles: titles.split(",").map((s) => s.trim()).filter(Boolean),
-                    locations: locations.split(",").map((s) => s.trim()).filter(Boolean),
-                    remotePreference: remote,
-                    salaryMin: salary || null,
-                    salaryCurrency: currency,
-                    industries: [],
-                }),
-            });
+            const res = await fetchWithTimeout(
+                "/api/preferences",
+                {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        targetTitles: titles.split(",").map((s) => s.trim()).filter(Boolean),
+                        locations: locations.split(",").map((s) => s.trim()).filter(Boolean),
+                        remotePreference: remote,
+                        salaryMin: salary || null,
+                        salaryCurrency: currency,
+                        industries: [],
+                    }),
+                },
+                ONBOARDING_MUTATION_TIMEOUT_MS
+            );
             if (res.ok) {
                 setHealthSnapshot((current) =>
                     current ? { ...current, preferencesReady: true } : current
@@ -203,6 +263,10 @@ export default function OnboardingPage() {
                 setError(data.error || "Failed to save preferences. Please try again.");
             }
         } catch (err) {
+            if (isAbortError(err)) {
+                setError("Save timed out — please check your connection and try again.");
+                return;
+            }
             console.error("Save preferences failed:", err);
             setError("Network error — please check your connection and try again.");
         } finally {
