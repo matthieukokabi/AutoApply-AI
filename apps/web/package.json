@@ -14,7 +14,8 @@
         "postinstall": "prisma generate",
         "test": "vitest run",
         "test:watch": "vitest",
-        "db:seed": "npx tsx prisma/seed.ts"
+        "db:seed": "npx tsx prisma/seed.ts",
+        "smoke:onboarding": "bash scripts/onboarding_smoke_matrix.sh"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"

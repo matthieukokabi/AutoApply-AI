@@ -3075,3 +3075,35 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/vercel.json`
 - `SESSION_LOG.md`
+
+---
+
+## Session 90 — 2026-03-16
+
+### Completed
+
+**Onboarding Smoke Matrix Automation (Desktop + Mobile Auth Entry Checks):**
+- Added repeatable onboarding smoke script:
+  - `apps/web/scripts/onboarding_smoke_matrix.sh`
+- Added npm command:
+  - `npm run smoke:onboarding`
+- Matrix validates, per locale + viewport:
+  - landing page overflow/Unauthorized text checks
+  - upgrade CTA presence on pricing section
+  - sign-up intent route health (`/sign-up?upgrade=...`)
+  - sign-in route health
+  - auth surface presence (Clerk UI / loading fallback / diagnostics link)
+- Ran the matrix against production:
+  - Report: `/tmp/onboarding-smoke-20260316_201202.jsonl`
+  - Result: **4 passed, 0 failed** (`fr/en` × `desktop/mobile`).
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/scripts/onboarding_smoke_matrix.sh`
+- `apps/web/package.json`
+- `SESSION_LOG.md`
