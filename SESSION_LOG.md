@@ -3413,3 +3413,28 @@ Included in this rollout:
 - `apps/web/lib/clerk-widget-monitor.ts`
 - `apps/web/__tests__/clerk-widget-monitor.test.ts`
 - `SESSION_LOG.md`
+
+---
+
+## Session 102 — 2026-03-16
+
+### Completed
+
+**Middleware Invocation Reduction (Diagnostics/Debug API Exclusion):**
+- Removed `/api/auth/diagnostics` and `/api/debug/auth` from middleware matcher scope.
+- Kept both endpoints fully available via route handlers, but stopped unnecessary edge middleware executions for them.
+- Added matcher regression assertions so those endpoints stay excluded.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_225635.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260316_225723.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 220 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`
+- `SESSION_LOG.md`
