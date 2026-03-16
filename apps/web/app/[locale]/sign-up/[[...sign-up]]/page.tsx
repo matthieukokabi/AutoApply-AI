@@ -10,7 +10,7 @@ import {
 } from "@clerk/nextjs";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { AuthRecoveryCard } from "@/components/auth-recovery-card";
 import {
     buildAuthIntentUrl,
     buildPostAuthRedirectUrl,
@@ -19,38 +19,6 @@ import {
 } from "@/lib/checkout-intent";
 
 const CLERK_LOAD_TIMEOUT_MS = 8000;
-
-function SignUpFallback({ signInUrl }: { signInUrl: string }) {
-    return (
-        <div className="rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                Secure sign-up is temporarily unavailable
-            </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Please refresh this page or try another network/browser. If you already have an account, you can sign in directly.
-            </p>
-            <div className="mt-4 flex flex-col gap-2">
-                <Button
-                    type="button"
-                    onClick={() => window.location.reload()}
-                    className="w-full"
-                >
-                    Retry
-                </Button>
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                        window.location.href = signInUrl;
-                    }}
-                >
-                    Go to sign in
-                </Button>
-            </div>
-        </div>
-    );
-}
 
 export default function SignUpPage() {
     const params = useParams<{ locale?: string }>();
@@ -98,7 +66,7 @@ export default function SignUpPage() {
                 </div>
 
                 {showTimeoutFallback && !isLoaded ? (
-                    <SignUpFallback signInUrl={signInUrl} />
+                    <AuthRecoveryCard mode="sign-up" alternateUrl={signInUrl} />
                 ) : (
                     <ClerkLoading>
                         <div className="rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
@@ -132,11 +100,11 @@ export default function SignUpPage() {
                 </ClerkLoaded>
 
                 <ClerkDegraded>
-                    <SignUpFallback signInUrl={signInUrl} />
+                    <AuthRecoveryCard mode="sign-up" alternateUrl={signInUrl} />
                 </ClerkDegraded>
 
                 <ClerkFailed>
-                    <SignUpFallback signInUrl={signInUrl} />
+                    <AuthRecoveryCard mode="sign-up" alternateUrl={signInUrl} />
                 </ClerkFailed>
             </div>
         </div>

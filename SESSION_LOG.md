@@ -2388,3 +2388,32 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+
+---
+
+## Session 60 — 2026-03-16
+
+### Completed
+
+**Auth Recovery Messaging for Blocked Cookie/Privacy Environments:**
+- Added a shared `AuthRecoveryCard` component for sign-in/sign-up failure states.
+- Replaced generic fallback copy with explicit, actionable troubleshooting guidance for:
+  - blocked cookies/storage
+  - strict tracking protection / ad blockers
+  - VPN or private DNS filters blocking `clerk.autoapply.works`.
+- Added lightweight local diagnostics in recovery UI:
+  - cookie-enabled check
+  - cookie write/read probe
+  - Brave browser hint
+- Added explicit error code in UI: `AUTH_INIT_BLOCKED`.
+- Wired both auth pages (timeout fallback, degraded state, failed state) to use the shared recovery card while preserving existing alternate-route actions.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (23 files, 192 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/auth-recovery-card.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
