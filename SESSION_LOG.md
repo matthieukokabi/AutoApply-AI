@@ -80,6 +80,18 @@
 - `npm test -- __tests__/api/contact.test.ts` → 8/8 passing
 - `npm run build` → success
 
+**Stability hardening — profile PDF upload rejects invalid payloads (atomic step):**
+- Updated `apps/web/app/api/profile/upload/route.ts`:
+  - Added early PDF signature validation (`%PDF-`) for `.pdf` uploads
+  - Returns `400` with clear error for invalid PDF byte streams
+  - Switched parser loading from `require()` to dynamic `import("pdf-parse")`
+- Updated regression test in `apps/web/__tests__/api/profile-upload.test.ts`:
+  - Invalid PDF payload path now asserts quick `400` rejection
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/profile-upload.test.ts` → 9/9 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

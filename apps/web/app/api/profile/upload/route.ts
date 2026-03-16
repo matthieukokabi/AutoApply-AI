@@ -33,8 +33,18 @@ export async function POST(req: Request) {
             const buffer = Buffer.from(await file.arrayBuffer());
 
             if (ext === "pdf") {
-                // eslint-disable-next-line @typescript-eslint/no-require-imports
-                const pdfParse = require("pdf-parse");
+                // Fast fail for invalid payloads before invoking PDF parser.
+                // Helps avoid long parser hangs on non-PDF byte streams.
+                const pdfSignature = buffer.subarray(0, 5).toString("utf-8");
+                if (pdfSignature !== "%PDF-") {
+                    return NextResponse.json(
+                        { error: "Invalid PDF file. Please upload a valid PDF document." },
+                        { status: 400 }
+                    );
+                }
+
+                const pdfParseModule = await import("pdf-parse");
+                const pdfParse = (pdfParseModule as any).default || (pdfParseModule as any);
                 const result = await pdfParse(buffer);
                 rawText = result.text;
             } else if (ext === "docx") {

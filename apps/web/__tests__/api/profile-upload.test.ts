@@ -165,11 +165,7 @@ describe("POST /api/profile/upload", () => {
             expect(data.error).toContain("No file");
         });
 
-        it("handles PDF file upload (returns 500 due to binary mock limitation)", async () => {
-            // Note: pdf-parse requires a real binary PDF buffer to work.
-            // In unit tests with vitest module mocking, the require() call inside
-            // the route gets the raw module. We test that the route properly
-            // catches parse errors and returns 500 gracefully.
+        it("rejects invalid PDF payloads quickly", async () => {
             vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
 
             const file = new File([Buffer.from("fake-pdf-content")], "resume.pdf", {
@@ -184,8 +180,9 @@ describe("POST /api/profile/upload", () => {
             });
 
             const response = await POST(request);
-            // pdf-parse will throw on non-PDF content, route catches it as 500
-            expect(response.status).toBe(500);
+            const data = await response.json();
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Invalid PDF");
         });
 
         it("handles DOCX file upload", async () => {
