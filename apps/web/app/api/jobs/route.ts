@@ -21,7 +21,11 @@ export async function GET(req: Request) {
         const search = url.searchParams.get("search");
         const source = url.searchParams.get("source");
         const minScore = url.searchParams.get("minScore");
-        const limit = Math.min(parseInt(url.searchParams.get("limit") || "50", 10), 200);
+        const limitParam = url.searchParams.get("limit");
+        const parsedLimit = limitParam ? Number.parseInt(limitParam, 10) : 50;
+        const limit = Number.isNaN(parsedLimit)
+            ? 50
+            : Math.min(Math.max(parsedLimit, 1), 200);
 
         // Get jobs that have applications for this user (i.e., discovered/scored for them)
         const where: any = {
@@ -41,9 +45,17 @@ export async function GET(req: Request) {
             where.source = source;
         }
 
-        if (minScore) {
+        if (minScore !== null) {
+            const parsedMinScore = Number.parseInt(minScore, 10);
+            if (Number.isNaN(parsedMinScore) || parsedMinScore < 0 || parsedMinScore > 100) {
+                return NextResponse.json(
+                    { error: "Invalid minScore query parameter. Expected an integer between 0 and 100." },
+                    { status: 400 }
+                );
+            }
+
             where.applications.some.compatibilityScore = {
-                gte: parseInt(minScore, 10),
+                gte: parsedMinScore,
             };
         }
 

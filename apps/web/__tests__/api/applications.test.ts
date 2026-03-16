@@ -82,6 +82,36 @@ describe("GET /api/applications", () => {
         );
     });
 
+    it("falls back to default limit when limit query param is invalid", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
+
+        const request = new Request("http://localhost/api/applications?limit=not-a-number");
+        const response = await GET(request);
+
+        expect(response.status).toBe(200);
+        expect(prisma.application.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                take: 100,
+            })
+        );
+    });
+
+    it("clamps limit query param to minimum of 1", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
+
+        const request = new Request("http://localhost/api/applications?limit=0");
+        const response = await GET(request);
+
+        expect(response.status).toBe(200);
+        expect(prisma.application.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                take: 1,
+            })
+        );
+    });
+
     it("returns 401 when not authenticated", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(null);
 

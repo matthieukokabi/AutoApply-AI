@@ -17,7 +17,11 @@ export async function GET(req: Request) {
 
         const url = new URL(req.url);
         const status = url.searchParams.get("status");
-        const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10), 200);
+        const limitParam = url.searchParams.get("limit");
+        const parsedLimit = limitParam ? Number.parseInt(limitParam, 10) : 100;
+        const limit = Number.isNaN(parsedLimit)
+            ? 100
+            : Math.min(Math.max(parsedLimit, 1), 200);
 
         const where: any = { userId: user.id };
         if (status) {

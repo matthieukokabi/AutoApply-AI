@@ -92,6 +92,21 @@
 - `npm test -- __tests__/api/profile-upload.test.ts` → 9/9 passing
 - `npm run build` → success
 
+**Input validation hardening — safe query parsing for jobs/applications APIs (atomic step):**
+- Updated `apps/web/app/api/jobs/route.ts`:
+  - Hardened `limit` parsing with safe default (`50`) and clamp (`1..200`)
+  - Added strict `minScore` validation; invalid/out-of-range values now return `400`
+  - Prevented invalid numeric input from propagating into Prisma filters
+- Updated `apps/web/app/api/applications/route.ts`:
+  - Hardened `limit` parsing with safe default (`100`) and clamp (`1..200`)
+- Added regression coverage:
+  - `apps/web/__tests__/api/jobs.test.ts` (invalid `minScore`, invalid/zero `limit`)
+  - `apps/web/__tests__/api/applications.test.ts` (invalid/zero `limit`)
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/jobs.test.ts __tests__/api/applications.test.ts` → 11/11 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

@@ -92,6 +92,48 @@ describe("GET /api/jobs", () => {
         );
     });
 
+    it("rejects invalid minScore query values", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/jobs?minScore=invalid");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Invalid minScore");
+        expect(prisma.job.findMany).not.toHaveBeenCalled();
+    });
+
+    it("falls back to default limit when limit query is invalid", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.findMany).mockResolvedValue(mockJobs as any);
+
+        const request = new Request("http://localhost/api/jobs?limit=not-a-number");
+        const response = await GET(request);
+
+        expect(response.status).toBe(200);
+        expect(prisma.job.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                take: 50,
+            })
+        );
+    });
+
+    it("clamps limit query param to minimum of 1", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.findMany).mockResolvedValue(mockJobs as any);
+
+        const request = new Request("http://localhost/api/jobs?limit=0");
+        const response = await GET(request);
+
+        expect(response.status).toBe(200);
+        expect(prisma.job.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                take: 1,
+            })
+        );
+    });
+
     it("returns 401 when not authenticated", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(null);
 
