@@ -65,6 +65,9 @@ describe("checkout intent helpers", () => {
     it("resolves localized route paths from pathname", () => {
         expect(getLocalizedPathForRoute("/fr/pricing", "sign-up")).toBe("/fr/sign-up");
         expect(getLocalizedPathForRoute("/pricing", "sign-up")).toBe("/sign-up");
+        expect(getLocalizedPathForRoute("/fr/sign-in", "auth-diagnostics")).toBe(
+            "/fr/auth-diagnostics"
+        );
     });
 
     it("builds auth paths from supported locale param", () => {

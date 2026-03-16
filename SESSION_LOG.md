@@ -2526,3 +2526,27 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/components/checkout-button.tsx`
 - `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
 - `apps/web/__tests__/checkout-intent.test.ts`
+
+---
+
+## Session 65 — 2026-03-16
+
+### Completed
+
+**Auth Recovery UX Upgrade (Direct Diagnostics Action):**
+- Extended auth route helper support with localized `auth-diagnostics` path generation.
+- Added optional `diagnosticsUrl` action to `AuthRecoveryCard`.
+- Wired sign-in/sign-up fallback states (timeout, degraded, failed, widget-missing) to include a direct “Run auth diagnostics” button.
+- Added route helper regression assertion for localized diagnostics path generation.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 199 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/checkout-intent.ts`
+- `apps/web/components/auth-recovery-card.tsx`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/__tests__/checkout-intent.test.ts`

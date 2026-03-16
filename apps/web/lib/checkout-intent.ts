@@ -14,7 +14,12 @@ const supportedLocaleSet = new Set<string>(SUPPORTED_LOCALES);
 const checkoutPlanSet = new Set<string>(CHECKOUT_PLANS);
 
 type QueryLike = URLSearchParams | { get(name: string): string | null };
-type AuthRoute = "sign-in" | "sign-up" | "settings" | "dashboard";
+type AuthRoute =
+    | "sign-in"
+    | "sign-up"
+    | "settings"
+    | "dashboard"
+    | "auth-diagnostics";
 
 function buildRoutePath(locale: string | null, route: AuthRoute) {
     return locale ? `/${locale}/${route}` : `/${route}`;

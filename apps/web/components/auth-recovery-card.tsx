@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 interface AuthRecoveryCardProps {
     mode: "sign-in" | "sign-up";
     alternateUrl: string;
+    diagnosticsUrl?: string;
 }
 
 function detectAuthBlockerHint() {
@@ -38,7 +39,11 @@ function detectAuthBlockerHint() {
     return null;
 }
 
-export function AuthRecoveryCard({ mode, alternateUrl }: AuthRecoveryCardProps) {
+export function AuthRecoveryCard({
+    mode,
+    alternateUrl,
+    diagnosticsUrl,
+}: AuthRecoveryCardProps) {
     const [detectedHint, setDetectedHint] = useState<string | null>(null);
 
     useEffect(() => {
@@ -94,6 +99,18 @@ export function AuthRecoveryCard({ mode, alternateUrl }: AuthRecoveryCardProps) 
                 >
                     {isSignInMode ? "Go to sign up" : "Go to sign in"}
                 </Button>
+                {diagnosticsUrl ? (
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        className="w-full"
+                        onClick={() => {
+                            window.location.href = diagnosticsUrl;
+                        }}
+                    >
+                        Run auth diagnostics
+                    </Button>
+                ) : null}
             </div>
         </div>
     );

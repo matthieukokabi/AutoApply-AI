@@ -15,6 +15,7 @@ import {
     buildAuthIntentUrl,
     buildPostAuthRedirectUrl,
     getAuthPathsForLocale,
+    getLocalizedPathForRoute,
     resolveCheckoutIntentPlan,
 } from "@/lib/checkout-intent";
 import { hasMountedClerkWidget } from "@/lib/clerk-widget-monitor";
@@ -31,6 +32,7 @@ export default function SignInPage() {
     const requestedPlan = resolveCheckoutIntentPlan(searchParams);
     const fromParam = searchParams.get("from");
     const signUpUrl = buildAuthIntentUrl(signUpPath, requestedPlan, fromParam);
+    const diagnosticsUrl = getLocalizedPathForRoute(signInPath, "auth-diagnostics");
     const postAuthRedirectUrl = buildPostAuthRedirectUrl(
         settingsPath,
         dashboardPath,
@@ -108,7 +110,11 @@ export default function SignInPage() {
                 </div>
 
                 {shouldShowRecoveryCard ? (
-                    <AuthRecoveryCard mode="sign-in" alternateUrl={signUpUrl} />
+                    <AuthRecoveryCard
+                        mode="sign-in"
+                        alternateUrl={signUpUrl}
+                        diagnosticsUrl={diagnosticsUrl}
+                    />
                 ) : (
                     <ClerkLoading>
                         <div className="rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
@@ -144,11 +150,19 @@ export default function SignInPage() {
                 </ClerkLoaded>
 
                 <ClerkDegraded>
-                    <AuthRecoveryCard mode="sign-in" alternateUrl={signUpUrl} />
+                    <AuthRecoveryCard
+                        mode="sign-in"
+                        alternateUrl={signUpUrl}
+                        diagnosticsUrl={diagnosticsUrl}
+                    />
                 </ClerkDegraded>
 
                 <ClerkFailed>
-                    <AuthRecoveryCard mode="sign-in" alternateUrl={signUpUrl} />
+                    <AuthRecoveryCard
+                        mode="sign-in"
+                        alternateUrl={signUpUrl}
+                        diagnosticsUrl={diagnosticsUrl}
+                    />
                 </ClerkFailed>
             </div>
         </div>
