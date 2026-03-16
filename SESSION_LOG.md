@@ -2785,3 +2785,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
+
+---
+
+## Session 76 — 2026-03-16
+
+### Completed
+
+**Vercel Cost Optimization (Landing Middleware Bypass + Static Root Redirect):**
+- Added static redirect from `/` to `/en` in Next.js config so homepage locale routing no longer requires middleware execution.
+- Narrowed middleware matcher by removing landing roots (`/`, `/en`, `/fr`, `/de`, `/es`, `/it`) to reduce bot/crawler edge invocations on public entry pages.
+- Added matcher regression assertions to ensure landing roots stay excluded from middleware scope.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (27 files, 212 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/next.config.js`
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`

@@ -140,6 +140,12 @@ describe("middleware auth + i18n routing", () => {
 
     it("keeps matcher scope narrow for locale-prefixed public content routes", () => {
         const matcher = (config as { matcher: string[] }).matcher;
+        expect(matcher).not.toContain("/");
+        expect(matcher).not.toContain("/en");
+        expect(matcher).not.toContain("/fr");
+        expect(matcher).not.toContain("/de");
+        expect(matcher).not.toContain("/es");
+        expect(matcher).not.toContain("/it");
         expect(matcher).toContain("/blog/:path*");
         expect(matcher).toContain("/auth-diagnostics");
         expect(matcher).not.toContain("/(en|fr|de|es|it)/blog/:path*");

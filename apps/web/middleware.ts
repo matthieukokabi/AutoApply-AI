@@ -138,13 +138,8 @@ export const config = {
     // 1.2M+ edge invocations/month from bots, crawlers, and prefetches.
     // Now only matches specific route patterns that need auth or i18n.
     matcher: [
-        // Landing page (locale routing + signed-in redirect)
-        "/",
-        "/en",
-        "/fr",
-        "/de",
-        "/es",
-        "/it",
+        // Public landing roots are intentionally excluded from middleware and
+        // handled via static routing/redirects to avoid crawler edge invocations.
         // Dashboard routes — with locale prefix (protected — need auth)
         "/(en|fr|de|es|it)/dashboard/:path*",
         "/(en|fr|de|es|it)/profile/:path*",
