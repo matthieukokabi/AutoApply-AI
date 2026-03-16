@@ -136,6 +136,42 @@ describe("POST /api/webhooks/n8n", () => {
             );
         });
 
+        it("uses a stable fallback externalId when n8n payload omits externalId", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [
+                    {
+                        title: "Backend Engineer",
+                        company: "Data Inc",
+                        compatibilityScore: 72,
+                    },
+                    {
+                        title: "Frontend Engineer",
+                        company: "UI Corp",
+                        compatibilityScore: 80,
+                    },
+                ],
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            const firstCall = vi.mocked(prisma.job.upsert).mock.calls[0][0];
+            const secondCall = vi.mocked(prisma.job.upsert).mock.calls[1][0];
+
+            const firstExternalId = firstCall.where.externalId as string;
+            const secondExternalId = secondCall.where.externalId as string;
+
+            expect(firstExternalId).toMatch(/^manual-user_1-/);
+            expect(firstCall.create.externalId).toBe(firstExternalId);
+            expect(secondCall.create.externalId).toBe(secondExternalId);
+            expect(firstExternalId).not.toBe(secondExternalId);
+        });
+
         it("sends job match email notification", async () => {
             vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);

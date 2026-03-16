@@ -152,6 +152,18 @@
 - `npm test -- __tests__/api/tailor.test.ts __tests__/integration/credit-flow.test.ts` → 20/20 passing
 - `npm run build` → success
 
+**Data integrity hardening — stable fallback `externalId` in n8n webhook ingest (atomic step):**
+- Updated `apps/web/app/api/webhooks/n8n/route.ts`:
+  - Generates one stable `externalId` per incoming application item
+  - Reuses the same resolved `externalId` in both `where` and `create` during job upsert
+  - Uses deterministic fallback format `manual-${userId}-${timestamp}-${index}`
+- Added regression test in `apps/web/__tests__/api/webhooks-n8n.test.ts`:
+  - Verifies fallback IDs are stable per item and distinct across items when `externalId` is omitted
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/webhooks-n8n.test.ts` → 10/10 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

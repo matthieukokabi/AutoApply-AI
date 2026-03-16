@@ -25,12 +25,17 @@ export async function POST(req: Request) {
 
                 const createdApps = [];
 
-                for (const app of applications) {
+                for (const [index, app] of applications.entries()) {
+                    const externalId =
+                        app.externalId ||
+                        app.url ||
+                        `manual-${userId}-${Date.now()}-${index}`;
+
                     // First, create/upsert the Job record (discovery pipeline finds NEW jobs)
                     const job = await prisma.job.upsert({
-                        where: { externalId: app.externalId || `manual-${Date.now()}` },
+                        where: { externalId },
                         create: {
-                            externalId: app.externalId || `manual-${Date.now()}`,
+                            externalId,
                             title: app.title || "Untitled Position",
                             company: app.company || "Unknown Company",
                             location: app.location || "Not specified",
