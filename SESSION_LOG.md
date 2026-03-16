@@ -3033,3 +3033,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+
+---
+
+## Session 88 — 2026-03-16
+
+### Completed
+
+**Vercel Cost Guardrail (Disable Auto Git Deployment Creation):**
+- Audited Vercel billing charge stream for `auto-apply-ai` and confirmed **Build Minutes** remain the dominant effective cost line item in the recent window.
+- Inspected project Git settings and found `gitProviderOptions.createDeployments` still set to `enabled`, which was creating deployment records on every push even with ignore-build logic.
+- Updated Vercel project setting via API:
+  - `gitProviderOptions.createDeployments: "disabled"`
+- Result: Git pushes no longer create automatic deployment jobs; deployments must be triggered intentionally (manual batch deploys only), further reducing Vercel churn/cost.
+
+### Verification
+- Confirmed via Vercel Project API response:
+  - `gitProviderOptions.createDeployments: "disabled"`
+  - `commandForIgnoringBuildStep` remains set to strict skip command.
+
+### Files Modified This Session
+- `SESSION_LOG.md`
