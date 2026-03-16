@@ -40,6 +40,21 @@
 - `npm test -- __tests__/api/cron-weekly-digest.test.ts` → 8/8 passing
 - `npm run build` → success
 
+**Billing correctness — unlimited yearly price mapping fixed (atomic step):**
+- Updated `apps/web/app/api/webhooks/stripe/route.ts`:
+  - Added `resolvePlanFromPriceId()` helper
+  - Plan mapping now recognizes both:
+    - `STRIPE_PRICE_UNLIMITED_MONTHLY`
+    - `STRIPE_PRICE_UNLIMITED_YEARLY`
+  - Applied in both `checkout.session.completed` and `customer.subscription.*` handlers
+- Added regression tests in `apps/web/__tests__/api/webhooks-stripe.test.ts`:
+  - Unlimited yearly checkout maps to `subscriptionStatus: "unlimited"`
+  - Unlimited yearly subscription update maps to `subscriptionStatus: "unlimited"`
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/webhooks-stripe.test.ts __tests__/integration/stripe-workflow.test.ts` → 17/17 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

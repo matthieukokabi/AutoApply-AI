@@ -6,6 +6,8 @@ import { stripe } from "@/lib/stripe";
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_secret";
+    process.env.STRIPE_PRICE_UNLIMITED_MONTHLY = "price_unlimited_monthly";
+    process.env.STRIPE_PRICE_UNLIMITED_YEARLY = "price_unlimited_yearly";
 });
 
 function createStripeEvent(type: string, data: any) {
@@ -69,8 +71,6 @@ describe("POST /api/webhooks/stripe", () => {
         });
 
         it("handles subscription purchase (unlimited)", async () => {
-            process.env.STRIPE_PRICE_UNLIMITED_MONTHLY = "price_unlimited";
-
             vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
                 createStripeEvent("checkout.session.completed", {
                     mode: "subscription",
@@ -81,7 +81,7 @@ describe("POST /api/webhooks/stripe", () => {
             );
 
             vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue({
-                items: { data: [{ price: { id: "price_unlimited" } }] },
+                items: { data: [{ price: { id: "price_unlimited_monthly" } }] },
             } as any);
 
             vi.mocked(prisma.user.update).mockResolvedValue({} as any);
@@ -99,6 +99,40 @@ describe("POST /api/webhooks/stripe", () => {
                 data: {
                     subscriptionStatus: "unlimited",
                     stripeCustomerId: "cus_456",
+                    creditsRemaining: 9999,
+                },
+            });
+        });
+
+        it("handles subscription purchase (unlimited yearly)", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("checkout.session.completed", {
+                    mode: "subscription",
+                    subscription: "sub_999",
+                    customer: "cus_999",
+                    metadata: { userId: "user_9" },
+                }) as any
+            );
+
+            vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue({
+                items: { data: [{ price: { id: "price_unlimited_yearly" } }] },
+            } as any);
+
+            vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            expect(prisma.user.update).toHaveBeenCalledWith({
+                where: { id: "user_9" },
+                data: {
+                    subscriptionStatus: "unlimited",
+                    stripeCustomerId: "cus_999",
                     creditsRemaining: 9999,
                 },
             });
@@ -196,6 +230,33 @@ describe("POST /api/webhooks/stripe", () => {
             const response = await POST(request);
             expect(response.status).toBe(200);
             expect(prisma.user.updateMany).toHaveBeenCalled();
+        });
+
+        it("maps unlimited yearly price to unlimited plan", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("customer.subscription.updated", {
+                    customer: "cus_unlimited_yearly",
+                    status: "active",
+                    items: { data: [{ price: { id: "price_unlimited_yearly" } }] },
+                }) as any
+            );
+
+            vi.mocked(prisma.user.updateMany).mockResolvedValue({ count: 1 } as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+            expect(prisma.user.updateMany).toHaveBeenCalledWith({
+                where: { stripeCustomerId: "cus_unlimited_yearly" },
+                data: {
+                    subscriptionStatus: "unlimited",
+                    creditsRemaining: 9999,
+                },
+            });
         });
 
         it("does not update DB for past_due status", async () => {

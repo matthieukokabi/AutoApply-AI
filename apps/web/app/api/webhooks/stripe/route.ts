@@ -4,6 +4,17 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
+function resolvePlanFromPriceId(priceId?: string): "pro" | "unlimited" {
+    if (!priceId) return "pro";
+
+    const unlimitedPrices = new Set([
+        process.env.STRIPE_PRICE_UNLIMITED_MONTHLY,
+        process.env.STRIPE_PRICE_UNLIMITED_YEARLY,
+    ].filter(Boolean));
+
+    return unlimitedPrices.has(priceId) ? "unlimited" : "pro";
+}
+
 /**
  * POST /api/webhooks/stripe
  * Handles Stripe webhook events for subscription management.
@@ -41,11 +52,7 @@ export async function POST(req: Request) {
                         session.subscription as string
                     );
                     const priceId = subscription.items.data[0]?.price.id;
-
-                    let plan = "pro";
-                    if (priceId === process.env.STRIPE_PRICE_UNLIMITED_MONTHLY) {
-                        plan = "unlimited";
-                    }
+                    const plan = resolvePlanFromPriceId(priceId);
 
                     await prisma.user.update({
                         where: { id: userId },
@@ -73,11 +80,7 @@ export async function POST(req: Request) {
                 const customer = subscription.customer as string;
                 const priceId = subscription.items.data[0]?.price.id;
                 const status = subscription.status;
-
-                let plan = "pro";
-                if (priceId === process.env.STRIPE_PRICE_UNLIMITED_MONTHLY) {
-                    plan = "unlimited";
-                }
+                const plan = resolvePlanFromPriceId(priceId);
 
                 // Only activate if subscription is active/trialing
                 if (status === "active" || status === "trialing") {
