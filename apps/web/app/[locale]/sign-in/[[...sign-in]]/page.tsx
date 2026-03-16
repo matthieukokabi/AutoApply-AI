@@ -9,7 +9,7 @@ import {
     useAuth,
 } from "@clerk/nextjs";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AuthRecoveryCard } from "@/components/auth-recovery-card";
 import {
     buildAuthIntentUrl,
@@ -17,8 +17,10 @@ import {
     getAuthPathsForLocale,
     resolveCheckoutIntentPlan,
 } from "@/lib/checkout-intent";
+import { hasMountedClerkWidget } from "@/lib/clerk-widget-monitor";
 
 const CLERK_LOAD_TIMEOUT_MS = 8000;
+const CLERK_WIDGET_MOUNT_TIMEOUT_MS = 5000;
 
 export default function SignInPage() {
     const params = useParams<{ locale?: string }>();
@@ -37,6 +39,8 @@ export default function SignInPage() {
     );
     const { isLoaded } = useAuth();
     const [showTimeoutFallback, setShowTimeoutFallback] = useState(false);
+    const [showWidgetFallback, setShowWidgetFallback] = useState(false);
+    const widgetHostRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (isLoaded) {
@@ -53,6 +57,44 @@ export default function SignInPage() {
         };
     }, [isLoaded]);
 
+    useEffect(() => {
+        if (!isLoaded) {
+            setShowWidgetFallback(false);
+            return;
+        }
+
+        const monitorRoot = widgetHostRef.current;
+        const hasWidget = () => hasMountedClerkWidget(monitorRoot);
+
+        if (hasWidget()) {
+            setShowWidgetFallback(false);
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            if (!hasWidget()) {
+                setShowWidgetFallback(true);
+            }
+        }, CLERK_WIDGET_MOUNT_TIMEOUT_MS);
+
+        const observer = new MutationObserver(() => {
+            if (hasWidget()) {
+                setShowWidgetFallback(false);
+            }
+        });
+
+        if (monitorRoot) {
+            observer.observe(monitorRoot, { childList: true, subtree: true });
+        }
+
+        return () => {
+            window.clearTimeout(timeoutId);
+            observer.disconnect();
+        };
+    }, [isLoaded]);
+
+    const shouldShowRecoveryCard = (showTimeoutFallback && !isLoaded) || showWidgetFallback;
+
     return (
         <div className="min-h-screen overflow-x-hidden px-4 py-8 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
             <div className="w-full max-w-md">
@@ -65,7 +107,7 @@ export default function SignInPage() {
                     </p>
                 </div>
 
-                {showTimeoutFallback && !isLoaded ? (
+                {shouldShowRecoveryCard ? (
                     <AuthRecoveryCard mode="sign-in" alternateUrl={signUpUrl} />
                 ) : (
                     <ClerkLoading>
@@ -78,25 +120,27 @@ export default function SignInPage() {
                 )}
 
                 <ClerkLoaded>
-                    <SignIn
-                        path={signInPath}
-                        routing="path"
-                        signUpUrl={signUpUrl}
-                        forceRedirectUrl={postAuthRedirectUrl}
-                        fallbackRedirectUrl={postAuthRedirectUrl}
-                        appearance={{
-                            elements: {
-                                rootBox: "mx-auto w-full",
-                                card: "shadow-xl rounded-xl",
-                                socialButtonsBlockButton:
-                                    "border border-slate-200 hover:bg-slate-50",
-                                formButtonPrimary:
-                                    "bg-blue-600 hover:bg-blue-700 text-sm",
-                                footerActionLink:
-                                    "text-blue-600 hover:text-blue-700",
-                            },
-                        }}
-                    />
+                    <div ref={widgetHostRef}>
+                        <SignIn
+                            path={signInPath}
+                            routing="path"
+                            signUpUrl={signUpUrl}
+                            forceRedirectUrl={postAuthRedirectUrl}
+                            fallbackRedirectUrl={postAuthRedirectUrl}
+                            appearance={{
+                                elements: {
+                                    rootBox: "mx-auto w-full",
+                                    card: "shadow-xl rounded-xl",
+                                    socialButtonsBlockButton:
+                                        "border border-slate-200 hover:bg-slate-50",
+                                    formButtonPrimary:
+                                        "bg-blue-600 hover:bg-blue-700 text-sm",
+                                    footerActionLink:
+                                        "text-blue-600 hover:text-blue-700",
+                                },
+                            }}
+                        />
+                    </div>
                 </ClerkLoaded>
 
                 <ClerkDegraded>

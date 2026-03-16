@@ -2453,3 +2453,28 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/auth-diagnostics/page.tsx`
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/api/auth-diagnostics.test.ts`
+
+---
+
+## Session 62 — 2026-03-16
+
+### Completed
+
+**Auth Widget Mount Watchdog for Blank Sign-In/Sign-Up States:**
+- Added a Clerk widget mount detector utility to identify when auth UI fails to mount despite Clerk being loaded.
+- Updated localized `sign-in` and `sign-up` pages to trigger `AuthRecoveryCard` when:
+  - Clerk load times out, or
+  - Clerk is loaded but no auth widget mounts within a short watchdog window.
+- Wrapped Clerk `SignIn`/`SignUp` components in monitored host containers so mutation observation can confirm mount progress.
+- Added regression test coverage for Clerk widget mount detection helper behavior.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 198 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/clerk-widget-monitor.ts`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/__tests__/clerk-widget-monitor.test.ts`
