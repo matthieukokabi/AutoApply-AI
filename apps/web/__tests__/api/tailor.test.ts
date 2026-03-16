@@ -380,6 +380,34 @@ describe("POST /api/tailor", () => {
         expect(body.masterCvText).toBeDefined();
     });
 
+    it("preserves configured webhook base path when dispatching to n8n", async () => {
+        process.env.N8N_WEBHOOK_URL = "http://n8n:5678/custom-base";
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+            ...mockUser,
+            creditsRemaining: 9,
+        } as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobDescription: "React developer needed.",
+            }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(global.fetch).toHaveBeenCalledWith(
+            "http://n8n:5678/custom-base/webhook/single-job-tailor",
+            expect.anything()
+        );
+    });
+
     it("returns 400 when job URL is invalid", async () => {
         vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
         vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);

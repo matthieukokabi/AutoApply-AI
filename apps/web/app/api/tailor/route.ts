@@ -86,7 +86,12 @@ export async function POST(req: Request) {
                     { status: 503 }
                 );
             }
-            webhookEndpoint = new URL("/webhook/single-job-tailor", parsedN8nWebhookUrl).toString();
+
+            const normalizedBasePath = parsedN8nWebhookUrl.pathname.replace(/\/$/, "");
+            parsedN8nWebhookUrl.pathname = `${normalizedBasePath}/webhook/single-job-tailor`;
+            parsedN8nWebhookUrl.search = "";
+            parsedN8nWebhookUrl.hash = "";
+            webhookEndpoint = parsedN8nWebhookUrl.toString();
         } catch {
             return NextResponse.json(
                 { error: "Tailoring service unavailable. Please try again later." },

@@ -2069,3 +2069,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/tailor/route.ts`
 - `apps/web/__tests__/api/tailor.test.ts`
+
+---
+
+## Session 47 — 2026-03-16
+
+### Completed
+
+**Tailor Webhook Base-Path Compatibility Fix:**
+- Fixed webhook endpoint construction to preserve any configured base path in `N8N_WEBHOOK_URL` (for proxied/subpath n8n setups).
+- Maintained strict URL/protocol validation from the previous hardening step.
+- Added regression test to verify dispatch target when `N8N_WEBHOOK_URL` includes a subpath.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 168 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/tailor/route.ts`
+- `apps/web/__tests__/api/tailor.test.ts`
