@@ -2967,3 +2967,26 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+
+---
+
+## Session 85 — 2026-03-16
+
+### Completed
+
+**Auth Widget Recovery Hardening (No Permanent Fallback Lock):**
+- Fixed sign-in/sign-up fallback behavior so Clerk widgets stay mounted even when recovery mode is shown.
+- Added `shouldHideWidget` state to hide the widget during recovery without unmounting it.
+- This allows late widget mounts on slower browsers/devices to recover automatically instead of staying stuck on fallback UI.
+- Updated auth widget state tests to cover hide/show behavior when recovery and mount states overlap.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/auth-widget-state.ts`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/__tests__/auth-widget-state.test.ts`

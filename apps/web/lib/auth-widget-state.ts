@@ -15,9 +15,12 @@ export function getAuthWidgetState({
         (showTimeoutFallback && !isLoaded) || showWidgetFallback;
     const shouldShowLoadingCard =
         !shouldShowRecoveryCard && !hasWidgetMounted;
+    const shouldHideWidget =
+        shouldShowRecoveryCard && !hasWidgetMounted;
 
     return {
         shouldShowRecoveryCard,
         shouldShowLoadingCard,
+        shouldHideWidget,
     };
 }

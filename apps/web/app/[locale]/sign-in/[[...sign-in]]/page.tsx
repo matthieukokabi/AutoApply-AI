@@ -99,7 +99,7 @@ export default function SignInPage() {
         };
     }, [isLoaded]);
 
-    const { shouldShowRecoveryCard, shouldShowLoadingCard } = getAuthWidgetState({
+    const { shouldShowRecoveryCard, shouldShowLoadingCard, shouldHideWidget } = getAuthWidgetState({
         isLoaded,
         hasWidgetMounted,
         showTimeoutFallback,
@@ -135,29 +135,31 @@ export default function SignInPage() {
                 ) : null}
 
                 <ClerkLoaded>
-                    {!shouldShowRecoveryCard ? (
-                        <div ref={widgetHostRef}>
-                            <SignIn
-                                path={signInPath}
-                                routing="path"
-                                signUpUrl={signUpUrl}
-                                forceRedirectUrl={postAuthRedirectUrl}
-                                fallbackRedirectUrl={postAuthRedirectUrl}
-                                appearance={{
-                                    elements: {
-                                        rootBox: "mx-auto w-full",
-                                        card: "shadow-xl rounded-xl",
-                                        socialButtonsBlockButton:
-                                            "border border-slate-200 hover:bg-slate-50",
-                                        formButtonPrimary:
-                                            "bg-blue-600 hover:bg-blue-700 text-sm",
-                                        footerActionLink:
-                                            "text-blue-600 hover:text-blue-700",
-                                    },
-                                }}
-                            />
-                        </div>
-                    ) : null}
+                    <div
+                        ref={widgetHostRef}
+                        aria-hidden={shouldHideWidget ? true : undefined}
+                        className={shouldHideWidget ? "hidden" : undefined}
+                    >
+                        <SignIn
+                            path={signInPath}
+                            routing="path"
+                            signUpUrl={signUpUrl}
+                            forceRedirectUrl={postAuthRedirectUrl}
+                            fallbackRedirectUrl={postAuthRedirectUrl}
+                            appearance={{
+                                elements: {
+                                    rootBox: "mx-auto w-full",
+                                    card: "shadow-xl rounded-xl",
+                                    socialButtonsBlockButton:
+                                        "border border-slate-200 hover:bg-slate-50",
+                                    formButtonPrimary:
+                                        "bg-blue-600 hover:bg-blue-700 text-sm",
+                                    footerActionLink:
+                                        "text-blue-600 hover:text-blue-700",
+                                },
+                            }}
+                        />
+                    </div>
                 </ClerkLoaded>
 
                 <ClerkDegraded>
