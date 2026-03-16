@@ -24,6 +24,7 @@ beforeEach(() => {
     vi.clearAllMocks();
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_secret";
     process.env.STRIPE_PRICE_UNLIMITED_MONTHLY = "price_unlimited";
+    process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.test";
 });
 
 describe("Stripe Checkout → Webhook Workflow", () => {

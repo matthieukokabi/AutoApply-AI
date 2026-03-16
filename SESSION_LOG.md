@@ -1875,3 +1875,28 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/webhooks/stripe/route.ts`
 - `apps/web/__tests__/api/webhooks-stripe.test.ts`
+
+---
+
+## Session 38 — 2026-03-16
+
+### Completed
+
+**Checkout Redirect Config Hardening:**
+- Added explicit `NEXT_PUBLIC_APP_URL` validation in `POST /api/checkout`.
+- Route now returns `503` with clear error when app URL is missing or invalid, instead of failing later during session creation.
+- Normalized success/cancel redirect URL generation with `URL` API to avoid malformed redirect URLs.
+- Added regression tests for:
+  - missing `NEXT_PUBLIC_APP_URL`
+  - invalid `NEXT_PUBLIC_APP_URL`
+- Updated Stripe checkout integration test setup to include `NEXT_PUBLIC_APP_URL`.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 159 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/checkout/route.ts`
+- `apps/web/__tests__/api/checkout.test.ts`
+- `apps/web/__tests__/integration/stripe-workflow.test.ts`

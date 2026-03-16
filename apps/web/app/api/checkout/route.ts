@@ -69,12 +69,30 @@ export async function POST(req: Request) {
             );
         }
 
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+        if (!appUrl) {
+            console.error("NEXT_PUBLIC_APP_URL is required for checkout redirects");
+            return NextResponse.json({ error: "Checkout handler misconfigured" }, { status: 503 });
+        }
+
+        let successUrl: URL;
+        let cancelUrl: URL;
+        try {
+            successUrl = new URL("/dashboard", appUrl);
+            successUrl.searchParams.set("checkout", "success");
+            cancelUrl = new URL("/dashboard", appUrl);
+            cancelUrl.searchParams.set("checkout", "cancelled");
+        } catch {
+            console.error("NEXT_PUBLIC_APP_URL is invalid:", appUrl);
+            return NextResponse.json({ error: "Checkout handler misconfigured" }, { status: 503 });
+        }
+
         const sessionParams: any = {
             mode,
             payment_method_types: ["card"],
             line_items: [{ price: priceId, quantity: 1 }],
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=success`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?checkout=cancelled`,
+            success_url: successUrl.toString(),
+            cancel_url: cancelUrl.toString(),
             metadata: { userId: user.id },
         };
 

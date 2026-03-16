@@ -12,6 +12,7 @@ const mockUser = {
 
 beforeEach(() => {
     vi.clearAllMocks();
+    process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.test";
 });
 
 describe("POST /api/checkout", () => {
@@ -85,6 +86,42 @@ describe("POST /api/checkout", () => {
 
         const response = await POST(request);
         expect(response.status).toBe(400);
+    });
+
+    it("returns 503 when NEXT_PUBLIC_APP_URL is missing", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        delete process.env.NEXT_PUBLIC_APP_URL;
+
+        const request = new Request("http://localhost/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: "pro_monthly" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toBe("Checkout handler misconfigured");
+        expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    });
+
+    it("returns 503 when NEXT_PUBLIC_APP_URL is invalid", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        process.env.NEXT_PUBLIC_APP_URL = "invalid-url";
+
+        const request = new Request("http://localhost/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: "pro_monthly" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toBe("Checkout handler misconfigured");
+        expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
     });
 
     it("returns 429 when one IP exceeds checkout attempt limits", async () => {
