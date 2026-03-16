@@ -1,5 +1,25 @@
 # AutoApply AI — Session Log
 
+## Session 18 — 2026-03-16
+
+### Completed
+
+**Security hardening — committed secret sanitization (atomic step):**
+- Redacted leaked Stripe webhook secret from `SESSION_LOG.md`
+- Replaced hardcoded webhook/API key literals in:
+  - `n8n/workflows/single-job-tailoring.json`
+  - `n8n/workflows/job-discovery-pipeline.json`
+- Standardized workflow placeholders:
+  - `YOUR_N8N_WEBHOOK_SECRET`
+  - `YOUR_ADZUNA_APP_KEY`
+  - `YOUR_JSEARCH_API_KEY`
+
+**Verification run for this step:**
+- Secret pattern grep for removed literals: no matches
+- JSON validation: both modified workflow JSON files pass `jq empty`
+
+---
+
 ## Session 1 — 2026-02-20
 
 ### Completed
@@ -167,7 +187,7 @@
   - AutoApply Pro: $29/mo (price_1T3LmSCObkaQqcv27oj42Mae) + $249/yr (price_1T3LmSCObkaQqcv2upF4ZJxB)
   - AutoApply Unlimited: $79/mo (price_1T3LolCObkaQqcv2PsDAFiDM)
   - Credit Pack: $19 one-time (price_1T3LquCObkaQqcv20R2uHOi4)
-- Webhook endpoint: https://autoapply.works/api/webhooks/stripe (whsec_yy2kOF9M8FCIxMrpFanrUuMRsrikHRNx)
+- Webhook endpoint: https://autoapply.works/api/webhooks/stripe (whsec_REDACTED)
 - Webhook handler updated to handle all 6 events:
   - checkout.session.completed, customer.subscription.created/updated/deleted
   - invoice.payment_succeeded, invoice.payment_failed
@@ -912,7 +932,7 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - Used Python script to GET workflow → update Load Config node code → PUT back (stripped read-only fields: `active`, non-writable properties)
 - Real API keys injected into both workflows' Load Config nodes:
   - Anthropic API key
-  - N8N Webhook Secret: `e398a1c2b63259f396e61b08736f5d10`
+  - N8N Webhook Secret: `YOUR_N8N_WEBHOOK_SECRET`
   - Adzuna App ID: `e2af75b6`, App Key configured
 - No manual n8n UI editing required
 

@@ -26,7 +26,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nconst CONFIG = {\n  anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n  appUrl: 'https://autoapply.works',\n  webhookSecret: 'e398a1c2b63259f396e61b08736f5d10'\n};\n\nconst input = $input.first().json;\nreturn [{ json: { ...input, _config: CONFIG } }];"
+                "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nconst CONFIG = {\n  anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n  appUrl: 'https://autoapply.works',\n  webhookSecret: 'YOUR_N8N_WEBHOOK_SECRET'\n};\n\nconst input = $input.first().json;\nreturn [{ json: { ...input, _config: CONFIG } }];"
             },
             "id": "load-config",
             "name": "Load Config",
@@ -322,7 +322,7 @@
             },
             {
                 "parameters": {
-                    "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nconst CONFIG = {\n  anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n  appUrl: 'https://autoapply.works',\n  webhookSecret: 'e398a1c2b63259f396e61b08736f5d10'\n};\n\nconst input = $input.first().json;\nreturn [{ json: { ...input, _config: CONFIG } }];"
+                    "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nconst CONFIG = {\n  anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n  appUrl: 'https://autoapply.works',\n  webhookSecret: 'YOUR_N8N_WEBHOOK_SECRET'\n};\n\nconst input = $input.first().json;\nreturn [{ json: { ...input, _config: CONFIG } }];"
                 },
                 "id": "load-config",
                 "name": "Load Config",

@@ -29,7 +29,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nreturn [{\n  json: {\n    anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n    appUrl: 'https://autoapply.works',\n    webhookSecret: 'e398a1c2b63259f396e61b08736f5d10',\n    adzunaAppId: 'e2af75b6',\n    adzunaAppKey: 'c26a8ecf9af040f21ee9e0c2b863aa48',\n    jsearchApiKey: '76cf1b39a6msh38432550938e460p14b9fejsn84790223133b',\n    joobleApiKey: '',\n    reedApiKey: ''\n  }\n}];"
+                "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nreturn [{\n  json: {\n    anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n    appUrl: 'https://autoapply.works',\n    webhookSecret: 'YOUR_N8N_WEBHOOK_SECRET',\n    adzunaAppId: 'e2af75b6',\n    adzunaAppKey: 'YOUR_ADZUNA_APP_KEY',\n    jsearchApiKey: 'YOUR_JSEARCH_API_KEY',\n    joobleApiKey: '',\n    reedApiKey: ''\n  }\n}];"
             },
             "id": "load-config",
             "name": "Load Config",
@@ -471,7 +471,7 @@
             },
             {
                 "parameters": {
-                    "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nreturn [{\n  json: {\n    anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n    appUrl: 'https://autoapply.works',\n    webhookSecret: 'e398a1c2b63259f396e61b08736f5d10',\n    adzunaAppId: 'e2af75b6',\n    adzunaAppKey: 'c26a8ecf9af040f21ee9e0c2b863aa48',\n    jsearchApiKey: '76cf1b39a6msh38432550938e460p14b9fejsn84790223133b',\n    joobleApiKey: '',\n    reedApiKey: ''\n  }\n}];"
+                    "jsCode": "// CONFIGURATION \u2014 API keys injected via automation\nreturn [{\n  json: {\n    anthropicApiKey: 'YOUR_ANTHROPIC_API_KEY',\n    appUrl: 'https://autoapply.works',\n    webhookSecret: 'YOUR_N8N_WEBHOOK_SECRET',\n    adzunaAppId: 'e2af75b6',\n    adzunaAppKey: 'YOUR_ADZUNA_APP_KEY',\n    jsearchApiKey: 'YOUR_JSEARCH_API_KEY',\n    joobleApiKey: '',\n    reedApiKey: ''\n  }\n}];"
                 },
                 "id": "load-config",
                 "name": "Load Config",
