@@ -2595,3 +2595,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
+
+---
+
+## Session 68 — 2026-03-16
+
+### Completed
+
+**Middleware Cost Optimization (Bot Auth-Page Auth Skip):**
+- Extended bot/crawler auth-skip gating to include public auth pages (`/sign-in`, `/sign-up`) in addition to landing roots.
+- Preserved auth checks for protected routes and human traffic.
+- Added middleware regression coverage ensuring bot requests on auth pages bypass auth callback.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 202 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`

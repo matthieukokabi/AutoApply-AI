@@ -68,10 +68,11 @@ export default clerkMiddleware(async (auth, req) => {
         url.pathname === "/sign-up";
     const isLandingRoot = url.pathname === "/" || isLocaleRoot;
     const isBotRequest = isLikelyBot(req.headers.get("user-agent"));
+    const requiresPublicAuthLookup =
+        (isAuthPage || isLandingRoot) && !isBotRequest;
     const needsAuthLookup =
         !isPublicRoute(req) ||
-        isAuthPage ||
-        (isLandingRoot && !isBotRequest);
+        requiresPublicAuthLookup;
 
     if (!needsAuthLookup) {
         return intlResponse;

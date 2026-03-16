@@ -97,4 +97,16 @@ describe("middleware auth + i18n routing", () => {
         expect(response).toBeUndefined();
         expect(auth).not.toHaveBeenCalled();
     });
+
+    it("does not invoke auth callback for bot requests on auth pages", async () => {
+        const auth = vi.fn().mockResolvedValue({ userId: "clerk_user_1" });
+
+        const response = await (middleware as any)(
+            auth,
+            mockRequest("/sign-in", "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)")
+        );
+
+        expect(response).toBeUndefined();
+        expect(auth).not.toHaveBeenCalled();
+    });
 });
