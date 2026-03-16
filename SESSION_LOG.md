@@ -2254,3 +2254,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `apps/web/components/checkout-button.tsx`
+
+---
+
+## Session 55 — 2026-03-16
+
+### Completed
+
+**Auth Page Resilience Hardening (Sign-In / Sign-Up):**
+- Added explicit Clerk lifecycle handling on both auth pages:
+  - `ClerkLoading` renders a visible loading state.
+  - `ClerkDegraded` and `ClerkFailed` render a user-facing fallback card with retry and alternate auth-route actions.
+- Added locale-aware auth paths (`sign-in`, `sign-up`, `dashboard`) on both pages to ensure Clerk widgets initialize against the correct localized route.
+- Wired Clerk widgets with explicit `path`, `routing="path"`, and localized redirect URLs to reduce route mismatch risk.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 182 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
