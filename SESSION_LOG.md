@@ -1469,3 +1469,21 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/__tests__/setup.ts`
 - `apps/web/__tests__/api/auth-mobile.test.ts`
 - `apps/web/__tests__/api/debug-auth.test.ts`
+
+---
+
+## Session 20 — 2026-03-16
+
+### Completed
+
+**Next.js Trace Root Hardening (Monorepo):**
+- Added explicit `outputFileTracingRoot` in `apps/web/next.config.js` to stop implicit workspace-root inference from multiple lockfiles.
+- Removed recurring Next.js warning during `lint` and `build`.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (21 files, 139 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/next.config.js`
