@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+
+const PROFILE_UPLOAD_RATE_LIMIT_MAX_REQUESTS = 6;
+const PROFILE_UPLOAD_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_UPLOAD_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_RAW_TEXT_LENGTH = 200000;
+const MAX_FILE_NAME_LENGTH = 255;
+const profileUploadRequestLog = new Map<string, number[]>();
 
 /**
  * POST /api/profile/upload — handle CV file upload
@@ -12,6 +20,22 @@ export async function POST(req: Request) {
         const user = await getAuthUser(req);
         if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const clientIp = getClientIp(req);
+        if (
+            clientIp &&
+            isRateLimited({
+                store: profileUploadRequestLog,
+                key: clientIp,
+                maxRequests: PROFILE_UPLOAD_RATE_LIMIT_MAX_REQUESTS,
+                windowMs: PROFILE_UPLOAD_RATE_LIMIT_WINDOW_MS,
+            })
+        ) {
+            return NextResponse.json(
+                { error: "Too many upload attempts. Please try again shortly." },
+                { status: 429 }
+            );
         }
 
         const contentType = req.headers.get("content-type") || "";
@@ -28,7 +52,17 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: "No file provided" }, { status: 400 });
             }
 
+            if (file.size > MAX_UPLOAD_FILE_BYTES) {
+                return NextResponse.json(
+                    { error: "File is too large. Maximum size is 5MB." },
+                    { status: 413 }
+                );
+            }
+
             fileName = file.name;
+            if (fileName.length > MAX_FILE_NAME_LENGTH) {
+                fileName = fileName.slice(0, MAX_FILE_NAME_LENGTH);
+            }
             const ext = fileName.split(".").pop()?.toLowerCase();
             const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -62,8 +96,18 @@ export async function POST(req: Request) {
         } else {
             // Fallback: JSON body with rawText (for paste or client-side extraction)
             const body = await req.json();
-            rawText = body.rawText || "";
-            fileName = body.fileName || "paste";
+            rawText = typeof body.rawText === "string" ? body.rawText : "";
+            fileName = typeof body.fileName === "string" ? body.fileName : "paste";
+            if (fileName.length > MAX_FILE_NAME_LENGTH) {
+                fileName = fileName.slice(0, MAX_FILE_NAME_LENGTH);
+            }
+        }
+
+        if (rawText.length > MAX_RAW_TEXT_LENGTH) {
+            return NextResponse.json(
+                { error: "CV text is too long. Please upload a smaller file." },
+                { status: 400 }
+            );
         }
 
         if (!rawText || rawText.trim().length < 50) {

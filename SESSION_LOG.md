@@ -1691,3 +1691,32 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/api/contact/route.ts`
 - `apps/web/app/api/auth/mobile/route.ts`
 - `apps/web/app/api/tailor/route.ts`
+
+---
+
+## Session 30 — 2026-03-16
+
+### Completed
+
+**Profile Upload API Hardening:**
+- Added per-IP throttling to `POST /api/profile/upload`:
+  - limit: 6 requests per 10 minutes per IP
+  - response on limit: `429 Too Many Requests`
+- Added upload payload safety limits:
+  - max file size: 5MB (`413` when exceeded)
+  - max extracted/pasted CV text size guard
+  - max filename length normalization
+- Added stricter JSON fallback parsing for `rawText` and `fileName`.
+- Added tests for:
+  - oversized raw text rejection
+  - oversized multipart file rejection
+  - repeated upload rate-limit rejection
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 152 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/profile/upload/route.ts`
+- `apps/web/__tests__/api/profile-upload.test.ts`

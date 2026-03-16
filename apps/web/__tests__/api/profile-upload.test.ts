@@ -104,6 +104,23 @@ describe("POST /api/profile/upload", () => {
             const response = await POST(request);
             expect(response.status).toBe(400);
         });
+
+        it("rejects text payloads that exceed max length", async () => {
+            vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+            const request = new Request("http://localhost/api/profile/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ rawText: "a".repeat(200001) }),
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("too long");
+            expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
+        });
     });
 
     describe("multipart file upload", () => {
@@ -165,6 +182,28 @@ describe("POST /api/profile/upload", () => {
             expect(data.error).toContain("No file");
         });
 
+        it("returns 413 for files larger than 5MB", async () => {
+            vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+            const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "resume.txt", {
+                type: "text/plain",
+            });
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const request = new Request("http://localhost/api/profile/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(413);
+            expect(data.error).toContain("too large");
+            expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
+        });
+
         it("rejects invalid PDF payloads quickly", async () => {
             vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
 
@@ -209,5 +248,45 @@ describe("POST /api/profile/upload", () => {
             const response = await POST(request);
             expect(response.status).toBe(200);
         });
+    });
+
+    it("returns 429 when one IP exceeds upload request limits", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.masterProfile.upsert).mockResolvedValue(mockProfile as any);
+
+        const headers = {
+            "Content-Type": "application/json",
+            "x-forwarded-for": "198.51.100.99",
+        };
+
+        for (let i = 0; i < 6; i += 1) {
+            const response = await POST(
+                new Request("http://localhost/api/profile/upload", {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                        rawText:
+                            "Experienced software engineer with full-stack delivery background and strong TypeScript expertise.",
+                    }),
+                })
+            );
+
+            expect(response.status).toBe(200);
+        }
+
+        const limitedResponse = await POST(
+            new Request("http://localhost/api/profile/upload", {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    rawText:
+                        "Experienced software engineer with full-stack delivery background and strong TypeScript expertise.",
+                }),
+            })
+        );
+        const data = await limitedResponse.json();
+
+        expect(limitedResponse.status).toBe(429);
+        expect(data.error).toContain("Too many upload attempts");
     });
 });
