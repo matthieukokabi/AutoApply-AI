@@ -1522,6 +1522,28 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ---
 
+## Session 26 — 2026-03-16
+
+### Completed
+
+**Contact API Abuse Protection:**
+- Added real per-IP request throttling to `POST /api/contact`:
+  - limit: 5 requests per 10 minutes per client IP
+  - response on limit: `429 Too Many Requests`
+- Kept behavior safe for environments where client IP headers are unavailable.
+- Added test coverage for rate-limit behavior (verifies 6th request from same IP is blocked).
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 145 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/contact/route.ts`
+- `apps/web/__tests__/api/contact.test.ts`
+
+---
+
 ## Session 24 — 2026-03-16
 
 ### Completed

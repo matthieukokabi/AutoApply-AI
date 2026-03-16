@@ -143,4 +143,46 @@ describe("POST /api/contact", () => {
             expect(response.status).toBe(200);
         }
     });
+
+    it("returns 429 when a single IP exceeds the request limit", async () => {
+        const ip = "203.0.113.42";
+        const headers = {
+            "Content-Type": "application/json",
+            "x-forwarded-for": ip,
+        };
+
+        for (let i = 0; i < 5; i += 1) {
+            const response = await POST(
+                new Request("http://localhost/api/contact", {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                        name: "Rate Test",
+                        email: `rate-${i}@example.com`,
+                        subject: "support",
+                        message: `Attempt ${i + 1}`,
+                    }),
+                })
+            );
+
+            expect(response.status).toBe(200);
+        }
+
+        const limitedResponse = await POST(
+            new Request("http://localhost/api/contact", {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    name: "Rate Test",
+                    email: "rate-final@example.com",
+                    subject: "support",
+                    message: "Should be rate-limited",
+                }),
+            })
+        );
+        const data = await limitedResponse.json();
+
+        expect(limitedResponse.status).toBe(429);
+        expect(data.error).toContain("Too many requests");
+    });
 });
