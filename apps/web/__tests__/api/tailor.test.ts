@@ -113,6 +113,28 @@ describe("POST /api/tailor", () => {
         expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
+    it("returns 503 when tailoring webhook URL is invalid", async () => {
+        process.env.N8N_WEBHOOK_URL = "not-a-valid-url";
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jobDescription: "test" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toContain("unavailable");
+        expect(global.fetch).not.toHaveBeenCalled();
+        expect(prisma.job.upsert).not.toHaveBeenCalled();
+        expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
     it("returns 400 when no master profile exists", async () => {
         vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
         vi.mocked(prisma.user.findFirst).mockResolvedValue({

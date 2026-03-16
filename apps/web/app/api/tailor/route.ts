@@ -74,6 +74,26 @@ export async function POST(req: Request) {
             );
         }
 
+        let webhookEndpoint: string;
+        try {
+            const parsedN8nWebhookUrl = new URL(n8nWebhookUrl);
+            if (
+                parsedN8nWebhookUrl.protocol !== "http:" &&
+                parsedN8nWebhookUrl.protocol !== "https:"
+            ) {
+                return NextResponse.json(
+                    { error: "Tailoring service unavailable. Please try again later." },
+                    { status: 503 }
+                );
+            }
+            webhookEndpoint = new URL("/webhook/single-job-tailor", parsedN8nWebhookUrl).toString();
+        } catch {
+            return NextResponse.json(
+                { error: "Tailoring service unavailable. Please try again later." },
+                { status: 503 }
+            );
+        }
+
         const body = await req.json();
         const {
             jobDescription,
@@ -174,7 +194,7 @@ export async function POST(req: Request) {
 
         // Trigger n8n single-job tailoring webhook.
         // Credits are deducted only after webhook dispatch succeeds.
-        const webhookResponse = await fetch(`${n8nWebhookUrl}/webhook/single-job-tailor`, {
+        const webhookResponse = await fetch(webhookEndpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

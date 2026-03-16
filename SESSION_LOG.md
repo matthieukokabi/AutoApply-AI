@@ -2047,3 +2047,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/webhooks/stripe/route.ts`
 - `apps/web/__tests__/api/webhooks-stripe.test.ts`
+
+---
+
+## Session 46 — 2026-03-16
+
+### Completed
+
+**Tailor Webhook URL Validation Hardening:**
+- Added strict `N8N_WEBHOOK_URL` validation in `POST /api/tailor`:
+  - requires a valid URL format
+  - requires `http` or `https` protocol
+- Endpoint now fails closed with `503` for invalid webhook URL config instead of attempting dispatch.
+- Added regression test for invalid `N8N_WEBHOOK_URL`.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 167 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/tailor/route.ts`
+- `apps/web/__tests__/api/tailor.test.ts`
