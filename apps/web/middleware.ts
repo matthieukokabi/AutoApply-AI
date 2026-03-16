@@ -155,9 +155,9 @@ export const config = {
         "/settings/:path*",
         "/documents/:path*",
         "/onboarding/:path*",
-        // Auth pages
-        "/(en|fr|de|es|it)/sign-in/:path*",
-        "/(en|fr|de|es|it)/sign-up/:path*",
+        // Auth pages (bare only).
+        // Locale-prefixed auth routes are served directly and intentionally
+        // excluded here to reduce edge middleware invocations.
         "/sign-in/:path*",
         "/sign-up/:path*",
         // Public pages that need locale routing from non-prefixed URLs.

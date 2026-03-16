@@ -3233,3 +3233,31 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/scripts/onboarding_auth_blocked_smoke.sh`
 - `apps/web/package.json`
 - `SESSION_LOG.md`
+
+---
+
+## Session 96 — 2026-03-16
+
+### Completed
+
+**Middleware Cost Optimization (Skip Locale-Prefixed Auth Routes):**
+- Reduced middleware matcher scope by removing locale-prefixed auth routes:
+  - `/(en|fr|de|es|it)/sign-in/:path*`
+  - `/(en|fr|de|es|it)/sign-up/:path*`
+- Kept bare auth routes (`/sign-in/:path*`, `/sign-up/:path*`) in matcher for non-prefixed entrypoints.
+- Rationale: locale-prefixed auth pages are directly routable and do not require middleware for locale resolution, so excluding them lowers edge invocation volume.
+- Updated middleware scope test to lock this optimization and prevent regressions.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_221726.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260316_221726.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/middleware.test.ts`
+- `SESSION_LOG.md`
