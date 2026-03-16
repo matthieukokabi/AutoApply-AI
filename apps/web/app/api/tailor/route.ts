@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { sendCreditsLowEmail } from "@/lib/email";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 const TAILOR_RATE_LIMIT_MAX_REQUESTS = 8;
 const TAILOR_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -11,31 +12,6 @@ const MAX_JOB_TITLE_LENGTH = 200;
 const MAX_COMPANY_LENGTH = 200;
 const MAX_JOB_ID_LENGTH = 100;
 const tailorRequestLog = new Map<string, number[]>();
-
-function getClientIp(req: Request): string | null {
-    const forwardedFor = req.headers.get("x-forwarded-for");
-    if (forwardedFor) {
-        return forwardedFor.split(",")[0]?.trim() || null;
-    }
-
-    return req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || null;
-}
-
-function isRateLimited(clientIp: string, now = Date.now()): boolean {
-    const windowStart = now - TAILOR_RATE_LIMIT_WINDOW_MS;
-    const recentRequests = (tailorRequestLog.get(clientIp) || []).filter(
-        (timestamp) => timestamp > windowStart
-    );
-
-    if (recentRequests.length >= TAILOR_RATE_LIMIT_MAX_REQUESTS) {
-        tailorRequestLog.set(clientIp, recentRequests);
-        return true;
-    }
-
-    recentRequests.push(now);
-    tailorRequestLog.set(clientIp, recentRequests);
-    return false;
-}
 
 /**
  * POST /api/tailor
@@ -60,7 +36,15 @@ export async function POST(req: Request) {
         }
 
         const clientIp = getClientIp(req);
-        if (clientIp && isRateLimited(clientIp)) {
+        if (
+            clientIp &&
+            isRateLimited({
+                store: tailorRequestLog,
+                key: clientIp,
+                maxRequests: TAILOR_RATE_LIMIT_MAX_REQUESTS,
+                windowMs: TAILOR_RATE_LIMIT_WINDOW_MS,
+            })
+        ) {
             return NextResponse.json(
                 { error: "Too many tailoring requests. Please try again shortly." },
                 { status: 429 }

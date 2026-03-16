@@ -1664,3 +1664,30 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/tailor/route.ts`
 - `apps/web/__tests__/api/tailor.test.ts`
+
+---
+
+## Session 29 — 2026-03-16
+
+### Completed
+
+**Shared Rate-Limit Utility Refactor:**
+- Added a shared helper module for API throttling in `apps/web/lib/rate-limit.ts`:
+  - `getClientIp(req)` for consistent proxy-aware IP extraction
+  - `isRateLimited({...})` for reusable sliding-window checks
+- Refactored rate-limit logic in these endpoints to use the shared utility without changing limits or responses:
+  - `POST /api/contact`
+  - `POST /api/auth/mobile`
+  - `POST /api/tailor`
+- Reduced duplicate security logic and kept endpoint behavior consistent.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 149 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/rate-limit.ts`
+- `apps/web/app/api/contact/route.ts`
+- `apps/web/app/api/auth/mobile/route.ts`
+- `apps/web/app/api/tailor/route.ts`

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 const CONTACT_RATE_LIMIT_MAX_REQUESTS = 5;
 const CONTACT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -7,31 +8,6 @@ const contactRequestLog = new Map<string, number[]>();
 function getResend() {
     const { Resend } = require("resend");
     return new Resend(process.env.RESEND_API_KEY);
-}
-
-function getClientIp(req: Request): string | null {
-    const forwardedFor = req.headers.get("x-forwarded-for");
-    if (forwardedFor) {
-        return forwardedFor.split(",")[0]?.trim() || null;
-    }
-
-    return req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || null;
-}
-
-function isRateLimited(clientIp: string, now = Date.now()): boolean {
-    const windowStart = now - CONTACT_RATE_LIMIT_WINDOW_MS;
-    const recentRequests = (contactRequestLog.get(clientIp) || []).filter(
-        (timestamp) => timestamp > windowStart
-    );
-
-    if (recentRequests.length >= CONTACT_RATE_LIMIT_MAX_REQUESTS) {
-        contactRequestLog.set(clientIp, recentRequests);
-        return true;
-    }
-
-    recentRequests.push(now);
-    contactRequestLog.set(clientIp, recentRequests);
-    return false;
 }
 
 function escapeHtml(value: string): string {
@@ -69,7 +45,15 @@ export async function POST(req: Request) {
         }
 
         const clientIp = getClientIp(req);
-        if (clientIp && isRateLimited(clientIp)) {
+        if (
+            clientIp &&
+            isRateLimited({
+                store: contactRequestLog,
+                key: clientIp,
+                maxRequests: CONTACT_RATE_LIMIT_MAX_REQUESTS,
+                windowMs: CONTACT_RATE_LIMIT_WINDOW_MS,
+            })
+        ) {
             return NextResponse.json(
                 { error: "Too many requests. Please try again in a few minutes." },
                 { status: 429 }

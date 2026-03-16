@@ -1,35 +1,11 @@
 import { NextResponse } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { createMobileToken } from '@/lib/mobile-auth';
+import { getClientIp, isRateLimited } from '@/lib/rate-limit';
 
 const MOBILE_AUTH_RATE_LIMIT_MAX_REQUESTS = 10;
 const MOBILE_AUTH_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const mobileAuthRequestLog = new Map<string, number[]>();
-
-function getClientIp(req: Request): string | null {
-  const forwardedFor = req.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0]?.trim() || null;
-  }
-
-  return req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || null;
-}
-
-function isRateLimited(clientIp: string, now = Date.now()): boolean {
-  const windowStart = now - MOBILE_AUTH_RATE_LIMIT_WINDOW_MS;
-  const recentRequests = (mobileAuthRequestLog.get(clientIp) || []).filter(
-    (timestamp) => timestamp > windowStart
-  );
-
-  if (recentRequests.length >= MOBILE_AUTH_RATE_LIMIT_MAX_REQUESTS) {
-    mobileAuthRequestLog.set(clientIp, recentRequests);
-    return true;
-  }
-
-  recentRequests.push(now);
-  mobileAuthRequestLog.set(clientIp, recentRequests);
-  return false;
-}
 
 /**
  * POST /api/auth/mobile
@@ -43,7 +19,15 @@ export async function POST(req: Request) {
     const { email, password, action = 'sign-in' } = body;
     const clientIp = getClientIp(req);
 
-    if (clientIp && isRateLimited(clientIp)) {
+    if (
+      clientIp &&
+      isRateLimited({
+        store: mobileAuthRequestLog,
+        key: clientIp,
+        maxRequests: MOBILE_AUTH_RATE_LIMIT_MAX_REQUESTS,
+        windowMs: MOBILE_AUTH_RATE_LIMIT_WINDOW_MS,
+      })
+    ) {
       return NextResponse.json(
         { error: 'Too many authentication attempts. Please try again shortly.' },
         { status: 429 }
