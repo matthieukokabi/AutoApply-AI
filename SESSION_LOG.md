@@ -2990,3 +2990,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `apps/web/__tests__/auth-widget-state.test.ts`
+
+---
+
+## Session 86 — 2026-03-16
+
+### Completed
+
+**Auth Loading UX Hardening (Actionable Fallback During Widget Load):**
+- Added actionable links inside sign-in/sign-up loading cards so users are not blocked while Clerk initializes.
+- Users now get immediate fallback actions during loading:
+  - open auth diagnostics
+  - switch to the alternate auth page (sign-in/sign-up).
+- This improves onboarding resilience for slow mobile browsers and constrained network conditions.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 218 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`

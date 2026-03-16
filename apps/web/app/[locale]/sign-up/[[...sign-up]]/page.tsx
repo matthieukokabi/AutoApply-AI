@@ -131,6 +131,14 @@ export default function SignUpPage() {
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                             Loading secure sign-up...
                         </p>
+                        <div className="mt-3 flex items-center justify-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                            <a href={diagnosticsUrl} className="underline-offset-2 hover:underline">
+                                Open diagnostics
+                            </a>
+                            <a href={signInUrl} className="underline-offset-2 hover:underline">
+                                Go to sign-in
+                            </a>
+                        </div>
                     </div>
                 ) : null}
 
