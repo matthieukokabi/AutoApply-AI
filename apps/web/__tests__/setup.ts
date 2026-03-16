@@ -54,6 +54,7 @@ vi.mock("@/lib/prisma", () => ({
         },
         job: {
             findMany: vi.fn(),
+            findUnique: vi.fn(),
             upsert: vi.fn(),
         },
         workflowError: {

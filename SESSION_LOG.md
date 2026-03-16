@@ -121,6 +121,22 @@
 - Tooling check: `dart` not found in environment PATH
 - Mobile analyze/test/build could not be executed in this environment due missing SDK
 
+**API contract hardening — `/api/tailor` now supports existing `jobId` without duplicate description (atomic step):**
+- Updated `apps/web/app/api/tailor/route.ts`:
+  - `jobDescription` is now required only when creating a new manual job
+  - For existing `jobId`, route now falls back to stored job description
+  - Returns `400` only when neither request nor stored job has usable description
+  - Webhook payload now uses resolved description and job metadata fallback from stored job
+- Updated test mock scaffolding:
+  - Added `prisma.job.findUnique` in `apps/web/__tests__/setup.ts`
+- Added regression tests in `apps/web/__tests__/api/tailor.test.ts`:
+  - Existing `jobId` succeeds without `jobDescription` when DB job has one
+  - Existing `jobId` fails with `400` when DB job description is empty
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/tailor.test.ts __tests__/integration/credit-flow.test.ts` → 18/18 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

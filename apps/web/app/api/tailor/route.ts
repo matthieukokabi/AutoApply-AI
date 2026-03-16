@@ -41,9 +41,16 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { jobDescription, jobUrl, jobTitle, company, additionalContext, jobId: existingJobId } = body;
+        const {
+            jobDescription,
+            jobUrl,
+            jobTitle,
+            company,
+            additionalContext,
+            jobId: existingJobId,
+        } = body;
 
-        if (!jobDescription) {
+        if (!existingJobId && !jobDescription) {
             return NextResponse.json(
                 { error: "Job description is required" },
                 { status: 400 }
@@ -52,12 +59,26 @@ export async function POST(req: Request) {
 
         // If re-tailoring an existing job, use the existing job record directly
         let job;
+        let effectiveJobDescription = typeof jobDescription === "string"
+            ? jobDescription.trim()
+            : "";
         if (existingJobId) {
             job = await prisma.job.findUnique({ where: { id: existingJobId } });
             if (!job) {
                 return NextResponse.json(
                     { error: "Job not found" },
                     { status: 404 }
+                );
+            }
+
+            if (!effectiveJobDescription) {
+                effectiveJobDescription = (job.description || "").trim();
+            }
+
+            if (!effectiveJobDescription) {
+                return NextResponse.json(
+                    { error: "Job description is required for this job" },
+                    { status: 400 }
                 );
             }
         } else {
@@ -70,7 +91,7 @@ export async function POST(req: Request) {
                     title: jobTitle || "Untitled Position",
                     company: company || "Unknown Company",
                     location: "Not specified",
-                    description: jobDescription,
+                    description: effectiveJobDescription,
                     source: "manual",
                     url: jobUrl || "",
                 },
@@ -88,9 +109,9 @@ export async function POST(req: Request) {
                 body: JSON.stringify({
                     userId: user.id,
                     jobId: job.id,
-                    jobTitle: jobTitle || "Untitled Position",
-                    company: company || "Unknown Company",
-                    jobDescription,
+                    jobTitle: jobTitle || job.title || "Untitled Position",
+                    company: company || job.company || "Unknown Company",
+                    jobDescription: effectiveJobDescription,
                     masterCvText: user.masterProfile.rawText,
                     additionalContext: additionalContext || "",
                 }),

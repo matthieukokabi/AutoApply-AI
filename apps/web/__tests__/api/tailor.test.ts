@@ -23,6 +23,7 @@ const mockJob = {
     externalId: "manual-123",
     title: "Senior React Developer",
     company: "Tech Corp",
+    description: "React developer needed with TypeScript experience.",
 };
 
 beforeEach(() => {
@@ -162,6 +163,59 @@ describe("POST /api/tailor", () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ jobTitle: "Developer" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Job description");
+    });
+
+    it("accepts existing jobId without jobDescription when stored job has description", async () => {
+        process.env.N8N_WEBHOOK_URL = "http://n8n:5678";
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.findUnique).mockResolvedValue(mockJob as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+            ...mockUser,
+            creditsRemaining: 9,
+        } as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobId: "job_1",
+            }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(200);
+        expect(prisma.job.findUnique).toHaveBeenCalledWith({ where: { id: "job_1" } });
+
+        const fetchCall = vi.mocked(global.fetch).mock.calls[0];
+        const body = JSON.parse(fetchCall[1]?.body as string);
+        expect(body.jobDescription).toBe(mockJob.description);
+
+        delete process.env.N8N_WEBHOOK_URL;
+    });
+
+    it("returns 400 when existing job has no stored description and none is provided", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.findUnique).mockResolvedValue({
+            ...mockJob,
+            description: "",
+        } as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobId: "job_1",
+            }),
         });
 
         const response = await POST(request);
