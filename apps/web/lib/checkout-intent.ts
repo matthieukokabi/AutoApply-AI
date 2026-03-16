@@ -130,9 +130,16 @@ export function isUnauthorizedCheckoutError(
 
 export function shouldRedirectToAuthBeforeCheckout(
     isAuthLoaded: boolean,
-    userId: string | null | undefined
+    userId: string | null | undefined,
+    cookieHeader?: string | null
 ) {
-    return isAuthLoaded && !userId;
+    if (isAuthLoaded) {
+        return !userId;
+    }
+
+    // When Clerk auth is still initializing, treat clear anonymous sessions
+    // as signed-out and route to sign-up without invoking checkout API.
+    return !/(?:^|;\s*)__session=/.test(cookieHeader ?? "");
 }
 
 export function getCheckoutErrorMessage(errorMessage: string | null | undefined) {

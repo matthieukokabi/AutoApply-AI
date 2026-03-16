@@ -44,7 +44,15 @@ export function CheckoutButton({ plan, children, variant = "default", className 
         setLoading(true);
         setErrorMessage(null);
         try {
-            if (shouldRedirectToAuthBeforeCheckout(isLoaded, userId)) {
+            const cookieHeader =
+                typeof document !== "undefined" ? document.cookie : "";
+            if (
+                shouldRedirectToAuthBeforeCheckout(
+                    isLoaded,
+                    userId,
+                    cookieHeader
+                )
+            ) {
                 redirectToSignUpWithIntent();
                 return;
             }

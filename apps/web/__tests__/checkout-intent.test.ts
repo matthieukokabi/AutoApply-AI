@@ -100,7 +100,14 @@ describe("checkout intent helpers", () => {
     it("redirects known signed-out users before calling checkout API", () => {
         expect(shouldRedirectToAuthBeforeCheckout(true, null)).toBe(true);
         expect(shouldRedirectToAuthBeforeCheckout(true, "user_123")).toBe(false);
-        expect(shouldRedirectToAuthBeforeCheckout(false, null)).toBe(false);
+        expect(shouldRedirectToAuthBeforeCheckout(false, null, "")).toBe(true);
+        expect(
+            shouldRedirectToAuthBeforeCheckout(
+                false,
+                null,
+                "foo=bar; __session=session_token"
+            )
+        ).toBe(false);
     });
 
     it("normalizes checkout start error messaging", () => {

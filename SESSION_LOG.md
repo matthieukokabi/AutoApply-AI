@@ -2887,3 +2887,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `apps/web/__tests__/auth-widget-state.test.ts`
+
+---
+
+## Session 81 — 2026-03-16
+
+### Completed
+
+**Checkout Onboarding Hardening (Pre-auth Redirect Before API Call):**
+- Updated checkout preflight decision logic so anonymous users are redirected to sign-up immediately when Clerk auth is not loaded yet and no `__session` cookie is present.
+- Prevented unnecessary `/api/checkout` calls for clearly anonymous sessions, reducing Unauthorized-path errors during onboarding and reducing avoidable serverless invocations.
+- Updated checkout intent tests to cover both anonymous-no-cookie and session-cookie-not-yet-loaded cases.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 217 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/checkout-intent.ts`
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/__tests__/checkout-intent.test.ts`
