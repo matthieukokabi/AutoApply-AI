@@ -1739,3 +1739,27 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `.github/workflows/web-ci.yml`
+
+---
+
+## Session 32 — 2026-03-16
+
+### Completed
+
+**Checkout API Abuse Protection:**
+- Added per-IP checkout throttling to `POST /api/checkout`:
+  - limit: 5 attempts per 10 minutes per user/IP key
+  - response on limit: `429 Too Many Requests`
+- Added stricter request parsing by enforcing `plan` as a string before routing to Stripe plan mapping.
+- Added test coverage for:
+  - non-string `plan` payload rejection
+  - repeated checkout attempts from one IP being rate-limited
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 154 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/checkout/route.ts`
+- `apps/web/__tests__/api/checkout.test.ts`

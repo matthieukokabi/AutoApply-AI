@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/checkout/route";
-import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { getAuthUser } from "@/lib/auth";
 
@@ -73,6 +72,55 @@ describe("POST /api/checkout", () => {
 
         const response = await POST(request);
         expect(response.status).toBe(400);
+    });
+
+    it("returns 400 when plan is not a string", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: 123 }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(400);
+    });
+
+    it("returns 429 when one IP exceeds checkout attempt limits", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
+            url: "https://checkout.stripe.com/test_session",
+        } as any);
+
+        const headers = {
+            "Content-Type": "application/json",
+            "x-forwarded-for": "198.51.100.35",
+        };
+
+        for (let i = 0; i < 5; i += 1) {
+            const response = await POST(
+                new Request("http://localhost/api/checkout", {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ plan: "pro_monthly" }),
+                })
+            );
+            expect(response.status).toBe(200);
+        }
+
+        const limitedResponse = await POST(
+            new Request("http://localhost/api/checkout", {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ plan: "pro_monthly" }),
+            })
+        );
+        const data = await limitedResponse.json();
+
+        expect(limitedResponse.status).toBe(429);
+        expect(data.error).toContain("Too many checkout attempts");
+        expect(stripe.checkout.sessions.create).toHaveBeenCalledTimes(5);
     });
 
     it("returns 401 for unauthenticated user", async () => {

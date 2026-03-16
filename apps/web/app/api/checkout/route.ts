@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { stripe, PLANS } from "@/lib/stripe";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+
+const CHECKOUT_RATE_LIMIT_MAX_REQUESTS = 5;
+const CHECKOUT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const checkoutRequestLog = new Map<string, number[]>();
 
 /**
  * POST /api/checkout
@@ -15,7 +19,24 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { plan } = await req.json();
+        const clientIp = getClientIp(req);
+        if (
+            clientIp &&
+            isRateLimited({
+                store: checkoutRequestLog,
+                key: `${clientIp}:${user.id}`,
+                maxRequests: CHECKOUT_RATE_LIMIT_MAX_REQUESTS,
+                windowMs: CHECKOUT_RATE_LIMIT_WINDOW_MS,
+            })
+        ) {
+            return NextResponse.json(
+                { error: "Too many checkout attempts. Please try again shortly." },
+                { status: 429 }
+            );
+        }
+
+        const body = await req.json();
+        const plan = typeof body.plan === "string" ? body.plan : "";
 
         let priceId: string | undefined;
         let mode: "subscription" | "payment" = "subscription";
