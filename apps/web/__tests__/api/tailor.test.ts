@@ -28,6 +28,7 @@ const mockJob = {
 
 beforeEach(() => {
     vi.clearAllMocks();
+    process.env.N8N_WEBHOOK_URL = "http://n8n:5678";
     // Reset fetch mock
     vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
@@ -89,6 +90,27 @@ describe("POST /api/tailor", () => {
 
         const response = await POST(request);
         expect(response.status).toBe(404);
+    });
+
+    it("returns 503 when tailoring webhook URL is not configured", async () => {
+        delete process.env.N8N_WEBHOOK_URL;
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jobDescription: "test" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toContain("unavailable");
+        expect(prisma.job.upsert).not.toHaveBeenCalled();
+        expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     it("returns 400 when no master profile exists", async () => {
@@ -276,9 +298,30 @@ describe("POST /api/tailor", () => {
         );
     });
 
-    it("triggers n8n webhook with correct payload", async () => {
-        process.env.N8N_WEBHOOK_URL = "http://n8n:5678";
+    it("returns 502 and does not deduct credits when webhook dispatch fails", async () => {
+        vi.mocked(global.fetch).mockResolvedValueOnce({
+            ok: false,
+            text: async () => "upstream error",
+        } as any);
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
 
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jobDescription: "Looking for a developer." }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(502);
+        expect(data.error).toContain("dispatch failed");
+        expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("triggers n8n webhook with correct payload", async () => {
         vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
         vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
@@ -313,7 +356,5 @@ describe("POST /api/tailor", () => {
         expect(body.jobId).toBe("job_1");
         expect(body.jobDescription).toBe("React developer needed.");
         expect(body.masterCvText).toBeDefined();
-
-        delete process.env.N8N_WEBHOOK_URL;
     });
 });

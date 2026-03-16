@@ -137,6 +137,21 @@
 - `npm test -- __tests__/api/tailor.test.ts __tests__/integration/credit-flow.test.ts` → 18/18 passing
 - `npm run build` → success
 
+**Reliability hardening — `/api/tailor` now fail-closed on webhook dispatch (atomic step):**
+- Updated `apps/web/app/api/tailor/route.ts`:
+  - Returns `503` when `N8N_WEBHOOK_URL` is not configured
+  - Awaits webhook dispatch and returns `502` when dispatch fails
+  - Deducts credits only after successful webhook dispatch
+- Added regression tests in `apps/web/__tests__/api/tailor.test.ts`:
+  - Missing webhook URL returns `503` with no credit deduction
+  - Webhook non-OK response returns `502` with no credit deduction
+- Updated integration test setup:
+  - `apps/web/__tests__/integration/credit-flow.test.ts` now sets `N8N_WEBHOOK_URL` in `beforeEach`
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/tailor.test.ts __tests__/integration/credit-flow.test.ts` → 20/20 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

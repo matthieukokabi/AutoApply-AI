@@ -40,6 +40,14 @@ export async function POST(req: Request) {
             );
         }
 
+        const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+        if (!n8nWebhookUrl) {
+            return NextResponse.json(
+                { error: "Tailoring service unavailable. Please try again later." },
+                { status: 503 }
+            );
+        }
+
         const body = await req.json();
         const {
             jobDescription,
@@ -99,24 +107,29 @@ export async function POST(req: Request) {
             });
         }
 
-        // Trigger n8n single-job tailoring webhook (fire-and-forget)
-        // n8n processes asynchronously and calls back to /api/webhooks/n8n when done
-        const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
-        if (n8nWebhookUrl) {
-            fetch(`${n8nWebhookUrl}/webhook/single-job-tailor`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId: user.id,
-                    jobId: job.id,
-                    jobTitle: jobTitle || job.title || "Untitled Position",
-                    company: company || job.company || "Unknown Company",
-                    jobDescription: effectiveJobDescription,
-                    masterCvText: user.masterProfile.rawText,
-                    additionalContext: additionalContext || "",
-                }),
-            }).catch((err) =>
-                console.error("n8n webhook trigger failed:", err.message)
+        // Trigger n8n single-job tailoring webhook.
+        // Credits are deducted only after webhook dispatch succeeds.
+        const webhookResponse = await fetch(`${n8nWebhookUrl}/webhook/single-job-tailor`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: user.id,
+                jobId: job.id,
+                jobTitle: jobTitle || job.title || "Untitled Position",
+                company: company || job.company || "Unknown Company",
+                jobDescription: effectiveJobDescription,
+                masterCvText: user.masterProfile.rawText,
+                additionalContext: additionalContext || "",
+            }),
+        }).catch((err) => {
+            console.error("n8n webhook trigger failed:", err.message);
+            return null;
+        });
+
+        if (!webhookResponse || !webhookResponse.ok) {
+            return NextResponse.json(
+                { error: "Tailoring dispatch failed. Please try again." },
+                { status: 502 }
             );
         }
 
