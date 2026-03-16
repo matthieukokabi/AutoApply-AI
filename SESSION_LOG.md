@@ -2214,3 +2214,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/applications/[id]/route.ts`
 - `apps/web/__tests__/api/application-detail.test.ts`
+
+---
+
+## Session 53 — 2026-03-16
+
+### Completed
+
+**Applications List Query Validation Hardening:**
+- Added strict validation for `status` query param in `GET /api/applications`.
+- Route now returns `400` when `status` is not one of the allowed application statuses.
+- Added status type guard for strict build compatibility.
+- Added regression test for invalid `status` query values.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 182 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/applications/route.ts`
+- `apps/web/__tests__/api/applications.test.ts`

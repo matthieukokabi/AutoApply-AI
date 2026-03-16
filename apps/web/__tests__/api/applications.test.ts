@@ -82,6 +82,18 @@ describe("GET /api/applications", () => {
         );
     });
 
+    it("returns 400 for invalid status query param", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/applications?status=invalid_status");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Invalid status");
+        expect(prisma.application.findMany).not.toHaveBeenCalled();
+    });
+
     it("falls back to default limit when limit query param is invalid", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
