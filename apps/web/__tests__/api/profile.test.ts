@@ -83,4 +83,63 @@ describe("POST /api/profile", () => {
         expect(data.profile).toBeDefined();
         expect(prisma.masterProfile.upsert).toHaveBeenCalled();
     });
+
+    it("returns 400 when structuredJson is missing", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                rawText: "Valid raw text",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("required");
+        expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 when rawText exceeds max length", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                rawText: "a".repeat(150001),
+                structuredJson: mockProfile.structuredJson,
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("maximum length");
+        expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
+    });
+
+    it("returns 400 when structuredJson payload is too large", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                rawText: "Valid raw text",
+                structuredJson: { blob: "x".repeat(500001) },
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("too large");
+        expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
+    });
 });

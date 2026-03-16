@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
+const MAX_RAW_TEXT_LENGTH = 150_000;
+const MAX_STRUCTURED_JSON_LENGTH = 500_000;
+
 /**
  * GET /api/profile — fetch the current user's master profile
  */
@@ -41,9 +44,30 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { rawText, structuredJson } = body;
 
-        if (!rawText || !structuredJson) {
+        const safeRawText = typeof rawText === "string" ? rawText.trim() : "";
+        const hasStructuredJson =
+            structuredJson !== null &&
+            typeof structuredJson === "object" &&
+            !Array.isArray(structuredJson);
+
+        if (!safeRawText || !hasStructuredJson) {
             return NextResponse.json(
                 { error: "rawText and structuredJson are required" },
+                { status: 400 }
+            );
+        }
+
+        if (safeRawText.length > MAX_RAW_TEXT_LENGTH) {
+            return NextResponse.json(
+                { error: `rawText exceeds maximum length of ${MAX_RAW_TEXT_LENGTH} characters` },
+                { status: 400 }
+            );
+        }
+
+        const structuredJsonLength = JSON.stringify(structuredJson).length;
+        if (structuredJsonLength > MAX_STRUCTURED_JSON_LENGTH) {
+            return NextResponse.json(
+                { error: "structuredJson payload is too large" },
                 { status: 400 }
             );
         }
@@ -52,11 +76,11 @@ export async function POST(req: Request) {
             where: { userId: user.id },
             create: {
                 userId: user.id,
-                rawText,
+                rawText: safeRawText,
                 structuredJson,
             },
             update: {
-                rawText,
+                rawText: safeRawText,
                 structuredJson,
             },
         });

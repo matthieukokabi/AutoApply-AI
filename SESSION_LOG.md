@@ -2161,3 +2161,30 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/preferences/route.ts`
 - `apps/web/__tests__/api/preferences.test.ts`
+
+---
+
+## Session 51 — 2026-03-16
+
+### Completed
+
+**Profile Payload Validation Hardening:**
+- Added strict payload validation in `POST /api/profile`:
+  - `rawText` must be a non-empty string
+  - `structuredJson` must be a non-null object
+- Added size limits:
+  - `rawText` max 150,000 chars
+  - serialized `structuredJson` max 500,000 chars
+- Added regression tests for:
+  - missing `structuredJson`
+  - oversized `rawText`
+  - oversized `structuredJson`
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 179 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/profile/route.ts`
+- `apps/web/__tests__/api/profile.test.ts`
