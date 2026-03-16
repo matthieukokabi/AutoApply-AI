@@ -1495,6 +1495,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `.github/workflows/web-ci.yml`
+
+---
+
+## Session 24 — 2026-03-16
+
+### Completed
+
+**CI Security Gate Added:**
+- Added `npm audit --audit-level=moderate` to `.github/workflows/web-ci.yml`.
+- CI now blocks merges when moderate-or-higher vulnerabilities are introduced in `apps/web`.
+
+### Verification
+- `npm audit --audit-level=moderate` (apps/web) ✅ (0 vulnerabilities)
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (21 files, 139 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `.github/workflows/web-ci.yml`
 - `apps/web/package-lock.json`
 - `apps/web/middleware.ts`
 - `apps/web/lib/auth.ts`
