@@ -3,20 +3,17 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import {
+    buildAuthIntentUrl,
+    getLocalizedPathForRoute,
+    type CheckoutPlan,
+} from "@/lib/checkout-intent";
 
 interface CheckoutButtonProps {
-    plan: "pro_monthly" | "pro_yearly" | "unlimited" | "unlimited_yearly" | "credit_pack";
+    plan: CheckoutPlan;
     children: React.ReactNode;
     variant?: "default" | "outline" | "ghost" | "secondary" | "destructive" | "link";
     className?: string;
-}
-
-const SUPPORTED_LOCALES = new Set(["en", "fr", "de", "es", "it"]);
-
-function getLocalizedSignUpPath(pathname: string) {
-    const segments = pathname.split("/").filter(Boolean);
-    const locale = segments[0];
-    return locale && SUPPORTED_LOCALES.has(locale) ? `/${locale}/sign-up` : "/sign-up";
 }
 
 export function CheckoutButton({ plan, children, variant = "default", className }: CheckoutButtonProps) {
@@ -35,9 +32,15 @@ export function CheckoutButton({ plan, children, variant = "default", className 
                 .catch(() => ({})) as { url?: string; error?: string };
 
             if (res.status === 401) {
-                const signUpPath = getLocalizedSignUpPath(window.location.pathname);
-                const params = new URLSearchParams({ upgrade: plan, from: window.location.pathname });
-                window.location.href = `${signUpPath}?${params.toString()}`;
+                const signUpPath = getLocalizedPathForRoute(
+                    window.location.pathname,
+                    "sign-up"
+                );
+                window.location.href = buildAuthIntentUrl(
+                    signUpPath,
+                    plan,
+                    window.location.pathname
+                );
                 return;
             }
 

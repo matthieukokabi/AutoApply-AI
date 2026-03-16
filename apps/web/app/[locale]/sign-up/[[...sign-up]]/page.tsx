@@ -11,53 +11,14 @@ import {
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+    buildAuthIntentUrl,
+    buildPostAuthRedirectUrl,
+    getAuthPathsForLocale,
+    resolveCheckoutIntentPlan,
+} from "@/lib/checkout-intent";
 
-const SUPPORTED_LOCALES = new Set(["en", "fr", "de", "es", "it"]);
-const CHECKOUT_PLANS = new Set([
-    "pro_monthly",
-    "pro_yearly",
-    "unlimited",
-    "unlimited_yearly",
-    "credit_pack",
-]);
 const CLERK_LOAD_TIMEOUT_MS = 8000;
-
-type SearchParamsLike = { get(name: string): string | null };
-
-function getAuthPaths(localeParam: string | undefined) {
-    const locale = localeParam && SUPPORTED_LOCALES.has(localeParam) ? localeParam : null;
-    return {
-        signInPath: locale ? `/${locale}/sign-in` : "/sign-in",
-        signUpPath: locale ? `/${locale}/sign-up` : "/sign-up",
-        settingsPath: locale ? `/${locale}/settings` : "/settings",
-        dashboardPath: locale ? `/${locale}/dashboard` : "/dashboard",
-    };
-}
-
-function getRequestedUpgradePlan(searchParams: SearchParamsLike) {
-    const plan = searchParams.get("upgrade") ?? searchParams.get("plan");
-    return plan && CHECKOUT_PLANS.has(plan) ? plan : null;
-}
-
-function buildAuthIntentUrl(basePath: string, plan: string | null, from: string | null) {
-    if (!plan && !from) return basePath;
-    const params = new URLSearchParams();
-    if (plan) params.set("upgrade", plan);
-    if (from) params.set("from", from);
-    return `${basePath}?${params.toString()}`;
-}
-
-function buildPostAuthRedirectUrl(
-    settingsPath: string,
-    dashboardPath: string,
-    plan: string | null,
-    from: string | null
-) {
-    if (!plan) return dashboardPath;
-    const params = new URLSearchParams({ upgrade: plan });
-    if (from) params.set("from", from);
-    return `${settingsPath}?${params.toString()}`;
-}
 
 function SignUpFallback({ signInUrl }: { signInUrl: string }) {
     return (
@@ -95,8 +56,9 @@ export default function SignUpPage() {
     const params = useParams<{ locale?: string }>();
     const searchParams = useSearchParams();
     const localeParam = typeof params?.locale === "string" ? params.locale : undefined;
-    const { signInPath, signUpPath, settingsPath, dashboardPath } = getAuthPaths(localeParam);
-    const requestedPlan = getRequestedUpgradePlan(searchParams);
+    const { signInPath, signUpPath, settingsPath, dashboardPath } =
+        getAuthPathsForLocale(localeParam);
+    const requestedPlan = resolveCheckoutIntentPlan(searchParams);
     const fromParam = searchParams.get("from");
     const signInUrl = buildAuthIntentUrl(signInPath, requestedPlan, fromParam);
     const postAuthRedirectUrl = buildPostAuthRedirectUrl(

@@ -2355,3 +2355,36 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+
+---
+
+## Session 59 — 2026-03-16
+
+### Completed
+
+**Checkout Intent Regression Test Coverage:**
+- Extracted checkout-intent parsing and URL-building logic into shared helper module:
+  - locale-aware auth path resolution
+  - checkout plan validation
+  - auth intent URL generation
+  - post-auth redirect URL generation.
+- Refactored checkout button, sign-in/sign-up pages, and settings page to use shared helpers (no behavior change intended).
+- Added dedicated test suite for onboarding checkout-intent flow rules:
+  - `upgrade` param precedence
+  - legacy `plan` fallback compatibility
+  - invalid plan rejection
+  - locale-safe route generation
+  - auth and post-auth redirect URL construction.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (23 files, 192 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/checkout-intent.ts`
+- `apps/web/__tests__/checkout-intent.test.ts`
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`

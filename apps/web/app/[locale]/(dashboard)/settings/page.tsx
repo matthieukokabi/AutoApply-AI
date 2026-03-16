@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, AlertCircle } from "lucide-react";
 import { SettingsSkeleton } from "@/components/loading-skeleton";
+import { resolveCheckoutIntentPlan } from "@/lib/checkout-intent";
 
 interface UserInfo {
     automationEnabled: boolean;
@@ -46,23 +47,11 @@ const CURRENCIES = [
     { code: "BRL", symbol: "R$", label: "Brazilian Real" },
 ];
 
-const VALID_CHECKOUT_PLANS = new Set([
-    "pro_monthly",
-    "pro_yearly",
-    "unlimited",
-    "unlimited_yearly",
-    "credit_pack",
-]);
-
-function getValidUpgradePlan(plan: string | null) {
-    return plan && VALID_CHECKOUT_PLANS.has(plan) ? plan : null;
-}
-
 export default function SettingsPage() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const autoUpgradePlan = getValidUpgradePlan(searchParams.get("upgrade"));
+    const autoUpgradePlan = resolveCheckoutIntentPlan(searchParams);
     const autoCheckoutTriggeredRef = useRef(false);
 
     const [user, setUser] = useState<UserInfo | null>(null);
