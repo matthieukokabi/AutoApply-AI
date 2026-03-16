@@ -2806,3 +2806,21 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/next.config.js`
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
+
+---
+
+## Session 77 — 2026-03-16
+
+### Completed
+
+**Vercel Cost Optimization (Build Machine Downgrade):**
+- Pulled Vercel billing charges for `auto-apply-ai` (March 1–16) and identified **Build Minutes** as the dominant cost driver (largest share of effective spend).
+- Updated Vercel project setting for `auto-apply-ai` from `buildMachineType: "turbo"` to `buildMachineType: "standard"` via Vercel Project API.
+- Kept all app runtime settings and deployment behavior unchanged; only build machine tier was adjusted.
+
+### Verification
+- Confirmed via Vercel Project API response that `resourceConfig.buildMachineType` is now `standard`.
+- No repository source files changed for application logic in this step.
+
+### Files Modified This Session
+- `SESSION_LOG.md`
