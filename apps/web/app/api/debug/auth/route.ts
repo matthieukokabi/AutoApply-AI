@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
     // Check 1: Clerk auth
     try {
-        const { userId } = auth();
+        const { userId } = await auth();
         checks.clerkAuth = userId ? { status: "ok", userId } : { status: "not_signed_in" };
     } catch (error) {
         checks.clerkAuth = { status: "error", message: String(error) };

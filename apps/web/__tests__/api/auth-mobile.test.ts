@@ -1,10 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/auth/mobile/route";
-import { clerkClient } from "@clerk/nextjs";
+import { clerkClient } from "@clerk/nextjs/server";
 import { createMobileToken } from "@/lib/mobile-auth";
+
+const mockUsers = {
+    createUser: vi.fn(),
+    getUserList: vi.fn(),
+    verifyPassword: vi.fn(),
+};
 
 beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(clerkClient).mockResolvedValue({ users: mockUsers } as any);
 });
 
 describe("POST /api/auth/mobile", () => {
@@ -35,7 +42,7 @@ describe("POST /api/auth/mobile", () => {
 
     describe("sign-up flow", () => {
         it("creates a new user and returns token", async () => {
-            vi.mocked(clerkClient.users.createUser).mockResolvedValue({
+            vi.mocked(mockUsers.createUser).mockResolvedValue({
                 id: "clerk_new_user",
             } as any);
             vi.mocked(createMobileToken).mockResolvedValue("new_jwt_token");
@@ -58,14 +65,14 @@ describe("POST /api/auth/mobile", () => {
             expect(data.userId).toBe("clerk_new_user");
             expect(data.email).toBe("newuser@example.com");
 
-            expect(clerkClient.users.createUser).toHaveBeenCalledWith({
+            expect(mockUsers.createUser).toHaveBeenCalledWith({
                 emailAddress: ["newuser@example.com"],
                 password: "SecurePass123!",
             });
         });
 
         it("returns 400 when sign-up fails (duplicate email)", async () => {
-            vi.mocked(clerkClient.users.createUser).mockRejectedValue({
+            vi.mocked(mockUsers.createUser).mockRejectedValue({
                 errors: [{ message: "That email address is taken" }],
             });
 
@@ -89,13 +96,13 @@ describe("POST /api/auth/mobile", () => {
 
     describe("sign-in flow", () => {
         it("signs in existing user and returns token", async () => {
-            vi.mocked(clerkClient.users.getUserList).mockResolvedValue([
+            vi.mocked(mockUsers.getUserList).mockResolvedValue([
                 {
                     id: "clerk_existing_user",
                     emailAddresses: [{ emailAddress: "user@example.com" }],
                 },
             ] as any);
-            vi.mocked(clerkClient.users.verifyPassword).mockResolvedValue({} as any);
+            vi.mocked(mockUsers.verifyPassword).mockResolvedValue({} as any);
             vi.mocked(createMobileToken).mockResolvedValue("signed_in_token");
 
             const request = new Request("http://localhost/api/auth/mobile", {
@@ -116,7 +123,7 @@ describe("POST /api/auth/mobile", () => {
         });
 
         it("returns 401 when user not found", async () => {
-            vi.mocked(clerkClient.users.getUserList).mockResolvedValue([] as any);
+            vi.mocked(mockUsers.getUserList).mockResolvedValue([] as any);
 
             const request = new Request("http://localhost/api/auth/mobile", {
                 method: "POST",
@@ -135,10 +142,10 @@ describe("POST /api/auth/mobile", () => {
         });
 
         it("returns 401 when password is wrong", async () => {
-            vi.mocked(clerkClient.users.getUserList).mockResolvedValue([
+            vi.mocked(mockUsers.getUserList).mockResolvedValue([
                 { id: "clerk_user", emailAddresses: [] },
             ] as any);
-            vi.mocked(clerkClient.users.verifyPassword).mockRejectedValue(
+            vi.mocked(mockUsers.verifyPassword).mockRejectedValue(
                 new Error("Password incorrect")
             );
 
@@ -159,10 +166,10 @@ describe("POST /api/auth/mobile", () => {
         });
 
         it("defaults to sign-in when no action specified", async () => {
-            vi.mocked(clerkClient.users.getUserList).mockResolvedValue([
+            vi.mocked(mockUsers.getUserList).mockResolvedValue([
                 { id: "clerk_user", emailAddresses: [{ emailAddress: "user@example.com" }] },
             ] as any);
-            vi.mocked(clerkClient.users.verifyPassword).mockResolvedValue({} as any);
+            vi.mocked(mockUsers.verifyPassword).mockResolvedValue({} as any);
             vi.mocked(createMobileToken).mockResolvedValue("token_123");
 
             const request = new Request("http://localhost/api/auth/mobile", {
@@ -178,8 +185,8 @@ describe("POST /api/auth/mobile", () => {
             const response = await POST(request);
             expect(response.status).toBe(200);
             // Should have called getUserList (sign-in flow), not createUser
-            expect(clerkClient.users.getUserList).toHaveBeenCalled();
-            expect(clerkClient.users.createUser).not.toHaveBeenCalled();
+            expect(mockUsers.getUserList).toHaveBeenCalled();
+            expect(mockUsers.createUser).not.toHaveBeenCalled();
         });
     });
 });

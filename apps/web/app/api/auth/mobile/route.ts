@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { clerkClient } from '@clerk/nextjs';
+import { clerkClient } from '@clerk/nextjs/server';
 import { createMobileToken } from '@/lib/mobile-auth';
 
 /**
@@ -9,6 +9,7 @@ import { createMobileToken } from '@/lib/mobile-auth';
  */
 export async function POST(req: Request) {
   try {
+    const client = await clerkClient();
     const body = await req.json();
     const { email, password, action = 'sign-in' } = body;
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     if (action === 'sign-up') {
       // Create a new user via Clerk Backend API
       try {
-        const user = await clerkClient.users.createUser({
+        const user = await client.users.createUser({
           emailAddress: [email],
           password,
         });
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
 
     // Sign in flow
     // 1. Find user by email
-    const users = await clerkClient.users.getUserList({
+    const users = await client.users.getUserList({
       emailAddress: [email],
     });
 
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
 
     // 2. Verify password via Clerk Backend API
     try {
-      await clerkClient.users.verifyPassword({
+      await client.users.verifyPassword({
         userId: user.id,
         password,
       });

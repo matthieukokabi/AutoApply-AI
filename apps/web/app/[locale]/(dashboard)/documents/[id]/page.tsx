@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { DocumentViewer } from "@/components/document-viewer";
@@ -35,7 +35,7 @@ export default async function DocumentViewerPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) redirect("/sign-in");
     const { id } = await params;
 

@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +70,7 @@ async function getDashboardData(clerkId: string) {
 }
 
 export default async function DashboardPage() {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) redirect("/sign-in");
 
     const data = await getDashboardData(userId);

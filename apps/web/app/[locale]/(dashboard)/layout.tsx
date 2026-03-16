@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export default async function DashboardLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) redirect("/sign-in");
 
     const user = await currentUser();
@@ -43,9 +43,9 @@ export default async function DashboardLayout({
                 <div className="text-center space-y-4">
                     <h1 className="text-2xl font-bold">Something went wrong</h1>
                     <p className="text-muted-foreground">We couldn&apos;t load your account. Please try again.</p>
-                    <a href="/dashboard" className="inline-block px-4 py-2 bg-primary text-white rounded-md">
+                    <Link href="/dashboard" className="inline-block px-4 py-2 bg-primary text-white rounded-md">
                         Retry
-                    </a>
+                    </Link>
                 </div>
             </div>
         );

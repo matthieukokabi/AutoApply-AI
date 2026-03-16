@@ -1431,3 +1431,41 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Blockers / Decisions
 - ProductHunt draft ready, just needs launch date selection
 - Neon free tier at 86.1% compute usage — monitor closely, may need upgrade before launch
+
+---
+
+## Session 19 — 2026-03-16
+
+### Completed
+
+**Clerk v7 Compatibility Migration (Web App):**
+- Upgraded Clerk usage to `@clerk/nextjs@^7.0.4` and eliminated remaining audit findings.
+- Migrated server-side imports from `@clerk/nextjs` to `@clerk/nextjs/server`.
+- Updated auth calls to async (`await auth()`) in dashboard pages, debug route, and auth helper.
+- Migrated mobile auth route to async Clerk backend client (`const client = await clerkClient()`).
+- Replaced deprecated `authMiddleware` with `clerkMiddleware` + `createRouteMatcher`, preserving locale middleware behavior and existing redirect logic.
+- Updated Clerk UI auth pages to v7 redirect props (`forceRedirectUrl`).
+- Fixed dashboard fallback retry link to use `<Link />` (lint-safe).
+- Updated test mocks and API tests for new Clerk server import surface and async `clerkClient()`.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (21 files, 139 tests)
+- `npm run build` (apps/web) ✅
+- `npm audit --json` (apps/web) ✅ (0 vulnerabilities)
+
+### Files Modified This Session
+- `apps/web/package.json`
+- `apps/web/package-lock.json`
+- `apps/web/middleware.ts`
+- `apps/web/lib/auth.ts`
+- `apps/web/app/api/auth/mobile/route.ts`
+- `apps/web/app/api/debug/auth/route.ts`
+- `apps/web/app/[locale]/(dashboard)/layout.tsx`
+- `apps/web/app/[locale]/(dashboard)/dashboard/page.tsx`
+- `apps/web/app/[locale]/(dashboard)/documents/[id]/page.tsx`
+- `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/__tests__/setup.ts`
+- `apps/web/__tests__/api/auth-mobile.test.ts`
+- `apps/web/__tests__/api/debug-auth.test.ts`

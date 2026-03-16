@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/mobile-auth";
 import { sendWelcomeEmail } from "@/lib/email";
@@ -17,7 +17,7 @@ export async function getAuthUser(req?: Request) {
 
     // 1. Try Clerk session auth (web)
     try {
-        const result = auth();
+        const result = await auth();
         if (result.userId) {
             clerkId = result.userId;
         }

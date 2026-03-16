@@ -1,4 +1,4 @@
-import { authMiddleware } from "@clerk/nextjs";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
@@ -7,94 +7,92 @@ import { locales, defaultLocale } from "@/i18n/config";
 // Create the intl middleware for locale routing
 const intlMiddleware = createMiddleware(routing);
 
-export default authMiddleware({
-    // These routes don't require authentication
-    publicRoutes: [
-        "/",
-        "/:locale",
-        "/:locale/sign-in(.*)",
-        "/:locale/sign-up(.*)",
-        "/sign-in(.*)",
-        "/sign-up(.*)",
-        "/__clerk(.*)",
-        "/api/(.*)",
-        "/:locale/terms",
-        "/:locale/privacy",
-        "/:locale/contact",
-        "/terms",
-        "/privacy",
-        "/contact",
-        "/:locale/blog",
-        "/:locale/blog/(.*)",
-        "/blog",
-        "/blog/(.*)",
-        "/:locale/roadmap",
-        "/roadmap",
-    ],
+const publicRoutes = [
+    "/",
+    "/:locale",
+    "/:locale/sign-in(.*)",
+    "/:locale/sign-up(.*)",
+    "/sign-in(.*)",
+    "/sign-up(.*)",
+    "/__clerk(.*)",
+    "/api/(.*)",
+    "/:locale/terms",
+    "/:locale/privacy",
+    "/:locale/contact",
+    "/terms",
+    "/privacy",
+    "/contact",
+    "/:locale/blog",
+    "/:locale/blog/(.*)",
+    "/blog",
+    "/blog/(.*)",
+    "/:locale/roadmap",
+    "/roadmap",
+];
 
-    beforeAuth(req) {
-        // Skip locale routing for API routes and Clerk internals
-        if (
-            req.nextUrl.pathname.startsWith("/api/") ||
-            req.nextUrl.pathname.startsWith("/__clerk")
-        ) {
-            return;
-        }
-        // Handle locale routing before auth
-        return intlMiddleware(req);
-    },
+const isPublicRoute = createRouteMatcher(publicRoutes);
 
-    afterAuth(authResult, req) {
-        const { userId } = authResult;
-        const url = req.nextUrl;
+export default clerkMiddleware(async (auth, req) => {
+    let intlResponse: ReturnType<typeof intlMiddleware> | undefined;
 
-        // Skip redirects for API routes — return void to preserve beforeAuth response
-        if (url.pathname.startsWith("/api/")) {
-            return;
-        }
+    // Skip locale routing for API routes and Clerk internals
+    if (
+        !req.nextUrl.pathname.startsWith("/api/") &&
+        !req.nextUrl.pathname.startsWith("/__clerk")
+    ) {
+        intlResponse = intlMiddleware(req);
+    }
 
-        // IMPORTANT: Do NOT redirect Clerk's internal auth routes
-        const isClerkInternalRoute =
-            url.pathname.includes("/sso-callback") ||
-            url.pathname.includes("/factor-") ||
-            url.pathname.includes("/verify") ||
-            url.pathname.includes("/reset-password") ||
-            url.pathname.includes("/verify-email");
+    const { userId } = await auth();
+    const url = req.nextUrl;
 
-        // Detect locale from path
-        const pathLocale = locales.find(
-            (l) => url.pathname.startsWith(`/${l}/`) || url.pathname === `/${l}`
-        );
-        const localePrefix = pathLocale && pathLocale !== defaultLocale ? `/${pathLocale}` : "";
+    // Skip redirects for API routes and preserve intl response when present
+    if (url.pathname.startsWith("/api/")) {
+        return intlResponse;
+    }
 
-        // If signed-in user visits landing page, redirect to dashboard
-        if (
-            userId &&
-            !isClerkInternalRoute &&
-            (url.pathname === "/" || locales.some((l) => url.pathname === `/${l}`))
-        ) {
-            return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
-        }
+    // IMPORTANT: Do NOT redirect Clerk's internal auth routes
+    const isClerkInternalRoute =
+        url.pathname.includes("/sso-callback") ||
+        url.pathname.includes("/factor-") ||
+        url.pathname.includes("/verify") ||
+        url.pathname.includes("/reset-password") ||
+        url.pathname.includes("/verify-email");
 
-        // If user is signed in and on sign-in/sign-up page, redirect to dashboard
-        if (
-            userId &&
-            !isClerkInternalRoute &&
-            (url.pathname.endsWith("/sign-in") || url.pathname.endsWith("/sign-up") ||
-             url.pathname === "/sign-in" || url.pathname === "/sign-up")
-        ) {
-            return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
-        }
+    // Detect locale from path
+    const pathLocale = locales.find(
+        (l) => url.pathname.startsWith(`/${l}/`) || url.pathname === `/${l}`
+    );
+    const localePrefix = pathLocale && pathLocale !== defaultLocale ? `/${pathLocale}` : "";
 
-        // If user is NOT signed in and trying to access a protected route
-        if (!userId && !authResult.isPublicRoute) {
-            return NextResponse.redirect(new URL(`${localePrefix}/sign-in`, req.url));
-        }
+    // If signed-in user visits landing page, redirect to dashboard
+    if (
+        userId &&
+        !isClerkInternalRoute &&
+        (url.pathname === "/" || locales.some((l) => url.pathname === `/${l}`))
+    ) {
+        return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
+    }
 
-        // CRITICAL: Return void (not NextResponse.next()) to preserve
-        // the intlMiddleware rewrite response from beforeAuth.
-        return;
-    },
+    // If user is signed in and on sign-in/sign-up page, redirect to dashboard
+    if (
+        userId &&
+        !isClerkInternalRoute &&
+        (url.pathname.endsWith("/sign-in") ||
+            url.pathname.endsWith("/sign-up") ||
+            url.pathname === "/sign-in" ||
+            url.pathname === "/sign-up")
+    ) {
+        return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
+    }
+
+    // If user is NOT signed in and trying to access a protected route
+    if (!userId && !isPublicRoute(req)) {
+        return NextResponse.redirect(new URL(`${localePrefix}/sign-in`, req.url));
+    }
+
+    // Preserve locale rewrite/redirect response from intl middleware when set.
+    return intlResponse;
 });
 
 export const config = {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/debug/auth/route";
 import { prisma } from "@/lib/prisma";
-import { auth, currentUser } from "@clerk/nextjs";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 describe("GET /api/debug/auth", () => {
     beforeEach(() => {
@@ -44,7 +44,7 @@ describe("GET /api/debug/auth", () => {
         process.env.ENABLE_DEBUG_AUTH_ENDPOINT = "true";
         process.env.DEBUG_AUTH_SECRET = "debug_secret";
 
-        vi.mocked(auth).mockReturnValue({ userId: "clerk_123" } as any);
+        vi.mocked(auth).mockResolvedValue({ userId: "clerk_123" } as any);
         vi.mocked(currentUser).mockResolvedValue({
             id: "clerk_123",
             emailAddresses: [{ emailAddress: "user@example.com" }],

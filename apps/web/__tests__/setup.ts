@@ -1,24 +1,33 @@
 import { vi } from "vitest";
 
-// Mock Clerk auth
+const mockClerkUsers = {
+    createUser: vi.fn(),
+    getUserList: vi.fn(),
+    verifyPassword: vi.fn(),
+};
+
+// Mock Clerk client-side utilities/components
 vi.mock("@clerk/nextjs", () => ({
-    auth: vi.fn(() => ({ userId: "clerk_test_user_123" })),
-    currentUser: vi.fn(() => ({
+    ClerkProvider: ({ children }: any) => children,
+    SignIn: () => null,
+    SignUp: () => null,
+    useAuth: vi.fn(() => ({ isLoaded: true, isSignedIn: true, userId: "clerk_test_user_123" })),
+    useClerk: vi.fn(() => ({ signOut: vi.fn() })),
+}));
+
+// Mock Clerk server-side utilities
+vi.mock("@clerk/nextjs/server", () => ({
+    auth: vi.fn(async () => ({ userId: "clerk_test_user_123" })),
+    currentUser: vi.fn(async () => ({
         firstName: "Test",
         lastName: "User",
         emailAddresses: [{ emailAddress: "test@example.com" }],
     })),
-    authMiddleware: vi.fn(() => (req: any, res: any, next: any) => next?.()),
-    ClerkProvider: ({ children }: any) => children,
-    SignIn: () => null,
-    SignUp: () => null,
-    clerkClient: {
-        users: {
-            createUser: vi.fn(),
-            getUserList: vi.fn(),
-            verifyPassword: vi.fn(),
-        },
-    },
+    clerkClient: vi.fn(async () => ({
+        users: mockClerkUsers,
+    })),
+    clerkMiddleware: vi.fn((handler: any) => handler),
+    createRouteMatcher: vi.fn(() => vi.fn(() => false)),
 }));
 
 // Mock Prisma
