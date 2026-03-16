@@ -5,9 +5,9 @@ const CONTACT_RATE_LIMIT_MAX_REQUESTS = 5;
 const CONTACT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const contactRequestLog = new Map<string, number[]>();
 
-function getResend() {
+function getResend(apiKey: string) {
     const { Resend } = require("resend");
-    return new Resend(process.env.RESEND_API_KEY);
+    return new Resend(apiKey);
 }
 
 function escapeHtml(value: string): string {
@@ -42,6 +42,12 @@ export async function POST(req: Request) {
                 { error: "Invalid email format" },
                 { status: 400 }
             );
+        }
+
+        const resendApiKey = process.env.RESEND_API_KEY;
+        if (!resendApiKey) {
+            console.error("RESEND_API_KEY is required for /api/contact");
+            return NextResponse.json({ error: "Contact endpoint misconfigured" }, { status: 503 });
         }
 
         const clientIp = getClientIp(req);
@@ -81,7 +87,7 @@ export async function POST(req: Request) {
         const safeSubject = escapeHtml(subjectLabels[subject] || "General");
         const safeMessage = escapeHtml(message).replace(/\n/g, "<br />");
 
-        const resend = getResend();
+        const resend = getResend(resendApiKey);
         await resend.emails.send({
             from: "AutoApply AI <noreply@autoapply.works>",
             to: ["support@autoapply.works"],

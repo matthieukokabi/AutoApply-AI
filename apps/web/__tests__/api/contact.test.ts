@@ -108,6 +108,27 @@ describe("POST /api/contact", () => {
         expect(data.error).toContain("too long");
     });
 
+    it("returns 503 when RESEND_API_KEY is missing", async () => {
+        delete process.env.RESEND_API_KEY;
+
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: "John Doe",
+                email: "john@example.com",
+                subject: "support",
+                message: "I need help with my account settings.",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toBe("Contact endpoint misconfigured");
+    });
+
     it("handles missing subject gracefully (defaults to General)", async () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",

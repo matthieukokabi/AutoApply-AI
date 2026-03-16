@@ -1924,3 +1924,24 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
+
+---
+
+## Session 40 — 2026-03-16
+
+### Completed
+
+**Contact API Misconfiguration Hardening:**
+- Added explicit `RESEND_API_KEY` guard to `POST /api/contact`.
+- Endpoint now returns `503` with a clear error when email provider config is missing instead of failing later with a generic server error.
+- Refactored local Resend client helper to accept validated API key input.
+- Added regression test for missing `RESEND_API_KEY`.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 161 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/contact/route.ts`
+- `apps/web/__tests__/api/contact.test.ts`
