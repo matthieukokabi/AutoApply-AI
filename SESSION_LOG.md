@@ -1476,6 +1476,25 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `.gitignore`
 - `apps/web/tsconfig.tsbuildinfo` (deleted)
+
+---
+
+## Session 23 — 2026-03-16
+
+### Completed
+
+**CI Baseline Added (Web App):**
+- Added GitHub Actions workflow at `.github/workflows/web-ci.yml`.
+- Workflow triggers on `push` and `pull_request` to `main` for `apps/web/**` changes.
+- CI job runs: `npm ci`, `npm run lint`, `npm test`, `npm run build` in `apps/web`.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (21 files, 139 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `.github/workflows/web-ci.yml`
 - `apps/web/package-lock.json`
 - `apps/web/middleware.ts`
 - `apps/web/lib/auth.ts`
