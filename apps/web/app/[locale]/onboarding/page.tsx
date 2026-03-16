@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@clerk/nextjs";
 import { Link } from "@/i18n/routing";
@@ -16,7 +16,9 @@ import {
     Loader2,
     Check,
     AlertCircle,
+    Circle,
 } from "lucide-react";
+import { buildOnboardingHealthSnapshot, type OnboardingHealthSnapshot } from "@/lib/onboarding-health";
 
 type Step = "welcome" | "cv" | "preferences" | "done";
 
@@ -46,6 +48,10 @@ export default function OnboardingPage() {
     const [rawText, setRawText] = useState("");
     const [cvUploaded, setCvUploaded] = useState(false);
     const [error, setError] = useState("");
+    const [healthLoading, setHealthLoading] = useState(false);
+    const [healthSnapshot, setHealthSnapshot] = useState<OnboardingHealthSnapshot | null>(
+        null
+    );
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Preferences
@@ -55,11 +61,65 @@ export default function OnboardingPage() {
     const [salary, setSalary] = useState("");
     const [currency, setCurrency] = useState("USD");
 
-    // Redirect to sign-in if not authenticated
-    if (isLoaded && !isSignedIn) {
-        router.push("/sign-in");
-        return null;
-    }
+    useEffect(() => {
+        if (isLoaded && !isSignedIn) {
+            router.push("/sign-in");
+        }
+    }, [isLoaded, isSignedIn, router]);
+
+    useEffect(() => {
+        if (!isLoaded || !isSignedIn) {
+            return;
+        }
+
+        let cancelled = false;
+
+        async function loadHealthSnapshot() {
+            setHealthLoading(true);
+
+            const [diagnosticsPayload, profilePayload, preferencesPayload] =
+                await Promise.all([
+                    fetch("/api/auth/diagnostics", { cache: "no-store" })
+                        .then(async (res) => {
+                            if (!res.ok) return null;
+                            return await res.json();
+                        })
+                        .catch(() => null),
+                    fetch("/api/profile", { cache: "no-store" })
+                        .then(async (res) => {
+                            if (!res.ok) return null;
+                            return await res.json();
+                        })
+                        .catch(() => null),
+                    fetch("/api/preferences", { cache: "no-store" })
+                        .then(async (res) => {
+                            if (!res.ok) return null;
+                            return await res.json();
+                        })
+                        .catch(() => null),
+                ]);
+
+            if (cancelled) {
+                return;
+            }
+
+            setHealthSnapshot(
+                buildOnboardingHealthSnapshot({
+                    isSignedIn: true,
+                    diagnosticsPayload,
+                    profilePayload,
+                    preferencesPayload,
+                })
+            );
+            setHealthLoading(false);
+        }
+
+        void loadHealthSnapshot();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isLoaded, isSignedIn]);
 
     async function handleFileUpload(file: File) {
         setUploading(true);
@@ -75,6 +135,9 @@ export default function OnboardingPage() {
                 const data = await res.json();
                 setRawText(data.profile.rawText);
                 setCvUploaded(true);
+                setHealthSnapshot((current) =>
+                    current ? { ...current, profileReady: true } : current
+                );
             } else {
                 const data = await res.json().catch(() => ({}));
                 setError(data.error || `Upload failed (${res.status}). Please try again or paste your CV text instead.`);
@@ -99,6 +162,9 @@ export default function OnboardingPage() {
             });
             if (res.ok) {
                 setCvUploaded(true);
+                setHealthSnapshot((current) =>
+                    current ? { ...current, profileReady: true } : current
+                );
             } else {
                 const data = await res.json().catch(() => ({}));
                 setError(data.error || "Failed to save CV text. Please try again.");
@@ -128,6 +194,9 @@ export default function OnboardingPage() {
                 }),
             });
             if (res.ok) {
+                setHealthSnapshot((current) =>
+                    current ? { ...current, preferencesReady: true } : current
+                );
                 setStep("done");
             } else {
                 const data = await res.json().catch(() => ({}));
@@ -140,6 +209,46 @@ export default function OnboardingPage() {
             setSaving(false);
         }
     }
+
+    if (isLoaded && !isSignedIn) {
+        return null;
+    }
+
+    const effectiveProfileReady =
+        Boolean(healthSnapshot?.profileReady) ||
+        cvUploaded ||
+        rawText.trim().length >= 50;
+    const effectivePreferencesReady =
+        Boolean(healthSnapshot?.preferencesReady) || step === "done";
+    const effectiveAuthReady = Boolean(healthSnapshot?.authReady) || (isLoaded && isSignedIn);
+    const effectiveCheckoutReady = Boolean(healthSnapshot?.checkoutReady);
+
+    const healthChecks = [
+        {
+            id: "auth",
+            label: "Secure auth session",
+            ready: effectiveAuthReady,
+            waitingText: "Waiting for authentication",
+        },
+        {
+            id: "profile",
+            label: "CV profile source",
+            ready: effectiveProfileReady,
+            waitingText: "Upload or paste your CV",
+        },
+        {
+            id: "preferences",
+            label: "Job preferences",
+            ready: effectivePreferencesReady,
+            waitingText: "Complete Step 2",
+        },
+        {
+            id: "checkout",
+            label: "Checkout configuration",
+            ready: effectiveCheckoutReady,
+            waitingText: healthSnapshot?.checkoutDetail || "Verifying checkout setup",
+        },
+    ];
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col">
@@ -166,6 +275,41 @@ export default function OnboardingPage() {
                                 }`}
                             />
                         ))}
+                    </div>
+
+                    <div className="mb-6 rounded-lg border bg-card/60 p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                            <p className="text-sm font-semibold">Onboarding health checklist</p>
+                            {healthLoading ? (
+                                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Checking...
+                                </span>
+                            ) : null}
+                        </div>
+                        <div className="space-y-2">
+                            {healthChecks.map((check) => (
+                                <div key={check.id} className="flex items-center justify-between gap-3">
+                                    <span className="text-sm">{check.label}</span>
+                                    {check.ready ? (
+                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
+                                            <Check className="h-3.5 w-3.5" />
+                                            Ready
+                                        </span>
+                                    ) : healthLoading ? (
+                                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                            <Circle className="h-3.5 w-3.5" />
+                                            Pending
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                                            <AlertCircle className="h-3.5 w-3.5" />
+                                            {check.waitingText}
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     {step === "welcome" && (

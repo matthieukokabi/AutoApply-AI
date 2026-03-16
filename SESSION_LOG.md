@@ -2713,3 +2713,30 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/components/photo-upload.tsx`
 - `apps/web/lib/photo-upload.ts`
 - `apps/web/__tests__/photo-upload.test.ts`
+
+---
+
+## Session 73 — 2026-03-16
+
+### Completed
+
+**Onboarding Health Checklist (Auth/Profile/Preferences/Checkout Readiness):**
+- Added onboarding health snapshot utility to evaluate:
+  - secure auth session readiness
+  - profile source availability
+  - preferences readiness
+  - checkout configuration readiness.
+- Added onboarding-page checklist UI that shows readiness state inline and updates as users progress.
+- Wired onboarding flow to mark checklist items ready immediately after successful CV upload/text save and preference save.
+- Refactored sign-in redirect into `useEffect` to preserve stable hook execution order.
+- Added regression tests for onboarding health snapshot logic.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (27 files, 211 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/onboarding/page.tsx`
+- `apps/web/lib/onboarding-health.ts`
+- `apps/web/__tests__/onboarding-health.test.ts`
