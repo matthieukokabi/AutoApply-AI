@@ -3334,3 +3334,30 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `SESSION_LOG.md`
+
+---
+
+## Session 99 — 2026-03-16
+
+### Completed
+
+**Production Rollout (Cost-Optimization Batch 2):**
+- Deployed the latest batched optimization changes to production:
+  - `https://auto-apply-hov7mr6tt-matts-projects-d33e5f04.vercel.app`
+- Production alias updated:
+  - `https://autoapply.works`
+
+Included in this rollout:
+- middleware matcher narrowing for locale-prefixed auth routes.
+- static bare-route redirects for public pages.
+- static bare-route redirects for auth entry routes.
+- client-side signed-in guard on auth pages.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web, against `https://autoapply.works`) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_222829.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web, against `https://autoapply.works`) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260316_222829.jsonl`
+
+### Files Modified This Session
+- `SESSION_LOG.md`
