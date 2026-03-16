@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CheckoutButton } from "@/components/checkout-button";
+import { buildAuthIntentUrl, getAuthPathsForLocale } from "@/lib/checkout-intent";
 import {
     ArrowRight,
     FileText,
@@ -41,6 +42,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function LandingPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
+    const { signUpPath } = getAuthPathsForLocale(locale);
+    const localeFromPath = `/${locale}`;
+    const signUpProMonthlyHref = buildAuthIntentUrl(signUpPath, "pro_monthly", localeFromPath);
+    const signUpProYearlyHref = buildAuthIntentUrl(signUpPath, "pro_yearly", localeFromPath);
+    const signUpUnlimitedHref = buildAuthIntentUrl(signUpPath, "unlimited", localeFromPath);
+    const signUpUnlimitedYearlyHref = buildAuthIntentUrl(signUpPath, "unlimited_yearly", localeFromPath);
+    const signUpCreditPackHref = buildAuthIntentUrl(signUpPath, "credit_pack", localeFromPath);
 
     // NOTE: Signed-in user redirect is handled by middleware (afterAuth)
     // to avoid making this page dynamic (saves serverless function invocations)
@@ -356,10 +364,19 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </ul>
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
-                            <CheckoutButton plan="pro_monthly" className="h-auto w-full whitespace-normal py-3 text-center leading-tight">
+                            <CheckoutButton
+                                plan="pro_monthly"
+                                fallbackHref={signUpProMonthlyHref}
+                                className="h-auto w-full whitespace-normal py-3 text-center leading-tight"
+                            >
                                 {t("pricing.getProMonthly")}
                             </CheckoutButton>
-                            <CheckoutButton plan="pro_yearly" variant="ghost" className="h-auto w-full whitespace-normal py-2 text-center text-xs leading-tight">
+                            <CheckoutButton
+                                plan="pro_yearly"
+                                fallbackHref={signUpProYearlyHref}
+                                variant="ghost"
+                                className="h-auto w-full whitespace-normal py-2 text-center text-xs leading-tight"
+                            >
                                 {t("pricing.proSaveYearly")}
                             </CheckoutButton>
                         </CardFooter>
@@ -397,10 +414,20 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </ul>
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2">
-                            <CheckoutButton plan="unlimited" variant="outline" className="h-auto w-full whitespace-normal py-3 text-center leading-tight">
+                            <CheckoutButton
+                                plan="unlimited"
+                                fallbackHref={signUpUnlimitedHref}
+                                variant="outline"
+                                className="h-auto w-full whitespace-normal py-3 text-center leading-tight"
+                            >
                                 {t("pricing.goUnlimited")}
                             </CheckoutButton>
-                            <CheckoutButton plan="unlimited_yearly" variant="ghost" className="h-auto w-full whitespace-normal py-2 text-center text-xs leading-tight">
+                            <CheckoutButton
+                                plan="unlimited_yearly"
+                                fallbackHref={signUpUnlimitedYearlyHref}
+                                variant="ghost"
+                                className="h-auto w-full whitespace-normal py-2 text-center text-xs leading-tight"
+                            >
                                 {t("pricing.unlimitedSaveYearly")}
                             </CheckoutButton>
                         </CardFooter>
@@ -411,7 +438,12 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     <p className="text-sm text-muted-foreground mb-3">
                         {t("pricing.creditPackDesc")}
                     </p>
-                    <CheckoutButton plan="credit_pack" variant="secondary" className="h-auto whitespace-normal py-3 text-center leading-tight">
+                    <CheckoutButton
+                        plan="credit_pack"
+                        fallbackHref={signUpCreditPackHref}
+                        variant="secondary"
+                        className="h-auto whitespace-normal py-3 text-center leading-tight"
+                    >
                         {t("pricing.buyCreditPack")}
                     </CheckoutButton>
                 </div>

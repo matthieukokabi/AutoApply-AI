@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -20,9 +20,16 @@ interface CheckoutButtonProps {
     children: React.ReactNode;
     variant?: "default" | "outline" | "ghost" | "secondary" | "destructive" | "link";
     className?: string;
+    fallbackHref?: string;
 }
 
-export function CheckoutButton({ plan, children, variant = "default", className }: CheckoutButtonProps) {
+export function CheckoutButton({
+    plan,
+    children,
+    variant = "default",
+    className,
+    fallbackHref,
+}: CheckoutButtonProps) {
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const { isLoaded, userId } = useAuth();
@@ -91,17 +98,40 @@ export function CheckoutButton({ plan, children, variant = "default", className 
         }
     }
 
+    function handleAnchorCheckout(event: MouseEvent<HTMLAnchorElement>) {
+        event.preventDefault();
+        if (loading) {
+            return;
+        }
+
+        void handleCheckout();
+    }
+
     return (
         <div className="space-y-2">
-            <Button
-                variant={variant}
-                className={className}
-                onClick={handleCheckout}
-                disabled={loading}
-            >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {children}
-            </Button>
+            {fallbackHref ? (
+                <Button variant={variant} className={className} asChild>
+                    <a
+                        href={fallbackHref}
+                        onClick={handleAnchorCheckout}
+                        aria-disabled={loading}
+                        className={loading ? "pointer-events-none opacity-50" : undefined}
+                    >
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        {children}
+                    </a>
+                </Button>
+            ) : (
+                <Button
+                    variant={variant}
+                    className={className}
+                    onClick={handleCheckout}
+                    disabled={loading}
+                >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {children}
+                </Button>
+            )}
             {errorMessage ? (
                 <p role="alert" className="text-center text-xs text-destructive">
                     {errorMessage}

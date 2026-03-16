@@ -3468,3 +3468,32 @@ Included in this rollout:
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `SESSION_LOG.md`
+
+---
+
+## Session 104 — 2026-03-17
+
+### Completed
+
+**Pricing CTA Hydration-Safe Fallback (Safari/WebKit Mobile Reliability):**
+- Added non-JS/hydration-safe fallback links for landing pricing checkout CTAs.
+- `CheckoutButton` now supports optional `fallbackHref`:
+  - renders an anchor fallback (server-rendered href) while preserving JS checkout behavior after hydration.
+- Wired all landing pricing CTAs to localized sign-up intent URLs (`upgrade` + `from`) so a click still navigates correctly even if React handlers are not yet hydrated.
+- This addresses a reproduced WebKit mobile edge case where early CTA clicks on landing could be ignored.
+
+### Verification
+- Focused local WebKit repro (mobile viewport) against patched app ✅:
+  - landing pricing CTA now navigates to `/fr/sign-up?upgrade=pro_monthly&from=%2Ffr`
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260317_001634.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260317_001759.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/app/[locale]/page.tsx`
+- `SESSION_LOG.md`
