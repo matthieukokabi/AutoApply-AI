@@ -2908,3 +2908,22 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/lib/checkout-intent.ts`
 - `apps/web/components/checkout-button.tsx`
 - `apps/web/__tests__/checkout-intent.test.ts`
+
+---
+
+## Session 82 — 2026-03-16
+
+### Completed
+
+**Vercel Cost Guardrail Correction (Strict Ignore Build Command):**
+- Observed a new production deployment entering `BUILDING` despite the previous branch-scoped ignore rule.
+- Replaced `commandForIgnoringBuildStep` with a strict command:
+  - `echo "Skipping auto build to control Vercel cost"; exit 0`
+- This enforces skip behavior for all Git-triggered builds until deployment is intentionally re-enabled.
+
+### Verification
+- Confirmed via Vercel Deployments API that the latest production deployment transitioned to `CANCELED`.
+- Confirmed project config now stores the strict ignore command.
+
+### Files Modified This Session
+- `SESSION_LOG.md`
