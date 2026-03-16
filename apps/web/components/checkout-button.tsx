@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import {
     buildAuthIntentUrl,
     getLocalizedPathForRoute,
+    isUnauthorizedCheckoutError,
     type CheckoutPlan,
 } from "@/lib/checkout-intent";
 
@@ -31,7 +32,7 @@ export function CheckoutButton({ plan, children, variant = "default", className 
                 .json()
                 .catch(() => ({})) as { url?: string; error?: string };
 
-            if (res.status === 401) {
+            if (isUnauthorizedCheckoutError(res.status, data.error)) {
                 const signUpPath = getLocalizedPathForRoute(
                     window.location.pathname,
                     "sign-up"

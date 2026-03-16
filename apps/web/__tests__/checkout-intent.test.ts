@@ -5,6 +5,7 @@ import {
     getAuthPathsForLocale,
     getLocalizedPathForRoute,
     isCheckoutPlan,
+    isUnauthorizedCheckoutError,
     resolveCheckoutIntentPlan,
 } from "@/lib/checkout-intent";
 
@@ -79,5 +80,12 @@ describe("checkout intent helpers", () => {
             settingsPath: "/settings",
             dashboardPath: "/dashboard",
         });
+    });
+
+    it("detects unauthorized checkout responses across status/message variants", () => {
+        expect(isUnauthorizedCheckoutError(401, "Anything")).toBe(true);
+        expect(isUnauthorizedCheckoutError(500, "Unauthorized")).toBe(true);
+        expect(isUnauthorizedCheckoutError(400, "User is not authenticated")).toBe(true);
+        expect(isUnauthorizedCheckoutError(500, "Checkout handler misconfigured")).toBe(false);
     });
 });

@@ -2503,3 +2503,26 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/globals.css`
 - `apps/web/components/cookie-consent.tsx`
+
+---
+
+## Session 64 — 2026-03-16
+
+### Completed
+
+**Unauthorized Checkout Popup Elimination (Auth Redirect Hardening):**
+- Added `isUnauthorizedCheckoutError` helper to normalize unauthorized detection across status/message variants.
+- Updated landing checkout CTA flow to redirect to sign-up intent flow when checkout responses are unauthorized-like, even if status is not strictly `401`.
+- Updated settings checkout flow to do the same and redirect to localized sign-in with preserved checkout intent instead of showing a generic error.
+- Added regression coverage for unauthorized detection helper behavior.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (25 files, 199 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/checkout-intent.ts`
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+- `apps/web/__tests__/checkout-intent.test.ts`

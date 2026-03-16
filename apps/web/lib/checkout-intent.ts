@@ -99,3 +99,22 @@ export function buildPostAuthRedirectUrl(
 
     return `${settingsPath}?${params.toString()}`;
 }
+
+export function isUnauthorizedCheckoutError(
+    status: number,
+    errorMessage: string | null | undefined
+) {
+    if (status === 401) {
+        return true;
+    }
+
+    if (!errorMessage) {
+        return false;
+    }
+
+    const normalizedMessage = errorMessage.toLowerCase();
+    return (
+        normalizedMessage.includes("unauthorized") ||
+        normalizedMessage.includes("not authenticated")
+    );
+}

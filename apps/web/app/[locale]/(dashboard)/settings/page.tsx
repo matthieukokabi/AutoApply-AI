@@ -13,7 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, AlertCircle } from "lucide-react";
 import { SettingsSkeleton } from "@/components/loading-skeleton";
-import { resolveCheckoutIntentPlan } from "@/lib/checkout-intent";
+import {
+    buildAuthIntentUrl,
+    getLocalizedPathForRoute,
+    isUnauthorizedCheckoutError,
+    resolveCheckoutIntentPlan,
+    type CheckoutPlan,
+} from "@/lib/checkout-intent";
 
 interface UserInfo {
     automationEnabled: boolean;
@@ -208,14 +214,30 @@ export default function SettingsPage() {
         }
     }
 
-    const handleCheckout = useCallback(async (plan: string) => {
+    const handleCheckout = useCallback(async (plan: CheckoutPlan) => {
         try {
             const res = await fetch("/api/checkout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ plan }),
             });
-            const data = await res.json();
+            const data = await res
+                .json()
+                .catch(() => ({})) as { url?: string; error?: string };
+
+            if (isUnauthorizedCheckoutError(res.status, data.error)) {
+                const signInPath = getLocalizedPathForRoute(
+                    window.location.pathname,
+                    "sign-in"
+                );
+                window.location.href = buildAuthIntentUrl(
+                    signInPath,
+                    plan,
+                    window.location.pathname
+                );
+                return;
+            }
+
             if (data.url) {
                 window.location.href = data.url;
             } else {
