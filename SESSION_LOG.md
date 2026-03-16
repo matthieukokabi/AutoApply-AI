@@ -1487,3 +1487,22 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `apps/web/next.config.js`
+
+---
+
+## Session 21 — 2026-03-16
+
+### Completed
+
+**Lint Pipeline Modernization (Next 16 Compatibility):**
+- Replaced deprecated `next lint` script with ESLint CLI in `apps/web/package.json`.
+- New lint command: `eslint . --ext .js,.jsx,.ts,.tsx`.
+- Removed the Next.js deprecation warning from the standard lint workflow.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (21 files, 139 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/package.json`
