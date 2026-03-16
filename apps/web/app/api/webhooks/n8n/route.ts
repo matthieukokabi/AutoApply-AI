@@ -9,9 +9,18 @@ import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } fr
  */
 export async function POST(req: Request) {
     try {
+        const expectedWebhookSecret = process.env.N8N_WEBHOOK_SECRET;
+        if (!expectedWebhookSecret) {
+            console.error("N8N_WEBHOOK_SECRET is not configured");
+            return NextResponse.json(
+                { error: "Webhook endpoint misconfigured" },
+                { status: 503 }
+            );
+        }
+
         // Verify webhook secret
         const webhookSecret = req.headers.get("x-webhook-secret");
-        if (webhookSecret !== process.env.N8N_WEBHOOK_SECRET) {
+        if (!webhookSecret || webhookSecret !== expectedWebhookSecret) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 

@@ -43,6 +43,22 @@ function createWebhookRequest(type: string, data: any) {
 }
 
 describe("POST /api/webhooks/n8n", () => {
+    it("returns 503 when webhook secret is not configured", async () => {
+        delete process.env.N8N_WEBHOOK_SECRET;
+
+        const request = new Request("http://localhost/api/webhooks/n8n", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "new_applications", data: { userId: "user_1", applications: [] } }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toContain("misconfigured");
+    });
+
     it("returns 401 for missing webhook secret", async () => {
         const request = new Request("http://localhost/api/webhooks/n8n", {
             method: "POST",

@@ -1763,3 +1763,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/checkout/route.ts`
 - `apps/web/__tests__/api/checkout.test.ts`
+
+---
+
+## Session 33 — 2026-03-16
+
+### Completed
+
+**n8n Webhook Auth Misconfiguration Fix (Critical):**
+- Hardened `POST /api/webhooks/n8n` so missing `N8N_WEBHOOK_SECRET` now returns `503` and does not process requests.
+- Updated secret validation to explicitly require a non-empty incoming `x-webhook-secret` header before type handling.
+- Added regression test for missing secret configuration to prevent accidental unauthorized webhook acceptance.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 155 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/webhooks/n8n/route.ts`
+- `apps/web/__tests__/api/webhooks-n8n.test.ts`
