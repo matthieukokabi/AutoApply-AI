@@ -70,6 +70,16 @@
 - `npm test -- __tests__/api/webhooks-stripe.test.ts __tests__/integration/stripe-workflow.test.ts` → 18/18 passing
 - `npm run build` → success
 
+**Security hardening — contact email HTML injection mitigated (atomic step):**
+- Updated `apps/web/app/api/contact/route.ts`:
+  - Added `escapeHtml()` helper
+  - Sanitized user-provided `name`, `email`, and `message` before HTML interpolation
+  - Preserved message line breaks after escaping (`\n` → `<br />`)
+
+**Verification run for this step:**
+- `npm test -- __tests__/api/contact.test.ts` → 8/8 passing
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

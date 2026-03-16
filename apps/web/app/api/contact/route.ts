@@ -5,6 +5,15 @@ function getResend() {
     return new Resend(process.env.RESEND_API_KEY);
 }
 
+function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 /**
  * POST /api/contact — send contact form message via email
  * Body: { name, email, subject, message }
@@ -48,6 +57,10 @@ export async function POST(req: Request) {
         };
 
         const subjectLine = `[AutoApply Contact] ${subjectLabels[subject] || "General"} from ${name}`;
+        const safeName = escapeHtml(name);
+        const safeEmail = escapeHtml(email);
+        const safeSubject = escapeHtml(subjectLabels[subject] || "General");
+        const safeMessage = escapeHtml(message).replace(/\n/g, "<br />");
 
         const resend = getResend();
         await resend.emails.send({
@@ -57,10 +70,10 @@ export async function POST(req: Request) {
             subject: subjectLine,
             html: `
                 <h2>New Contact Form Submission</h2>
-                <p><strong>From:</strong> ${name} &lt;${email}&gt;</p>
-                <p><strong>Subject:</strong> ${subjectLabels[subject] || "General"}</p>
+                <p><strong>From:</strong> ${safeName} &lt;${safeEmail}&gt;</p>
+                <p><strong>Subject:</strong> ${safeSubject}</p>
                 <hr />
-                <p>${message.replace(/\n/g, "<br />")}</p>
+                <p>${safeMessage}</p>
                 <hr />
                 <p style="color: #666; font-size: 12px;">
                     Sent from the AutoApply AI contact form at ${new Date().toISOString()}
