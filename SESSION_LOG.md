@@ -3388,3 +3388,28 @@ Included in this rollout:
 - `apps/web/app/api/auth/diagnostics/route.ts`
 - `apps/web/__tests__/api/auth-diagnostics.test.ts`
 - `SESSION_LOG.md`
+
+---
+
+## Session 101 — 2026-03-16
+
+### Completed
+
+**Auth Widget Mount Detection Hardening (Blank Sign-Up/Sign-In Prevention):**
+- Tightened Clerk widget mount detection to avoid false positives from placeholder nodes.
+- `hasMountedClerkWidget` now requires a real auth surface (form/input/button/iframe or populated rendered content) instead of any generic Clerk marker.
+- Added regression coverage to ensure placeholder-only nodes do not count as mounted while interactive auth nodes do.
+
+### Verification
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260316_225226.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260316_225319.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 220 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/clerk-widget-monitor.ts`
+- `apps/web/__tests__/clerk-widget-monitor.test.ts`
+- `SESSION_LOG.md`
