@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { Camera, X, User } from "lucide-react";
 
@@ -55,14 +56,17 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
         <div className="flex items-center gap-4">
             {/* Preview */}
             <div
-                className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted cursor-pointer hover:border-primary/50 transition-colors"
+                className="group relative w-20 h-20 rounded-full overflow-hidden border-2 border-dashed border-muted-foreground/30 flex items-center justify-center bg-muted cursor-pointer hover:border-primary/50 transition-colors"
                 onClick={() => inputRef.current?.click()}
             >
                 {value ? (
-                    <img
+                    <NextImage
                         src={value}
                         alt="CV Photo"
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="80px"
+                        unoptimized
+                        className="object-cover"
                     />
                 ) : (
                     <User className="w-8 h-8 text-muted-foreground/50" />

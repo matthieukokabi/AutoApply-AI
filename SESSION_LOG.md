@@ -172,6 +172,18 @@
 - `npm run lint` → success (2 warnings: `@next/next/no-img-element` in `components/cv-display.tsx` and `components/photo-upload.tsx`)
 - `npm run build` → success
 
+**Frontend quality hardening — removed remaining `no-img-element` warnings (atomic step):**
+- Updated image rendering in:
+  - `apps/web/components/cv-display.tsx`
+  - `apps/web/components/photo-upload.tsx`
+- Replaced raw `<img>` tags with `next/image` (`NextImage`, `unoptimized` for data URLs)
+- Added missing `group` class on photo preview container so hover overlay works consistently
+- Resolved `Image` constructor name collision by aliasing Next image component to `NextImage`
+
+**Verification run for this step:**
+- `npm run lint` → success (0 warnings, 0 errors)
+- `npm run build` → success
+
 ---
 
 ## Session 1 — 2026-02-20

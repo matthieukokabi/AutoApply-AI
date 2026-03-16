@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import NextImage from "next/image";
 import { parseCV } from "@/lib/cv-parser";
 import { Mail, Phone, MapPin } from "lucide-react";
 
@@ -38,9 +39,12 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
                         {/* Photo */}
                         {photoBase64 && (
                             <div className="flex-shrink-0">
-                                <img
+                                <NextImage
                                     src={photoBase64}
                                     alt="Profile"
+                                    width={96}
+                                    height={96}
+                                    unoptimized
                                     className="w-24 h-24 rounded-full object-cover border-2 border-slate-200 dark:border-slate-600 print:border-slate-300"
                                 />
                             </div>
