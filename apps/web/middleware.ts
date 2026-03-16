@@ -28,6 +28,8 @@ const publicRoutes = [
     "/blog/(.*)",
     "/:locale/roadmap",
     "/roadmap",
+    "/:locale/auth-diagnostics",
+    "/auth-diagnostics",
 ];
 
 const isPublicRoute = createRouteMatcher(publicRoutes);
@@ -142,16 +144,19 @@ export const config = {
         "/(en|fr|de|es|it)/privacy",
         "/(en|fr|de|es|it)/contact",
         "/(en|fr|de|es|it)/roadmap",
+        "/(en|fr|de|es|it)/auth-diagnostics",
         "/blog/:path*",
         "/terms",
         "/privacy",
         "/contact",
         "/roadmap",
+        "/auth-diagnostics",
         // Authenticated API routes only (avoid unnecessary middleware invocations
         // on public webhooks/OG image routes to reduce edge usage on Vercel)
         "/api/account",
         "/api/applications",
         "/api/applications/:path*",
+        "/api/auth/diagnostics",
         "/api/checkout",
         "/api/debug/auth",
         "/api/jobs",

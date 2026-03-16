@@ -2417,3 +2417,39 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 - `apps/web/components/auth-recovery-card.tsx`
 - `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
 - `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`
+
+---
+
+## Session 61 — 2026-03-16
+
+### Completed
+
+**Production-Safe Auth Diagnostics Endpoint + Support Page:**
+- Added new safe diagnostics API endpoint:
+  - `GET /api/auth/diagnostics`
+  - Returns non-sensitive auth/debug signals only (no secrets or token values).
+  - Includes request cookie/session presence booleans, auth status, config booleans, and actionable recommendations.
+  - Adds `Cache-Control: no-store` for real-time support use.
+- Added new public diagnostics page:
+  - `/{locale}/auth-diagnostics`
+  - Runs endpoint checks client-side and displays:
+    - quick status summary
+    - recommendation list
+    - raw JSON payload
+    - support code (`AUTH_INIT_BLOCKED`) for triage.
+- Updated middleware public-route handling and matcher entries for:
+  - `/auth-diagnostics`
+  - `/:locale/auth-diagnostics`
+  - `/api/auth/diagnostics`
+- Added API regression tests for diagnostics endpoint safety and behavior.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (24 files, 194 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/auth/diagnostics/route.ts`
+- `apps/web/app/[locale]/auth-diagnostics/page.tsx`
+- `apps/web/middleware.ts`
+- `apps/web/__tests__/api/auth-diagnostics.test.ts`
