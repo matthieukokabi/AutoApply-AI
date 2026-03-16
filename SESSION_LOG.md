@@ -2948,3 +2948,22 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 
 ### Files Modified This Session
 - `apps/web/components/cookie-consent.tsx`
+
+---
+
+## Session 84 — 2026-03-16
+
+### Completed
+
+**Onboarding Checkout Reliability (Settings Auth Warm-Up Retry):**
+- Added retry logic for `/api/user` load on the settings page to handle short-lived auth propagation races after sign-up/sign-in.
+- Settings now retries authenticated user fetch up to 3 times (with short delay) before proceeding, while still loading preferences in parallel.
+- Added `cache: "no-store"` for these initial settings fetches to avoid stale auth/user payloads during onboarding upgrade handoff.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (28 files, 217 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`

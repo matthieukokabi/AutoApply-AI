@@ -56,6 +56,32 @@ const CURRENCIES = [
     { code: "BRL", symbol: "R$", label: "Brazilian Real" },
 ];
 
+const SETTINGS_AUTH_RETRY_ATTEMPTS = 3;
+const SETTINGS_AUTH_RETRY_DELAY_MS = 500;
+
+async function fetchUserWithAuthRetry() {
+    let response: Response | null = null;
+
+    for (let attempt = 0; attempt < SETTINGS_AUTH_RETRY_ATTEMPTS; attempt += 1) {
+        response = await fetch("/api/user", { cache: "no-store" });
+        if (response.ok) {
+            return response;
+        }
+
+        if (response.status !== 401 && response.status !== 403) {
+            return response;
+        }
+
+        if (attempt < SETTINGS_AUTH_RETRY_ATTEMPTS - 1) {
+            await new Promise((resolve) =>
+                window.setTimeout(resolve, SETTINGS_AUTH_RETRY_DELAY_MS)
+            );
+        }
+    }
+
+    return response;
+}
+
 export default function SettingsPage() {
     const router = useRouter();
     const pathname = usePathname();
@@ -94,12 +120,13 @@ export default function SettingsPage() {
     useEffect(() => {
         async function load() {
             try {
-                const [userRes, prefsRes] = await Promise.all([
-                    fetch("/api/user"),
-                    fetch("/api/preferences"),
-                ]);
+                const prefsPromise = fetch("/api/preferences", {
+                    cache: "no-store",
+                });
+                const userRes = await fetchUserWithAuthRetry();
+                const prefsRes = await prefsPromise;
 
-                if (userRes.ok) {
+                if (userRes?.ok) {
                     const data = await userRes.json();
                     setUser(data.user);
                 }
