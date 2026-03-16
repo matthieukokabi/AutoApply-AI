@@ -11,6 +11,14 @@ interface CheckoutButtonProps {
     className?: string;
 }
 
+const SUPPORTED_LOCALES = new Set(["en", "fr", "de", "es", "it"]);
+
+function getLocalizedSignUpPath(pathname: string) {
+    const segments = pathname.split("/").filter(Boolean);
+    const locale = segments[0];
+    return locale && SUPPORTED_LOCALES.has(locale) ? `/${locale}/sign-up` : "/sign-up";
+}
+
 export function CheckoutButton({ plan, children, variant = "default", className }: CheckoutButtonProps) {
     const [loading, setLoading] = useState(false);
 
@@ -22,7 +30,16 @@ export function CheckoutButton({ plan, children, variant = "default", className 
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ plan }),
             });
-            const data = await res.json();
+            const data = await res
+                .json()
+                .catch(() => ({})) as { url?: string; error?: string };
+
+            if (res.status === 401) {
+                const signUpPath = getLocalizedSignUpPath(window.location.pathname);
+                const params = new URLSearchParams({ plan, from: window.location.pathname });
+                window.location.href = `${signUpPath}?${params.toString()}`;
+                return;
+            }
 
             if (data.url) {
                 window.location.href = data.url;

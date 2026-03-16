@@ -2235,3 +2235,22 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/app/api/applications/route.ts`
 - `apps/web/__tests__/api/applications.test.ts`
+
+---
+
+## Session 54 — 2026-03-16
+
+### Completed
+
+**Checkout Unauthorized UX Guard (Public Pricing):**
+- Updated `CheckoutButton` to handle `401 Unauthorized` responses by redirecting anonymous users to the localized sign-up route (`/sign-up` or `/{locale}/sign-up`) instead of showing a raw alert popup.
+- Added locale-aware sign-up path selection for supported locales (`en`, `fr`, `de`, `es`, `it`).
+- Preserved checkout context in query params (`plan`, `from`) when redirecting to sign-up.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 182 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/checkout-button.tsx`
