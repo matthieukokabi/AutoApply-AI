@@ -1855,3 +1855,23 @@ The user needs to **re-import** both workflow JSONs into the Render n8n instance
 ### Files Modified This Session
 - `apps/web/middleware.ts`
 - `apps/web/__tests__/middleware.test.ts`
+
+---
+
+## Session 37 — 2026-03-16
+
+### Completed
+
+**Stripe Webhook Misconfiguration Hardening:**
+- Added explicit startup-time guard in `POST /api/webhooks/stripe` for missing `STRIPE_WEBHOOK_SECRET`.
+- Route now fails closed with `503` and clear server log instead of attempting signature verification with an undefined secret.
+- Added regression test to enforce misconfiguration behavior and prevent silent regressions.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (22 files, 157 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/webhooks/stripe/route.ts`
+- `apps/web/__tests__/api/webhooks-stripe.test.ts`

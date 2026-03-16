@@ -67,6 +67,22 @@ describe("POST /api/webhooks/stripe", () => {
         expect(data.error).toBe("Invalid signature");
     });
 
+    it("returns 503 when webhook secret is not configured", async () => {
+        delete process.env.STRIPE_WEBHOOK_SECRET;
+
+        const request = new Request("http://localhost/api/webhooks/stripe", {
+            method: "POST",
+            body: "{}",
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toBe("Webhook handler misconfigured");
+        expect(stripe.webhooks.constructEvent).not.toHaveBeenCalled();
+    });
+
     describe("checkout.session.completed", () => {
         it("handles subscription purchase (pro)", async () => {
             vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
