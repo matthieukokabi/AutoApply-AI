@@ -200,6 +200,20 @@
   - Critical vulnerabilities reduced from 1 → 0
   - Remaining advisories are low/high and require major upgrades (not applied in this atomic patch step)
 
+**Dependency hygiene — applied non-breaking `npm audit fix` updates (atomic step):**
+- Ran `npm audit fix` in `apps/web` (no `--force`)
+- Updated lockfile transitive dependencies in:
+  - `apps/web/package-lock.json`
+
+**Verification run for this step:**
+- `npm run lint` → success
+- `npm test` → 21 files, 139 tests passing
+- `npm run build` → success
+- `npm audit` summary after fix:
+  - Remaining vulnerabilities: 8 total (4 low, 4 high)
+  - No critical vulnerabilities
+  - Remaining fixes require major upgrades (`next@16.x`, `eslint-config-next@16.x`, `@clerk/nextjs@7.x`)
+
 ---
 
 ## Session 1 — 2026-02-20
