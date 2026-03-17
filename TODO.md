@@ -41,7 +41,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 ## P1 — Social + ads campaign rollout (creative + execution)
 
 - [ ] Complete unfinished launch checklist items in `docs/launch-checklist.md` (in progress: dashboard social links done on 2026-03-17; remaining Product Hunt listing + GitHub public landing repo)
-- [ ] Prepare 14-day launch calendar with 1 daily LinkedIn post + 2 daily X posts
+- [x] Prepare 14-day launch calendar with 1 daily LinkedIn post + 2 daily X posts — completed on 2026-03-17 (`docs/launch-calendar-14-day.md`)
 - [ ] Prepare 3 creative angles for paid ads:
 - [ ] Angle A: "Save 30+ minutes per application"
 - [ ] Angle B: "ATS keyword optimization with zero fabrication"

@@ -4094,6 +4094,31 @@ Included in this rollout:
 
 ---
 
+## Session 138 — 2026-03-17
+
+### Completed
+
+**Growth rollout planning — 14-day launch calendar:**
+- Added `docs/launch-calendar-14-day.md` with:
+  - daily cadence (LinkedIn 1/day, X 2/day)
+  - posting windows (Europe/Zurich)
+  - 14-day topic plan (launch, proof, feature education, Product Hunt timing, recap)
+  - CTA UTM guidance linked to `docs/utm-naming-convention.md`
+  - daily execution checklist
+- Updated TODO item for 14-day launch calendar as complete.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `docs/launch-calendar-14-day.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed
