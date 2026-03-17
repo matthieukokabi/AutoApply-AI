@@ -3791,6 +3791,33 @@ Included in this rollout:
 
 ---
 
+## Session 127 — 2026-03-17
+
+### Completed
+
+**Checkout return UX/state hardening in settings:**
+- Updated `apps/web/app/[locale]/(dashboard)/settings/page.tsx` to process Stripe return query state:
+  - handles `checkout=success`
+  - handles `checkout=cancelled`
+- Added clear user-facing messages after return:
+  - success: payment success + status refresh messaging
+  - cancelled: no-plan-change confirmation messaging
+- On success return, page now attempts an immediate authenticated user refresh via `fetchUserWithAuthRetry()` and updates local subscription state.
+- `checkout` query param is removed from URL after handling to avoid repeated effect processing.
+- Updated TODO with completed hardening item for checkout return UX/state handling.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

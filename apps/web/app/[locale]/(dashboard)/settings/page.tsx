@@ -89,6 +89,7 @@ export default function SettingsPage() {
     const searchParams = useSearchParams();
     const autoUpgradePlan = resolveCheckoutIntentPlan(searchParams);
     const autoCheckoutTriggeredRef = useRef(false);
+    const checkoutReturnHandledRef = useRef<string | null>(null);
 
     const [user, setUser] = useState<UserInfo | null>(null);
     const [prefs, setPrefs] = useState<Preferences>({
@@ -313,6 +314,68 @@ export default function SettingsPage() {
 
         void handleCheckout(autoUpgradePlan);
     }, [autoUpgradePlan, loading, user, pathname, router, searchParams, handleCheckout]);
+
+    useEffect(() => {
+        if (loading) {
+            return;
+        }
+
+        const checkoutStatus = searchParams.get("checkout");
+        if (!checkoutStatus) {
+            return;
+        }
+
+        if (checkoutReturnHandledRef.current === checkoutStatus) {
+            return;
+        }
+        checkoutReturnHandledRef.current = checkoutStatus;
+
+        const nextParams = new URLSearchParams(searchParams.toString());
+        nextParams.delete("checkout");
+        const nextQuery = nextParams.toString();
+        router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+            scroll: false,
+        });
+
+        if (checkoutStatus === "cancelled") {
+            setMessage({
+                type: "success",
+                text: "Checkout cancelled. Your current plan remains unchanged.",
+            });
+            return;
+        }
+
+        if (checkoutStatus !== "success") {
+            return;
+        }
+
+        setMessage({
+            type: "success",
+            text: "Payment successful. Syncing your account status...",
+        });
+
+        void (async () => {
+            try {
+                const refreshedUserRes = await fetchUserWithAuthRetry();
+                if (refreshedUserRes?.ok) {
+                    const data = await refreshedUserRes.json();
+                    setUser(data.user);
+                    setMessage({
+                        type: "success",
+                        text: "Payment successful. Subscription status refreshed.",
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.error("Failed to refresh user after checkout return:", err);
+            }
+
+            setMessage({
+                type: "success",
+                text: "Payment successful. Refresh once if your plan has not updated yet.",
+            });
+        })();
+    }, [loading, pathname, router, searchParams]);
 
     async function handleDeleteAccount() {
         if (!confirmDelete) {
