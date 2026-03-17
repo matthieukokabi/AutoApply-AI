@@ -3617,6 +3617,32 @@ Included in this rollout:
 
 ---
 
+## Session 114 — 2026-03-17
+
+### Completed
+
+**Live Payment Manual QA Runbook Added:**
+- Added production manual runbook for family/owner payment execution:
+  - `docs/live-payment-test-runbook.md`
+- Runbook includes:
+  - browser/device/VPN/private-mode matrix
+  - step-by-step live payment + cancel-path validation
+  - required evidence capture (screenshots + Stripe event IDs + webhook delivery status)
+  - pass/fail criteria and failure logging template
+- Updated `TODO.md` P0 items to explicitly reference this runbook for:
+  - signed-in `/settings` upgrade validation
+  - manual family live payment test execution
+
+### Verification
+- Docs-only change; no runtime code path modified.
+
+### Files Modified This Session
+- `docs/live-payment-test-runbook.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 112 — 2026-03-17
 
 ### Completed

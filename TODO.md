@@ -9,11 +9,11 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Run production auth-blocked matrix (`npm run smoke:onboarding:auth-blocked -- https://autoapply.works` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-auth-blocked-smoke-20260317_124151.jsonl`)
 - [x] Verify Vercel production env vars are present and live (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_MONTHLY`, `STRIPE_PRICE_PRO_YEARLY`, `STRIPE_PRICE_UNLIMITED_MONTHLY`, `STRIPE_PRICE_UNLIMITED_YEARLY`, `STRIPE_PRICE_CREDIT_PACK`) — passed on 2026-03-17 (`vercel env pull` prefix checks)
 - [x] Verify checkout from landing pricing cards when signed out (`Free`, `Pro monthly`, `Pro yearly`, `Unlimited`) — passed on 2026-03-17 (ad-hoc Playwright prod check: `free`, `pro_monthly`, `pro_yearly`, `unlimited`, `unlimited_yearly`; no `Unauthorized`, no checkout API calls)
-- [ ] Verify checkout from `/settings` subscription upgrade path when signed in
+- [ ] Verify checkout from `/settings` subscription upgrade path when signed in (execute with `docs/live-payment-test-runbook.md`)
 - [ ] Verify successful return updates dashboard/account subscription state
 - [ ] Verify cancel return does not alter plan state
 - [ ] Verify webhook delivery and idempotency on latest payment events in Stripe dashboard
-- [ ] Manual family live payment test (real card, production mode) and record outcome with screenshots + Stripe event IDs
+- [ ] Manual family live payment test (real card, production mode) and record outcome with screenshots + Stripe event IDs (use `docs/live-payment-test-runbook.md`)
 
 ## P1 — Onboarding reliability hardening right after live payment pass
 
