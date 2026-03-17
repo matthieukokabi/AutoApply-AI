@@ -3595,6 +3595,35 @@ Included in this rollout:
 
 ---
 
+## Session 120 — 2026-03-17
+
+### Completed
+
+**GA4 Event Instrumentation Progress (`begin_checkout`):**
+- Added shared analytics helper:
+  - `apps/web/lib/analytics.ts`
+- Wired `begin_checkout` event tracking for checkout initiation on:
+  - landing pricing CTA flow (`CheckoutButton`)
+  - dashboard settings subscription/credits checkout flow
+- Event metadata currently includes:
+  - `checkout_plan`
+  - `checkout_source` (`landing_pricing` or `settings_subscription`)
+- Updated TODO GA4-event item with explicit in-progress status.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/analytics.ts`
+- `apps/web/components/checkout-button.tsx`
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

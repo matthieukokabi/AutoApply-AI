@@ -14,6 +14,7 @@ import {
     isUnauthorizedCheckoutError,
     type CheckoutPlan,
 } from "@/lib/checkout-intent";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 interface CheckoutButtonProps {
     plan: CheckoutPlan;
@@ -49,6 +50,7 @@ export function CheckoutButton({
     async function handleCheckout() {
         setLoading(true);
         setErrorMessage(null);
+        trackBeginCheckout(plan, "landing_pricing");
         try {
             // Landing-page pricing should route anonymous visitors straight to sign-up,
             // avoiding unnecessary checkout API calls and 401 noise.

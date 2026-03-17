@@ -23,6 +23,7 @@ import {
     resolveCheckoutIntentPlan,
     type CheckoutPlan,
 } from "@/lib/checkout-intent";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 interface UserInfo {
     automationEnabled: boolean;
@@ -245,6 +246,7 @@ export default function SettingsPage() {
     }
 
     const handleCheckout = useCallback(async (plan: CheckoutPlan) => {
+        trackBeginCheckout(plan, "settings_subscription");
         try {
             const controller = new AbortController();
             const timeoutId = window.setTimeout(
