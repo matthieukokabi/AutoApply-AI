@@ -45,13 +45,15 @@ export function trackSignUpStarted(
     source: string,
     locale: string | undefined,
     requestedPlan: CheckoutPlan | null,
-    fromPath: string | null
+    fromPath: string | null,
+    referralCode?: string | null
 ) {
     trackAnalyticsEvent("sign_up_started", {
         signup_source: source,
         locale,
         requested_plan: requestedPlan,
         requested_from: fromPath,
+        referral_code: referralCode,
     });
 }
 

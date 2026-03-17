@@ -51,7 +51,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Landing variant: proof-led
 - [x] Landing variant: feature-led
 - [x] Create Product Hunt launch-day checklist owner schedule (hour-by-hour community replies) — completed on 2026-03-17 (`docs/producthunt-launch-day-schedule.md`)
-- [ ] Add referral code campaign for first beta users and track redemption
+- [x] Add referral code campaign for first beta users and track redemption — completed on 2026-03-17 (URL `ref` tracking added to `sign_up_started` + `sign_up_completed`; runbook: `docs/referral-campaign-beta.md`)
 
 ## P1 — Vercel cost optimization (keep monthly burn controlled)
 

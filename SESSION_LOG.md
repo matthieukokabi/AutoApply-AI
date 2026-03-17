@@ -4611,3 +4611,31 @@ Included in this rollout:
 - `docs/vercel-usage-review-playbook.md`
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 147 — 2026-03-17
+
+### Completed
+
+**Beta Referral Tracking (Analytics-Based):**
+- Added referral code capture from sign-up query param (`?ref=`), with normalization and validation.
+- Extended analytics payloads to include `referral_code` on:
+  - `sign_up_started`
+  - `sign_up_completed`
+- Added referral campaign runbook with URL format, code rules, and GA4 reporting setup:
+  - `docs/referral-campaign-beta.md`
+- Updated TODO to mark referral campaign/tracking item as completed.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/analytics.ts`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `apps/web/components/analytics-session-events.tsx`
+- `docs/referral-campaign-beta.md`
+- `TODO.md`
+- `SESSION_LOG.md`

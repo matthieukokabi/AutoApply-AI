@@ -10,6 +10,7 @@ type PendingSignUpCompletedPayload = {
     locale?: string;
     requestedPlan?: string | null;
     from?: string | null;
+    referralCode?: string | null;
 };
 
 function parsePendingPayload(rawValue: string) {
@@ -47,6 +48,7 @@ export function AnalyticsSessionEvents() {
             locale: payload.locale,
             requested_plan: payload.requestedPlan,
             requested_from: payload.from,
+            referral_code: payload.referralCode,
         });
     }, [pathname]);
 

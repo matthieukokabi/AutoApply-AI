@@ -29,7 +29,8 @@ const SIGNUP_COMPLETED_PENDING_KEY = "aa_signup_completed_pending";
 function markSignUpCompletedPending(
     locale: string | undefined,
     requestedPlan: string | null,
-    from: string | null
+    from: string | null,
+    referralCode: string | null
 ) {
     if (typeof window === "undefined") {
         return;
@@ -42,11 +43,21 @@ function markSignUpCompletedPending(
                 locale,
                 requestedPlan,
                 from,
+                referralCode,
             })
         );
     } catch {
         // Ignore sessionStorage write failures (privacy mode/storage restrictions).
     }
+}
+
+function normalizeReferralCode(rawValue: string | null) {
+    if (!rawValue) {
+        return null;
+    }
+
+    const normalizedValue = rawValue.trim().toUpperCase();
+    return /^[A-Z0-9_-]{3,32}$/.test(normalizedValue) ? normalizedValue : null;
 }
 
 export default function SignUpPage() {
@@ -57,6 +68,7 @@ export default function SignUpPage() {
         getAuthPathsForLocale(localeParam);
     const requestedPlan = resolveCheckoutIntentPlan(searchParams);
     const fromParam = searchParams.get("from");
+    const referralCode = normalizeReferralCode(searchParams.get("ref"));
     const signInUrl = buildAuthIntentUrl(signInPath, requestedPlan, fromParam);
     const diagnosticsUrl = getLocalizedPathForRoute(signUpPath, "auth-diagnostics");
     const postAuthRedirectUrl = buildPostAuthRedirectUrl(
@@ -86,9 +98,10 @@ export default function SignUpPage() {
             "sign_up_page",
             localeParam,
             requestedPlan,
-            fromParam
+            fromParam,
+            referralCode
         );
-    }, [fromParam, localeParam, requestedPlan]);
+    }, [fromParam, localeParam, referralCode, requestedPlan]);
 
     useEffect(() => {
         if (!isLoaded || !userId) {
@@ -98,10 +111,11 @@ export default function SignUpPage() {
         markSignUpCompletedPending(
             localeParam,
             requestedPlan,
-            fromParam
+            fromParam,
+            referralCode
         );
         window.location.href = dashboardPath;
-    }, [dashboardPath, fromParam, isLoaded, localeParam, requestedPlan, userId]);
+    }, [dashboardPath, fromParam, isLoaded, localeParam, referralCode, requestedPlan, userId]);
 
     useEffect(() => {
         if (isLoaded) {
