@@ -65,7 +65,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 
 - [x] Fix SEO base URL fallback in `robots.ts` and `sitemap.ts` to `autoapply.works` (remove legacy `autoapply-ai.com` fallback) — completed on 2026-03-17 via `lib/site-url.ts`
 - [x] Add canonical + hreflang (`en`, `fr`, `de`, `es`, `it`, `x-default`) on all indexable localized pages — completed on 2026-03-17 (`lib/seo.ts` + localized metadata updates, including `contact` server wrapper)
-- [ ] Add default `og:image` + page-level social metadata overrides for landing and blog pages
+- [x] Add default `og:image` + page-level social metadata overrides for landing and blog pages — completed on 2026-03-17 (`layout.tsx` defaults + localized landing/blog metadata image overrides)
 - [ ] Fix broken public LinkedIn URL(s)
 - [ ] Add baseline security headers in production config (`CSP`, `X-Content-Type-Options`, clickjacking policy, `Referrer-Policy`)
 - [ ] Add anti-bot protection on public contact form (without breaking UX)

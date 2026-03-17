@@ -5,9 +5,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsent } from "@/components/cookie-consent";
 import { AnalyticsSessionEvents } from "@/components/analytics-session-events";
 import { AnalyticsConsentGate } from "@/components/analytics-consent-gate";
+import { getAppBaseUrl, toAbsoluteAppUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+const appBaseUrl = getAppBaseUrl();
+const defaultOgImage = toAbsoluteAppUrl("/opengraph-image");
+const defaultTwitterImage = toAbsoluteAppUrl("/twitter-image");
 
 export const metadata: Metadata = {
     title: {
@@ -32,14 +36,22 @@ export const metadata: Metadata = {
         "resume optimization tool",
         "ai career tools",
     ],
-    metadataBase: new URL("https://autoapply.works"),
+    metadataBase: new URL(appBaseUrl),
     openGraph: {
         type: "website",
         siteName: "AutoApply AI",
         title: "AutoApply AI — Tailor Your Resume & Cover Letter to Every Job with AI",
         description:
             "AI-powered job search platform. Auto-tailored ATS-optimized CVs, AI cover letters, job matching from 7+ sources, and application tracking.",
-        url: "https://autoapply.works",
+        url: appBaseUrl,
+        images: [
+            {
+                url: defaultOgImage,
+                width: 1200,
+                height: 630,
+                alt: "AutoApply AI — Tailor Your Resume & Cover Letter to Every Job with AI",
+            },
+        ],
     },
     twitter: {
         card: "summary_large_image",
@@ -48,6 +60,7 @@ export const metadata: Metadata = {
         title: "AutoApply AI — Tailor Your Resume & Cover Letter to Every Job with AI",
         description:
             "AI-powered job search platform. Auto-tailored ATS-optimized CVs, AI cover letters, job matching from 7+ sources, and application tracking.",
+        images: [defaultTwitterImage],
     },
     robots: {
         index: true,

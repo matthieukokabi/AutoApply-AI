@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, User, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import ReactMarkdown from "react-markdown";
-import { buildLocaleAlternates } from "@/lib/seo";
+import {
+    buildDynamicOgImageUrl,
+    buildLocaleAlternates,
+    getLocalizedAbsoluteUrl,
+} from "@/lib/seo";
 /**
  * Pre-render all blog post slugs at build time.
  * Combined with parent layout's locale params, this generates all locale × slug pages.
@@ -30,9 +34,11 @@ export async function generateMetadata({
     if (!post) {
         return { title: "Post Not Found" };
     }
+    const socialTitle = `${post.title} — AutoApply AI Blog`;
+    const socialImage = buildDynamicOgImageUrl(post.title, post.description);
 
     return {
-        title: `${post.title} — AutoApply AI Blog`,
+        title: socialTitle,
         description: post.description,
         authors: [{ name: post.author }],
         alternates: buildLocaleAlternates(locale, `/blog/${slug}`),
@@ -40,9 +46,24 @@ export async function generateMetadata({
             title: post.title,
             description: post.description,
             type: "article",
+            url: getLocalizedAbsoluteUrl(locale, `/blog/${slug}`),
             publishedTime: post.date,
             authors: [post.author],
             tags: post.tags,
+            images: [
+                {
+                    url: socialImage,
+                    width: 1200,
+                    height: 630,
+                    alt: socialTitle,
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: socialTitle,
+            description: post.description,
+            images: [socialImage],
         },
     };
 }

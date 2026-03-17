@@ -7,7 +7,11 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CheckoutButton } from "@/components/checkout-button";
 import { buildAuthIntentUrl, getAuthPathsForLocale } from "@/lib/checkout-intent";
-import { buildLocaleAlternates } from "@/lib/seo";
+import {
+    buildDynamicOgImageUrl,
+    buildLocaleAlternates,
+    getLocalizedAbsoluteUrl,
+} from "@/lib/seo";
 import {
     ArrowRight,
     FileText,
@@ -25,10 +29,33 @@ import {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     const t = await getTranslations({ locale, namespace: "hero" });
+    const socialTitle = `AutoApply AI — ${t("badge")}`;
+    const socialDescription = t("description");
+    const socialImage = buildDynamicOgImageUrl(socialTitle, socialDescription);
+
     return {
-        title: `AutoApply AI — ${t("badge")}`,
-        description: t("description"),
+        title: socialTitle,
+        description: socialDescription,
         alternates: buildLocaleAlternates(locale, "/"),
+        openGraph: {
+            title: socialTitle,
+            description: socialDescription,
+            url: getLocalizedAbsoluteUrl(locale, "/"),
+            images: [
+                {
+                    url: socialImage,
+                    width: 1200,
+                    height: 630,
+                    alt: socialTitle,
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: socialTitle,
+            description: socialDescription,
+            images: [socialImage],
+        },
     };
 }
 

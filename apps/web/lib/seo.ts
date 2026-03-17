@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { defaultLocale, locales, type Locale } from "@/i18n/config";
-import { toAbsoluteAppUrl } from "@/lib/site-url";
+import { getAppBaseUrl, toAbsoluteAppUrl } from "@/lib/site-url";
 
 type MetadataAlternates = NonNullable<Metadata["alternates"]>;
 type MetadataLanguages = NonNullable<MetadataAlternates["languages"]>;
@@ -31,6 +31,26 @@ function localePath(locale: Locale, path: string): string {
     }
 
     return `/${locale}${normalizedPath}`;
+}
+
+export function getLocalizedPath(locale: string, path = "/"): string {
+    return localePath(normalizeLocale(locale), path);
+}
+
+export function getLocalizedAbsoluteUrl(locale: string, path = "/"): string {
+    return toAbsoluteAppUrl(getLocalizedPath(locale, path));
+}
+
+export function buildDynamicOgImageUrl(
+    title: string,
+    subtitle?: string
+): string {
+    const url = new URL("/api/og", getAppBaseUrl());
+    url.searchParams.set("title", title);
+    if (subtitle) {
+        url.searchParams.set("subtitle", subtitle);
+    }
+    return url.toString();
 }
 
 export function buildLocaleAlternates(

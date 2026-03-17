@@ -7,7 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Calendar, Clock, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { buildLocaleAlternates } from "@/lib/seo";
+import {
+    buildDynamicOgImageUrl,
+    buildLocaleAlternates,
+    getLocalizedAbsoluteUrl,
+} from "@/lib/seo";
 export async function generateMetadata({
     params,
 }: {
@@ -15,10 +19,33 @@ export async function generateMetadata({
 }): Promise<Metadata> {
     const { locale } = await params;
     const t = await getTranslations({ locale, namespace: "blog" });
+    const socialTitle = `${t("title")} — AutoApply AI`;
+    const socialDescription = t("description");
+    const socialImage = buildDynamicOgImageUrl(socialTitle, socialDescription);
+
     return {
-        title: `${t("title")} — AutoApply AI`,
-        description: t("description"),
+        title: socialTitle,
+        description: socialDescription,
         alternates: buildLocaleAlternates(locale, "/blog"),
+        openGraph: {
+            title: socialTitle,
+            description: socialDescription,
+            url: getLocalizedAbsoluteUrl(locale, "/blog"),
+            images: [
+                {
+                    url: socialImage,
+                    width: 1200,
+                    height: 630,
+                    alt: socialTitle,
+                },
+            ],
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: socialTitle,
+            description: socialDescription,
+            images: [socialImage],
+        },
     };
 }
 
