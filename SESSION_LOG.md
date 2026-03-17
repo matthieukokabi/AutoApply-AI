@@ -3953,6 +3953,32 @@ Included in this rollout:
 
 ---
 
+## Session 133 — 2026-03-17
+
+### Completed
+
+**Checkout success return reliability hardening (state-sync polling):**
+- Updated `apps/web/app/[locale]/(dashboard)/settings/page.tsx`:
+  - Added bounded retry sync window after `checkout=success` return:
+    - `CHECKOUT_RETURN_SYNC_ATTEMPTS = 5`
+    - `CHECKOUT_RETURN_SYNC_DELAY_MS = 2000`
+  - Captures baseline subscription/credits and polls `/api/user` until a change is observed or attempts are exhausted.
+  - Avoids tight-loop retries by delaying on both non-OK responses and unchanged state.
+  - Keeps user messaging explicit when sync is still in progress after retries.
+- Updated TODO with completed pre-live-payment hardening note for checkout-return sync visibility.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

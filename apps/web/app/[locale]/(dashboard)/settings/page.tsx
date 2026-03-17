@@ -60,6 +60,8 @@ const CURRENCIES = [
 
 const SETTINGS_AUTH_RETRY_ATTEMPTS = 3;
 const SETTINGS_AUTH_RETRY_DELAY_MS = 500;
+const CHECKOUT_RETURN_SYNC_ATTEMPTS = 5;
+const CHECKOUT_RETURN_SYNC_DELAY_MS = 2000;
 
 async function fetchUserWithAuthRetry() {
     let response: Response | null = null;
@@ -364,33 +366,64 @@ export default function SettingsPage() {
             trackPurchase(checkoutPlanParam, "settings_checkout_return");
         }
 
+        const baselineSubscriptionStatus = user?.subscriptionStatus || null;
+        const baselineCreditsRemaining =
+            typeof user?.creditsRemaining === "number" ? user.creditsRemaining : null;
+
         setMessage({
             type: "success",
             text: "Payment successful. Syncing your account status...",
         });
 
         void (async () => {
-            try {
-                const refreshedUserRes = await fetchUserWithAuthRetry();
-                if (refreshedUserRes?.ok) {
+            for (let attempt = 0; attempt < CHECKOUT_RETURN_SYNC_ATTEMPTS; attempt += 1) {
+                try {
+                    const refreshedUserRes = await fetchUserWithAuthRetry();
+                    if (!refreshedUserRes?.ok) {
+                        if (attempt < CHECKOUT_RETURN_SYNC_ATTEMPTS - 1) {
+                            await new Promise((resolve) =>
+                                window.setTimeout(resolve, CHECKOUT_RETURN_SYNC_DELAY_MS)
+                            );
+                        }
+                        continue;
+                    }
+
                     const data = await refreshedUserRes.json();
-                    setUser(data.user);
+                    const refreshedUser = data.user as UserInfo;
+                    setUser(refreshedUser);
+
+                    const subscriptionChanged =
+                        baselineSubscriptionStatus !== null &&
+                        refreshedUser.subscriptionStatus !== baselineSubscriptionStatus;
+                    const creditsChanged =
+                        baselineCreditsRemaining !== null &&
+                        refreshedUser.creditsRemaining !== baselineCreditsRemaining;
+
+                    if (!subscriptionChanged && !creditsChanged) {
+                        if (attempt < CHECKOUT_RETURN_SYNC_ATTEMPTS - 1) {
+                            await new Promise((resolve) =>
+                                window.setTimeout(resolve, CHECKOUT_RETURN_SYNC_DELAY_MS)
+                            );
+                            continue;
+                        }
+                    }
+
                     setMessage({
                         type: "success",
                         text: "Payment successful. Subscription status refreshed.",
                     });
                     return;
+                } catch (err) {
+                    console.error("Failed to refresh user after checkout return:", err);
                 }
-            } catch (err) {
-                console.error("Failed to refresh user after checkout return:", err);
             }
 
             setMessage({
                 type: "success",
-                text: "Payment successful. Refresh once if your plan has not updated yet.",
+                text: "Payment successful. Sync is still in progress. Refresh again in a few seconds.",
             });
         })();
-    }, [loading, pathname, router, searchParams]);
+    }, [loading, pathname, router, searchParams, user]);
 
     async function handleDeleteAccount() {
         if (!confirmDelete) {

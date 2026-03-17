@@ -11,6 +11,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Verify checkout from landing pricing cards when signed out (`Free`, `Pro monthly`, `Pro yearly`, `Unlimited`) — passed on 2026-03-17 (ad-hoc Playwright prod check: `free`, `pro_monthly`, `pro_yearly`, `unlimited`, `unlimited_yearly`; no `Unauthorized`, no checkout API calls)
 - [x] Preserve signed-in checkout return path to locale settings route (safe `returnPath` handling) — completed on 2026-03-17 (`/api/checkout` sanitizes `returnPath`; settings sends `window.location.pathname`; regression tests added)
 - [x] Handle checkout return status in settings (`checkout=success|cancelled`) with clear UX message + user refresh attempt — completed on 2026-03-17 (`settings/page.tsx`)
+- [x] Add short polling window after checkout success return to improve subscription/credits sync visibility — completed on 2026-03-17 (`settings/page.tsx`, 5-attempt sync loop)
 - [ ] Verify checkout from `/settings` subscription upgrade path when signed in (execute with `docs/live-payment-test-runbook.md`)
 - [ ] Verify successful return updates dashboard/account subscription state
 - [ ] Verify cancel return does not alter plan state
