@@ -85,7 +85,7 @@ export default function PrivacyPage() {
 
                     <section>
                         <h2 className="text-xl font-semibold mt-8 mb-3">8. Cookies</h2>
-                        <p>We use essential cookies for authentication and session management. We use no third-party tracking cookies. See our cookie consent banner for more details.</p>
+                        <p>We use essential cookies for authentication and session management. Optional third-party analytics tags are loaded only after explicit consent in our cookie banner.</p>
                     </section>
 
                     <section>

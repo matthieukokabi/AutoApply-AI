@@ -36,7 +36,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [ ] Mark primary GA4 conversions and link GA4 to Google Ads
 - [ ] Configure Google Ads conversion actions for subscriptions (`Pro`, `Unlimited`) and one-time credit pack
 - [ ] Create UTM naming convention doc and enforce campaign tags in all social/ad links (in progress: naming convention doc added on 2026-03-17 in `docs/utm-naming-convention.md`; link-by-link enforcement pending)
-- [ ] Add consent-aware event gating for analytics/ads tags (EU-friendly behavior)
+- [x] Add consent-aware event gating for analytics/ads tags (EU-friendly behavior) — completed on 2026-03-17 (`analytics-consent-gate` + cookie-consent event wiring + privacy copy update)
 
 ## P1 — Social + ads campaign rollout (creative + execution)
 

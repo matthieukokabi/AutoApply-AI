@@ -4034,6 +4034,38 @@ Included in this rollout:
 
 ---
 
+## Session 136 — 2026-03-17
+
+### Completed
+
+**Consent-aware analytics gating (EU-friendly behavior):**
+- Added `apps/web/components/analytics-consent-gate.tsx`:
+  - reads `cookie-consent` status from localStorage
+  - renders GTM/GA tags only when consent is `accepted`
+  - reacts to both `storage` and in-tab `cookie-consent-updated` events
+- Updated `apps/web/components/cookie-consent.tsx`:
+  - emits `cookie-consent-updated` on accept/decline
+  - copy now states optional analytics tags load only after accept
+- Updated `apps/web/app/layout.tsx`:
+  - replaced unconditional analytics injection with `AnalyticsConsentGate`
+- Updated privacy policy copy in `apps/web/app/[locale]/privacy/page.tsx` to match real behavior.
+- Updated TODO consent-aware analytics item to complete.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/analytics-consent-gate.tsx`
+- `apps/web/components/cookie-consent.tsx`
+- `apps/web/app/layout.tsx`
+- `apps/web/app/[locale]/privacy/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

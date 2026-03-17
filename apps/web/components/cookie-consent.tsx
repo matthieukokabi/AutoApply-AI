@@ -23,11 +23,13 @@ export function CookieConsent() {
 
     function accept() {
         try { localStorage.setItem("cookie-consent", "accepted"); } catch { /* noop */ }
+        window.dispatchEvent(new Event("cookie-consent-updated"));
         setVisible(false);
     }
 
     function decline() {
         try { localStorage.setItem("cookie-consent", "declined"); } catch { /* noop */ }
+        window.dispatchEvent(new Event("cookie-consent-updated"));
         setVisible(false);
     }
 
@@ -38,7 +40,7 @@ export function CookieConsent() {
             <div className="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="min-w-0 break-words text-center text-sm leading-relaxed text-muted-foreground sm:text-left">
                     We use essential cookies for authentication and session management.
-                    No third-party tracking.{" "}
+                    Optional analytics tags are loaded only if you accept.{" "}
                     <Link href="/privacy" className="underline text-foreground">
                         Privacy Policy
                     </Link>
