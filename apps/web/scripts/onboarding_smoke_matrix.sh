@@ -2,7 +2,7 @@
 set -euo pipefail
 
 BASE_URL="${1:-https://autoapply.works}"
-LOCALES="${SMOKE_LOCALES:-fr en}"
+LOCALES="${SMOKE_LOCALES:-en fr de es it}"
 VIEWPORTS="${SMOKE_VIEWPORTS:-desktop:1280:800 mobile:390:844}"
 PLAYWRIGHT_TIMEOUT_MS="${PLAYWRIGHT_TIMEOUT_MS:-15000}"
 REPORT_PATH="${REPORT_PATH:-/tmp/onboarding-smoke-$(date +%Y%m%d_%H%M%S).jsonl}"
@@ -118,13 +118,8 @@ for locale in $LOCALES; do
     session="onboarding-${locale}-${name}-$$"
     case_id="${locale}-${name}"
     landing_url="${BASE_URL%/}/${locale}"
-    if [[ "$locale" == "en" ]]; then
-      sign_in_url="${BASE_URL%/}/sign-in"
-      sign_up_intent_url="${BASE_URL%/}/sign-up?upgrade=pro_monthly&from=%2Fen"
-    else
-      sign_in_url="${BASE_URL%/}/${locale}/sign-in"
-      sign_up_intent_url="${BASE_URL%/}/${locale}/sign-up?upgrade=pro_monthly&from=%2F${locale}"
-    fi
+    sign_in_url="${BASE_URL%/}/${locale}/sign-in"
+    sign_up_intent_url="${BASE_URL%/}/${locale}/sign-up?upgrade=pro_monthly&from=%2F${locale}"
 
     status="pass"
     reason="ok"
@@ -165,8 +160,12 @@ for locale in $LOCALES; do
         const marker = String(window.name || '');
         const match = marker.match(/^qaCheckoutCalls:(\\d+)$/);
         const checkoutCallsFromLanding = match ? Number(match[1]) : null;
+        const parsed = new URL(location.href);
         return {
           url: location.href,
+          path: parsed.pathname,
+          upgradeParam: parsed.searchParams.get('upgrade'),
+          fromParam: parsed.searchParams.get('from'),
           hasOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
           hasUnauthorizedText: document.body.innerText.toLowerCase().includes('unauthorized'),
           hasAuthSurface:
@@ -205,9 +204,15 @@ for locale in $LOCALES; do
       elif json_bool_true "$landing_json" '.hasUpgradeCta == false'; then
         status="fail"
         reason="landing_upgrade_cta_missing"
-      elif ! json_bool_true "$signup_json" '.url | test("/sign-up")'; then
+      elif ! json_bool_true "$signup_json" ".path == \"/${locale}/sign-up\""; then
         status="fail"
-        reason="upgrade_redirect_missing"
+        reason="signup_locale_path_mismatch"
+      elif ! json_bool_true "$signup_json" '.upgradeParam == "pro_monthly"'; then
+        status="fail"
+        reason="signup_upgrade_param_mismatch"
+      elif ! json_bool_true "$signup_json" ".fromParam == \"/${locale}\""; then
+        status="fail"
+        reason="signup_from_param_mismatch"
       elif json_bool_true "$signup_json" '.hasOverflow == true'; then
         status="fail"
         reason="signup_overflow_detected"

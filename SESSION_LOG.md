@@ -3731,6 +3731,35 @@ Included in this rollout:
 
 ---
 
+## Session 125 — 2026-03-17
+
+### Completed
+
+**Onboarding smoke parity hardening (locale-preserving sign-up handoff):**
+- Updated `apps/web/scripts/onboarding_smoke_matrix.sh` to default locale matrix:
+  - `en fr de es it`
+- Added explicit sign-up handoff parity assertions per locale:
+  - expected path must match `/${locale}/sign-up`
+  - `upgrade` query param must equal `pro_monthly`
+  - `from` query param must equal `/${locale}`
+- Kept existing guardrails (overflow, unauthorized text, anonymous checkout API call suppression, auth surface checks) while strengthening locale-path verification.
+- Updated TODO onboarding reliability item as complete.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+- `npm run smoke:onboarding -- http://127.0.0.1:3000` ✅
+  - report: `/tmp/onboarding-smoke-20260317_163628.jsonl`
+  - result: Passed 10, Failed 0
+
+### Files Modified This Session
+- `apps/web/scripts/onboarding_smoke_matrix.sh`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed
