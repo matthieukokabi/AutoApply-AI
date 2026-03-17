@@ -12,8 +12,8 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [ ] Verify checkout from `/settings` subscription upgrade path when signed in (execute with `docs/live-payment-test-runbook.md`)
 - [ ] Verify successful return updates dashboard/account subscription state
 - [ ] Verify cancel return does not alter plan state
-- [ ] Verify webhook delivery and idempotency on latest payment events in Stripe dashboard
-- [ ] Manual family live payment test (real card, production mode) and record outcome with screenshots + Stripe event IDs (use `docs/live-payment-test-runbook.md`)
+- [ ] Verify webhook delivery and idempotency on latest payment events in Stripe dashboard (log with `docs/live-payment-verification-log-template.md`)
+- [ ] Manual family live payment test (real card, production mode) and record outcome with screenshots + Stripe event IDs (use `docs/live-payment-test-runbook.md` + `docs/live-payment-verification-log-template.md`)
 
 ## P1 — Onboarding reliability hardening right after live payment pass
 

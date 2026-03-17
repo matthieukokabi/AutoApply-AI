@@ -3643,6 +3643,31 @@ Included in this rollout:
 
 ---
 
+## Session 115 — 2026-03-17
+
+### Completed
+
+**Live Payment Webhook/Idempotency Logging Template:**
+- Added a dedicated manual verification template for production billing validation:
+  - `docs/live-payment-verification-log-template.md`
+- Template now captures:
+  - per-case device/browser/VPN metadata
+  - success/cancel flow outcomes
+  - Stripe event IDs and webhook response status
+  - explicit idempotency validation (no duplicate side effects on retried events)
+- Updated runbook and TODO references so family manual testing uses this template by default.
+
+### Verification
+- Docs-only update; no runtime code path changed.
+
+### Files Modified This Session
+- `docs/live-payment-verification-log-template.md`
+- `docs/live-payment-test-runbook.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 112 — 2026-03-17
 
 ### Completed

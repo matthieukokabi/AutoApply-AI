@@ -22,6 +22,10 @@ Run these cases one by one:
 4. Android Samsung Internet (normal mode, no VPN)
 5. One repeat case with VPN enabled
 
+Use this logging sheet while executing:
+
+- `docs/live-payment-verification-log-template.md`
+
 ## Test steps per case
 
 1. Open landing page and go to pricing section.
@@ -57,6 +61,8 @@ For each run, save:
   - `checkout.session.completed`
   - `invoice.payment_succeeded` (for subscription)
 - Webhook delivery status (2xx) and retry status if any.
+- Idempotency notes for retried events using:
+  - `docs/live-payment-verification-log-template.md`
 
 ## Pass criteria
 
