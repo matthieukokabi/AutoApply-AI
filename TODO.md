@@ -17,7 +17,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 
 ## P1 — Onboarding reliability hardening right after live payment pass
 
-- [ ] Add E2E assertion that pricing CTA works before hydration on mobile WebKit
+- [x] Add E2E assertion that pricing CTA works before hydration on mobile WebKit — completed on 2026-03-17 (`mobile webkit pro CTA works before hydration` in `e2e/onboarding.cross-browser.smoke.spec.ts`, validated locally with JS disabled)
 - [ ] Add smoke assertion for localization path parity (`/en`, `/fr`, `/de`, `/es`, `/it`) on sign-up handoff
 - [x] Normalize Free-plan CTA locale preservation on non-EN landing pages (`/fr` should keep `/fr/sign-up`) — fixed in source on 2026-03-17 (landing links now use locale-aware `signUpPath`)
 - [x] Add production runbook page for payment incident triage (`Unauthorized`, webhook delay, missing envs) — completed on 2026-03-17 (`docs/payment-incident-triage-runbook.md`)

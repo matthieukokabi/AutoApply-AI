@@ -3705,6 +3705,32 @@ Included in this rollout:
 
 ---
 
+## Session 124 — 2026-03-17
+
+### Completed
+
+**Onboarding reliability hardening (`mobile WebKit` pre-hydration CTA guardrail):**
+- Added a dedicated Playwright assertion in `apps/web/e2e/onboarding.cross-browser.smoke.spec.ts`:
+  - `mobile webkit pro CTA works before hydration`
+- New test forces a no-JS browser context (`javaScriptEnabled: false`) and validates:
+  - Pro monthly pricing CTA exists as an anchor fallback in `#pricing`
+  - CTA href points to sign-up intent path with plan+source query
+  - Clicking CTA still navigates to `/sign-up?upgrade=pro_monthly...` before hydration
+- Updated TODO onboarding reliability checklist item as complete.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+- `SMOKE_BASE_URL=http://127.0.0.1:3000 npx playwright test -c playwright.smoke.config.ts e2e/onboarding.cross-browser.smoke.spec.ts --browser=webkit --grep "mobile webkit pro CTA works before hydration" --reporter=line` ✅ (2 passed, 2 skipped; desktop variants intentionally skipped)
+
+### Files Modified This Session
+- `apps/web/e2e/onboarding.cross-browser.smoke.spec.ts`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

@@ -123,6 +123,48 @@ for (const locale of locales) {
                 expect(signUp.hasAuthSurface).toBe(true);
             });
 
+            test("mobile webkit pro CTA works before hydration", async ({
+                browser,
+                browserName,
+            }) => {
+                test.skip(
+                    browserName !== "webkit" || viewportCase.name !== "mobile",
+                    "This guardrail is specific to mobile WebKit pre-hydration behavior."
+                );
+
+                const noJsContext = await browser.newContext({
+                    javaScriptEnabled: false,
+                    viewport: {
+                        width: viewportCase.width,
+                        height: viewportCase.height,
+                    },
+                });
+
+                try {
+                    const noJsPage = await noJsContext.newPage();
+                    await noJsPage.goto(`/${locale}`, {
+                        waitUntil: "domcontentloaded",
+                    });
+
+                    const proMonthlyCta = noJsPage
+                        .locator('#pricing a[href*="upgrade=pro_monthly"]')
+                        .first();
+
+                    await expect(proMonthlyCta).toBeVisible();
+                    await expect(proMonthlyCta).toHaveAttribute(
+                        "href",
+                        /\/sign-up\?upgrade=pro_monthly&from=/
+                    );
+
+                    await proMonthlyCta.click();
+                    await expect(noJsPage).toHaveURL(
+                        /\/sign-up\?upgrade=pro_monthly&from=/
+                    );
+                } finally {
+                    await noJsContext.close();
+                }
+            });
+
             test("blocked auth still shows recovery surface", async ({ context, page }) => {
                 await context.route("**/*", (route) => {
                     const requestHost = new URL(route.request().url()).hostname.toLowerCase();
