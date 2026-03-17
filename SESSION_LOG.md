@@ -3653,6 +3653,31 @@ Included in this rollout:
 
 ---
 
+## Session 122 — 2026-03-17
+
+### Completed
+
+**GA4 Event Instrumentation Progress (`sign_up_completed`):**
+- Added global session-event consumer component:
+  - `apps/web/components/analytics-session-events.tsx`
+- Wired it in root layout so deferred signup-completion tracking fires on the first post-signup page load.
+- Updated sign-up flow to set a pending completion marker in `sessionStorage` before redirecting authenticated users away from sign-up.
+- Result: `sign_up_completed` now fires reliably even with immediate redirect after account creation.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/analytics-session-events.tsx`
+- `apps/web/app/layout.tsx`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

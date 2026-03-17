@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsent } from "@/components/cookie-consent";
 import { GoogleAnalytics, GoogleTagManagerNoScript } from "@/components/google-analytics";
+import { AnalyticsSessionEvents } from "@/components/analytics-session-events";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -73,6 +74,7 @@ export default function RootLayout({
                         enableSystem
                         disableTransitionOnChange
                     >
+                        <AnalyticsSessionEvents />
                         {children}
                         <CookieConsent />
                     </ThemeProvider>

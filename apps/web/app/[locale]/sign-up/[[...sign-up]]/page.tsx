@@ -24,6 +24,30 @@ import { trackSignUpStarted } from "@/lib/analytics";
 
 const CLERK_LOAD_TIMEOUT_MS = 8000;
 const CLERK_WIDGET_MOUNT_TIMEOUT_MS = 5000;
+const SIGNUP_COMPLETED_PENDING_KEY = "aa_signup_completed_pending";
+
+function markSignUpCompletedPending(
+    locale: string | undefined,
+    requestedPlan: string | null,
+    from: string | null
+) {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    try {
+        window.sessionStorage.setItem(
+            SIGNUP_COMPLETED_PENDING_KEY,
+            JSON.stringify({
+                locale,
+                requestedPlan,
+                from,
+            })
+        );
+    } catch {
+        // Ignore sessionStorage write failures (privacy mode/storage restrictions).
+    }
+}
 
 export default function SignUpPage() {
     const params = useParams<{ locale?: string }>();
@@ -71,8 +95,13 @@ export default function SignUpPage() {
             return;
         }
 
+        markSignUpCompletedPending(
+            localeParam,
+            requestedPlan,
+            fromParam
+        );
         window.location.href = dashboardPath;
-    }, [dashboardPath, isLoaded, userId]);
+    }, [dashboardPath, fromParam, isLoaded, localeParam, requestedPlan, userId]);
 
     useEffect(() => {
         if (isLoaded) {
