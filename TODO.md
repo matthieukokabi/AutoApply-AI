@@ -81,6 +81,6 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Add IP + per-session throttling on contact endpoint — completed on 2026-03-18 (`/api/contact` adds session-level limiter in addition to IP limiter)
 - [x] Add abuse telemetry counters on contact endpoint — completed on 2026-03-18 (`/api/contact` blocked-reason counters + structured warning logs)
 - [x] Add `noindex` metadata for auth and utility pages (`sign-in`, `sign-up`, `auth-diagnostics`, dashboard surface) — completed on 2026-03-18 (`(dashboard)/layout.tsx`, `sign-in/layout.tsx`, `sign-up/layout.tsx`, `auth-diagnostics/layout.tsx`, `onboarding/layout.tsx`)
-- [ ] Tighten canonical handling for query-param variants
+- [x] Tighten canonical handling for query-param variants — completed on 2026-03-18 (`lib/seo.ts` now strips `?query` and `#hash` before canonical/hreflang generation; covered by `__tests__/seo.test.ts`)
 - [ ] Re-validate hreflang reciprocity across all localized indexable pages
 - [ ] Run Wave 2 validation suite (`lint`, `test`, `build`, live squirrel audit) and document score delta vs Wave 1

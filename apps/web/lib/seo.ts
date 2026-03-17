@@ -18,7 +18,16 @@ function normalizePath(path: string): string {
         return "/";
     }
 
-    const withLeadingSlash = path.startsWith("/") ? path : `/${path}`;
+    const pathWithoutSearchOrHash = path.split("?")[0]?.split("#")[0] ?? "/";
+    const trimmedPath = pathWithoutSearchOrHash.trim();
+
+    if (!trimmedPath || trimmedPath === "/") {
+        return "/";
+    }
+
+    const withLeadingSlash = trimmedPath.startsWith("/")
+        ? trimmedPath
+        : `/${trimmedPath}`;
     return withLeadingSlash.endsWith("/")
         ? withLeadingSlash.slice(0, -1)
         : withLeadingSlash;
