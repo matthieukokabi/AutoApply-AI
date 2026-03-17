@@ -4491,3 +4491,25 @@ Included in this rollout:
 - `apps/web/next.config.js`
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 142 — 2026-03-17
+
+### Completed
+
+**Campaign Landing Variant (Proof-Led):**
+- Added second campaign landing at `/<locale>/campaign/proof-led` with proof-first messaging and focused conversion sections.
+- Kept locale-safe sign-up and checkout fallback intents for campaign traffic (`pro_monthly`, `unlimited`).
+- Updated `TODO.md` to mark `proof-led` variant complete and leave only `feature-led` pending.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+  - Confirmed static routes for `/[locale]/campaign/pain-led` and `/[locale]/campaign/proof-led`
+
+### Files Modified This Session
+- `apps/web/app/[locale]/campaign/proof-led/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
