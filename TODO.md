@@ -52,6 +52,6 @@ Last updated: 2026-03-17 (Europe/Zurich)
 
 - [ ] Weekly Vercel usage review (`vercel usage`) and append summary in `SESSION_LOG.md`
 - [x] Verify no unintended auto-deploy/reactivation settings were re-enabled — completed on 2026-03-17 (confirmed: `gitProviderOptions.createDeployments=disabled`, `commandForIgnoringBuildStep` active, `enableAffectedProjectsDeployments=true`, `buildMachineType=standard`)
-- [ ] Add deploy batching rule: one production deploy after multiple validated atomic fixes
+- [x] Add deploy batching rule: one production deploy after multiple validated atomic fixes — completed on 2026-03-17 (`docs/vercel-deploy-batching-rule.md`)
 - [ ] Audit API routes for cacheability and short-circuit unauthenticated expensive paths
 - [ ] Add monthly cost budget guardrail with alert threshold and owner action playbook

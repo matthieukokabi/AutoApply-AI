@@ -3882,6 +3882,29 @@ Included in this rollout:
 
 ---
 
+## Session 130 — 2026-03-17
+
+### Completed
+
+**Vercel cost control policy hardening (deploy batching rule):**
+- Added `docs/vercel-deploy-batching-rule.md` with a strict production deploy policy:
+  - no deploy per atomic commit
+  - deploy only for P0 urgency, validated batch, or scheduled validation window
+  - mandatory pre-deploy gate (`pull`, `lint`, `test`, `build`)
+  - required post-deploy uptime smoke
+  - mandatory deploy reason + commit-range logging in `SESSION_LOG.md`
+- Updated TODO cost item (`deploy batching rule`) to complete.
+
+### Verification
+- Documentation/policy-only step; no application runtime code changed.
+
+### Files Modified This Session
+- `docs/vercel-deploy-batching-rule.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed
