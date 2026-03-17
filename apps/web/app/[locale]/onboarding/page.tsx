@@ -19,7 +19,7 @@ import {
     Circle,
 } from "lucide-react";
 import { buildOnboardingHealthSnapshot, type OnboardingHealthSnapshot } from "@/lib/onboarding-health";
-import { trackOnboardingCompleted } from "@/lib/analytics";
+import { trackCvUploaded, trackOnboardingCompleted } from "@/lib/analytics";
 
 type Step = "welcome" | "cv" | "preferences" | "done";
 const ONBOARDING_HEALTH_TIMEOUT_MS = 8000;
@@ -184,6 +184,7 @@ export default function OnboardingPage() {
                 setHealthSnapshot((current) =>
                     current ? { ...current, profileReady: true } : current
                 );
+                trackCvUploaded("onboarding", "file");
             } else {
                 const data = await res.json().catch(() => ({}));
                 setError(data.error || `Upload failed (${res.status}). Please try again or paste your CV text instead.`);
@@ -219,6 +220,7 @@ export default function OnboardingPage() {
                 setHealthSnapshot((current) =>
                     current ? { ...current, profileReady: true } : current
                 );
+                trackCvUploaded("onboarding", "text");
             } else {
                 const data = await res.json().catch(() => ({}));
                 setError(data.error || "Failed to save CV text. Please try again.");

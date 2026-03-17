@@ -3852,6 +3852,36 @@ Included in this rollout:
 
 ---
 
+## Session 129 — 2026-03-17
+
+### Completed
+
+**GA4 `cv_uploaded` event completion (final analytics gap closed):**
+- Added `trackCvUploaded()` helper in `apps/web/lib/analytics.ts`.
+- Wired `cv_uploaded` tracking in onboarding flow:
+  - file upload success -> `trackCvUploaded("onboarding", "file")`
+  - pasted CV text save success -> `trackCvUploaded("onboarding", "text")`
+  - file: `apps/web/app/[locale]/onboarding/page.tsx`
+- Wired `cv_uploaded` tracking in dashboard profile flow:
+  - file upload success -> `trackCvUploaded("profile", "file")`
+  - raw text save success -> `trackCvUploaded("profile", "text")`
+  - file: `apps/web/app/[locale]/(dashboard)/profile/page.tsx`
+- Updated TODO GA4 standardization item to complete (all target events now wired).
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/analytics.ts`
+- `apps/web/app/[locale]/onboarding/page.tsx`
+- `apps/web/app/[locale]/(dashboard)/profile/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

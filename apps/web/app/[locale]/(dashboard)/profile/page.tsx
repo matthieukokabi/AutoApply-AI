@@ -12,6 +12,7 @@ import {
 import { Upload, FileText, Loader2, Check, AlertCircle } from "lucide-react";
 import { ProfileSkeleton } from "@/components/loading-skeleton";
 import { PhotoUpload } from "@/components/photo-upload";
+import { trackCvUploaded } from "@/lib/analytics";
 
 interface StructuredCV {
     contact: {
@@ -91,6 +92,7 @@ export default function ProfilePage() {
             });
             if (res.ok) {
                 setMessage({ type: "success", text: "CV text saved successfully." });
+                trackCvUploaded("profile", "text");
             } else {
                 const data = await res.json();
                 setMessage({ type: "error", text: data.error || "Failed to save." });
@@ -152,6 +154,7 @@ export default function ProfilePage() {
                     setStructured(data.profile.structuredJson);
                 }
                 setMessage({ type: "success", text: data.message || "CV uploaded." });
+                trackCvUploaded("profile", "file");
             } else {
                 const data = await res.json();
                 setMessage({ type: "error", text: data.error || "Upload failed." });

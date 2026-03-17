@@ -67,3 +67,13 @@ export function trackPurchase(plan: CheckoutPlan, source: string) {
         checkout_source: source,
     });
 }
+
+export function trackCvUploaded(
+    source: string,
+    inputMethod: "file" | "text"
+) {
+    trackAnalyticsEvent("cv_uploaded", {
+        cv_source: source,
+        cv_input_method: inputMethod,
+    });
+}
