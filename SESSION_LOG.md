@@ -3624,6 +3624,35 @@ Included in this rollout:
 
 ---
 
+## Session 121 — 2026-03-17
+
+### Completed
+
+**GA4 Event Instrumentation Progress (`sign_up_started`):**
+- Extended analytics helper with `trackSignUpStarted`.
+- Added sign-up page instrumentation to fire `sign_up_started` once per page load.
+- Event payload now includes:
+  - `signup_source`
+  - `locale`
+  - `requested_plan`
+  - `requested_from`
+- Updated TODO GA4-event item progress to reflect both completed sub-events:
+  - `begin_checkout`
+  - `sign_up_started`
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/analytics.ts`
+- `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

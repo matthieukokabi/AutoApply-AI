@@ -40,3 +40,17 @@ export function trackBeginCheckout(plan: CheckoutPlan, source: string) {
         checkout_source: source,
     });
 }
+
+export function trackSignUpStarted(
+    source: string,
+    locale: string | undefined,
+    requestedPlan: CheckoutPlan | null,
+    fromPath: string | null
+) {
+    trackAnalyticsEvent("sign_up_started", {
+        signup_source: source,
+        locale,
+        requested_plan: requestedPlan,
+        requested_from: fromPath,
+    });
+}

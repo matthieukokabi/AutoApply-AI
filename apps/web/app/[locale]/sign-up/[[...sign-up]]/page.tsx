@@ -20,6 +20,7 @@ import {
 import { getAuthWidgetState } from "@/lib/auth-widget-state";
 import { hasMountedClerkWidget } from "@/lib/clerk-widget-monitor";
 import { resetViewportScroll } from "@/lib/scroll-reset";
+import { trackSignUpStarted } from "@/lib/analytics";
 
 const CLERK_LOAD_TIMEOUT_MS = 8000;
 const CLERK_WIDGET_MOUNT_TIMEOUT_MS = 5000;
@@ -45,10 +46,25 @@ export default function SignUpPage() {
     const [showWidgetFallback, setShowWidgetFallback] = useState(false);
     const [hasWidgetMounted, setHasWidgetMounted] = useState(false);
     const widgetHostRef = useRef<HTMLDivElement | null>(null);
+    const hasTrackedSignUpStartedRef = useRef(false);
 
     useEffect(() => {
         resetViewportScroll();
     }, []);
+
+    useEffect(() => {
+        if (hasTrackedSignUpStartedRef.current) {
+            return;
+        }
+
+        hasTrackedSignUpStartedRef.current = true;
+        trackSignUpStarted(
+            "sign_up_page",
+            localeParam,
+            requestedPlan,
+            fromParam
+        );
+    }, [fromParam, localeParam, requestedPlan]);
 
     useEffect(() => {
         if (!isLoaded || !userId) {
