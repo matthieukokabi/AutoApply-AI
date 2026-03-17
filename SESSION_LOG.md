@@ -3724,6 +3724,34 @@ Included in this rollout:
 
 ---
 
+## Session 118 — 2026-03-17
+
+### Completed
+
+**Google Tag Manager Integration (GA4 Fallback Preserved):**
+- Updated analytics integration to support env-driven GTM:
+  - `NEXT_PUBLIC_GTM_ID`
+- Behavior is now:
+  - If GTM ID exists: load GTM script + noscript iframe container.
+  - If GTM ID is not set and GA ID exists: use existing direct GA4 (`gtag`) loader.
+  - If neither is set: no analytics script is injected.
+- Added `NEXT_PUBLIC_GTM_ID` and `NEXT_PUBLIC_GA_MEASUREMENT_ID` placeholders to `.env.example`.
+- Updated TODO item for GTM integration to complete.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/components/google-analytics.tsx`
+- `apps/web/app/layout.tsx`
+- `.env.example`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 112 — 2026-03-17
 
 ### Completed

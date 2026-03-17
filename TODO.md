@@ -27,7 +27,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 
 - [ ] Verify Google Search Console ownership for `autoapply.works` and `www.autoapply.works`
 - [ ] Submit sitemap and re-index priority routes (`/`, `/pricing` section, `/blog`, localized roots)
-- [ ] Add Google Tag Manager container (keep GA4 config in one place)
+- [x] Add Google Tag Manager container (keep GA4 config in one place) — completed on 2026-03-17 (env-driven GTM in `layout` + GA fallback when GTM is unset)
 - [ ] Standardize GA4 events: `sign_up_started`, `sign_up_completed`, `begin_checkout`, `purchase`, `onboarding_completed`, `cv_uploaded`
 - [ ] Mark primary GA4 conversions and link GA4 to Google Ads
 - [ ] Configure Google Ads conversion actions for subscriptions (`Pro`, `Unlimited`) and one-time credit pack
