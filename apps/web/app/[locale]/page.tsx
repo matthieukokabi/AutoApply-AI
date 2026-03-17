@@ -502,7 +502,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 <a href="https://twitter.com/autoapplyai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
                                     <Twitter className="h-4 w-4" />
                                 </a>
-                                <a href="https://linkedin.com/company/autoapply-ai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn">
+                                <a href="https://www.linkedin.com/company/autoapply-ai/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn">
                                     <Linkedin className="h-4 w-4" />
                                 </a>
                             </div>

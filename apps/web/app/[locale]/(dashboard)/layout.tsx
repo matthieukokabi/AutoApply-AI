@@ -28,7 +28,7 @@ const dashboardSocialLinks = [
         label: "X / Twitter",
     },
     {
-        href: "https://linkedin.com/company/autoapply-ai",
+        href: "https://www.linkedin.com/company/autoapply-ai/",
         label: "LinkedIn",
     },
     {
