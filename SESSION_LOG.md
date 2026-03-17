@@ -4558,3 +4558,26 @@ Included in this rollout:
 - `docs/paid-ads-creative-angles.md`
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 145 — 2026-03-17
+
+### Completed
+
+**GitHub Public Landing Repo (Launch Checklist Progress):**
+- Created and published public landing repository:
+  - `https://github.com/autoapply-ai/autoapply-public-landing`
+- Initialized repository with a project-overview `README.md`.
+- Updated `docs/launch-checklist.md` to mark the GitHub landing-repo checkbox as done.
+- Updated `TODO.md` launch-checklist umbrella status to reflect that only Product Hunt listing actions remain.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `docs/launch-checklist.md`
+- `TODO.md`
+- `SESSION_LOG.md`

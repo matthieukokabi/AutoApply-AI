@@ -48,7 +48,7 @@
 - [x] Create organization: github.com/autoapply-ai
 - [x] Upload profile picture
 - [x] Set description, website, email, location
-- [ ] Create a public landing repo (README with project overview)
+- [x] Create a public landing repo (README with project overview): https://github.com/autoapply-ai/autoapply-public-landing
 
 ## Email
 
