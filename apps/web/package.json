@@ -16,7 +16,8 @@
         "test:watch": "vitest",
         "db:seed": "npx tsx prisma/seed.ts",
         "smoke:onboarding": "bash scripts/onboarding_smoke_matrix.sh",
-        "smoke:onboarding:auth-blocked": "bash scripts/onboarding_auth_blocked_smoke.sh"
+        "smoke:onboarding:auth-blocked": "bash scripts/onboarding_auth_blocked_smoke.sh",
+        "smoke:onboarding:cross-browser": "bash scripts/onboarding_cross_browser_smoke.sh"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"
@@ -56,6 +57,7 @@
     "devDependencies": {
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.2",
+        "@playwright/test": "^1.58.2",
         "@types/node": "^20.11.0",
         "@types/react": "^18.2.47",
         "@types/react-dom": "^18.2.18",

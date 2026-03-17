@@ -3497,3 +3497,41 @@ Included in this rollout:
 - `apps/web/components/checkout-button.tsx`
 - `apps/web/app/[locale]/page.tsx`
 - `SESSION_LOG.md`
+
+---
+
+## Session 105 — 2026-03-17
+
+### Completed
+
+**Cross-Browser Pre-Deploy Gate (Chromium + Firefox + WebKit):**
+- Added native Playwright smoke configuration for onboarding compatibility checks:
+  - `playwright.smoke.config.ts`
+  - `e2e/onboarding.cross-browser.smoke.spec.ts`
+- Added cross-browser smoke runner script:
+  - `scripts/onboarding_cross_browser_smoke.sh`
+  - iterates `SMOKE_BROWSERS` (default: `chromium firefox webkit`) and writes JSONL summary report.
+- Added npm command:
+  - `npm run smoke:onboarding:cross-browser`
+- Added `@playwright/test` to dev dependencies to make cross-browser gate reproducible in repo.
+
+### Verification
+- Local cross-browser onboarding smoke gate (against local patched app) ✅
+  - command: `SMOKE_BASE_URL=http://127.0.0.1:3000 npm run smoke:onboarding:cross-browser`
+  - report: `/tmp/onboarding-cross-browser-smoke-20260317_075954.jsonl`
+  - browsers passed: `chromium`, `firefox`, `webkit`
+- `npm run smoke:onboarding` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260317_080414.jsonl`
+- `npm run smoke:onboarding:auth-blocked` (apps/web) ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260317_080526.jsonl`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/package.json`
+- `apps/web/package-lock.json`
+- `apps/web/playwright.smoke.config.ts`
+- `apps/web/e2e/onboarding.cross-browser.smoke.spec.ts`
+- `apps/web/scripts/onboarding_cross_browser_smoke.sh`
+- `SESSION_LOG.md`
