@@ -21,7 +21,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [ ] Add smoke assertion for localization path parity (`/en`, `/fr`, `/de`, `/es`, `/it`) on sign-up handoff
 - [x] Normalize Free-plan CTA locale preservation on non-EN landing pages (`/fr` should keep `/fr/sign-up`) — fixed in source on 2026-03-17 (landing links now use locale-aware `signUpPath`)
 - [x] Add production runbook page for payment incident triage (`Unauthorized`, webhook delay, missing envs) — completed on 2026-03-17 (`docs/payment-incident-triage-runbook.md`)
-- [ ] Add lightweight uptime check for `/api/auth/session`, `/api/checkout`, `/api/webhooks/stripe`
+- [x] Add lightweight uptime check for `/api/auth/session`, `/api/checkout`, `/api/webhooks/stripe` — completed on 2026-03-17 (`npm run smoke:uptime:prod`, report: `/tmp/production-uptime-check-20260317_141546.jsonl`)
 
 ## P1 — Google tool integration (acquisition + measurement)
 

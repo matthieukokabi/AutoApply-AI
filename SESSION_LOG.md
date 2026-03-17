@@ -3692,6 +3692,38 @@ Included in this rollout:
 
 ---
 
+## Session 117 — 2026-03-17
+
+### Completed
+
+**Production Uptime Guardrail Script Added:**
+- Added lightweight API uptime script:
+  - `apps/web/scripts/production_uptime_check.sh`
+- Added npm command:
+  - `npm run smoke:uptime:prod`
+- Probe validates key production guardrail endpoints:
+  - `GET /api/auth/session` (expected status family configurable; defaults allow `200/401/404` to avoid false positives on Clerk-hosted session routing)
+  - `GET /api/auth/diagnostics` (expected `200`)
+  - `POST /api/checkout` unsigned request (expected `401`)
+  - `POST /api/webhooks/stripe` invalid signature payload (expected `400`)
+- Updated `TODO.md` to mark uptime-check item complete with report path.
+
+### Verification
+- `npm run smoke:uptime:prod` (apps/web, against production) ✅
+  - report: `/tmp/production-uptime-check-20260317_141546.jsonl`
+  - passed: `4`, failed: `0`
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/scripts/production_uptime_check.sh`
+- `apps/web/package.json`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 112 — 2026-03-17
 
 ### Completed

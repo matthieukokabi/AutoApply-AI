@@ -17,7 +17,8 @@
         "db:seed": "npx tsx prisma/seed.ts",
         "smoke:onboarding": "bash scripts/onboarding_smoke_matrix.sh",
         "smoke:onboarding:auth-blocked": "bash scripts/onboarding_auth_blocked_smoke.sh",
-        "smoke:onboarding:cross-browser": "bash scripts/onboarding_cross_browser_smoke.sh"
+        "smoke:onboarding:cross-browser": "bash scripts/onboarding_cross_browser_smoke.sh",
+        "smoke:uptime:prod": "bash scripts/production_uptime_check.sh https://autoapply.works"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"
