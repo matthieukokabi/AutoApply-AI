@@ -47,7 +47,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Angle B: "ATS keyword optimization with zero fabrication"
 - [x] Angle C: "Compatibility score to focus only on high-fit jobs"
 - [ ] Build 3 landing variants for campaign testing (pain-led, proof-led, feature-led)
-- [ ] Create Product Hunt launch-day checklist owner schedule (hour-by-hour community replies)
+- [x] Create Product Hunt launch-day checklist owner schedule (hour-by-hour community replies) — completed on 2026-03-17 (`docs/producthunt-launch-day-schedule.md`)
 - [ ] Add referral code campaign for first beta users and track redemption
 
 ## P1 — Vercel cost optimization (keep monthly burn controlled)
