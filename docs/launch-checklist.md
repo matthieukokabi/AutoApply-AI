@@ -59,7 +59,7 @@
 ## Website Updates
 
 - [x] Add social links to landing page footer
-- [ ] Add social links to dashboard sidebar/header
+- [x] Add social links to dashboard sidebar/header
 - [x] Add OpenGraph meta image (1200x630px)
 - [x] Add Twitter meta tags (card: summary_large_image)
 - [x] Branding assets (favicon, apple-icon, OG images, social images)

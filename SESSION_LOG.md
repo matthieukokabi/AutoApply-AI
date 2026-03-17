@@ -4066,6 +4066,34 @@ Included in this rollout:
 
 ---
 
+## Session 137 — 2026-03-17
+
+### Completed
+
+**Launch checklist progress — dashboard social links added:**
+- Updated dashboard sidebar layout:
+  - file: `apps/web/app/[locale]/(dashboard)/layout.tsx`
+  - added `Follow Updates` block with external links to:
+    - X/Twitter (`@autoapplyai`)
+    - LinkedIn company page
+    - Product Hunt product page
+- Updated launch checklist item:
+  - `docs/launch-checklist.md` → marked `Add social links to dashboard sidebar/header` as complete.
+- Updated TODO launch-checklist umbrella line to reflect partial completion (remaining Product Hunt listing + GitHub public landing repo).
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/(dashboard)/layout.tsx`
+- `docs/launch-checklist.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

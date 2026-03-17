@@ -10,6 +10,7 @@ import {
     Briefcase,
     Settings,
     Sparkles,
+    ExternalLink,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -19,6 +20,21 @@ const sidebarItems = [
     { href: "/profile" as const, label: "Profile & CV", icon: User },
     { href: "/jobs" as const, label: "Job Feed", icon: Briefcase },
     { href: "/settings" as const, label: "Settings", icon: Settings },
+];
+
+const dashboardSocialLinks = [
+    {
+        href: "https://twitter.com/autoapplyai",
+        label: "X / Twitter",
+    },
+    {
+        href: "https://linkedin.com/company/autoapply-ai",
+        label: "LinkedIn",
+    },
+    {
+        href: "https://www.producthunt.com/posts/autoapply-ai",
+        label: "Product Hunt",
+    },
 ];
 
 export default async function DashboardLayout({
@@ -93,6 +109,26 @@ export default async function DashboardLayout({
                 </nav>
 
                 <div className="p-4 border-t space-y-2">
+                    <div className="rounded-lg border p-3 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Follow Updates
+                        </p>
+                        <div className="space-y-1">
+                            {dashboardSocialLinks.map((social) => (
+                                <a
+                                    key={social.href}
+                                    href={social.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                >
+                                    <span>{social.label}</span>
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-3 px-3 py-2">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
                             {user?.firstName?.[0] || "U"}
