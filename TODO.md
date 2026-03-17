@@ -46,10 +46,10 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Angle A: "Save 30+ minutes per application"
 - [x] Angle B: "ATS keyword optimization with zero fabrication"
 - [x] Angle C: "Compatibility score to focus only on high-fit jobs"
-- [ ] Build 3 landing variants for campaign testing (in progress: pain-led + proof-led shipped on 2026-03-17; feature-led pending)
+- [x] Build 3 landing variants for campaign testing (completed on 2026-03-17: `/[locale]/campaign/pain-led`, `/[locale]/campaign/proof-led`, `/[locale]/campaign/feature-led`)
 - [x] Landing variant: pain-led
 - [x] Landing variant: proof-led
-- [ ] Landing variant: feature-led
+- [x] Landing variant: feature-led
 - [x] Create Product Hunt launch-day checklist owner schedule (hour-by-hour community replies) — completed on 2026-03-17 (`docs/producthunt-launch-day-schedule.md`)
 - [ ] Add referral code campaign for first beta users and track redemption
 

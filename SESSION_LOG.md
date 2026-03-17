@@ -4513,3 +4513,25 @@ Included in this rollout:
 - `apps/web/app/[locale]/campaign/proof-led/page.tsx`
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 143 — 2026-03-17
+
+### Completed
+
+**Campaign Landing Variant (Feature-Led):**
+- Added third campaign landing at `/<locale>/campaign/feature-led` with feature-first positioning and direct conversion CTAs.
+- Kept locale-safe sign-up and checkout fallback intents for campaign visitors (`pro_monthly`, `unlimited`).
+- Marked the parent TODO item "Build 3 landing variants" as completed, with all three variant sub-items checked.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+  - Confirmed static routes for `/[locale]/campaign/pain-led`, `/[locale]/campaign/proof-led`, `/[locale]/campaign/feature-led`
+
+### Files Modified This Session
+- `apps/web/app/[locale]/campaign/feature-led/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
