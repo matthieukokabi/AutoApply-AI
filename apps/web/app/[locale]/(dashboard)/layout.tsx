@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Link } from "@/i18n/routing";
@@ -14,6 +15,13 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
+
+export const metadata: Metadata = {
+    robots: {
+        index: false,
+        follow: false,
+    },
+};
 
 const sidebarItems = [
     { href: "/dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
