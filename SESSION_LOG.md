@@ -3595,6 +3595,26 @@ Included in this rollout:
 
 ---
 
+## Session 109 — 2026-03-17
+
+### Completed
+
+**P0 Production Onboarding Matrix Re-Verification:**
+- Executed `smoke:onboarding` against `https://autoapply.works` as the next pre-live-payment blocking check.
+- Confirmed matrix pass with no failures.
+- Updated `TODO.md` to mark the production onboarding matrix checkbox complete with the generated report path.
+
+### Verification
+- `npm run smoke:onboarding -- https://autoapply.works` (apps/web) ✅
+  - report: `/tmp/onboarding-smoke-20260317_120732.jsonl`
+  - passed: `4`, failed: `0`
+
+### Files Modified This Session
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 108 — 2026-03-17
 
 ### Completed

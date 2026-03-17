@@ -5,7 +5,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 ## P0 — Must complete before live payment test
 
 - [x] Run production onboarding gate (`SMOKE_BASE_URL=https://autoapply.works npm run smoke:onboarding:cross-browser` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-cross-browser-smoke-20260317_115606.jsonl`)
-- [ ] Run production onboarding matrix (`npm run smoke:onboarding -- https://autoapply.works` in `apps/web`)
+- [x] Run production onboarding matrix (`npm run smoke:onboarding -- https://autoapply.works` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-smoke-20260317_120732.jsonl`)
 - [ ] Run production auth-blocked matrix (`npm run smoke:onboarding:auth-blocked -- https://autoapply.works` in `apps/web`)
 - [ ] Verify Vercel production env vars are present and live (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, all live `STRIPE_PRICE_*`)
 - [ ] Verify checkout from landing pricing cards when signed out (`Free`, `Pro monthly`, `Pro yearly`, `Unlimited`)
