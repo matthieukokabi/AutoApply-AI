@@ -3668,6 +3668,30 @@ Included in this rollout:
 
 ---
 
+## Session 116 — 2026-03-17
+
+### Completed
+
+**Payment Incident Triage Runbook Added:**
+- Added `docs/payment-incident-triage-runbook.md` for production billing incident handling.
+- Runbook covers:
+  - `Unauthorized` pre-checkout triage
+  - payment success but stale app subscription state
+  - webhook delay/retry/idempotency checks
+  - production env verification steps for Stripe keys/price IDs
+  - closure criteria and post-incident follow-up actions
+- Updated `TODO.md` to mark payment incident triage runbook item complete.
+
+### Verification
+- Docs-only update; no runtime code path changed.
+
+### Files Modified This Session
+- `docs/payment-incident-triage-runbook.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 112 — 2026-03-17
 
 ### Completed
