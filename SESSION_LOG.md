@@ -3979,6 +3979,38 @@ Included in this rollout:
 
 ---
 
+## Session 134 — 2026-03-17
+
+### Completed
+
+**Production smoke revalidation after checkout/onboarding hardening:**
+- Re-ran production uptime guardrail:
+  - `npm run smoke:uptime:prod`
+  - report: `/tmp/production-uptime-check-20260317_165546.jsonl`
+  - result: Passed 4, Failed 0
+- Re-ran production onboarding smoke matrix:
+  - `npm run smoke:onboarding -- https://autoapply.works`
+  - report: `/tmp/onboarding-smoke-20260317_165552.jsonl`
+  - result: Passed 10, Failed 0
+- Re-ran production auth-blocked matrix:
+  - `npm run smoke:onboarding:auth-blocked -- https://autoapply.works`
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260317_165818.jsonl`
+  - result: Passed 4, Failed 0
+- Re-ran production cross-browser onboarding gate:
+  - `SMOKE_BASE_URL=https://autoapply.works npm run smoke:onboarding:cross-browser`
+  - report: `/tmp/onboarding-cross-browser-smoke-20260317_165923.jsonl`
+  - result: Passed 3 browsers, Failed 0
+- Updated TODO with a completed revalidation line tied to these latest reports.
+
+### Verification
+- All production smoke checks above passed.
+
+### Files Modified This Session
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed
