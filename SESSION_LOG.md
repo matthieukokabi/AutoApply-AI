@@ -3592,3 +3592,26 @@ Included in this rollout:
 ### Files Modified This Session
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 108 — 2026-03-17
+
+### Completed
+
+**P0 Production Onboarding Gate Re-Verification:**
+- Executed live cross-browser onboarding smoke against `https://autoapply.works` as the next pre-live-payment blocking check.
+- Confirmed full pass on all required engines:
+  - `chromium`
+  - `firefox`
+  - `webkit`
+- Updated `TODO.md` to mark the production onboarding gate checkbox complete with the generated report path.
+
+### Verification
+- `SMOKE_BASE_URL=https://autoapply.works npm run smoke:onboarding:cross-browser` (apps/web) ✅
+  - report: `/tmp/onboarding-cross-browser-smoke-20260317_115606.jsonl`
+  - browsers passed: `chromium`, `firefox`, `webkit`
+
+### Files Modified This Session
+- `TODO.md`
+- `SESSION_LOG.md`
