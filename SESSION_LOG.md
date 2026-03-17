@@ -3930,6 +3930,29 @@ Included in this rollout:
 
 ---
 
+## Session 132 — 2026-03-17
+
+### Completed
+
+**Vercel budget guardrail playbook (cost governance):**
+- Added `docs/vercel-cost-budget-guardrail.md` with:
+  - monthly budget cap and soft/hard/emergency thresholds
+  - weekly usage-review cadence and required metrics
+  - threshold-based owner action playbook
+  - escalation rules when projected spend exceeds budget
+  - standard `SESSION_LOG.md` reporting format for weekly review notes
+- Updated TODO cost item for monthly budget guardrail as complete.
+
+### Verification
+- Documentation/policy-only step; no application runtime code changed.
+
+### Files Modified This Session
+- `docs/vercel-cost-budget-guardrail.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed
