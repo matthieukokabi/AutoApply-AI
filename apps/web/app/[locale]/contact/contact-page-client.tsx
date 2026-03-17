@@ -1,10 +1,30 @@
 "use client";
 
-import { useRef, useState } from "react";
+import Script from "next/script";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, Mail, Check } from "lucide-react";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+
+declare global {
+    interface Window {
+        turnstile?: {
+            render: (
+                container: HTMLElement,
+                options: {
+                    sitekey: string;
+                    callback?: (token: string) => void;
+                    "expired-callback"?: () => void;
+                    "error-callback"?: () => void;
+                }
+            ) => string;
+            remove?: (widgetId: string) => void;
+        };
+    }
+}
 
 export default function ContactPageClient() {
     const [name, setName] = useState("");
@@ -15,15 +35,61 @@ export default function ContactPageClient() {
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [turnstileToken, setTurnstileToken] = useState("");
+    const [isTurnstileScriptLoaded, setIsTurnstileScriptLoaded] = useState(false);
     const formStartedAtRef = useRef(Date.now());
+    const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+    const turnstileWidgetIdRef = useRef<string | null>(null);
     const formSessionIdRef = useRef(
         typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
             ? crypto.randomUUID().replace(/-/g, "")
             : `${Date.now()}_${Math.random().toString(36).slice(2, 18)}`
     );
 
+    useEffect(() => {
+        if (!TURNSTILE_SITE_KEY || !isTurnstileScriptLoaded) {
+            return;
+        }
+
+        if (!turnstileContainerRef.current || !window.turnstile) {
+            return;
+        }
+
+        if (turnstileWidgetIdRef.current) {
+            return;
+        }
+
+        turnstileWidgetIdRef.current = window.turnstile.render(
+            turnstileContainerRef.current,
+            {
+                sitekey: TURNSTILE_SITE_KEY,
+                callback: (token: string) => {
+                    setTurnstileToken(token);
+                },
+                "expired-callback": () => {
+                    setTurnstileToken("");
+                },
+                "error-callback": () => {
+                    setTurnstileToken("");
+                },
+            }
+        );
+
+        return () => {
+            if (turnstileWidgetIdRef.current && window.turnstile?.remove) {
+                window.turnstile.remove(turnstileWidgetIdRef.current);
+            }
+            turnstileWidgetIdRef.current = null;
+        };
+    }, [isTurnstileScriptLoaded]);
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+        if (TURNSTILE_SITE_KEY && !turnstileToken) {
+            setError("Please complete the verification challenge before submitting.");
+            return;
+        }
+
         setLoading(true);
         setError("");
 
@@ -39,6 +105,7 @@ export default function ContactPageClient() {
                     website,
                     formStartedAt: formStartedAtRef.current,
                     formSessionId: formSessionIdRef.current,
+                    turnstileToken,
                 }),
             });
 
@@ -159,6 +226,19 @@ export default function ContactPageClient() {
                                         onChange={(e) => setWebsite(e.target.value)}
                                     />
                                 </div>
+                                {TURNSTILE_SITE_KEY ? (
+                                    <>
+                                        <Script
+                                            src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+                                            strategy="afterInteractive"
+                                            onLoad={() => setIsTurnstileScriptLoaded(true)}
+                                        />
+                                        <div
+                                            ref={turnstileContainerRef}
+                                            className="flex justify-center"
+                                        />
+                                    </>
+                                ) : null}
                                 {error && (
                                     <p className="text-sm text-red-500">{error}</p>
                                 )}

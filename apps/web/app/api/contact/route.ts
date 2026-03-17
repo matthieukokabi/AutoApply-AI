@@ -17,6 +17,8 @@ type ContactAbuseReason =
     | "invalid_form_timing"
     | "form_too_fast"
     | "form_expired"
+    | "missing_turnstile_token"
+    | "turnstile_failed"
     | "ip_rate_limited"
     | "session_rate_limited"
     | "missing_required_fields"
@@ -47,6 +49,45 @@ function isValidFormSessionId(value: unknown): value is string {
 
     const trimmed = value.trim();
     return /^[A-Za-z0-9_-]{16,128}$/.test(trimmed);
+}
+
+type TurnstileVerificationResult = {
+    success: boolean;
+    "error-codes"?: string[];
+};
+
+async function verifyTurnstileToken(
+    secretKey: string,
+    token: string,
+    clientIp: string | null
+) {
+    const payload = new URLSearchParams({
+        secret: secretKey,
+        response: token,
+    });
+
+    if (clientIp) {
+        payload.set("remoteip", clientIp);
+    }
+
+    const verificationResponse = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: payload.toString(),
+        }
+    );
+
+    if (!verificationResponse.ok) {
+        return false;
+    }
+
+    const result =
+        (await verificationResponse.json()) as TurnstileVerificationResult;
+    return result.success === true;
 }
 
 function getResend(apiKey: string) {
@@ -132,13 +173,42 @@ export async function POST(req: Request) {
             );
         }
 
+        const clientIp = getClientIp(req);
+        const turnstileSecret = process.env.TURNSTILE_SECRET_KEY?.trim();
+        if (turnstileSecret) {
+            const token =
+                typeof body.turnstileToken === "string"
+                    ? body.turnstileToken.trim()
+                    : "";
+
+            if (!token) {
+                incrementAbuseCounter("missing_turnstile_token");
+                return NextResponse.json(
+                    { error: "Verification challenge is required." },
+                    { status: 400 }
+                );
+            }
+
+            const turnstilePassed = await verifyTurnstileToken(
+                turnstileSecret,
+                token,
+                clientIp
+            );
+            if (!turnstilePassed) {
+                incrementAbuseCounter("turnstile_failed");
+                return NextResponse.json(
+                    { error: "Verification challenge failed. Please try again." },
+                    { status: 400 }
+                );
+            }
+        }
+
         const resendApiKey = process.env.RESEND_API_KEY;
         if (!resendApiKey) {
             console.error("RESEND_API_KEY is required for /api/contact");
             return NextResponse.json({ error: "Contact endpoint misconfigured" }, { status: 503 });
         }
 
-        const clientIp = getClientIp(req);
         if (
             clientIp &&
             isRateLimited({

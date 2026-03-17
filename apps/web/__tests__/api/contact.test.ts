@@ -5,6 +5,7 @@ import { Resend } from "resend";
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.RESEND_API_KEY = "re_test_key";
+    delete process.env.TURNSTILE_SECRET_KEY;
 });
 
 function withAntiBotFields(payload: Record<string, unknown>) {
@@ -138,6 +139,79 @@ describe("POST /api/contact", () => {
 
         expect(response.status).toBe(503);
         expect(data.error).toBe("Contact endpoint misconfigured");
+    });
+
+    it("returns 400 when Turnstile token is missing and verification is enabled", async () => {
+        process.env.TURNSTILE_SECRET_KEY = "turnstile_secret";
+
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: withAntiBotFields({
+                name: "John Doe",
+                email: "john@example.com",
+                subject: "support",
+                message: "I need help with my account settings.",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Verification challenge");
+    });
+
+    it("returns 400 when Turnstile verification fails", async () => {
+        process.env.TURNSTILE_SECRET_KEY = "turnstile_secret";
+        vi.mocked(global.fetch).mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ success: false }),
+        } as any);
+
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: withAntiBotFields({
+                name: "John Doe",
+                email: "john@example.com",
+                subject: "support",
+                message: "I need help with my account settings.",
+                turnstileToken: "failed_token",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("challenge failed");
+    });
+
+    it("accepts request when Turnstile verification succeeds", async () => {
+        process.env.TURNSTILE_SECRET_KEY = "turnstile_secret";
+        vi.mocked(global.fetch).mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ success: true }),
+        } as any);
+
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: withAntiBotFields({
+                name: "John Doe",
+                email: "john@example.com",
+                subject: "support",
+                message: "I need help with my account settings.",
+                turnstileToken: "passed_token",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.success).toBe(true);
     });
 
     it("handles missing subject gracefully (defaults to General)", async () => {
