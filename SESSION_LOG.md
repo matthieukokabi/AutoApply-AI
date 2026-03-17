@@ -3563,3 +3563,32 @@ Included in this rollout:
 ### Files Modified This Session
 - `apps/web/scripts/onboarding_smoke_matrix.sh`
 - `SESSION_LOG.md`
+
+---
+
+## Session 107 — 2026-03-17
+
+### Completed
+
+**Production Readiness Tracker (Pre-Live Payment + Growth + Cost):**
+- Added repository-level tracker `TODO.md` to centralize the current execution queue.
+- Added explicit P0 pre-live-payment checklist, including:
+  - production onboarding smoke gates
+  - Stripe/Vercel env verification
+  - signed-in and signed-out checkout path checks
+  - webhook/idempotency verification
+  - manual family live payment test logging requirement
+- Added P1 follow-ups for:
+  - onboarding reliability hardening
+  - Google tool integration (Search Console, GTM, GA4/Ads conversions)
+  - social + ad campaign rollout tasks
+  - Vercel cost governance routine
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `TODO.md`
+- `SESSION_LOG.md`
