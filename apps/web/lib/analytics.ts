@@ -60,3 +60,10 @@ export function trackOnboardingCompleted(source: string) {
         onboarding_source: source,
     });
 }
+
+export function trackPurchase(plan: CheckoutPlan, source: string) {
+    trackAnalyticsEvent("purchase", {
+        checkout_plan: plan,
+        checkout_source: source,
+    });
+}

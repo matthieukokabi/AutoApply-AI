@@ -18,12 +18,13 @@ import {
     CHECKOUT_TIMEOUT_ERROR,
     CHECKOUT_TIMEOUT_MS,
     getLocalizedPathForRoute,
+    isCheckoutPlan,
     isAbortError,
     isUnauthorizedCheckoutError,
     resolveCheckoutIntentPlan,
     type CheckoutPlan,
 } from "@/lib/checkout-intent";
-import { trackBeginCheckout } from "@/lib/analytics";
+import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
 
 interface UserInfo {
     automationEnabled: boolean;
@@ -89,7 +90,7 @@ export default function SettingsPage() {
     const searchParams = useSearchParams();
     const autoUpgradePlan = resolveCheckoutIntentPlan(searchParams);
     const autoCheckoutTriggeredRef = useRef(false);
-    const checkoutReturnHandledRef = useRef<string | null>(null);
+    const checkoutReturnHandledKeyRef = useRef<string | null>(null);
 
     const [user, setUser] = useState<UserInfo | null>(null);
     const [prefs, setPrefs] = useState<Preferences>({
@@ -325,13 +326,23 @@ export default function SettingsPage() {
             return;
         }
 
-        if (checkoutReturnHandledRef.current === checkoutStatus) {
+        const checkoutPlanParam = searchParams.get("checkout_plan");
+        const checkoutRefParam = searchParams.get("checkout_ref");
+        const checkoutHandledKey = [
+            checkoutStatus,
+            checkoutPlanParam || "",
+            checkoutRefParam || "",
+        ].join(":");
+
+        if (checkoutReturnHandledKeyRef.current === checkoutHandledKey) {
             return;
         }
-        checkoutReturnHandledRef.current = checkoutStatus;
+        checkoutReturnHandledKeyRef.current = checkoutHandledKey;
 
         const nextParams = new URLSearchParams(searchParams.toString());
         nextParams.delete("checkout");
+        nextParams.delete("checkout_plan");
+        nextParams.delete("checkout_ref");
         const nextQuery = nextParams.toString();
         router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
             scroll: false,
@@ -347,6 +358,10 @@ export default function SettingsPage() {
 
         if (checkoutStatus !== "success") {
             return;
+        }
+
+        if (isCheckoutPlan(checkoutPlanParam)) {
+            trackPurchase(checkoutPlanParam, "settings_checkout_return");
         }
 
         setMessage({

@@ -3818,6 +3818,40 @@ Included in this rollout:
 
 ---
 
+## Session 128 — 2026-03-17
+
+### Completed
+
+**GA4 purchase tracking hardening via checkout return metadata:**
+- Updated `apps/web/app/api/checkout/route.ts`:
+  - Stripe success/cancel return URLs now include:
+    - `checkout_plan=<selected_plan>`
+    - `checkout_ref=<request_id>`
+- Updated `apps/web/app/[locale]/(dashboard)/settings/page.tsx`:
+  - Handles return state with dedupe key based on `checkout + checkout_plan + checkout_ref`
+  - Removes `checkout`, `checkout_plan`, `checkout_ref` params from URL after handling
+  - Fires GA4 `purchase` event on successful return when `checkout_plan` is valid
+- Added `trackPurchase()` helper in `apps/web/lib/analytics.ts`.
+- Strengthened checkout API tests in `apps/web/__tests__/api/checkout.test.ts`:
+  - assert `checkout_plan` + `checkout_ref` metadata in success/cancel URLs
+  - preserve safe `returnPath` behavior and unsafe fallback behavior
+- Updated TODO GA4 event progress to include `purchase`.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/checkout/route.ts`
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+- `apps/web/lib/analytics.ts`
+- `apps/web/__tests__/api/checkout.test.ts`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

@@ -10,6 +10,15 @@ const mockUser = {
     stripeCustomerId: null,
 };
 
+function getLatestCheckoutSessionParams() {
+    const latestCall = vi
+        .mocked(stripe.checkout.sessions.create)
+        .mock.calls.at(-1)?.[0];
+
+    expect(latestCall).toBeTruthy();
+    return latestCall as Record<string, unknown>;
+}
+
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.test";
@@ -82,12 +91,20 @@ describe("POST /api/checkout", () => {
         const response = await POST(request);
 
         expect(response.status).toBe(200);
-        expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
-            expect.objectContaining({
-                success_url: "https://autoapply.test/fr/settings?checkout=success",
-                cancel_url: "https://autoapply.test/fr/settings?checkout=cancelled",
-            })
-        );
+
+        const sessionParams = getLatestCheckoutSessionParams();
+        const successUrl = new URL(String(sessionParams.success_url));
+        const cancelUrl = new URL(String(sessionParams.cancel_url));
+
+        expect(successUrl.pathname).toBe("/fr/settings");
+        expect(successUrl.searchParams.get("checkout")).toBe("success");
+        expect(successUrl.searchParams.get("checkout_plan")).toBe("pro_monthly");
+        expect(successUrl.searchParams.get("checkout_ref")).toBeTruthy();
+
+        expect(cancelUrl.pathname).toBe("/fr/settings");
+        expect(cancelUrl.searchParams.get("checkout")).toBe("cancelled");
+        expect(cancelUrl.searchParams.get("checkout_plan")).toBe("pro_monthly");
+        expect(cancelUrl.searchParams.get("checkout_ref")).toBeTruthy();
     });
 
     it("falls back to dashboard when returnPath is unsafe", async () => {
@@ -108,12 +125,20 @@ describe("POST /api/checkout", () => {
         const response = await POST(request);
 
         expect(response.status).toBe(200);
-        expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
-            expect.objectContaining({
-                success_url: "https://autoapply.test/dashboard?checkout=success",
-                cancel_url: "https://autoapply.test/dashboard?checkout=cancelled",
-            })
-        );
+
+        const sessionParams = getLatestCheckoutSessionParams();
+        const successUrl = new URL(String(sessionParams.success_url));
+        const cancelUrl = new URL(String(sessionParams.cancel_url));
+
+        expect(successUrl.pathname).toBe("/dashboard");
+        expect(successUrl.searchParams.get("checkout")).toBe("success");
+        expect(successUrl.searchParams.get("checkout_plan")).toBe("pro_monthly");
+        expect(successUrl.searchParams.get("checkout_ref")).toBeTruthy();
+
+        expect(cancelUrl.pathname).toBe("/dashboard");
+        expect(cancelUrl.searchParams.get("checkout")).toBe("cancelled");
+        expect(cancelUrl.searchParams.get("checkout_plan")).toBe("pro_monthly");
+        expect(cancelUrl.searchParams.get("checkout_ref")).toBeTruthy();
     });
 
     it("returns 400 for invalid plan", async () => {

@@ -161,8 +161,12 @@ export async function POST(req: Request) {
         try {
             successUrl = new URL(returnPath, appUrl);
             successUrl.searchParams.set("checkout", "success");
+            successUrl.searchParams.set("checkout_plan", plan);
+            successUrl.searchParams.set("checkout_ref", requestId);
             cancelUrl = new URL(returnPath, appUrl);
             cancelUrl.searchParams.set("checkout", "cancelled");
+            cancelUrl.searchParams.set("checkout_plan", plan);
+            cancelUrl.searchParams.set("checkout_ref", requestId);
         } catch {
             console.error("[checkout] NEXT_PUBLIC_APP_URL is invalid", {
                 requestId,
