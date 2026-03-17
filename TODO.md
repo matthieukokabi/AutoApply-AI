@@ -60,3 +60,12 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Add deploy batching rule: one production deploy after multiple validated atomic fixes — completed on 2026-03-17 (`docs/vercel-deploy-batching-rule.md`)
 - [x] Audit API routes for cacheability and short-circuit unauthenticated expensive paths — completed on 2026-03-17 (`getAuthUser` now exits early when neither auth cookie nor bearer token exists, reducing unnecessary Clerk/DB work on anonymous API traffic)
 - [x] Add monthly cost budget guardrail with alert threshold and owner action playbook — completed on 2026-03-17 (`docs/vercel-cost-budget-guardrail.md`)
+
+## P1 — Wave 1 SEO + security hardening
+
+- [x] Fix SEO base URL fallback in `robots.ts` and `sitemap.ts` to `autoapply.works` (remove legacy `autoapply-ai.com` fallback) — completed on 2026-03-17 via `lib/site-url.ts`
+- [ ] Add canonical + hreflang (`en`, `fr`, `de`, `es`, `it`, `x-default`) on all indexable localized pages
+- [ ] Add default `og:image` + page-level social metadata overrides for landing and blog pages
+- [ ] Fix broken public LinkedIn URL(s)
+- [ ] Add baseline security headers in production config (`CSP`, `X-Content-Type-Options`, clickjacking policy, `Referrer-Policy`)
+- [ ] Add anti-bot protection on public contact form (without breaking UX)

@@ -1,9 +1,10 @@
 import { MetadataRoute } from "next";
 import { locales, defaultLocale } from "@/i18n/config";
 import { getAllPosts } from "@/lib/blog";
+import { getAppBaseUrl } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://autoapply-ai.com";
+    const baseUrl = getAppBaseUrl();
 
     const staticPages = ["", "/blog", "/roadmap", "/terms", "/privacy", "/contact"];
 
