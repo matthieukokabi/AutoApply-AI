@@ -64,7 +64,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 ## P1 — Wave 1 SEO + security hardening
 
 - [x] Fix SEO base URL fallback in `robots.ts` and `sitemap.ts` to `autoapply.works` (remove legacy `autoapply-ai.com` fallback) — completed on 2026-03-17 via `lib/site-url.ts`
-- [ ] Add canonical + hreflang (`en`, `fr`, `de`, `es`, `it`, `x-default`) on all indexable localized pages
+- [x] Add canonical + hreflang (`en`, `fr`, `de`, `es`, `it`, `x-default`) on all indexable localized pages — completed on 2026-03-17 (`lib/seo.ts` + localized metadata updates, including `contact` server wrapper)
 - [ ] Add default `og:image` + page-level social metadata overrides for landing and blog pages
 - [ ] Fix broken public LinkedIn URL(s)
 - [ ] Add baseline security headers in production config (`CSP`, `X-Content-Type-Options`, clickjacking policy, `Referrer-Policy`)

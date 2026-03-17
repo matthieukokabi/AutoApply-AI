@@ -1,9 +1,22 @@
+import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import { Sparkles } from "lucide-react";
+import { buildLocaleAlternates } from "@/lib/seo";
 
-export const metadata = {
-    title: "Terms of Service — AutoApply AI",
-};
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+    const { locale } = await params;
+
+    return {
+        title: "Terms of Service — AutoApply AI",
+        description:
+            "Read the AutoApply AI terms of service covering subscriptions, responsibilities, and acceptable use.",
+        alternates: buildLocaleAlternates(locale, "/terms"),
+    };
+}
 
 export default function TermsPage() {
     return (

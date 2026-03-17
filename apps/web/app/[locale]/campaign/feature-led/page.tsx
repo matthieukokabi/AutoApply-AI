@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/checkout-button";
 import { buildAuthIntentUrl, getAuthPathsForLocale } from "@/lib/checkout-intent";
+import { buildLocaleAlternates } from "@/lib/seo";
 
 type CampaignCopy = {
     badge: string;
@@ -159,15 +160,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     return {
         title: `AutoApply AI — ${copy.badge}`,
         description: copy.subtitle,
-        alternates: {
-            languages: {
-                en: "/en/campaign/feature-led",
-                fr: "/fr/campaign/feature-led",
-                de: "/de/campaign/feature-led",
-                es: "/es/campaign/feature-led",
-                it: "/it/campaign/feature-led",
-            },
-        },
+        alternates: buildLocaleAlternates(locale, "/campaign/feature-led"),
     };
 }
 

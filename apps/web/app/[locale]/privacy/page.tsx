@@ -1,9 +1,22 @@
+import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import { Sparkles } from "lucide-react";
+import { buildLocaleAlternates } from "@/lib/seo";
 
-export const metadata = {
-    title: "Privacy Policy — AutoApply AI",
-};
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+    const { locale } = await params;
+
+    return {
+        title: "Privacy Policy — AutoApply AI",
+        description:
+            "Read how AutoApply AI handles account, CV, and payment data with GDPR-focused privacy safeguards.",
+        alternates: buildLocaleAlternates(locale, "/privacy"),
+    };
+}
 
 export default function PrivacyPage() {
     return (

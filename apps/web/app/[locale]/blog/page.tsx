@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Calendar, Clock, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { buildLocaleAlternates } from "@/lib/seo";
 export async function generateMetadata({
     params,
 }: {
@@ -17,15 +18,7 @@ export async function generateMetadata({
     return {
         title: `${t("title")} — AutoApply AI`,
         description: t("description"),
-        alternates: {
-            languages: {
-                en: "/blog",
-                fr: "/fr/blog",
-                de: "/de/blog",
-                es: "/es/blog",
-                it: "/it/blog",
-            },
-        },
+        alternates: buildLocaleAlternates(locale, "/blog"),
     };
 }
 

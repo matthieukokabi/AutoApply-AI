@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { buildLocaleAlternates } from "@/lib/seo";
 import {
     Sparkles,
     CheckCircle2,
@@ -40,15 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     return {
         title: `${t("title")} — AutoApply AI`,
         description: t("description"),
-        alternates: {
-            languages: {
-                en: "/roadmap",
-                fr: "/fr/roadmap",
-                de: "/de/roadmap",
-                es: "/es/roadmap",
-                it: "/it/roadmap",
-            },
-        },
+        alternates: buildLocaleAlternates(locale, "/roadmap"),
     };
 }
 

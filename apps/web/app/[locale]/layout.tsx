@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n/config";
+import { buildLocaleAlternates } from "@/lib/seo";
 
 const seoByLocale: Record<string, { title: string; description: string; keywords: string[] }> = {
     en: {
@@ -47,11 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
         title: seo.title,
         description: seo.description,
         keywords: seo.keywords,
-        alternates: {
-            languages: Object.fromEntries(
-                locales.map((l) => [l, `/${l}`])
-            ),
-        },
+        alternates: buildLocaleAlternates(locale, "/"),
         openGraph: {
             title: seo.title,
             description: seo.description,

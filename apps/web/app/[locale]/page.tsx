@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CheckoutButton } from "@/components/checkout-button";
 import { buildAuthIntentUrl, getAuthPathsForLocale } from "@/lib/checkout-intent";
+import { buildLocaleAlternates } from "@/lib/seo";
 import {
     ArrowRight,
     FileText,
@@ -27,15 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     return {
         title: `AutoApply AI — ${t("badge")}`,
         description: t("description"),
-        alternates: {
-            languages: {
-                en: "/",
-                fr: "/fr",
-                de: "/de",
-                es: "/es",
-                it: "/it",
-            },
-        },
+        alternates: buildLocaleAlternates(locale, "/"),
     };
 }
 

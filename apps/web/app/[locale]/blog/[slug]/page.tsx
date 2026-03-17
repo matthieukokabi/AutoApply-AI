@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, User, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import ReactMarkdown from "react-markdown";
+import { buildLocaleAlternates } from "@/lib/seo";
 /**
  * Pre-render all blog post slugs at build time.
  * Combined with parent layout's locale params, this generates all locale × slug pages.
@@ -34,6 +35,7 @@ export async function generateMetadata({
         title: `${post.title} — AutoApply AI Blog`,
         description: post.description,
         authors: [{ name: post.author }],
+        alternates: buildLocaleAlternates(locale, `/blog/${slug}`),
         openGraph: {
             title: post.title,
             description: post.description,
@@ -41,15 +43,6 @@ export async function generateMetadata({
             publishedTime: post.date,
             authors: [post.author],
             tags: post.tags,
-        },
-        alternates: {
-            languages: {
-                en: `/blog/${slug}`,
-                fr: `/fr/blog/${slug}`,
-                de: `/de/blog/${slug}`,
-                es: `/es/blog/${slug}`,
-                it: `/it/blog/${slug}`,
-            },
         },
     };
 }
