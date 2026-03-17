@@ -3,6 +3,25 @@ import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/mobile-auth";
 import { sendWelcomeEmail } from "@/lib/email";
 
+const KNOWN_WEB_AUTH_COOKIE_PATTERN = /(?:^|;\s*)(?:__session|__client_uat|__clerk_[^=]*)=/;
+
+function shouldShortCircuitAnonymousRequest(req?: Request) {
+    if (!req) {
+        return false;
+    }
+
+    const authHeader = req.headers.get("authorization");
+    const hasBearerToken =
+        typeof authHeader === "string" && authHeader.startsWith("Bearer ");
+    if (hasBearerToken) {
+        return false;
+    }
+
+    const cookieHeader = req.headers.get("cookie") ?? "";
+    const hasPotentialAuthCookie = KNOWN_WEB_AUTH_COOKIE_PATTERN.test(cookieHeader);
+    return !hasPotentialAuthCookie;
+}
+
 /**
  * Get the authenticated user from Clerk + Prisma.
  * Auto-creates user on first login.
@@ -12,6 +31,10 @@ import { sendWelcomeEmail } from "@/lib/email";
  * Pass the Request object to enable mobile JWT auth.
  */
 export async function getAuthUser(req?: Request) {
+    if (shouldShortCircuitAnonymousRequest(req)) {
+        return null;
+    }
+
     let clerkId: string | null = null;
     let mobileEmail: string | null = null;
 

@@ -3905,6 +3905,31 @@ Included in this rollout:
 
 ---
 
+## Session 131 — 2026-03-17
+
+### Completed
+
+**API cost optimization (unauth short-circuit across protected routes):**
+- Updated `apps/web/lib/auth.ts`:
+  - Added `shouldShortCircuitAnonymousRequest(req)` pre-check.
+  - `getAuthUser(req)` now returns `null` immediately when request has:
+    - no bearer token, and
+    - no known Clerk/session auth cookie (`__session`, `__client_uat`, `__clerk_*`).
+- Effect: protected API routes that call `getAuthUser(req)` now avoid unnecessary Clerk auth + DB work for clearly anonymous traffic, reducing backend compute burn from bot/unauth hits.
+- Updated TODO cost optimization item for API short-circuit audit/completion.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/auth.ts`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed
