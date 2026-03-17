@@ -2,6 +2,42 @@ const path = require("path");
 const createNextIntlPlugin = require("next-intl/plugin");
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+const CONTENT_SECURITY_POLICY = [
+    "default-src 'self' https: data: blob:",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+    "style-src 'self' 'unsafe-inline' https:",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https:",
+    "connect-src 'self' https: wss:",
+    "frame-src 'self' https:",
+    "form-action 'self' https:",
+    "upgrade-insecure-requests",
+]
+    .join("; ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+const SECURITY_HEADERS = [
+    {
+        key: "Content-Security-Policy",
+        value: CONTENT_SECURITY_POLICY,
+    },
+    {
+        key: "X-Frame-Options",
+        value: "DENY",
+    },
+    {
+        key: "X-Content-Type-Options",
+        value: "nosniff",
+    },
+    {
+        key: "Referrer-Policy",
+        value: "strict-origin-when-cross-origin",
+    },
+];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -80,6 +116,14 @@ const nextConfig = {
                 source: "/sign-up/:path*",
                 destination: "/en/sign-up/:path*",
                 permanent: false,
+            },
+        ];
+    },
+    async headers() {
+        return [
+            {
+                source: "/(.*)",
+                headers: SECURITY_HEADERS,
             },
         ];
     },
