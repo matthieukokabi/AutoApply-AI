@@ -70,3 +70,17 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Fix broken public LinkedIn URL(s) — completed on 2026-03-17 (normalized to `https://www.linkedin.com/company/autoapply-ai/` in landing and dashboard)
 - [x] Add baseline security headers in production config (`CSP`, `X-Content-Type-Options`, clickjacking policy, `Referrer-Policy`) — completed on 2026-03-17 (`next.config.js` `headers()` layer with broad-safe CSP v1)
 - [x] Add anti-bot protection on public contact form (without breaking UX) — completed on 2026-03-17 (honeypot + form timing checks in `/api/contact`, client form fields, and test coverage updates)
+
+## P1 — Wave 2 hardening + SEO precision
+
+- [x] Add strict CSP in `Content-Security-Policy-Report-Only` mode while keeping Wave 1 enforced CSP stable — completed on 2026-03-18 (`next.config.js`)
+- [x] Add `Permissions-Policy` baseline header — completed on 2026-03-18 (`next.config.js`)
+- [x] Add optional COOP/CORP baseline headers (`same-origin-allow-popups`, `same-site`) — completed on 2026-03-18 (`next.config.js`)
+- [ ] Reduce/remove `unsafe-inline` and `unsafe-eval` from enforced CSP via nonce/hash rollout
+- [ ] Add Turnstile/hCaptcha server verification on contact endpoint (keep honeypot/timing as layer 1)
+- [ ] Add IP + per-session throttling on contact endpoint
+- [ ] Add abuse telemetry counters on contact endpoint
+- [ ] Add `noindex` metadata for auth and utility pages (`sign-in`, `sign-up`, `auth-diagnostics`, dashboard surface)
+- [ ] Tighten canonical handling for query-param variants
+- [ ] Re-validate hreflang reciprocity across all localized indexable pages
+- [ ] Run Wave 2 validation suite (`lint`, `test`, `build`, live squirrel audit) and document score delta vs Wave 1

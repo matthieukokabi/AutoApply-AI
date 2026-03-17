@@ -20,10 +20,33 @@ const CONTENT_SECURITY_POLICY = [
     .replace(/\s{2,}/g, " ")
     .trim();
 
+const STRICT_CSP_REPORT_ONLY = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com https://clerk.autoapply.works",
+    "style-src 'self' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://api.clerk.com https://clerk.autoapply.works https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://checkout.stripe.com https://api.stripe.com",
+    "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
+    "form-action 'self' https://checkout.stripe.com",
+    "worker-src 'self' blob:",
+    "upgrade-insecure-requests",
+]
+    .join("; ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
 const SECURITY_HEADERS = [
     {
         key: "Content-Security-Policy",
         value: CONTENT_SECURITY_POLICY,
+    },
+    {
+        key: "Content-Security-Policy-Report-Only",
+        value: STRICT_CSP_REPORT_ONLY,
     },
     {
         key: "X-Frame-Options",
@@ -36,6 +59,18 @@ const SECURITY_HEADERS = [
     {
         key: "Referrer-Policy",
         value: "strict-origin-when-cross-origin",
+    },
+    {
+        key: "Permissions-Policy",
+        value: "camera=(), microphone=(), geolocation=(), payment=(self), usb=()",
+    },
+    {
+        key: "Cross-Origin-Opener-Policy",
+        value: "same-origin-allow-popups",
+    },
+    {
+        key: "Cross-Origin-Resource-Policy",
+        value: "same-site",
     },
 ];
 
