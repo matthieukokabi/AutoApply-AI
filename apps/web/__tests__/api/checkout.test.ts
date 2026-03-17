@@ -64,6 +64,58 @@ describe("POST /api/checkout", () => {
         );
     });
 
+    it("uses a safe returnPath when provided", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
+            url: "https://checkout.stripe.com/test_session",
+        } as any);
+
+        const request = new Request("http://localhost/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                plan: "pro_monthly",
+                returnPath: "/fr/settings",
+            }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success_url: "https://autoapply.test/fr/settings?checkout=success",
+                cancel_url: "https://autoapply.test/fr/settings?checkout=cancelled",
+            })
+        );
+    });
+
+    it("falls back to dashboard when returnPath is unsafe", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
+            url: "https://checkout.stripe.com/test_session",
+        } as any);
+
+        const request = new Request("http://localhost/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                plan: "pro_monthly",
+                returnPath: "https://evil.example/phish",
+            }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                success_url: "https://autoapply.test/dashboard?checkout=success",
+                cancel_url: "https://autoapply.test/dashboard?checkout=cancelled",
+            })
+        );
+    });
+
     it("returns 400 for invalid plan", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
 

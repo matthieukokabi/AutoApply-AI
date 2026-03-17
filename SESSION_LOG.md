@@ -3760,6 +3760,37 @@ Included in this rollout:
 
 ---
 
+## Session 126 — 2026-03-17
+
+### Completed
+
+**Checkout return-path hardening for signed-in `/settings` upgrades:**
+- Updated `apps/web/app/api/checkout/route.ts`:
+  - Added safe `returnPath` support in request body.
+  - Added strict sanitization (`resolveSafeReturnPath`) to allow only app-relative routes.
+  - Kept safe fallback to `/dashboard` for missing/unsafe values.
+  - Success/cancel Stripe return URLs now honor validated `returnPath`.
+- Updated `apps/web/app/[locale]/(dashboard)/settings/page.tsx`:
+  - Checkout request now includes `returnPath: window.location.pathname` so upgrade flow returns users to the same locale settings page.
+- Added regression tests in `apps/web/__tests__/api/checkout.test.ts`:
+  - valid `returnPath` is applied to success/cancel URLs
+  - unsafe absolute `returnPath` falls back to `/dashboard`
+- Updated TODO with a completed production-hardening item for this return-path behavior.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/api/checkout/route.ts`
+- `apps/web/app/[locale]/(dashboard)/settings/page.tsx`
+- `apps/web/__tests__/api/checkout.test.ts`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

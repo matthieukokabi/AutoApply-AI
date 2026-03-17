@@ -258,7 +258,10 @@ export default function SettingsPage() {
                 res = await fetch("/api/checkout", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ plan }),
+                    body: JSON.stringify({
+                        plan,
+                        returnPath: window.location.pathname,
+                    }),
                     signal: controller.signal,
                 });
             } finally {

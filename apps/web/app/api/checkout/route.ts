@@ -7,6 +7,25 @@ const CHECKOUT_RATE_LIMIT_MAX_REQUESTS = 5;
 const CHECKOUT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const checkoutRequestLog = new Map<string, number[]>();
 const KNOWN_AUTH_COOKIE_PATTERN = /__session|__client_uat|__clerk_/;
+const CHECKOUT_DEFAULT_RETURN_PATH = "/dashboard";
+
+function resolveSafeReturnPath(candidate: unknown): string {
+    if (typeof candidate !== "string") {
+        return CHECKOUT_DEFAULT_RETURN_PATH;
+    }
+
+    const trimmed = candidate.trim();
+    if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
+        return CHECKOUT_DEFAULT_RETURN_PATH;
+    }
+
+    try {
+        const parsed = new URL(trimmed, "https://autoapply.local");
+        return `${parsed.pathname}${parsed.search}`;
+    } catch {
+        return CHECKOUT_DEFAULT_RETURN_PATH;
+    }
+}
 
 function withRequestId<T extends Record<string, unknown>>(
     payload: T,
@@ -87,8 +106,11 @@ export async function POST(req: Request) {
             );
         }
 
-        const body = await req.json();
+        const body = await req
+            .json()
+            .catch(() => ({})) as { plan?: unknown; returnPath?: unknown };
         const plan = typeof body.plan === "string" ? body.plan : "";
+        const returnPath = resolveSafeReturnPath(body.returnPath);
 
         let priceId: string | undefined;
         let mode: "subscription" | "payment" = "subscription";
@@ -137,9 +159,9 @@ export async function POST(req: Request) {
         let successUrl: URL;
         let cancelUrl: URL;
         try {
-            successUrl = new URL("/dashboard", appUrl);
+            successUrl = new URL(returnPath, appUrl);
             successUrl.searchParams.set("checkout", "success");
-            cancelUrl = new URL("/dashboard", appUrl);
+            cancelUrl = new URL(returnPath, appUrl);
             cancelUrl.searchParams.set("checkout", "cancelled");
         } catch {
             console.error("[checkout] NEXT_PUBLIC_APP_URL is invalid", {
