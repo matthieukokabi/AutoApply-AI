@@ -4119,6 +4119,32 @@ Included in this rollout:
 
 ---
 
+## Session 139 — 2026-03-17
+
+### Completed
+
+**Paid ads planning — creative angles A/B/C defined:**
+- Added `docs/paid-ads-creative-angles.md` covering:
+  - Angle A: time saved per application
+  - Angle B: ATS optimization without fabrication
+  - Angle C: compatibility-score based focus
+- Included hooks, CTA options, and creative spec guidance for each angle.
+- Updated TODO:
+  - `Prepare 3 creative angles for paid ads` -> complete
+  - Angle A/B/C lines -> complete
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `docs/paid-ads-creative-angles.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

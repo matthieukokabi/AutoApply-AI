@@ -42,10 +42,10 @@ Last updated: 2026-03-17 (Europe/Zurich)
 
 - [ ] Complete unfinished launch checklist items in `docs/launch-checklist.md` (in progress: dashboard social links done on 2026-03-17; remaining Product Hunt listing + GitHub public landing repo)
 - [x] Prepare 14-day launch calendar with 1 daily LinkedIn post + 2 daily X posts — completed on 2026-03-17 (`docs/launch-calendar-14-day.md`)
-- [ ] Prepare 3 creative angles for paid ads:
-- [ ] Angle A: "Save 30+ minutes per application"
-- [ ] Angle B: "ATS keyword optimization with zero fabrication"
-- [ ] Angle C: "Compatibility score to focus only on high-fit jobs"
+- [x] Prepare 3 creative angles for paid ads — completed on 2026-03-17 (`docs/paid-ads-creative-angles.md`)
+- [x] Angle A: "Save 30+ minutes per application"
+- [x] Angle B: "ATS keyword optimization with zero fabrication"
+- [x] Angle C: "Compatibility score to focus only on high-fit jobs"
 - [ ] Build 3 landing variants for campaign testing (pain-led, proof-led, feature-led)
 - [ ] Create Product Hunt launch-day checklist owner schedule (hour-by-hour community replies)
 - [ ] Add referral code campaign for first beta users and track redemption
