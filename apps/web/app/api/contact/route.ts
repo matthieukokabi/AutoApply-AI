@@ -3,6 +3,8 @@ import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 const CONTACT_RATE_LIMIT_MAX_REQUESTS = 5;
 const CONTACT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const CONTACT_MIN_SUBMIT_MS = 2500;
+const CONTACT_MAX_FORM_AGE_MS = 2 * 60 * 60 * 1000;
 const contactRequestLog = new Map<string, number[]>();
 
 function getResend(apiKey: string) {
@@ -26,7 +28,36 @@ function escapeHtml(value: string): string {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { name, email, subject, message } = body;
+        const { name, email, subject, message, website, formStartedAt } = body;
+
+        // Honeypot: bots filling hidden fields are accepted but dropped silently.
+        if (typeof website === "string" && website.trim().length > 0) {
+            return NextResponse.json({ success: true });
+        }
+
+        const startedAt = Number(formStartedAt);
+        const now = Date.now();
+        if (!Number.isFinite(startedAt)) {
+            return NextResponse.json(
+                { error: "Invalid form session. Please refresh and try again." },
+                { status: 400 }
+            );
+        }
+
+        const elapsedMs = now - startedAt;
+        if (elapsedMs < CONTACT_MIN_SUBMIT_MS) {
+            return NextResponse.json(
+                { error: "Please take a moment before submitting the form." },
+                { status: 400 }
+            );
+        }
+
+        if (elapsedMs > CONTACT_MAX_FORM_AGE_MS) {
+            return NextResponse.json(
+                { error: "Form session expired. Please refresh and submit again." },
+                { status: 400 }
+            );
+        }
 
         if (!name || !email || !message) {
             return NextResponse.json(

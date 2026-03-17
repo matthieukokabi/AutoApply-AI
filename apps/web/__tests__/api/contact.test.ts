@@ -1,17 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/contact/route";
+import { Resend } from "resend";
 
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.RESEND_API_KEY = "re_test_key";
 });
 
+function withAntiBotFields(payload: Record<string, unknown>) {
+    return JSON.stringify({
+        website: "",
+        formStartedAt: Date.now() - 5000,
+        ...payload,
+    });
+}
+
 describe("POST /api/contact", () => {
     it("sends contact form email successfully", async () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body: withAntiBotFields({
                 name: "John Doe",
                 email: "john@example.com",
                 subject: "support",
@@ -30,7 +39,7 @@ describe("POST /api/contact", () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body: withAntiBotFields({
                 email: "john@example.com",
                 message: "Hello",
             }),
@@ -47,7 +56,7 @@ describe("POST /api/contact", () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body: withAntiBotFields({
                 name: "John",
                 message: "Hello",
             }),
@@ -61,7 +70,7 @@ describe("POST /api/contact", () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body: withAntiBotFields({
                 name: "John",
                 email: "john@example.com",
             }),
@@ -75,7 +84,7 @@ describe("POST /api/contact", () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body: withAntiBotFields({
                 name: "John",
                 email: "not-an-email",
                 message: "Hello there",
@@ -94,7 +103,7 @@ describe("POST /api/contact", () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body: withAntiBotFields({
                 name: "John",
                 email: "john@example.com",
                 message: longMessage,
@@ -114,7 +123,7 @@ describe("POST /api/contact", () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body: withAntiBotFields({
                 name: "John Doe",
                 email: "john@example.com",
                 subject: "support",
@@ -133,7 +142,7 @@ describe("POST /api/contact", () => {
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+            body: withAntiBotFields({
                 name: "Jane",
                 email: "jane@example.com",
                 message: "General question about your service.",
@@ -152,7 +161,7 @@ describe("POST /api/contact", () => {
             const request = new Request("http://localhost/api/contact", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+                body: withAntiBotFields({
                     name: "Jane",
                     email: "jane@example.com",
                     subject,
@@ -177,7 +186,7 @@ describe("POST /api/contact", () => {
                 new Request("http://localhost/api/contact", {
                     method: "POST",
                     headers,
-                    body: JSON.stringify({
+                    body: withAntiBotFields({
                         name: "Rate Test",
                         email: `rate-${i}@example.com`,
                         subject: "support",
@@ -193,7 +202,7 @@ describe("POST /api/contact", () => {
             new Request("http://localhost/api/contact", {
                 method: "POST",
                 headers,
-                body: JSON.stringify({
+                body: withAntiBotFields({
                     name: "Rate Test",
                     email: "rate-final@example.com",
                     subject: "support",
@@ -205,5 +214,59 @@ describe("POST /api/contact", () => {
 
         expect(limitedResponse.status).toBe(429);
         expect(data.error).toContain("Too many requests");
+    });
+
+    it("returns 400 when anti-bot formStartedAt is missing", async () => {
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                website: "",
+                name: "Jane",
+                email: "jane@example.com",
+                message: "Missing form timer.",
+            }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(400);
+    });
+
+    it("returns 400 when form is submitted too quickly", async () => {
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                website: "",
+                formStartedAt: Date.now(),
+                name: "Jane",
+                email: "jane@example.com",
+                message: "Submitted instantly.",
+            }),
+        });
+
+        const response = await POST(request);
+        expect(response.status).toBe(400);
+    });
+
+    it("silently drops honeypot submissions", async () => {
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                website: "https://spam.invalid",
+                formStartedAt: Date.now() - 5000,
+                name: "Spam",
+                email: "spam@example.com",
+                message: "Spam payload",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.success).toBe(true);
+        expect(Resend).not.toHaveBeenCalled();
     });
 });

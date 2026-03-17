@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +11,11 @@ export default function ContactPageClient() {
     const [email, setEmail] = useState("");
     const [subject, setSubject] = useState("");
     const [messageBody, setMessageBody] = useState("");
+    const [website, setWebsite] = useState("");
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const formStartedAtRef = useRef(Date.now());
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -24,7 +26,14 @@ export default function ContactPageClient() {
             const res = await fetch("/api/contact", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, subject, message: messageBody }),
+                body: JSON.stringify({
+                    name,
+                    email,
+                    subject,
+                    message: messageBody,
+                    website,
+                    formStartedAt: formStartedAtRef.current,
+                }),
             });
 
             if (!res.ok) {
@@ -131,6 +140,17 @@ export default function ContactPageClient() {
                                         placeholder="How can we help?"
                                         value={messageBody}
                                         onChange={(e) => setMessageBody(e.target.value)}
+                                    />
+                                </div>
+                                <div className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden">
+                                    <label htmlFor="contact-website">Website</label>
+                                    <input
+                                        id="contact-website"
+                                        name="website"
+                                        autoComplete="off"
+                                        tabIndex={-1}
+                                        value={website}
+                                        onChange={(e) => setWebsite(e.target.value)}
                                     />
                                 </div>
                                 {error && (
