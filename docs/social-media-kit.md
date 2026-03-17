@@ -5,6 +5,25 @@
 
 ---
 
+## 0. Tracked CTA Links (use exactly these)
+
+- `{X_PINNED_CTA}`  
+  `https://autoapply.works/en/campaign/pain-led?utm_source=x&utm_medium=organic_social&utm_campaign=en_acq_launch_202603&utm_content=x-pinned-launch`
+- `{X_THREAD_CTA}`  
+  `https://autoapply.works/en/campaign/proof-led?utm_source=x&utm_medium=organic_social&utm_campaign=en_acq_launch_202603&utm_content=x-thread-product-story`
+- `{X_WEEKLY_CTA}`  
+  `https://autoapply.works/en/campaign/feature-led?utm_source=x&utm_medium=organic_social&utm_campaign=en_acq_launch_202603&utm_content=x-weekly-update`
+- `{LINKEDIN_ABOUT_CTA}`  
+  `https://autoapply.works/en/campaign/proof-led?utm_source=linkedin&utm_medium=organic_social&utm_campaign=en_acq_launch_202603&utm_content=linkedin-about-section`
+- `{LINKEDIN_LAUNCH_CTA}`  
+  `https://autoapply.works/en/campaign/pain-led?utm_source=linkedin&utm_medium=organic_social&utm_campaign=en_acq_launch_202603&utm_content=linkedin-launch-post`
+- `{PRODUCTHUNT_CTA}`  
+  `https://autoapply.works/en/campaign/feature-led?utm_source=producthunt&utm_medium=referral&utm_campaign=global_acq_launch_202603&utm_content=ph-maker-comment`
+
+Replace only `utm_content` when you duplicate a post variant. Keep `utm_source`, `utm_medium`, and `utm_campaign` stable for consistent reporting.
+
+---
+
 ## 1. Brand Identity
 
 **Name:** AutoApply AI
@@ -54,7 +73,7 @@ How it works:
 - Cover letter generated from YOUR real experience
 - Never fabricates credentials. Ever.
 
-Start free (3 docs/month): https://autoapply.works
+Start free (3 docs/month): {X_PINNED_CTA}
 ```
 
 ### Thread: Product Story (5 tweets)
@@ -101,7 +120,7 @@ Unlimited ($79/mo): Unlimited everything.
 
 Available in EN, FR, DE, ES, IT.
 
-Try it: https://autoapply.works
+Try it: {X_THREAD_CTA}
 ```
 
 ### Weekly Content Ideas (tweet templates)
@@ -115,7 +134,7 @@ Product update:
 "New this week on AutoApply AI:
 [feature description]
 
-Try it free: https://autoapply.works"
+Try it free: {X_WEEKLY_CTA}"
 
 User pain point:
 "'Why do I need to rewrite my CV for every job?'
@@ -130,7 +149,7 @@ Stats/data:
 - Generated X tailored documents
 - Average compatibility score: X%
 
-Join them: https://autoapply.works"
+Join them: {X_WEEKLY_CTA}"
 ```
 
 ---
@@ -182,7 +201,7 @@ PRICING
 
 Built with Next.js, Flutter, Claude AI, and n8n automation.
 
-Try it free: https://autoapply.works
+Try it free: {LINKEDIN_ABOUT_CTA}
 ```
 
 ### Launch Post
@@ -203,7 +222,7 @@ Here's what makes it different:
 
 Start free with 3 tailored documents/month.
 
-https://autoapply.works
+{LINKEDIN_LAUNCH_CTA}
 
 #jobsearch #career #AI #resume #ATS #hiring #jobhunt #careeradvice
 ```
@@ -267,7 +286,7 @@ I'd love your feedback on:
 - The tailoring quality (does the output feel authentic?)
 - What job boards you'd like us to add next?
 
-Try it free at https://autoapply.works — 3 tailored documents per month, no credit card required.
+Try it free at {PRODUCTHUNT_CTA} — 3 tailored documents per month, no credit card required.
 ```
 
 ---

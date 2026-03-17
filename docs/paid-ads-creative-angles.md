@@ -18,6 +18,8 @@ Stop rewriting from scratch for every role. AutoApply generates tailored CV/cove
 
 - "Start free and tailor your first CV"
 - "See your first tailored draft in minutes"
+- Landing URL:
+  `https://autoapply.works/en/campaign/pain-led?utm_source=google&utm_medium=cpc&utm_campaign=en_acq_subscription_202603&utm_content=google-angle-a`
 
 ## Angle B — ATS keyword optimization with zero fabrication
 
@@ -35,6 +37,8 @@ AutoApply optimizes wording for ATS relevance while staying grounded in your rea
 
 - "Check your ATS fit now"
 - "Optimize your CV for ATS in minutes"
+- Landing URL:
+  `https://autoapply.works/en/campaign/proof-led?utm_source=google&utm_medium=cpc&utm_campaign=en_acq_subscription_202603&utm_content=google-angle-b`
 
 ## Angle C — Compatibility score to focus on high-fit jobs
 
@@ -52,6 +56,8 @@ Prioritize the jobs with the highest match score and avoid low-fit applications.
 
 - "Find your highest-fit roles"
 - "Focus on jobs with better odds"
+- Landing URL:
+  `https://autoapply.works/en/campaign/feature-led?utm_source=google&utm_medium=cpc&utm_campaign=en_acq_subscription_202603&utm_content=google-angle-c`
 
 ## Creative specs
 

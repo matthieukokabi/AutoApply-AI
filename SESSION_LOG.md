@@ -4535,3 +4535,26 @@ Included in this rollout:
 - `apps/web/app/[locale]/campaign/feature-led/page.tsx`
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 144 — 2026-03-17
+
+### Completed
+
+**UTM Enforcement for Social/Ads Links:**
+- Added explicit tracked CTA link registry in `docs/social-media-kit.md` with reusable placeholders for X, LinkedIn, and Product Hunt launch content.
+- Replaced raw CTA links in social post templates with tracked UTM placeholders so publishing copy no longer uses untagged links.
+- Added concrete Google Ads landing URLs (Angle A/B/C) in `docs/paid-ads-creative-angles.md`, mapped to the 3 campaign landing variants.
+- Marked the TODO item for UTM naming + link-by-link enforcement as completed.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `docs/social-media-kit.md`
+- `docs/paid-ads-creative-angles.md`
+- `TODO.md`
+- `SESSION_LOG.md`
