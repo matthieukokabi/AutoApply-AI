@@ -3678,6 +3678,33 @@ Included in this rollout:
 
 ---
 
+## Session 123 — 2026-03-17
+
+### Completed
+
+**GA4 Event Instrumentation Progress (`onboarding_completed`):**
+- Added `trackOnboardingCompleted` in analytics helper.
+- Wired onboarding completion event to fire once when onboarding health reaches ready state:
+  - auth ready
+  - profile ready
+  - preferences ready
+  - checkout ready
+- Added one-time guard (`hasTrackedOnboardingCompletedRef`) to prevent duplicate event emission.
+- Updated TODO GA4-event progress to include `onboarding_completed`.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/lib/analytics.ts`
+- `apps/web/app/[locale]/onboarding/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed

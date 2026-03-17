@@ -54,3 +54,9 @@ export function trackSignUpStarted(
         requested_from: fromPath,
     });
 }
+
+export function trackOnboardingCompleted(source: string) {
+    trackAnalyticsEvent("onboarding_completed", {
+        onboarding_source: source,
+    });
+}

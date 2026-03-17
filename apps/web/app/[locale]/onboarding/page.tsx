@@ -19,6 +19,7 @@ import {
     Circle,
 } from "lucide-react";
 import { buildOnboardingHealthSnapshot, type OnboardingHealthSnapshot } from "@/lib/onboarding-health";
+import { trackOnboardingCompleted } from "@/lib/analytics";
 
 type Step = "welcome" | "cv" | "preferences" | "done";
 const ONBOARDING_HEALTH_TIMEOUT_MS = 8000;
@@ -77,6 +78,7 @@ export default function OnboardingPage() {
         null
     );
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const hasTrackedOnboardingCompletedRef = useRef(false);
 
     // Preferences
     const [titles, setTitles] = useState("");
@@ -274,10 +276,6 @@ export default function OnboardingPage() {
         }
     }
 
-    if (isLoaded && !isSignedIn) {
-        return null;
-    }
-
     const effectiveProfileReady =
         Boolean(healthSnapshot?.profileReady) ||
         cvUploaded ||
@@ -286,6 +284,29 @@ export default function OnboardingPage() {
         Boolean(healthSnapshot?.preferencesReady) || step === "done";
     const effectiveAuthReady = Boolean(healthSnapshot?.authReady) || (isLoaded && isSignedIn);
     const effectiveCheckoutReady = Boolean(healthSnapshot?.checkoutReady);
+    const onboardingReady =
+        effectiveAuthReady &&
+        effectiveProfileReady &&
+        effectivePreferencesReady &&
+        effectiveCheckoutReady;
+
+    useEffect(() => {
+        if (
+            !isLoaded ||
+            !isSignedIn ||
+            !onboardingReady ||
+            hasTrackedOnboardingCompletedRef.current
+        ) {
+            return;
+        }
+
+        hasTrackedOnboardingCompletedRef.current = true;
+        trackOnboardingCompleted("onboarding_page");
+    }, [isLoaded, isSignedIn, onboardingReady]);
+
+    if (isLoaded && !isSignedIn) {
+        return null;
+    }
 
     const healthChecks = [
         {
