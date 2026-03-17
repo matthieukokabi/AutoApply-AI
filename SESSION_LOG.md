@@ -3752,6 +3752,30 @@ Included in this rollout:
 
 ---
 
+## Session 119 — 2026-03-17
+
+### Completed
+
+**Vercel Guardrail Re-Audit (Cost Control):**
+- Queried Vercel project configuration via read-only API and revalidated cost/deploy guardrails for `auto-apply-ai`.
+- Confirmed key settings remain in expected state:
+  - `gitProviderOptions.createDeployments = "disabled"`
+  - `commandForIgnoringBuildStep = "echo \"Skipping auto build to control Vercel cost\"; exit 0"`
+  - `enableAffectedProjectsDeployments = true`
+  - `resourceConfig.buildMachineType = "standard"`
+- Updated TODO cost item to complete for this verification cycle.
+
+### Verification
+- Read-only Vercel API project audit ✅
+  - endpoint: `GET /v9/projects/auto-apply-ai`
+  - scope: `team_jN9KQ610Y5MyVq41fvUu0Wn7`
+
+### Files Modified This Session
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 112 — 2026-03-17
 
 ### Completed

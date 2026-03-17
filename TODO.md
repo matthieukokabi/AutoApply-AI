@@ -49,7 +49,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 ## P1 — Vercel cost optimization (keep monthly burn controlled)
 
 - [ ] Weekly Vercel usage review (`vercel usage`) and append summary in `SESSION_LOG.md`
-- [ ] Verify no unintended auto-deploy/reactivation settings were re-enabled
+- [x] Verify no unintended auto-deploy/reactivation settings were re-enabled — completed on 2026-03-17 (confirmed: `gitProviderOptions.createDeployments=disabled`, `commandForIgnoringBuildStep` active, `enableAffectedProjectsDeployments=true`, `buildMachineType=standard`)
 - [ ] Add deploy batching rule: one production deploy after multiple validated atomic fixes
 - [ ] Audit API routes for cacheability and short-circuit unauthenticated expensive paths
 - [ ] Add monthly cost budget guardrail with alert threshold and owner action playbook
