@@ -30,6 +30,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 ## P1 — Google tool integration (acquisition + measurement)
 
 - [ ] Verify Google Search Console ownership for `autoapply.works` and `www.autoapply.works`
+- [x] Add HTML verification tag support for GSC via `GOOGLE_SITE_VERIFICATION` env in `<head>` — completed on 2026-03-17 (`app/layout.tsx`)
 - [ ] Submit sitemap and re-index priority routes (`/`, `/pricing` section, `/blog`, localized roots)
 - [x] Add Google Tag Manager container (keep GA4 config in one place) — completed on 2026-03-17 (env-driven GTM in `layout` + GA fallback when GTM is unset)
 - [x] Standardize GA4 events: `sign_up_started`, `sign_up_completed`, `begin_checkout`, `purchase`, `onboarding_completed`, `cv_uploaded` — completed on 2026-03-17 (`cv_uploaded` added in onboarding/profile upload flows; purchase and checkout-return metadata wired)

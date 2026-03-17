@@ -12,6 +12,7 @@ const inter = Inter({ subsets: ["latin"] });
 const appBaseUrl = getAppBaseUrl();
 const defaultOgImage = toAbsoluteAppUrl("/opengraph-image");
 const defaultTwitterImage = toAbsoluteAppUrl("/twitter-image");
+const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
 
 export const metadata: Metadata = {
     title: {
@@ -66,6 +67,13 @@ export const metadata: Metadata = {
         index: true,
         follow: true,
     },
+    ...(googleSiteVerification
+        ? {
+              verification: {
+                  google: googleSiteVerification,
+              },
+          }
+        : {}),
 };
 
 export default function RootLayout({
