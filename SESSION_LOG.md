@@ -3595,6 +3595,37 @@ Included in this rollout:
 
 ---
 
+## Session 112 — 2026-03-17
+
+### Completed
+
+**P0 Signed-Out Pricing CTA Verification (All Main Plans):**
+- Ran ad-hoc production Playwright verification (no smoke-suite expansion) to validate signed-out pricing CTA behavior for:
+  - `free`
+  - `pro_monthly`
+  - `pro_yearly`
+  - `unlimited`
+  - `unlimited_yearly`
+- Confirmed each CTA navigates to sign-up with expected `upgrade` intent (or none for free), without `Unauthorized` surface and without `/api/checkout` calls from anonymous landing clicks.
+- Updated `TODO.md` to mark the signed-out pricing-card verification item complete.
+
+### Follow-up Noted
+- Observed locale UX mismatch for free CTA on `/fr` landing (navigates to `/en/sign-up`).
+- Added dedicated follow-up task in `TODO.md`:
+  - normalize free CTA locale preservation on non-EN landing pages.
+
+### Verification
+- Ad-hoc Playwright production check (Chromium headless) ✅
+  - base URL: `https://autoapply.works`
+  - locales: `fr`, `en`
+  - result: `SIGNED_OUT_PRICING_CHECK:PASS`
+
+### Files Modified This Session
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 111 — 2026-03-17
 
 ### Completed

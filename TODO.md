@@ -8,7 +8,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Run production onboarding matrix (`npm run smoke:onboarding -- https://autoapply.works` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-smoke-20260317_120732.jsonl`)
 - [x] Run production auth-blocked matrix (`npm run smoke:onboarding:auth-blocked -- https://autoapply.works` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-auth-blocked-smoke-20260317_124151.jsonl`)
 - [x] Verify Vercel production env vars are present and live (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_MONTHLY`, `STRIPE_PRICE_PRO_YEARLY`, `STRIPE_PRICE_UNLIMITED_MONTHLY`, `STRIPE_PRICE_UNLIMITED_YEARLY`, `STRIPE_PRICE_CREDIT_PACK`) — passed on 2026-03-17 (`vercel env pull` prefix checks)
-- [ ] Verify checkout from landing pricing cards when signed out (`Free`, `Pro monthly`, `Pro yearly`, `Unlimited`)
+- [x] Verify checkout from landing pricing cards when signed out (`Free`, `Pro monthly`, `Pro yearly`, `Unlimited`) — passed on 2026-03-17 (ad-hoc Playwright prod check: `free`, `pro_monthly`, `pro_yearly`, `unlimited`, `unlimited_yearly`; no `Unauthorized`, no checkout API calls)
 - [ ] Verify checkout from `/settings` subscription upgrade path when signed in
 - [ ] Verify successful return updates dashboard/account subscription state
 - [ ] Verify cancel return does not alter plan state
@@ -19,6 +19,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 
 - [ ] Add E2E assertion that pricing CTA works before hydration on mobile WebKit
 - [ ] Add smoke assertion for localization path parity (`/en`, `/fr`, `/de`, `/es`, `/it`) on sign-up handoff
+- [ ] Normalize Free-plan CTA locale preservation on non-EN landing pages (`/fr` should keep `/fr/sign-up`)
 - [ ] Add production runbook page for payment incident triage (`Unauthorized`, webhook delay, missing envs)
 - [ ] Add lightweight uptime check for `/api/auth/session`, `/api/checkout`, `/api/webhooks/stripe`
 
