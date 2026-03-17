@@ -57,6 +57,11 @@ const nextConfig = {
                 permanent: false,
             },
             {
+                source: "/campaign/:path*",
+                destination: "/en/campaign/:path*",
+                permanent: false,
+            },
+            {
                 source: "/sign-in",
                 destination: "/en/sign-in",
                 permanent: false,

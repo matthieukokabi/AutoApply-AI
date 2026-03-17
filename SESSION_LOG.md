@@ -4466,3 +4466,28 @@ Included in this rollout:
 ### Files Modified This Session
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 141 — 2026-03-17
+
+### Completed
+
+**Campaign Landing Variant (Pain-Led):**
+- Added first campaign-specific landing page at `/<locale>/campaign/pain-led` with localized messaging, focused pain/outcome/proof blocks, and direct conversion CTAs.
+- Wired locale-safe sign-up and checkout intent fallbacks for campaign CTA buttons (`pro_monthly`, `unlimited`) using `buildAuthIntentUrl`.
+- Added bare-path redirect for campaign links:
+  - `/campaign/:path*` -> `/en/campaign/:path*`
+- Updated `TODO.md` to move landing variants item to in-progress and mark `pain-led` as done.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+  - Confirmed static route generation for `/[locale]/campaign/pain-led`
+
+### Files Modified This Session
+- `apps/web/app/[locale]/campaign/pain-led/page.tsx`
+- `apps/web/next.config.js`
+- `TODO.md`
+- `SESSION_LOG.md`
