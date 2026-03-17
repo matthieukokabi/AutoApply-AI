@@ -3,9 +3,51 @@ import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 const CONTACT_RATE_LIMIT_MAX_REQUESTS = 5;
 const CONTACT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const CONTACT_SESSION_RATE_LIMIT_MAX_REQUESTS = 3;
+const CONTACT_SESSION_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const CONTACT_MIN_SUBMIT_MS = 2500;
 const CONTACT_MAX_FORM_AGE_MS = 2 * 60 * 60 * 1000;
 const contactRequestLog = new Map<string, number[]>();
+const contactSessionRequestLog = new Map<string, number[]>();
+const contactAbuseCounters = new Map<string, number>();
+
+type ContactAbuseReason =
+    | "honeypot"
+    | "invalid_form_session"
+    | "invalid_form_timing"
+    | "form_too_fast"
+    | "form_expired"
+    | "ip_rate_limited"
+    | "session_rate_limited"
+    | "missing_required_fields"
+    | "invalid_email"
+    | "message_too_long";
+
+function incrementAbuseCounter(reason: ContactAbuseReason) {
+    const nextCount = (contactAbuseCounters.get(reason) || 0) + 1;
+    contactAbuseCounters.set(reason, nextCount);
+
+    if (nextCount === 1 || nextCount % 25 === 0) {
+        const totalBlocked = Array.from(contactAbuseCounters.values()).reduce(
+            (sum, count) => sum + count,
+            0
+        );
+        console.warn("[contact-abuse] blocked request", {
+            reason,
+            reasonCount: nextCount,
+            totalBlocked,
+        });
+    }
+}
+
+function isValidFormSessionId(value: unknown): value is string {
+    if (typeof value !== "string") {
+        return false;
+    }
+
+    const trimmed = value.trim();
+    return /^[A-Za-z0-9_-]{16,128}$/.test(trimmed);
+}
 
 function getResend(apiKey: string) {
     const { Resend } = require("resend");
@@ -28,16 +70,27 @@ function escapeHtml(value: string): string {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { name, email, subject, message, website, formStartedAt } = body;
+        const { name, email, subject, message, website, formStartedAt, formSessionId } = body;
 
         // Honeypot: bots filling hidden fields are accepted but dropped silently.
         if (typeof website === "string" && website.trim().length > 0) {
+            incrementAbuseCounter("honeypot");
             return NextResponse.json({ success: true });
         }
 
+        if (!isValidFormSessionId(formSessionId)) {
+            incrementAbuseCounter("invalid_form_session");
+            return NextResponse.json(
+                { error: "Invalid form session. Please refresh and try again." },
+                { status: 400 }
+            );
+        }
+
+        const normalizedSessionId = formSessionId.trim();
         const startedAt = Number(formStartedAt);
         const now = Date.now();
         if (!Number.isFinite(startedAt)) {
+            incrementAbuseCounter("invalid_form_timing");
             return NextResponse.json(
                 { error: "Invalid form session. Please refresh and try again." },
                 { status: 400 }
@@ -46,6 +99,7 @@ export async function POST(req: Request) {
 
         const elapsedMs = now - startedAt;
         if (elapsedMs < CONTACT_MIN_SUBMIT_MS) {
+            incrementAbuseCounter("form_too_fast");
             return NextResponse.json(
                 { error: "Please take a moment before submitting the form." },
                 { status: 400 }
@@ -53,6 +107,7 @@ export async function POST(req: Request) {
         }
 
         if (elapsedMs > CONTACT_MAX_FORM_AGE_MS) {
+            incrementAbuseCounter("form_expired");
             return NextResponse.json(
                 { error: "Form session expired. Please refresh and submit again." },
                 { status: 400 }
@@ -60,6 +115,7 @@ export async function POST(req: Request) {
         }
 
         if (!name || !email || !message) {
+            incrementAbuseCounter("missing_required_fields");
             return NextResponse.json(
                 { error: "Name, email, and message are required" },
                 { status: 400 }
@@ -69,6 +125,7 @@ export async function POST(req: Request) {
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
+            incrementAbuseCounter("invalid_email");
             return NextResponse.json(
                 { error: "Invalid email format" },
                 { status: 400 }
@@ -91,13 +148,30 @@ export async function POST(req: Request) {
                 windowMs: CONTACT_RATE_LIMIT_WINDOW_MS,
             })
         ) {
+            incrementAbuseCounter("ip_rate_limited");
             return NextResponse.json(
                 { error: "Too many requests. Please try again in a few minutes." },
                 { status: 429 }
             );
         }
 
+        if (
+            isRateLimited({
+                store: contactSessionRequestLog,
+                key: normalizedSessionId,
+                maxRequests: CONTACT_SESSION_RATE_LIMIT_MAX_REQUESTS,
+                windowMs: CONTACT_SESSION_RATE_LIMIT_WINDOW_MS,
+            })
+        ) {
+            incrementAbuseCounter("session_rate_limited");
+            return NextResponse.json(
+                { error: "Too many requests from this session. Please try again shortly." },
+                { status: 429 }
+            );
+        }
+
         if (message.length > 5000) {
+            incrementAbuseCounter("message_too_long");
             return NextResponse.json(
                 { error: "Message too long (max 5000 characters)" },
                 { status: 400 }

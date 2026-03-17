@@ -16,6 +16,11 @@ export default function ContactPageClient() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const formStartedAtRef = useRef(Date.now());
+    const formSessionIdRef = useRef(
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID().replace(/-/g, "")
+            : `${Date.now()}_${Math.random().toString(36).slice(2, 18)}`
+    );
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -33,6 +38,7 @@ export default function ContactPageClient() {
                     message: messageBody,
                     website,
                     formStartedAt: formStartedAtRef.current,
+                    formSessionId: formSessionIdRef.current,
                 }),
             });
 

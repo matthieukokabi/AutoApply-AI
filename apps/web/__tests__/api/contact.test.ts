@@ -8,9 +8,11 @@ beforeEach(() => {
 });
 
 function withAntiBotFields(payload: Record<string, unknown>) {
+    const generatedSessionId = `session_${Math.random().toString(36).slice(2, 28)}`;
     return JSON.stringify({
         website: "",
         formStartedAt: Date.now() - 5000,
+        formSessionId: generatedSessionId,
         ...payload,
     });
 }
@@ -222,6 +224,7 @@ describe("POST /api/contact", () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 website: "",
+                formSessionId: "session_abcdefghijklmnopqrstuvwxyz",
                 name: "Jane",
                 email: "jane@example.com",
                 message: "Missing form timer.",
@@ -239,6 +242,7 @@ describe("POST /api/contact", () => {
             body: JSON.stringify({
                 website: "",
                 formStartedAt: Date.now(),
+                formSessionId: "session_abcdefghijklmnopqrstuvwxyz",
                 name: "Jane",
                 email: "jane@example.com",
                 message: "Submitted instantly.",
@@ -256,6 +260,7 @@ describe("POST /api/contact", () => {
             body: JSON.stringify({
                 website: "https://spam.invalid",
                 formStartedAt: Date.now() - 5000,
+                formSessionId: "session_abcdefghijklmnopqrstuvwxyz",
                 name: "Spam",
                 email: "spam@example.com",
                 message: "Spam payload",
@@ -268,5 +273,45 @@ describe("POST /api/contact", () => {
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
         expect(Resend).not.toHaveBeenCalled();
+    });
+
+    it("returns 429 when a single form session exceeds the request limit", async () => {
+        const formSessionId = "session_rate_limit_abcdefghijklmnopqrstuvwxyz";
+
+        for (let i = 0; i < 3; i += 1) {
+            const response = await POST(
+                new Request("http://localhost/api/contact", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: withAntiBotFields({
+                        formSessionId,
+                        name: "Rate Session",
+                        email: `session-${i}@example.com`,
+                        subject: "support",
+                        message: `Attempt ${i + 1}`,
+                    }),
+                })
+            );
+
+            expect(response.status).toBe(200);
+        }
+
+        const limitedResponse = await POST(
+            new Request("http://localhost/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: withAntiBotFields({
+                    formSessionId,
+                    name: "Rate Session",
+                    email: "session-final@example.com",
+                    subject: "support",
+                    message: "Should be session-rate-limited",
+                }),
+            })
+        );
+        const data = await limitedResponse.json();
+
+        expect(limitedResponse.status).toBe(429);
+        expect(data.error).toContain("session");
     });
 });

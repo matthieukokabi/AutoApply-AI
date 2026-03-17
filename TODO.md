@@ -78,8 +78,8 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Add optional COOP/CORP baseline headers (`same-origin-allow-popups`, `same-site`) — completed on 2026-03-18 (`next.config.js`)
 - [ ] Reduce/remove `unsafe-inline` and `unsafe-eval` from enforced CSP via nonce/hash rollout
 - [ ] Add Turnstile/hCaptcha server verification on contact endpoint (keep honeypot/timing as layer 1)
-- [ ] Add IP + per-session throttling on contact endpoint
-- [ ] Add abuse telemetry counters on contact endpoint
+- [x] Add IP + per-session throttling on contact endpoint — completed on 2026-03-18 (`/api/contact` adds session-level limiter in addition to IP limiter)
+- [x] Add abuse telemetry counters on contact endpoint — completed on 2026-03-18 (`/api/contact` blocked-reason counters + structured warning logs)
 - [ ] Add `noindex` metadata for auth and utility pages (`sign-in`, `sign-up`, `auth-diagnostics`, dashboard surface)
 - [ ] Tighten canonical handling for query-param variants
 - [ ] Re-validate hreflang reciprocity across all localized indexable pages
