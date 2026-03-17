@@ -3595,6 +3595,31 @@ Included in this rollout:
 
 ---
 
+## Session 111 — 2026-03-17
+
+### Completed
+
+**P0 Vercel Production Stripe Env Verification:**
+- Verified production Vercel env configuration for Stripe billing keys using `vercel env pull` with local prefix validation (no secret values logged).
+- Confirmed required live/server keys and all active price IDs are present with expected prefixes:
+  - `STRIPE_SECRET_KEY` (`sk_live_`)
+  - `STRIPE_WEBHOOK_SECRET` (`whsec_`)
+  - `STRIPE_PRICE_PRO_MONTHLY`, `STRIPE_PRICE_PRO_YEARLY`, `STRIPE_PRICE_UNLIMITED_MONTHLY`, `STRIPE_PRICE_UNLIMITED_YEARLY`, `STRIPE_PRICE_CREDIT_PACK` (`price_`)
+- Updated `TODO.md` to:
+  - mark this P0 env-verification item complete
+  - correct wording to reflect actual unlimited env variable names (`_MONTHLY` and `_YEARLY`)
+
+### Verification
+- `vercel env pull <temp-file> --environment=production` + prefix validation script ✅
+  - result: `ENV_CHECK:PASS`
+  - sensitive values were not printed or persisted
+
+### Files Modified This Session
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 110 — 2026-03-17
 
 ### Completed
