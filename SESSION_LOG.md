@@ -3535,3 +3535,31 @@ Included in this rollout:
 - `apps/web/e2e/onboarding.cross-browser.smoke.spec.ts`
 - `apps/web/scripts/onboarding_cross_browser_smoke.sh`
 - `SESSION_LOG.md`
+
+---
+
+## Session 106 — 2026-03-17
+
+### Completed
+
+**Production Rollout + Live Onboarding Verification:**
+- Deployed latest onboarding fixes to production in one single release:
+  - deployment: `https://auto-apply-20ppkijkr-matts-projects-d33e5f04.vercel.app`
+  - production alias: `https://autoapply.works`
+- Ran live cross-browser onboarding smoke gate against production (Chromium + Firefox + WebKit) and confirmed pass.
+- Fixed production smoke script selector mismatch introduced by hydration-safe pricing CTA anchors:
+  - `onboarding_smoke_matrix.sh` now checks/clicks `#pricing a, #pricing button` instead of only `#pricing button`.
+- Re-ran production onboarding smokes after the script fix and confirmed all pass.
+
+### Verification
+- `SMOKE_BASE_URL=https://autoapply.works npm run smoke:onboarding:cross-browser` ✅
+  - report: `/tmp/onboarding-cross-browser-smoke-20260317_081502.jsonl`
+  - browsers passed: `chromium`, `firefox`, `webkit`
+- `npm run smoke:onboarding -- https://autoapply.works` ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-smoke-20260317_082023.jsonl`
+- `npm run smoke:onboarding:auth-blocked -- https://autoapply.works` ✅ (4/4 cases passed)
+  - report: `/tmp/onboarding-auth-blocked-smoke-20260317_082150.jsonl`
+
+### Files Modified This Session
+- `apps/web/scripts/onboarding_smoke_matrix.sh`
+- `SESSION_LOG.md`

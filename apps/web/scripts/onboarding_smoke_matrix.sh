@@ -81,9 +81,9 @@ click_upgrade_cta() {
       (window).__qaCheckoutFetchWrapped = true;
     }
 
-    const buttons = Array.from(document.querySelectorAll('#pricing button'));
-    const target = buttons.find((button) => {
-      const text = getText(button).toLowerCase();
+    const ctas = Array.from(document.querySelectorAll('#pricing a, #pricing button'));
+    const target = ctas.find((cta) => {
+      const text = getText(cta).toLowerCase();
       return text.includes('pro') && text.includes('29');
     });
 
@@ -146,7 +146,7 @@ for locale in $LOCALES; do
     signin_json='{}'
 
     if [[ "$status" == "pass" ]]; then
-      if ! landing_json="$(eval_json "$session" "() => ({ url: location.href, hasOverflow: document.documentElement.scrollWidth > window.innerWidth + 1, hasUnauthorizedText: document.body.innerText.toLowerCase().includes('unauthorized'), hasUpgradeCta: Boolean(document.querySelector('#pricing button')) })")"; then
+      if ! landing_json="$(eval_json "$session" "() => ({ url: location.href, hasOverflow: document.documentElement.scrollWidth > window.innerWidth + 1, hasUnauthorizedText: document.body.innerText.toLowerCase().includes('unauthorized'), hasUpgradeCta: Boolean(document.querySelector('#pricing a, #pricing button')) })")"; then
         status="fail"
         reason="landing_eval_failed"
       fi
