@@ -4011,6 +4011,29 @@ Included in this rollout:
 
 ---
 
+## Session 135 — 2026-03-17
+
+### Completed
+
+**Marketing attribution foundation (UTM convention):**
+- Added `docs/utm-naming-convention.md` with:
+  - required/optional UTM parameters
+  - allowed source/medium values
+  - standardized campaign and content naming formats
+  - channel-specific URL examples (LinkedIn, X, Google Ads, Product Hunt)
+  - pre-publish enforcement checklist
+- Updated TODO UTM item to in-progress with the new doc reference (link enforcement remains pending as a separate next step).
+
+### Verification
+- Documentation-only step; no runtime application code changed.
+
+### Files Modified This Session
+- `docs/utm-naming-convention.md`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 113 — 2026-03-17
 
 ### Completed
