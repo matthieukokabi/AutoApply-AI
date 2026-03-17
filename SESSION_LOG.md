@@ -3595,6 +3595,28 @@ Included in this rollout:
 
 ---
 
+## Session 113 — 2026-03-17
+
+### Completed
+
+**Landing Locale-Preservation Fix for Auth CTAs:**
+- Updated landing-page direct auth links to use locale-aware routes from `getAuthPathsForLocale(locale)`:
+  - now uses `signInPath` and `signUpPath` instead of hardcoded `/sign-in` and `/sign-up`.
+- This fixes the observed mismatch where free-plan CTA on non-EN landing could route to `/en/sign-up`.
+- Updated TODO follow-up item to complete for this source-level fix.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 222 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `apps/web/app/[locale]/page.tsx`
+- `TODO.md`
+- `SESSION_LOG.md`
+
+---
+
 ## Session 112 — 2026-03-17
 
 ### Completed

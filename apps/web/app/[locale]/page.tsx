@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function LandingPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    const { signUpPath } = getAuthPathsForLocale(locale);
+    const { signInPath, signUpPath } = getAuthPathsForLocale(locale);
     const localeFromPath = `/${locale}`;
     const signUpProMonthlyHref = buildAuthIntentUrl(signUpPath, "pro_monthly", localeFromPath);
     const signUpProYearlyHref = buildAuthIntentUrl(signUpPath, "pro_yearly", localeFromPath);
@@ -127,10 +127,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
-                        <Link href="/sign-in" className="hidden sm:inline-flex">
+                        <Link href={signInPath} className="hidden sm:inline-flex">
                             <Button variant="ghost">{t("nav.signIn")}</Button>
                         </Link>
-                        <Link href="/sign-up" className="hidden sm:inline-flex">
+                        <Link href={signUpPath} className="hidden sm:inline-flex">
                             <Button>{t("nav.getStarted")}</Button>
                         </Link>
                     </div>
@@ -152,7 +152,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     {t("hero.description")}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                    <Link href="/sign-up">
+                    <Link href={signUpPath}>
                         <Button size="lg" className="gap-2 px-8">
                             {t("hero.startFree")} <ArrowRight className="h-4 w-4" />
                         </Button>
@@ -317,7 +317,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </ul>
                         </CardContent>
                         <CardFooter>
-                            <Link href="/sign-up" className="w-full">
+                            <Link href={signUpPath} className="w-full">
                                 <Button variant="outline" className="h-auto w-full whitespace-normal py-3 text-center">
                                     {t("hero.startFree")}
                                 </Button>
@@ -458,7 +458,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     <p className="text-lg opacity-90 mb-8 max-w-lg mx-auto">
                         {t("cta.subtitle")}
                     </p>
-                    <Link href="/sign-up">
+                    <Link href={signUpPath}>
                         <Button size="lg" variant="secondary" className="gap-2 px-8">
                             {t("cta.getStarted")} <ArrowRight className="h-4 w-4" />
                         </Button>
