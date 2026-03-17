@@ -4581,3 +4581,33 @@ Included in this rollout:
 - `docs/launch-checklist.md`
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 146 — 2026-03-17
+
+### Completed
+
+**Vercel Weekly Usage Review (Cost Proxy):**
+- Ran `vercel ls auto-apply-ai` (CLI v50.1.6 fallback, because `vercel usage` command is unavailable).
+- Captured latest deployment activity snapshot for cost-control monitoring.
+- Added weekly usage review playbook with fallback method and guardrails:
+  - `docs/vercel-usage-review-playbook.md`
+- Updated TODO to mark this weekly review item completed for this cycle.
+
+### Snapshot (latest 20 production deployments)
+
+- `Ready`: 10
+- `Canceled`: 10
+- Typical ready build duration: ~41s to 1m
+- Action: keep strict deploy batching and avoid retry loops that create canceled deployment churn.
+
+### Verification
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ (29 files, 224 tests)
+- `npm run build` (apps/web) ✅
+
+### Files Modified This Session
+- `docs/vercel-usage-review-playbook.md`
+- `TODO.md`
+- `SESSION_LOG.md`

@@ -55,7 +55,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 
 ## P1 — Vercel cost optimization (keep monthly burn controlled)
 
-- [ ] Weekly Vercel usage review (`vercel usage`) and append summary in `SESSION_LOG.md`
+- [x] Weekly Vercel usage review and append summary in `SESSION_LOG.md` — completed on 2026-03-17 using `vercel ls auto-apply-ai` activity snapshot fallback (`vercel usage` unavailable in CLI v50.1.6); playbook: `docs/vercel-usage-review-playbook.md`
 - [x] Verify no unintended auto-deploy/reactivation settings were re-enabled — completed on 2026-03-17 (confirmed: `gitProviderOptions.createDeployments=disabled`, `commandForIgnoringBuildStep` active, `enableAffectedProjectsDeployments=true`, `buildMachineType=standard`)
 - [x] Add deploy batching rule: one production deploy after multiple validated atomic fixes — completed on 2026-03-17 (`docs/vercel-deploy-batching-rule.md`)
 - [x] Audit API routes for cacheability and short-circuit unauthenticated expensive paths — completed on 2026-03-17 (`getAuthUser` now exits early when neither auth cookie nor bearer token exists, reducing unnecessary Clerk/DB work on anonymous API traffic)
