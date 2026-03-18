@@ -205,6 +205,9 @@ export default function ContactPageClient() {
                 <p className="text-muted-foreground mb-8">
                     Have questions, feedback, or need support? We&apos;d love to hear from you.
                 </p>
+                <p className="mb-8 rounded-md border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+                    Support usually replies within one business day. Messages are used only for support and product follow-up.
+                </p>
 
                 {submitted ? (
                     <Card>
@@ -321,6 +324,9 @@ export default function ContactPageClient() {
                                 >
                                     {loading ? "Sending..." : "Send Message"}
                                 </Button>
+                                <p className="text-center text-xs text-muted-foreground">
+                                    No marketing spam. You can request deletion of this conversation at any time.
+                                </p>
                             </form>
                         </CardContent>
                     </Card>
