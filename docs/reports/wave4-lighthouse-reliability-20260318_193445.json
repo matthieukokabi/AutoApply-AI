@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-03-18T18:35:09Z",
+  "target": {
+    "baseUrl": "https://autoapply.works",
+    "route": "/en",
+    "url": "https://autoapply.works/en"
+  },
+  "config": {
+    "requiredSuccessfulRuns": 1,
+    "maxAttemptsPerRun": 2,
+    "warmupRequests": 1,
+    "deterministicFlags": [
+      "--quiet",
+      "--output=json",
+      "--preset=desktop",
+      "--form-factor=desktop",
+      "--throttling-method=simulate",
+      "--max-wait-for-load=45000",
+      "--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --window-size=1920,1080"
+    ]
+  },
+  "runtime": {
+    "lighthouseVersion": "13.0.3",
+    "totalDurationMs": 21133
+  },
+  "summary": {
+    "status": "pass",
+    "successfulRuns": 1,
+    "attemptCount": 1,
+    "failureReason": null
+  },
+  "attempts": [
+    {
+      "generatedAt": "2026-03-18T18:35:09Z",
+      "targetUrl": "https://autoapply.works/en",
+      "runIndex": 1,
+      "attemptIndex": 1,
+      "retryIndex": 0,
+      "status": "pass",
+      "reason": "ok",
+      "commandError": null,
+      "durationMs": 18886,
+      "metrics": {
+        "lcpMs": 655.9789999999999,
+        "performanceScore": 1,
+        "accessibilityScore": 0.93,
+        "bestPracticesScore": 0.92,
+        "seoScore": 0.91
+      },
+      "lcpDiagnostics": {
+        "errorMessage": null,
+        "errorStack": null
+      }
+    }
+  ]
+}

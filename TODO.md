@@ -99,3 +99,12 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Add Organization + ContactPoint structured data on trust pages — completed on 2026-03-18 (`lib/structured-data.ts` + JSON-LD on `/contact`, `/privacy`, `/terms`, covered by `__tests__/structured-data-trust-pages.test.ts`)
 - [x] Run production Lighthouse + a11y benchmark and track deltas — completed on 2026-03-18 (artifacts: `docs/reports/wave3-lighthouse-prod-2026-03-18-run1.json`, `docs/reports/wave3-lighthouse-prod-2026-03-18-run2.json`)
 - [x] Publish Wave 3 validation report with evidence — completed on 2026-03-18 (`docs/wave3-validation-report-2026-03-18.md`, plus post-deploy squirrel audit `docs/reports/wave3-live-squirrel-audit-prod-2026-03-18.json`)
+
+## P1 — Wave 4 performance reliability + observability hardening
+
+- [x] Stabilize Lighthouse reliability run (`NO_LCP` mitigation) with warm-up, retries, deterministic flags, and explicit fail reason — completed on 2026-03-18 (`apps/web/scripts/lighthouse_reliability_check.sh`, npm script `perf:lighthouse:reliability`)
+- [ ] Add performance budget hard gates (LCP, CLS, JS bytes, image bytes) with CI fail-on-regression and emergency override path
+- [ ] Pin deterministic audited routes (including one high-intent route) and fail when a required route is unavailable
+- [ ] Expand conversion telemetry funnel (`page_view` → `cta_click` → `form_start` → `captcha_pass|fail` → `submit_result`) with daily artifact + anomaly detection
+- [ ] Add protected runtime health snapshot endpoint (latest perf gate, funnel telemetry, parity status), non-indexable + auth-protected
+- [ ] Publish Wave 4 validation report with reliability proof, perf gate outcome, telemetry baseline, and SEO/security non-regression evidence

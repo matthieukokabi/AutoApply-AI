@@ -19,7 +19,8 @@
         "smoke:onboarding:auth-blocked": "bash scripts/onboarding_auth_blocked_smoke.sh",
         "smoke:onboarding:cross-browser": "bash scripts/onboarding_cross_browser_smoke.sh",
         "smoke:uptime:prod": "bash scripts/production_uptime_check.sh https://autoapply.works",
-        "smoke:squirrel:prod": "bash scripts/live_squirrel_audit.sh https://autoapply.works"
+        "smoke:squirrel:prod": "bash scripts/live_squirrel_audit.sh https://autoapply.works",
+        "perf:lighthouse:reliability": "bash scripts/lighthouse_reliability_check.sh"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"
@@ -57,9 +58,9 @@
         "zod": "^3.22.4"
     },
     "devDependencies": {
+        "@playwright/test": "^1.58.2",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.2",
-        "@playwright/test": "^1.58.2",
         "@types/node": "^20.11.0",
         "@types/react": "^18.2.47",
         "@types/react-dom": "^18.2.18",
@@ -68,6 +69,7 @@
         "eslint": "^8.56.0",
         "eslint-config-next": "^15.5.10",
         "jsdom": "^27.0.1",
+        "lighthouse": "^13.0.3",
         "postcss": "^8.4.33",
         "prisma": "^5.8.0",
         "tailwindcss": "^3.4.1",
