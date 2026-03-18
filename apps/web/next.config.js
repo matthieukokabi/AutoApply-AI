@@ -1,13 +1,59 @@
+const crypto = require("crypto");
 const path = require("path");
 const createNextIntlPlugin = require("next-intl/plugin");
+const {
+    buildGaBootstrapScript,
+    buildGtmBootstrapScript,
+} = require("./lib/analytics-inline-scripts");
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+
+function toCspHash(scriptContent) {
+    const hash = crypto
+        .createHash("sha256")
+        .update(scriptContent)
+        .digest("base64");
+
+    return `'sha256-${hash}'`;
+}
+
+function getAnalyticsInlineScriptHashes() {
+    const gtmId = process.env.NEXT_PUBLIC_GTM_ID?.trim();
+    const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+
+    if (gtmId) {
+        return [toCspHash(buildGtmBootstrapScript(gtmId))];
+    }
+
+    if (gaMeasurementId) {
+        return [toCspHash(buildGaBootstrapScript(gaMeasurementId))];
+    }
+
+    return [];
+}
+
+const analyticsInlineScriptHashes = getAnalyticsInlineScriptHashes();
+const ENFORCED_SCRIPT_SRC = [
+    "'self'",
+    ...analyticsInlineScriptHashes,
+    "'unsafe-inline'",
+    "https:",
+].join(" ");
+const STRICT_REPORT_ONLY_SCRIPT_SRC = [
+    "'self'",
+    ...analyticsInlineScriptHashes,
+    "https://www.googletagmanager.com",
+    "https://www.google-analytics.com",
+    "https://challenges.cloudflare.com",
+    "https://clerk.autoapply.works",
+].join(" ");
+
 const CONTENT_SECURITY_POLICY = [
     "default-src 'self' https: data: blob:",
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
-    "script-src 'self' 'unsafe-inline' https:",
+    `script-src ${ENFORCED_SCRIPT_SRC}`,
     "style-src 'self' 'unsafe-inline' https:",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https:",
@@ -25,7 +71,7 @@ const STRICT_CSP_REPORT_ONLY = [
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
-    "script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com https://clerk.autoapply.works",
+    `script-src ${STRICT_REPORT_ONLY_SCRIPT_SRC}`,
     "style-src 'self' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com",
