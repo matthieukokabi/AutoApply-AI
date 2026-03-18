@@ -71,7 +71,7 @@ async function getScriptPolicies(config: NextConfigWithHeaders) {
 }
 
 describe("next config CSP analytics hashes", () => {
-    it("adds sha256 hash allowances when GTM inline bootstrap is enabled", async () => {
+    it("adds sha256 hash allowances in report-only CSP when GTM inline bootstrap is enabled", async () => {
         const config = loadNextConfigWithEnv({
             NEXT_PUBLIC_GTM_ID: "GTM-TEST123",
             NEXT_PUBLIC_GA_MEASUREMENT_ID: null,
@@ -80,11 +80,12 @@ describe("next config CSP analytics hashes", () => {
 
         expect(enforcedCsp).toContain("script-src");
         expect(reportOnlyCsp).toContain("script-src");
-        expect(enforcedCsp).toContain("sha256-");
+        expect(enforcedCsp).toContain("'unsafe-inline'");
+        expect(enforcedCsp).not.toContain("sha256-");
         expect(reportOnlyCsp).toContain("sha256-");
     });
 
-    it("adds sha256 hash allowances when GA inline bootstrap is enabled", async () => {
+    it("adds sha256 hash allowances in report-only CSP when GA inline bootstrap is enabled", async () => {
         const config = loadNextConfigWithEnv({
             NEXT_PUBLIC_GTM_ID: null,
             NEXT_PUBLIC_GA_MEASUREMENT_ID: "G-TEST12345",
@@ -93,7 +94,8 @@ describe("next config CSP analytics hashes", () => {
 
         expect(enforcedCsp).toContain("script-src");
         expect(reportOnlyCsp).toContain("script-src");
-        expect(enforcedCsp).toContain("sha256-");
+        expect(enforcedCsp).toContain("'unsafe-inline'");
+        expect(enforcedCsp).not.toContain("sha256-");
         expect(reportOnlyCsp).toContain("sha256-");
     });
 });

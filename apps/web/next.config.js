@@ -35,7 +35,6 @@ function getAnalyticsInlineScriptHashes() {
 const analyticsInlineScriptHashes = getAnalyticsInlineScriptHashes();
 const ENFORCED_SCRIPT_SRC = [
     "'self'",
-    ...analyticsInlineScriptHashes,
     "'unsafe-inline'",
     "https:",
 ].join(" ");
