@@ -92,7 +92,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Add CI guard for canonical + `og:url` parity and `/` vs `/coming-soon` metadata distinction — completed on 2026-03-18 (`lib/seo.ts` `buildCanonicalOgParity`, localized metadata migrations, `__tests__/seo-parity.test.ts`)
 - [ ] Deploy + verify canonical and `og:url` parity on all indexable pages
 - [ ] Confirm `/` versus `/coming-soon` metadata remains distinct in production
-- [ ] Add redirect regression CI assertions (max redirect hops + expected final URL)
+- [x] Add redirect regression CI assertions (max redirect hops + expected final URL) — completed on 2026-03-18 (`__tests__/redirect-regression.test.ts`)
 - [ ] Add CAPTCHA telemetry (`solve`/`fail`/`error`) and abuse diagnostics dashboard hooks
 - [ ] Advance CSP phase 2 toward nonce/hash strictness where feasible
 - [ ] Add Organization + ContactPoint structured data on trust pages
