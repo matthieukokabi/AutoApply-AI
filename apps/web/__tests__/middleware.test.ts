@@ -163,6 +163,7 @@ describe("middleware auth + i18n routing", () => {
         expect(matcher).not.toContain("/sign-in/:path*");
         expect(matcher).not.toContain("/sign-up/:path*");
         expect(matcher).not.toContain("/api/auth/diagnostics");
+        expect(matcher).not.toContain("/api/runtime/health-snapshot");
         expect(matcher).not.toContain("/api/debug/auth");
     });
 });
