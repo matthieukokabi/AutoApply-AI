@@ -39,6 +39,15 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Invalid telemetry event" }, { status: 400 });
     }
 
+    const routePath =
+        typeof (body as { routePath?: unknown })?.routePath === "string"
+            ? (body as { routePath: string }).routePath
+            : undefined;
+    const campaign =
+        typeof (body as { campaign?: unknown })?.campaign === "string"
+            ? (body as { campaign: string }).campaign
+            : undefined;
+
     const clientIp = getClientIp(req) || "unknown";
     if (
         isRateLimited({
@@ -54,7 +63,7 @@ export async function POST(req: Request) {
         );
     }
 
-    incrementFunnelEvent(event);
+    incrementFunnelEvent(event, { routePath, campaign });
     const response = NextResponse.json({ success: true }, { status: 200 });
     response.headers.set("Cache-Control", "no-store, max-age=0");
     return response;

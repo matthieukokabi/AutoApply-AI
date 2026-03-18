@@ -4,6 +4,7 @@ import {
     incrementAbuseCounter,
     incrementCaptchaCounter,
     incrementFunnelEvent,
+    type ContactFunnelEventContext,
 } from "@/lib/contact-telemetry";
 
 const CONTACT_RATE_LIMIT_MAX_REQUESTS = 5;
@@ -102,14 +103,21 @@ function escapeHtml(value: string): string {
  * Body: { name, email, subject, message }
  */
 export async function POST(req: Request) {
+    let funnelContext: ContactFunnelEventContext = {};
     const submitFailResponse = (error: string, status: number) => {
-        incrementFunnelEvent("submit_fail");
+        incrementFunnelEvent("submit_fail", funnelContext);
         return NextResponse.json({ error }, { status });
     };
 
     try {
         const body = await req.json();
         const { name, email, subject, message, website, formStartedAt, formSessionId } = body;
+        funnelContext = {
+            routePath:
+                typeof body.routePath === "string" ? body.routePath : undefined,
+            campaign:
+                typeof body.campaign === "string" ? body.campaign : undefined,
+        };
 
         // Honeypot: bots filling hidden fields are accepted but dropped silently.
         if (typeof website === "string" && website.trim().length > 0) {
@@ -189,7 +197,8 @@ export async function POST(req: Request) {
             );
             incrementCaptchaCounter(
                 turnstileOutcome.outcome,
-                turnstileOutcome.errorCodes
+                turnstileOutcome.errorCodes,
+                funnelContext
             );
 
             if (turnstileOutcome.outcome !== "solve") {
@@ -276,7 +285,7 @@ export async function POST(req: Request) {
             `,
         });
 
-        incrementFunnelEvent("submit_success");
+        incrementFunnelEvent("submit_success", funnelContext);
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("POST /api/contact error:", error);

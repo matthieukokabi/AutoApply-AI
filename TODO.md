@@ -1,6 +1,6 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-03-17 (Europe/Zurich)
+Last updated: 2026-03-18 (Europe/Zurich)
 
 ## P0 — Must complete before live payment test
 
@@ -108,3 +108,13 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Expand conversion telemetry funnel (`page_view` → `cta_click` → `form_start` → `captcha_pass|fail` → `submit_result`) with daily artifact + anomaly detection — completed on 2026-03-18 (`lib/contact-telemetry.ts`, `/api/contact/telemetry`, contact client instrumentation, `scripts/conversion_telemetry_daily_report.js`)
 - [x] Add protected runtime health snapshot endpoint (latest perf gate, funnel telemetry, parity status), non-indexable + auth-protected — completed on 2026-03-18 (`/api/runtime/health-snapshot`, token header auth + `X-Robots-Tag: noindex`)
 - [x] Publish Wave 4 validation report with reliability proof, perf gate outcome, telemetry baseline, and SEO/security non-regression evidence — completed on 2026-03-18 (`docs/wave4-validation-report-2026-03-18.md`)
+
+## P1 — Wave 5 conversion optimization + operational resilience
+
+- [x] Add funnel stage diagnostics with drop-off attribution + route/campaign conversion segmentation, and introduce weekly conversion trend report artifact generator — completed on 2026-03-18 (`lib/contact-telemetry.ts`, `/api/contact`, `/api/contact/telemetry`, `contact-page-client.tsx`, `scripts/conversion_telemetry_weekly_report.js`)
+- [ ] Add conversion regression sentinel gate for CI/release with explicit audited emergency override path
+- [ ] Add mission-control runtime ops summary artifact (perf gate + lighthouse reliability + funnel + parity/squirrel)
+- [ ] Harden runtime health snapshot v2 (token rotation guidance, stale-token warning, rate limiting, audit logging)
+- [ ] Evolve performance budget checks with percentile trends + per-route regression deltas
+- [ ] Add low-risk trust/content CRO on high-intent pages with no SEO metadata or CLS regressions
+- [ ] Publish Wave 5 validation report + required `docs/reports/wave5-*` artifacts and final Wave 6 candidate list

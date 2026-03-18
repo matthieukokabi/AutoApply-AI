@@ -29,14 +29,23 @@ describe("POST /api/contact/telemetry", () => {
             new Request("http://localhost/api/contact/telemetry", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ event: "page_view" }),
+                body: JSON.stringify({
+                    event: "page_view",
+                    routePath: "/en/contact",
+                    campaign: "launch_q1",
+                }),
             })
         );
         const data = await response.json();
+        const telemetrySnapshot = getContactTelemetrySnapshot();
+        const routeSegment = telemetrySnapshot.funnel.lifetime.segmentation.byRoute.find(
+            (item) => item.segment === "/en/contact"
+        );
 
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
-        expect(getContactTelemetrySnapshot().funnel.lifetime.events.page_view).toBe(1);
+        expect(telemetrySnapshot.funnel.lifetime.events.page_view).toBe(1);
+        expect(routeSegment?.events.page_view).toBe(1);
     });
 
     it("enforces IP rate limit for telemetry endpoint", async () => {

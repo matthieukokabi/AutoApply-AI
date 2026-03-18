@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,19 @@ import { Sparkles, Mail, Check } from "lucide-react";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
 type ContactFunnelClientEvent = "page_view" | "cta_click" | "form_start";
+type ContactTelemetryContext = {
+    routePath: string | undefined;
+    campaign: string | undefined;
+};
+
+function getCampaignFromLocation(search: string) {
+    const params = new URLSearchParams(search);
+    const campaign =
+        params.get("utm_campaign") ||
+        params.get("campaign") ||
+        params.get("ref");
+    return campaign?.trim() || undefined;
+}
 
 declare global {
     interface Window {
@@ -49,8 +62,25 @@ export default function ContactPageClient() {
             : `${Date.now()}_${Math.random().toString(36).slice(2, 18)}`
     );
 
-    function trackContactFunnelEvent(event: ContactFunnelClientEvent) {
-        const payload = JSON.stringify({ event });
+    const getTelemetryContext = useCallback((): ContactTelemetryContext => {
+        if (typeof window === "undefined") {
+            return {
+                routePath: undefined,
+                campaign: undefined,
+            };
+        }
+
+        return {
+            routePath: window.location.pathname || undefined,
+            campaign: getCampaignFromLocation(window.location.search),
+        };
+    }, []);
+
+    const trackContactFunnelEvent = useCallback((event: ContactFunnelClientEvent) => {
+        const payload = JSON.stringify({
+            event,
+            ...getTelemetryContext(),
+        });
 
         if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
             const blob = new Blob([payload], { type: "application/json" });
@@ -64,7 +94,7 @@ export default function ContactPageClient() {
             body: payload,
             keepalive: true,
         }).catch(() => {});
-    }
+    }, [getTelemetryContext]);
 
     function handleFormFocusCapture() {
         if (formStartTrackedRef.current) {
@@ -117,7 +147,7 @@ export default function ContactPageClient() {
         }
         pageViewTrackedRef.current = true;
         trackContactFunnelEvent("page_view");
-    }, []);
+    }, [trackContactFunnelEvent]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -142,6 +172,7 @@ export default function ContactPageClient() {
                     formStartedAt: formStartedAtRef.current,
                     formSessionId: formSessionIdRef.current,
                     turnstileToken,
+                    ...getTelemetryContext(),
                 }),
             });
 
