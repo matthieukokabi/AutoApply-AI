@@ -83,12 +83,133 @@ function readLatestFromPrefixes(reportsDir, prefixes, extension = ".json") {
     return allCandidates[allCandidates.length - 1];
 }
 
+function readLatestFromPrefixesFiltered(
+    reportsDir,
+    prefixes,
+    extension = ".json",
+    excludedSubstrings = []
+) {
+    const allCandidates = prefixes
+        .flatMap((prefix) => listMatchingReports(reportsDir, prefix, extension))
+        .filter(
+            (filePath) =>
+                !excludedSubstrings.some((fragment) =>
+                    path.basename(filePath).includes(fragment)
+                )
+        )
+        .sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs);
+
+    if (allCandidates.length === 0) {
+        return null;
+    }
+
+    return allCandidates[allCandidates.length - 1];
+}
+
 function createComponentSummary(name, status, detail, sourceReport) {
     return {
         name,
         status,
         detail,
         sourceReport,
+    };
+}
+
+function confidenceTierRank(value) {
+    switch (value) {
+        case "high":
+            return 3;
+        case "medium":
+            return 2;
+        case "low":
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+function classifyOrganicBaselineStatus(rawStatus) {
+    const value = typeof rawStatus === "string" ? rawStatus : "";
+    if (value === "eligible") {
+        return "pass";
+    }
+
+    if (!value) {
+        return "unavailable";
+    }
+
+    return "warning";
+}
+
+function computeConfidenceTierTrend(historyReport) {
+    const historyStorePath =
+        typeof historyReport?.historyStorePath === "string"
+            ? historyReport.historyStorePath
+            : null;
+    if (!historyStorePath || !fs.existsSync(historyStorePath)) {
+        return {
+            status: "unavailable",
+            latest: "none",
+            previous: "none",
+            direction: "unknown",
+            sourceReport: historyStorePath,
+        };
+    }
+
+    let historyStorePayload = null;
+    try {
+        historyStorePayload = readJson(historyStorePath);
+    } catch {
+        historyStorePayload = null;
+    }
+
+    const sentinelStream = Array.isArray(historyStorePayload?.streams?.sentinel)
+        ? historyStorePayload.streams.sentinel
+        : [];
+    const normalized = sentinelStream
+        .map((entry) => ({
+            generatedAt:
+                typeof entry?.generatedAt === "string" ? entry.generatedAt : null,
+            confidenceTier:
+                typeof entry?.confidenceTier === "string"
+                    ? entry.confidenceTier
+                    : "none",
+        }))
+        .filter((entry) => entry.generatedAt)
+        .sort(
+            (a, b) =>
+                new Date(a.generatedAt).getTime() - new Date(b.generatedAt).getTime()
+        );
+
+    if (normalized.length === 0) {
+        return {
+            status: "warning",
+            latest: "none",
+            previous: "none",
+            direction: "insufficient_data",
+            sourceReport: historyStorePath,
+        };
+    }
+
+    const latest = normalized[normalized.length - 1].confidenceTier;
+    const previous =
+        normalized.length > 1
+            ? normalized[normalized.length - 2].confidenceTier
+            : "none";
+
+    let direction = "flat";
+    if (confidenceTierRank(latest) > confidenceTierRank(previous)) {
+        direction = "up";
+    } else if (confidenceTierRank(latest) < confidenceTierRank(previous)) {
+        direction = "down";
+    }
+
+    return {
+        status: "pass",
+        latest,
+        previous,
+        direction,
+        sourceReport: historyStorePath,
     };
 }
 
@@ -173,7 +294,7 @@ function main() {
     );
     const outputPath =
         process.env.REPORT_PATH ||
-        path.join(reportsDir, `wave6-ops-summary-${formatTimestamp()}.json`);
+        path.join(reportsDir, `wave7-ops-summary-v2-${formatTimestamp()}.json`);
 
     const perfGatePath = readLatestFromPrefixes(
         reportsDir,
@@ -187,18 +308,38 @@ function main() {
     );
     const funnelPath = readLatestFromPrefixes(
         reportsDir,
-        ["wave6-conversion-trend-live-", "wave5-conversion-trend-"],
+        [
+            "wave7-conversion-trend-live-",
+            "wave6-conversion-trend-live-",
+            "wave5-conversion-trend-",
+        ],
         ".json"
     );
     const sentinelPath = readLatestFromPrefixes(
         reportsDir,
-        ["wave6-conversion-sentinel-", "wave5-conversion-sentinel-"],
+        [
+            "wave7-conversion-sentinel-",
+            "wave6-conversion-sentinel-",
+            "wave5-conversion-sentinel-",
+        ],
         ".json"
     );
     const correlationPath = readLatestFromPrefixes(
         reportsDir,
-        ["wave6-perf-conversion-correlation-"],
+        ["wave7-perf-conversion-correlation-", "wave6-perf-conversion-correlation-"],
         ".json"
+    );
+    const historyPath = readLatestFromPrefixesFiltered(
+        reportsDir,
+        ["wave7-telemetry-history-"],
+        ".json",
+        ["store"]
+    );
+    const alertTransportPath = readLatestFromPrefixesFiltered(
+        reportsDir,
+        ["wave7-alert-transport-"],
+        ".json",
+        ["state"]
     );
     const parityPath = readLatestFile(
         reportsDir,
@@ -216,8 +357,11 @@ function main() {
     const funnel = funnelPath ? readJson(funnelPath) : null;
     const sentinel = sentinelPath ? readJson(sentinelPath) : null;
     const correlation = correlationPath ? readJson(correlationPath) : null;
+    const historyReport = historyPath ? readJson(historyPath) : null;
+    const alertTransport = alertTransportPath ? readJson(alertTransportPath) : null;
     const squirrel = squirrelPath ? readJson(squirrelPath) : null;
     const parityRaw = parityPath ? fs.readFileSync(parityPath, "utf8") : "";
+    const organicBaseline = sentinel?.channelTracks?.organic || null;
 
     const perfStatus = classifyStatus(toStatus(perfGate?.status));
     const lighthouseStatus = classifyStatus(toStatus(lighthouse?.summary?.status));
@@ -250,6 +394,16 @@ function main() {
     const correlationStatus = correlationPath
         ? classifyStatus(toStatus(correlation?.status))
         : "pass";
+    const historyStatus = historyPath
+        ? classifyStatus(toStatus(historyReport?.status))
+        : "warning";
+    const alertTransportStatus = alertTransportPath
+        ? classifyStatus(toStatus(alertTransport?.status))
+        : "warning";
+    const organicBaselineStatus = classifyOrganicBaselineStatus(
+        organicBaseline?.status
+    );
+    const confidenceTierTrend = computeConfidenceTierTrend(historyReport);
     const parityCanonicalStatus = classifyStatus(canonicalParityStatus(parityRaw));
     const paritySquirrelStatus = classifyStatus(toStatus(squirrel?.status));
 
@@ -325,6 +479,38 @@ function main() {
                 : "Co-occurring perf + conversion regressions detected.",
             correlationPath
         ),
+        organicBaselineHealth: createComponentSummary(
+            "organicBaselineHealth",
+            organicBaselineStatus,
+            organicBaseline
+                ? `Organic baseline status ${organicBaseline.status}, drop ${
+                      organicBaseline.dropPercent ?? "n/a"
+                  }%.`
+                : "Organic baseline status unavailable.",
+            sentinelPath
+        ),
+        historyStoreFreshness: createComponentSummary(
+            "historyStoreFreshness",
+            historyStatus,
+            historyReport
+                ? `History store freshness: conversion=${historyReport?.freshness?.conversion?.status || "unknown"}, sentinel=${historyReport?.freshness?.sentinel?.status || "unknown"}, perf=${historyReport?.freshness?.perf?.status || "unknown"}.`
+                : "History store report unavailable.",
+            historyPath
+        ),
+        alertTransportDelivery: createComponentSummary(
+            "alertTransportDelivery",
+            alertTransportStatus,
+            alertTransport
+                ? `Alert transport ${alertTransport.dispatchMode || "none"} (${alertTransport.delivery?.status || "unknown"}).`
+                : "Alert transport report unavailable.",
+            alertTransportPath
+        ),
+        anomalyConfidenceTierTrend: createComponentSummary(
+            "anomalyConfidenceTierTrend",
+            classifyStatus(confidenceTierTrend.status),
+            `Anomaly confidence tier trend ${confidenceTierTrend.previous} -> ${confidenceTierTrend.latest} (${confidenceTierTrend.direction}).`,
+            confidenceTierTrend.sourceReport || historyPath
+        ),
     };
 
     const componentStatuses = Object.values(components).map((component) =>
@@ -353,6 +539,10 @@ function main() {
         `Telemetry freshness: ${components.telemetryFreshness.status}`,
         `Conversion sentinel: ${components.conversionSentinel.status}`,
         `Perf/conversion correlation: ${components.perfConversionCorrelation.status}`,
+        `Organic baseline health: ${components.organicBaselineHealth.status}`,
+        `History store freshness: ${components.historyStoreFreshness.status}`,
+        `Alert transport delivery: ${components.alertTransportDelivery.status}`,
+        `Anomaly confidence trend: ${confidenceTierTrend.previous}->${confidenceTierTrend.latest} (${confidenceTierTrend.direction})`,
         `Parity checks: ${components.parityChecks.status}`,
         `Top anomalies: ${topAnomalies.length}`,
     ];
@@ -374,6 +564,46 @@ function main() {
                         ? funnel.sourceFreshness.ageMinutes
                         : null,
             },
+            organicBaselineHealth: {
+                status: components.organicBaselineHealth.status,
+                currentStatus:
+                    typeof organicBaseline?.status === "string"
+                        ? organicBaseline.status
+                        : "unknown",
+                dropPercent:
+                    typeof organicBaseline?.dropPercent === "number"
+                        ? organicBaseline.dropPercent
+                        : null,
+                seasonalityMode:
+                    typeof organicBaseline?.seasonalityMode === "string"
+                        ? organicBaseline.seasonalityMode
+                        : null,
+            },
+            historyStoreFreshness: {
+                status: components.historyStoreFreshness.status,
+                conversion:
+                    historyReport?.freshness?.conversion?.status || "unknown",
+                sentinel:
+                    historyReport?.freshness?.sentinel?.status || "unknown",
+                perf: historyReport?.freshness?.perf?.status || "unknown",
+            },
+            alertTransportDelivery: {
+                status: components.alertTransportDelivery.status,
+                dispatchMode:
+                    typeof alertTransport?.dispatchMode === "string"
+                        ? alertTransport.dispatchMode
+                        : null,
+                deliveryStatus:
+                    typeof alertTransport?.delivery?.status === "string"
+                        ? alertTransport.delivery.status
+                        : null,
+            },
+            anomalyConfidenceTierTrend: {
+                status: components.anomalyConfidenceTierTrend.status,
+                latest: confidenceTierTrend.latest,
+                previous: confidenceTierTrend.previous,
+                direction: confidenceTierTrend.direction,
+            },
             topAnomalies,
         },
         components,
@@ -385,6 +615,8 @@ function main() {
             funnelHealth: funnelPath,
             conversionSentinel: sentinelPath,
             perfConversionCorrelation: correlationPath,
+            telemetryHistory: historyPath,
+            alertTransport: alertTransportPath,
             canonicalParity: parityPath,
             liveSquirrel: squirrelPath,
         },
@@ -392,7 +624,7 @@ function main() {
 
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`, "utf8");
-    console.log(`Wave 6 ops summary report: ${outputPath}`);
+    console.log(`Wave 7 ops summary report: ${outputPath}`);
     console.log(JSON.stringify(output, null, 2));
 }
 
