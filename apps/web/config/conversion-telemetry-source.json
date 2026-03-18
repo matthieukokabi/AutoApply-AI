@@ -1,0 +1,6 @@
+{
+  "allowSeededFallback": false,
+  "freshnessWindowMinutes": 180,
+  "fallbackWindowSize": 3,
+  "maxFallbackReportsInWindow": 0
+}

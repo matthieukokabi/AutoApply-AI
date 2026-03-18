@@ -118,3 +118,13 @@ Last updated: 2026-03-18 (Europe/Zurich)
 - [x] Evolve performance budget checks with percentile trends + per-route regression deltas — completed on 2026-03-18 (`scripts/performance_budget_gate.js`, `scripts/performance_trend_report.js`, `__tests__/performance-budget-trend.test.ts`, `docs/reports/wave5-perf-trend-20260318_201625.json`)
 - [x] Add low-risk trust/content CRO on high-intent pages with no SEO metadata or CLS regressions — completed on 2026-03-18 (`contact-page-client.tsx`, `campaign/pain-led`, `campaign/proof-led`, `campaign/feature-led`)
 - [x] Publish Wave 5 validation report + required `docs/reports/wave5-*` artifacts and final Wave 6 candidate list — completed on 2026-03-18 (`docs/wave5-validation-report-2026-03-18.md`, refreshed `wave5-*` reports)
+
+## P1 — Wave 6 live telemetry + anomaly automation
+
+- [x] Activate live conversion trend pipeline with explicit `sourceMode` (`live` vs `seeded`) markers, freshness checks, and fallback-window failure policy — completed on 2026-03-18 (`scripts/conversion_telemetry_weekly_report.js`, `config/conversion-telemetry-source.json`)
+- [ ] Add conversion data-integrity pre-checks (required events, route/campaign completeness, freshness window) and compute telemetry quality score
+- [ ] Harden conversion sentinel v2 (rolling baseline window tuning, anomaly confidence tiers, cooldown/dedupe)
+- [ ] Add sentinel failure-code runbook mapping for rapid remediation
+- [ ] Extend runtime health snapshot v3 with conversion freshness, source mode, sentinel last status, and data-quality score
+- [ ] Add perf-vs-conversion correlation report and flag co-occurring perf + conversion regressions
+- [ ] Produce Wave 6 mission-control payload + Wave 6 validation report/artifacts with seeded-to-live transition proof

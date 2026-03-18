@@ -28,40 +28,201 @@ function readSegmentAlerts(segments = []) {
         }));
 }
 
+function readJson(filePath) {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function listMatchingReports(directory, prefix) {
+    if (!fs.existsSync(directory)) {
+        return [];
+    }
+
+    return fs
+        .readdirSync(directory)
+        .filter((name) => name.startsWith(prefix) && name.endsWith(".json"))
+        .map((name) => path.join(directory, name))
+        .sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs);
+}
+
+function parseBoolean(value, fallback) {
+    if (typeof value !== "string") {
+        return fallback;
+    }
+
+    const normalized = value.trim().toLowerCase();
+    if (["1", "true", "yes", "on"].includes(normalized)) {
+        return true;
+    }
+
+    if (["0", "false", "no", "off"].includes(normalized)) {
+        return false;
+    }
+
+    return fallback;
+}
+
+function parseInteger(value, fallback) {
+    const parsed = Number.parseInt(String(value || ""), 10);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+        return parsed;
+    }
+
+    return fallback;
+}
+
+function resolveTelemetryTimestamp(sourceMode, payload) {
+    if (sourceMode === "live") {
+        return payload?.telemetry?.generatedAt || null;
+    }
+
+    return payload?.generatedAt || null;
+}
+
+function evaluateFreshness(sourceTimestamp, freshnessWindowMinutes, now) {
+    if (!sourceTimestamp || typeof sourceTimestamp !== "string") {
+        return {
+            isFresh: false,
+            ageMinutes: null,
+            freshnessWindowMinutes,
+            failureCode: "source_timestamp_missing",
+        };
+    }
+
+    const parsed = new Date(sourceTimestamp);
+    if (Number.isNaN(parsed.getTime())) {
+        return {
+            isFresh: false,
+            ageMinutes: null,
+            freshnessWindowMinutes,
+            failureCode: "source_timestamp_invalid",
+        };
+    }
+
+    const ageMinutes = Number(
+        ((now.getTime() - parsed.getTime()) / (60 * 1000)).toFixed(2)
+    );
+
+    if (ageMinutes > freshnessWindowMinutes) {
+        return {
+            isFresh: false,
+            ageMinutes,
+            freshnessWindowMinutes,
+            failureCode: "source_stale",
+        };
+    }
+
+    return {
+        isFresh: true,
+        ageMinutes,
+        freshnessWindowMinutes,
+        failureCode: null,
+    };
+}
+
+function resolveSeededReport(reportsDir, explicitPath) {
+    if (explicitPath) {
+        return path.resolve(explicitPath);
+    }
+
+    const candidates = listMatchingReports(reportsDir, "wave5-conversion-trend-");
+    if (candidates.length === 0) {
+        return null;
+    }
+
+    return candidates[candidates.length - 1];
+}
+
 async function main() {
     const workspaceRoot = path.resolve(__dirname, "../../..");
     const reportsDir = path.join(workspaceRoot, "docs", "reports");
     const baseUrl = (process.argv[2] || process.env.CONVERSION_TELEMETRY_BASE_URL || "https://autoapply.works").replace(/\/$/, "");
     const diagnosticsToken = process.env.CONTACT_DIAGNOSTICS_TOKEN?.trim();
+    const configPath = path.join(
+        __dirname,
+        "..",
+        "config",
+        "conversion-telemetry-source.json"
+    );
+    const config = fs.existsSync(configPath)
+        ? readJson(configPath)
+        : {};
+    const allowSeededFallback = parseBoolean(
+        process.env.CONVERSION_TELEMETRY_ALLOW_SEEDED_FALLBACK,
+        Boolean(config.allowSeededFallback)
+    );
+    const freshnessWindowMinutes = parseInteger(
+        process.env.CONVERSION_TELEMETRY_FRESHNESS_MINUTES,
+        parseInteger(config.freshnessWindowMinutes, 180)
+    );
+    const fallbackWindowSize = parseInteger(
+        process.env.CONVERSION_TELEMETRY_FALLBACK_WINDOW_SIZE,
+        parseInteger(config.fallbackWindowSize, 3)
+    );
+    const maxFallbackReportsInWindow = parseInteger(
+        process.env.CONVERSION_TELEMETRY_MAX_FALLBACK_REPORTS_IN_WINDOW,
+        parseInteger(config.maxFallbackReportsInWindow, 0)
+    );
+    const seededReportPath = resolveSeededReport(
+        reportsDir,
+        process.env.CONVERSION_TELEMETRY_SEEDED_REPORT
+    );
     const reportPath =
         process.env.REPORT_PATH ||
-        path.join(reportsDir, `wave5-conversion-trend-${formatTimestamp()}.json`);
+        path.join(reportsDir, `wave6-conversion-trend-live-${formatTimestamp()}.json`);
 
-    if (!diagnosticsToken) {
-        console.error("CONTACT_DIAGNOSTICS_TOKEN is required to generate conversion trend report.");
-        process.exit(1);
-    }
-
-    const response = await fetch(`${baseUrl}/api/contact/diagnostics`, {
-        method: "GET",
-        headers: {
-            "x-contact-diagnostics-token": diagnosticsToken,
-        },
-    });
-
+    const sourceFailures = [];
+    const now = new Date();
+    let sourceMode = "live";
+    let sourcePath = `${baseUrl}/api/contact/diagnostics`;
     let payload = {};
-    try {
-        payload = await response.json();
-    } catch {
-        payload = {};
+
+    if (diagnosticsToken) {
+        const response = await fetch(`${baseUrl}/api/contact/diagnostics`, {
+            method: "GET",
+            headers: {
+                "x-contact-diagnostics-token": diagnosticsToken,
+            },
+        });
+
+        try {
+            payload = await response.json();
+        } catch {
+            payload = {};
+        }
+
+        if (!response.ok) {
+            sourceFailures.push(`live_fetch_failed_${response.status}`);
+            payload = {};
+        }
+    } else {
+        sourceFailures.push("live_token_missing");
     }
 
-    if (!response.ok) {
-        console.error("Failed to fetch contact diagnostics:", response.status, payload);
+    if (!payload?.telemetry) {
+        if (!allowSeededFallback) {
+            console.error(
+                "Live diagnostics unavailable and seeded fallback disabled.",
+                sourceFailures
+            );
+            process.exit(1);
+        }
+
+        if (!seededReportPath || !fs.existsSync(seededReportPath)) {
+            console.error("Seeded fallback requested but no seeded report was found.");
+            process.exit(1);
+        }
+
+        sourceMode = "seeded";
+        sourcePath = seededReportPath;
+        payload = readJson(seededReportPath);
+    }
+
+    const telemetry = sourceMode === "live" ? payload?.telemetry || null : payload?.funnel ? payload : null;
+    if (!telemetry) {
+        console.error("Unable to resolve telemetry funnel payload.");
         process.exit(1);
     }
 
-    const telemetry = payload?.telemetry || null;
     const funnelDaily = telemetry?.funnel?.daily || null;
     const funnelWeekly = telemetry?.funnel?.weekly || null;
     const dailyAnomalies = funnelDaily?.summary?.anomalies || [];
@@ -75,12 +236,65 @@ async function main() {
         routeAlerts.length +
         campaignAlerts.length;
 
+    const sourceTimestamp = resolveTelemetryTimestamp(sourceMode, payload);
+    const freshness = evaluateFreshness(sourceTimestamp, freshnessWindowMinutes, now);
+
+    const fallbackHistory = listMatchingReports(
+        reportsDir,
+        "wave6-conversion-trend-live-"
+    )
+        .slice(-fallbackWindowSize)
+        .map((filePath) => {
+            try {
+                const report = readJson(filePath);
+                return {
+                    filePath,
+                    sourceMode: report?.sourceMode || "unknown",
+                };
+            } catch {
+                return {
+                    filePath,
+                    sourceMode: "unknown",
+                };
+            }
+        });
+
+    const fallbackReportsInWindow =
+        fallbackHistory.filter((entry) => entry.sourceMode !== "live").length +
+        (sourceMode !== "live" ? 1 : 0);
+    const fallbackWindowExceeded =
+        fallbackReportsInWindow > maxFallbackReportsInWindow;
+
+    const failureCodes = [];
+    if (!freshness.isFresh && freshness.failureCode) {
+        failureCodes.push(freshness.failureCode);
+    }
+    if (fallbackWindowExceeded) {
+        failureCodes.push("fallback_window_exceeded");
+    }
+
     const output = {
-        generatedAt: new Date().toISOString(),
+        generatedAt: now.toISOString(),
         baseUrl,
-        source: `${baseUrl}/api/contact/diagnostics`,
-        status: anomalyCount > 0 ? "alert" : "pass",
+        source: sourcePath,
+        sourceMode,
+        sourceFailures,
+        sourceFreshness: freshness,
+        sourcePolicy: {
+            allowSeededFallback,
+            fallbackWindowSize,
+            maxFallbackReportsInWindow,
+            fallbackReportsInWindow,
+            fallbackWindowExceeded,
+        },
+        status:
+            failureCodes.length > 0
+                ? "fail"
+                : anomalyCount > 0
+                  ? "alert"
+                  : "pass",
         anomalyCount,
+        failureCodes,
         keyMetrics: {
             dailyCompletionRateFromFormStart:
                 funnelDaily?.summary?.completionRateFromFormStart ?? null,
@@ -108,8 +322,12 @@ async function main() {
 
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });
     fs.writeFileSync(reportPath, `${JSON.stringify(output, null, 2)}\n`, "utf8");
-    console.log(`Wave 5 conversion trend report: ${reportPath}`);
+    console.log(`Wave 6 conversion trend report: ${reportPath}`);
     console.log(JSON.stringify(output, null, 2));
+
+    if (failureCodes.length > 0) {
+        process.exit(1);
+    }
 }
 
 main().catch((error) => {
