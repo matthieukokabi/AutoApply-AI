@@ -1,0 +1,10 @@
+{
+  "minFormStarts": 5,
+  "conversionDropThresholdPercent": 20,
+  "perfRegressionThresholdPercent": {
+    "lcpMs": 10,
+    "cls": 10,
+    "jsBytes": 15,
+    "imageBytes": 15
+  }
+}
