@@ -74,3 +74,8 @@ jobs:
             sleep 1
           done
           PERF_BASE_URL=http://127.0.0.1:4100 npm run perf:routes:audit
+
+      - name: Conversion regression sentinel
+        env:
+          CONVERSION_SENTINEL_EMERGENCY_BYPASS: ${{ vars.CONVERSION_SENTINEL_EMERGENCY_BYPASS }}
+        run: npm run telemetry:conversion:sentinel

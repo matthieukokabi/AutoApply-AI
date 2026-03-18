@@ -1,0 +1,278 @@
+{
+  "generatedAt": "2026-03-18T00:00:00.000Z",
+  "baseUrl": "https://autoapply.works",
+  "source": "seeded_baseline",
+  "status": "pass",
+  "anomalyCount": 0,
+  "keyMetrics": {
+    "dailyCompletionRateFromFormStart": 0.6,
+    "dailyCaptchaFailRate": 0.1667,
+    "weeklyCompletionRateLatest": 0.6,
+    "weeklyCompletionRateBaseline": 0.5833,
+    "weeklyCaptchaFailRateLatest": 0.1667,
+    "weeklyCaptchaFailRateBaseline": 0.181
+  },
+  "anomalies": {
+    "daily": [],
+    "weekly": [],
+    "routeDropoff": [],
+    "campaignDropoff": []
+  },
+  "funnel": {
+    "daily": {
+      "windowHours": 24,
+      "events": {
+        "captcha_fail": 2,
+        "captcha_pass": 10,
+        "cta_click": 20,
+        "form_start": 15,
+        "page_view": 30,
+        "submit_fail": 5,
+        "submit_success": 9
+      },
+      "summary": {
+        "pageViews": 30,
+        "ctaClicks": 20,
+        "formStarts": 15,
+        "captchaPass": 10,
+        "captchaFail": 2,
+        "submitSuccess": 9,
+        "submitFail": 5,
+        "completionRateFromPageView": 0.3,
+        "completionRateFromFormStart": 0.6,
+        "ctaToSubmitRate": 0.45,
+        "captchaFailRate": 0.1667,
+        "dropOffAttribution": [
+          {
+            "stage": "page_view_to_cta_click",
+            "from": "page_view",
+            "to": "cta_click",
+            "fromCount": 30,
+            "toCount": 20,
+            "dropOffCount": 10,
+            "dropOffRate": 0.3333
+          },
+          {
+            "stage": "cta_click_to_form_start",
+            "from": "cta_click",
+            "to": "form_start",
+            "fromCount": 20,
+            "toCount": 15,
+            "dropOffCount": 5,
+            "dropOffRate": 0.25
+          },
+          {
+            "stage": "form_start_to_captcha_pass",
+            "from": "form_start",
+            "to": "captcha_pass",
+            "fromCount": 15,
+            "toCount": 10,
+            "dropOffCount": 5,
+            "dropOffRate": 0.3333
+          },
+          {
+            "stage": "captcha_pass_to_submit_success",
+            "from": "captcha_pass",
+            "to": "submit_success",
+            "fromCount": 10,
+            "toCount": 9,
+            "dropOffCount": 1,
+            "dropOffRate": 0.1
+          }
+        ],
+        "anomalies": []
+      },
+      "segmentation": {
+        "byRoute": [
+          {
+            "segment": "/en/contact",
+            "events": {
+              "captcha_fail": 2,
+              "captcha_pass": 10,
+              "cta_click": 20,
+              "form_start": 15,
+              "page_view": 30,
+              "submit_fail": 5,
+              "submit_success": 9
+            },
+            "summary": {
+              "pageViews": 30,
+              "ctaClicks": 20,
+              "formStarts": 15,
+              "captchaPass": 10,
+              "captchaFail": 2,
+              "submitSuccess": 9,
+              "submitFail": 5,
+              "completionRateFromPageView": 0.3,
+              "completionRateFromFormStart": 0.6,
+              "ctaToSubmitRate": 0.45,
+              "captchaFailRate": 0.1667,
+              "dropOffAttribution": [],
+              "anomalies": []
+            }
+          }
+        ],
+        "byCampaign": [
+          {
+            "segment": "spring_launch",
+            "events": {
+              "captcha_fail": 2,
+              "captcha_pass": 10,
+              "cta_click": 20,
+              "form_start": 15,
+              "page_view": 30,
+              "submit_fail": 5,
+              "submit_success": 9
+            },
+            "summary": {
+              "pageViews": 30,
+              "ctaClicks": 20,
+              "formStarts": 15,
+              "captchaPass": 10,
+              "captchaFail": 2,
+              "submitSuccess": 9,
+              "submitFail": 5,
+              "completionRateFromPageView": 0.3,
+              "completionRateFromFormStart": 0.6,
+              "ctaToSubmitRate": 0.45,
+              "captchaFailRate": 0.1667,
+              "dropOffAttribution": [],
+              "anomalies": []
+            }
+          }
+        ]
+      }
+    },
+    "weekly": {
+      "windowDays": 7,
+      "days": [
+        {
+          "date": "2026-03-12",
+          "events": {
+            "captcha_fail": 3,
+            "captcha_pass": 9,
+            "cta_click": 20,
+            "form_start": 15,
+            "page_view": 29,
+            "submit_fail": 5,
+            "submit_success": 8
+          },
+          "summary": {
+            "formStarts": 15,
+            "completionRateFromFormStart": 0.5333
+          }
+        },
+        {
+          "date": "2026-03-13",
+          "events": {
+            "captcha_fail": 2,
+            "captcha_pass": 10,
+            "cta_click": 22,
+            "form_start": 16,
+            "page_view": 31,
+            "submit_fail": 5,
+            "submit_success": 9
+          },
+          "summary": {
+            "formStarts": 16,
+            "completionRateFromFormStart": 0.5625
+          }
+        },
+        {
+          "date": "2026-03-14",
+          "events": {
+            "captcha_fail": 2,
+            "captcha_pass": 10,
+            "cta_click": 21,
+            "form_start": 16,
+            "page_view": 32,
+            "submit_fail": 5,
+            "submit_success": 10
+          },
+          "summary": {
+            "formStarts": 16,
+            "completionRateFromFormStart": 0.625
+          }
+        },
+        {
+          "date": "2026-03-15",
+          "events": {
+            "captcha_fail": 3,
+            "captcha_pass": 11,
+            "cta_click": 24,
+            "form_start": 18,
+            "page_view": 34,
+            "submit_fail": 6,
+            "submit_success": 10
+          },
+          "summary": {
+            "formStarts": 18,
+            "completionRateFromFormStart": 0.5556
+          }
+        },
+        {
+          "date": "2026-03-16",
+          "events": {
+            "captcha_fail": 2,
+            "captcha_pass": 11,
+            "cta_click": 23,
+            "form_start": 18,
+            "page_view": 35,
+            "submit_fail": 6,
+            "submit_success": 11
+          },
+          "summary": {
+            "formStarts": 18,
+            "completionRateFromFormStart": 0.6111
+          }
+        },
+        {
+          "date": "2026-03-17",
+          "events": {
+            "captcha_fail": 2,
+            "captcha_pass": 12,
+            "cta_click": 24,
+            "form_start": 19,
+            "page_view": 36,
+            "submit_fail": 6,
+            "submit_success": 11
+          },
+          "summary": {
+            "formStarts": 19,
+            "completionRateFromFormStart": 0.5789
+          }
+        },
+        {
+          "date": "2026-03-18",
+          "events": {
+            "captcha_fail": 2,
+            "captcha_pass": 10,
+            "cta_click": 20,
+            "form_start": 15,
+            "page_view": 30,
+            "submit_fail": 5,
+            "submit_success": 9
+          },
+          "summary": {
+            "formStarts": 15,
+            "completionRateFromFormStart": 0.6
+          }
+        }
+      ],
+      "trend": {
+        "latestDate": "2026-03-18",
+        "completionRateFromFormStart": {
+          "latest": 0.6,
+          "baseline": 0.5833,
+          "deltaFromBaseline": 0.0167
+        },
+        "captchaFailRate": {
+          "latest": 0.1667,
+          "baseline": 0.181,
+          "deltaFromBaseline": -0.0143
+        }
+      },
+      "anomalies": []
+    }
+  }
+}

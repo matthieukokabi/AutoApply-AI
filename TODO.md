@@ -112,7 +112,7 @@ Last updated: 2026-03-18 (Europe/Zurich)
 ## P1 — Wave 5 conversion optimization + operational resilience
 
 - [x] Add funnel stage diagnostics with drop-off attribution + route/campaign conversion segmentation, and introduce weekly conversion trend report artifact generator — completed on 2026-03-18 (`lib/contact-telemetry.ts`, `/api/contact`, `/api/contact/telemetry`, `contact-page-client.tsx`, `scripts/conversion_telemetry_weekly_report.js`)
-- [ ] Add conversion regression sentinel gate for CI/release with explicit audited emergency override path
+- [x] Add conversion regression sentinel gate for CI/release with explicit audited emergency override path — completed on 2026-03-18 (`scripts/conversion_regression_sentinel.js`, `config/conversion-regression-sentinel.json`, `.github/workflows/web-ci.yml`, `docs/conversion-regression-emergency-override.md`)
 - [ ] Add mission-control runtime ops summary artifact (perf gate + lighthouse reliability + funnel + parity/squirrel)
 - [ ] Harden runtime health snapshot v2 (token rotation guidance, stale-token warning, rate limiting, audit logging)
 - [ ] Evolve performance budget checks with percentile trends + per-route regression deltas

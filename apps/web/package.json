@@ -24,7 +24,8 @@
         "perf:budget:gate": "node scripts/performance_budget_gate.js",
         "perf:routes:audit": "bash scripts/performance_route_audit.sh",
         "telemetry:conversion:daily": "node scripts/conversion_telemetry_daily_report.js",
-        "telemetry:conversion:weekly": "node scripts/conversion_telemetry_weekly_report.js"
+        "telemetry:conversion:weekly": "node scripts/conversion_telemetry_weekly_report.js",
+        "telemetry:conversion:sentinel": "node scripts/conversion_regression_sentinel.js"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"

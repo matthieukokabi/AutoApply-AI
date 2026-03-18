@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-03-18T20:05:57.962Z",
+  "status": "pass",
+  "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-conversion-trend-20260318_000000.json",
+  "config": {
+    "dropThresholdPercent": 30,
+    "consecutiveWindowsToFail": 2,
+    "baselineWindowSize": 3,
+    "minBaselineWindows": 2,
+    "minFormStartsPerWindow": 5
+  },
+  "summary": {
+    "requiredConsecutiveRegressionWindows": 2,
+    "latestConsecutiveRegressionWindows": 0,
+    "maxConsecutiveRegressionWindows": 0,
+    "triggered": false,
+    "triggerReason": null
+  },
+  "windows": [
+    {
+      "date": "2026-03-12",
+      "status": "insufficient_baseline",
+      "formStarts": 15,
+      "completionRateFromFormStart": 0.5333,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-13",
+      "status": "insufficient_baseline",
+      "formStarts": 16,
+      "completionRateFromFormStart": 0.5625,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-14",
+      "status": "ok",
+      "formStarts": 16,
+      "completionRateFromFormStart": 0.625,
+      "baselineCompletionRate": 0.5479,
+      "dropPercent": -14.07,
+      "thresholdPercent": 30,
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-15",
+      "status": "ok",
+      "formStarts": 18,
+      "completionRateFromFormStart": 0.5556,
+      "baselineCompletionRate": 0.5736,
+      "dropPercent": 3.14,
+      "thresholdPercent": 30,
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-16",
+      "status": "ok",
+      "formStarts": 18,
+      "completionRateFromFormStart": 0.6111,
+      "baselineCompletionRate": 0.581,
+      "dropPercent": -5.18,
+      "thresholdPercent": 30,
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-17",
+      "status": "ok",
+      "formStarts": 19,
+      "completionRateFromFormStart": 0.5789,
+      "baselineCompletionRate": 0.5972,
+      "dropPercent": 3.06,
+      "thresholdPercent": 30,
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-18",
+      "status": "ok",
+      "formStarts": 15,
+      "completionRateFromFormStart": 0.6,
+      "baselineCompletionRate": 0.5819,
+      "dropPercent": -3.11,
+      "thresholdPercent": 30,
+      "consecutiveRegressionWindows": 0
+    }
+  ],
+  "emergencyBypass": {
+    "active": false,
+    "reason": null
+  }
+}

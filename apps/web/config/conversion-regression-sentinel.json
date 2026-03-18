@@ -1,0 +1,7 @@
+{
+  "dropThresholdPercent": 30,
+  "consecutiveWindowsToFail": 2,
+  "baselineWindowSize": 3,
+  "minBaselineWindows": 2,
+  "minFormStartsPerWindow": 5
+}
