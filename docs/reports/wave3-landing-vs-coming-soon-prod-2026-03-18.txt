@@ -1,0 +1,7 @@
+LANDING_TITLE=AutoApply AI — AI-Powered Career Assistant | AutoApply AI
+COMING_TITLE=Coming Soon — AutoApply AI
+LANDING_DESC=AutoApply AI discovers relevant jobs, scores your compatibility, and generates ATS-optimized resumes and cover letters — all tailored to each specific role.
+COMING_DESC=A preview page for upcoming AutoApply AI releases and launch updates.
+LANDING_ROBOTS=index, follow
+COMING_ROBOTS=noindex, nofollow
+PASS landing_vs_coming_soon_distinct
