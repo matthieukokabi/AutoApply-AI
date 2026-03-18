@@ -1,0 +1,7 @@
+{
+  "cooldownMinutes": 120,
+  "maxRetries": 3,
+  "retryDelayMs": 1000,
+  "warningBatchWindowMinutes": 30,
+  "warningBatchSize": 3
+}
