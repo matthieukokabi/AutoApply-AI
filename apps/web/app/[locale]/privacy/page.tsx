@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import { Sparkles } from "lucide-react";
 import { buildCanonicalOgParity } from "@/lib/seo";
+import { buildTrustPageJsonLd } from "@/lib/structured-data";
 
 export async function generateMetadata({
     params,
@@ -26,9 +27,24 @@ export async function generateMetadata({
     };
 }
 
-export default function PrivacyPage() {
+export default async function PrivacyPage({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}) {
+    const { locale } = await params;
+    const jsonLd = buildTrustPageJsonLd(
+        locale,
+        "/privacy",
+        "Privacy Policy — AutoApply AI"
+    );
+
     return (
         <div className="min-h-screen bg-background">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <header className="border-b">
                 <div className="container flex h-14 items-center">
                     <Link href="/" className="flex items-center space-x-2">

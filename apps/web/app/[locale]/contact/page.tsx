@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ContactPageClient from "./contact-page-client";
 import { buildCanonicalOgParity } from "@/lib/seo";
+import { buildTrustPageJsonLd } from "@/lib/structured-data";
 
 export async function generateMetadata({
     params,
@@ -25,6 +26,25 @@ export async function generateMetadata({
     };
 }
 
-export default function ContactPage() {
-    return <ContactPageClient />;
+export default async function ContactPage({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}) {
+    const { locale } = await params;
+    const jsonLd = buildTrustPageJsonLd(
+        locale,
+        "/contact",
+        "Contact Us — AutoApply AI"
+    );
+
+    return (
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+            <ContactPageClient />
+        </>
+    );
 }

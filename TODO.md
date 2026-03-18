@@ -95,6 +95,6 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Add redirect regression CI assertions (max redirect hops + expected final URL) — completed on 2026-03-18 (`__tests__/redirect-regression.test.ts`)
 - [x] Add CAPTCHA telemetry (`solve`/`fail`/`error`) and abuse diagnostics dashboard hooks — completed on 2026-03-18 (`lib/contact-telemetry.ts`, `/api/contact/diagnostics`, telemetry assertions in contact API tests)
 - [x] Advance CSP phase 2 toward nonce/hash strictness where feasible — completed on 2026-03-18 (hash-based allowances for GTM/GA inline bootstraps in both enforced + report-only CSP, with `__tests__/csp-analytics-hashes.test.ts`)
-- [ ] Add Organization + ContactPoint structured data on trust pages
+- [x] Add Organization + ContactPoint structured data on trust pages — completed on 2026-03-18 (`lib/structured-data.ts` + JSON-LD on `/contact`, `/privacy`, `/terms`, covered by `__tests__/structured-data-trust-pages.test.ts`)
 - [ ] Run production Lighthouse + a11y benchmark and track deltas
 - [ ] Publish Wave 3 validation report with evidence
