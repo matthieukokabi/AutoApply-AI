@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-03-18T20:08:01.254Z",
+  "reportsDir": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports",
+  "overallStatus": "pass",
+  "components": {
+    "perfGate": {
+      "name": "perfGate",
+      "status": "pass",
+      "detail": "Performance budget gate is passing.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave4-performance-budget-20260318_204500.json"
+    },
+    "lighthouseReliability": {
+      "name": "lighthouseReliability",
+      "status": "pass",
+      "detail": "Lighthouse reliability checks are stable.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave4-lighthouse-reliability-20260318_204500.json"
+    },
+    "funnelHealth": {
+      "name": "funnelHealth",
+      "status": "pass",
+      "detail": "Conversion trend is stable with no active anomalies.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-conversion-trend-20260318_000000.json"
+    },
+    "parityChecks": {
+      "name": "parityChecks",
+      "status": "pass",
+      "detail": "Canonical parity and live squirrel checks are passing.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave3-canonical-og-parity-prod-2026-03-18.txt"
+    }
+  },
+  "missionControlSummary": [
+    "Overall status: PASS",
+    "Perf gate: pass",
+    "Lighthouse reliability: pass",
+    "Funnel health: pass",
+    "Parity checks: pass"
+  ],
+  "sourceReports": {
+    "perfGate": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave4-performance-budget-20260318_204500.json",
+    "lighthouseReliability": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave4-lighthouse-reliability-20260318_204500.json",
+    "funnelHealth": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-conversion-trend-20260318_000000.json",
+    "canonicalParity": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave3-canonical-og-parity-prod-2026-03-18.txt",
+    "liveSquirrel": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave3-live-squirrel-audit-prod-2026-03-18.json"
+  }
+}
