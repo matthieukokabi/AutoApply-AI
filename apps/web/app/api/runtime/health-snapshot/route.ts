@@ -53,6 +53,24 @@ function readLatestFile(
     };
 }
 
+function readLatestFileFromPrefixes(
+    reportsDir: string,
+    prefixes: string[],
+    extension: ".json" | ".txt"
+) {
+    const candidates = prefixes
+        .map((prefix) => readLatestFile(reportsDir, prefix, extension))
+        .filter(Boolean) as Array<{ filePath: string; raw: string }>;
+
+    if (candidates.length === 0) {
+        return null;
+    }
+
+    return candidates.sort(
+        (a, b) => fs.statSync(a.filePath).mtimeMs - fs.statSync(b.filePath).mtimeMs
+    )[candidates.length - 1];
+}
+
 function parseJsonPayload(raw: string): JsonRecord | null {
     try {
         return JSON.parse(raw) as JsonRecord;
@@ -63,6 +81,25 @@ function parseJsonPayload(raw: string): JsonRecord | null {
 
 function toStatus(value: unknown) {
     return typeof value === "string" ? value : "unknown";
+}
+
+function asRecord(value: unknown): JsonRecord {
+    return value && typeof value === "object" ? (value as JsonRecord) : {};
+}
+
+function readBoolean(record: JsonRecord, key: string) {
+    const value = record[key];
+    return typeof value === "boolean" ? value : null;
+}
+
+function readNumber(record: JsonRecord, key: string) {
+    const value = record[key];
+    return typeof value === "number" ? value : null;
+}
+
+function readString(record: JsonRecord, key: string, fallback = "unknown") {
+    const value = record[key];
+    return typeof value === "string" ? value : fallback;
 }
 
 function canonicalParityStatus(raw: string) {
@@ -193,22 +230,38 @@ export async function GET(req: Request) {
 
     const reportsDir = resolveReportsDirectory();
 
-    const perfReportFile = readLatestFile(
+    const perfReportFile = readLatestFileFromPrefixes(
         reportsDir,
-        "wave4-performance-routes-",
+        [
+            "wave5-performance-budget-",
+            "wave4-performance-budget-",
+            "wave4-performance-routes-",
+        ],
         ".json"
     );
     const perfReport = perfReportFile
         ? parseJsonPayload(perfReportFile.raw)
         : null;
 
-    const funnelReportFile = readLatestFile(
+    const funnelReportFile = readLatestFileFromPrefixes(
         reportsDir,
-        "wave4-conversion-telemetry-",
+        [
+            "wave6-conversion-trend-live-",
+            "wave5-conversion-trend-",
+            "wave4-conversion-telemetry-",
+        ],
         ".json"
     );
     const funnelReport = funnelReportFile
         ? parseJsonPayload(funnelReportFile.raw)
+        : null;
+    const sentinelReportFile = readLatestFileFromPrefixes(
+        reportsDir,
+        ["wave6-conversion-sentinel-", "wave5-conversion-sentinel-"],
+        ".json"
+    );
+    const sentinelReport = sentinelReportFile
+        ? parseJsonPayload(sentinelReportFile.raw)
         : null;
 
     const parityTextFile = readLatestFile(
@@ -236,6 +289,10 @@ export async function GET(req: Request) {
               ? "unavailable"
               : "warning";
     const tokenRotationStatus = buildTokenRotationStatus();
+    const funnelSourceFreshness = asRecord(funnelReport?.sourceFreshness);
+    const funnelDataQuality = asRecord(funnelReport?.dataQuality);
+    const sentinelSummary = asRecord(sentinelReport?.summary);
+    const sentinelAlertDispatch = asRecord(sentinelSummary.alertDispatch);
 
     const response = NextResponse.json(
         {
@@ -256,7 +313,37 @@ export async function GET(req: Request) {
                         typeof funnelReport?.anomalyCount === "number"
                             ? funnelReport.anomalyCount
                             : null,
+                    sourceMode:
+                        typeof funnelReport?.sourceMode === "string"
+                            ? funnelReport.sourceMode
+                            : null,
+                    freshness: {
+                        isFresh: readBoolean(funnelSourceFreshness, "isFresh"),
+                        ageMinutes: readNumber(funnelSourceFreshness, "ageMinutes"),
+                        freshnessWindowMinutes: readNumber(
+                            funnelSourceFreshness,
+                            "freshnessWindowMinutes"
+                        ),
+                    },
+                    quality: {
+                        score: readNumber(funnelDataQuality, "qualityScore"),
+                        minimum: readNumber(funnelDataQuality, "minQualityScore"),
+                        status: readString(funnelDataQuality, "status"),
+                    },
                     sourceReport: funnelReportFile?.filePath || null,
+                },
+                conversionSentinel: {
+                    status: toStatus(sentinelReport?.status),
+                    triggerCode:
+                        typeof sentinelSummary.triggerCode === "string"
+                            ? sentinelSummary.triggerCode
+                            : null,
+                    alertDispatch: readString(
+                        sentinelAlertDispatch,
+                        "status",
+                        "unknown"
+                    ),
+                    sourceReport: sentinelReportFile?.filePath || null,
                 },
                 parityChecks: {
                     overallStatus: parityOverallStatus,

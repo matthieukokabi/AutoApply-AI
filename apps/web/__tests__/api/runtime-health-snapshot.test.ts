@@ -59,7 +59,7 @@ describe("GET /api/runtime/health-snapshot", () => {
             "2026-03-17T00:00:00.000Z";
 
         fs.writeFileSync(
-            path.join(reportsDir, "wave4-performance-routes-20260318_200000.json"),
+            path.join(reportsDir, "wave5-performance-budget-20260318_200000.json"),
             JSON.stringify(
                 {
                     status: "pass",
@@ -70,11 +70,38 @@ describe("GET /api/runtime/health-snapshot", () => {
             )
         );
         fs.writeFileSync(
-            path.join(reportsDir, "wave4-conversion-telemetry-20260318_200000.json"),
+            path.join(reportsDir, "wave6-conversion-trend-live-20260318_200000.json"),
             JSON.stringify(
                 {
                     status: "alert",
                     anomalyCount: 2,
+                    sourceMode: "live",
+                    sourceFreshness: {
+                        isFresh: true,
+                        ageMinutes: 3,
+                        freshnessWindowMinutes: 180,
+                    },
+                    dataQuality: {
+                        qualityScore: 92,
+                        minQualityScore: 80,
+                        status: "pass",
+                    },
+                },
+                null,
+                2
+            )
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave6-conversion-sentinel-20260318_200000.json"),
+            JSON.stringify(
+                {
+                    status: "pass",
+                    summary: {
+                        triggerCode: null,
+                        alertDispatch: {
+                            status: "no_alert",
+                        },
+                    },
                 },
                 null,
                 2
@@ -110,6 +137,10 @@ describe("GET /api/runtime/health-snapshot", () => {
         expect(data.snapshot.perfGate.status).toBe("pass");
         expect(data.snapshot.funnelTelemetry.status).toBe("alert");
         expect(data.snapshot.funnelTelemetry.anomalyCount).toBe(2);
+        expect(data.snapshot.funnelTelemetry.sourceMode).toBe("live");
+        expect(data.snapshot.funnelTelemetry.freshness.isFresh).toBe(true);
+        expect(data.snapshot.funnelTelemetry.quality.score).toBe(92);
+        expect(data.snapshot.conversionSentinel.status).toBe("pass");
         expect(data.snapshot.parityChecks.overallStatus).toBe("pass");
         expect(data.snapshot.parityChecks.canonicalOgParity.status).toBe("pass");
         expect(data.snapshot.parityChecks.liveSquirrel.status).toBe("pass");
@@ -124,12 +155,46 @@ describe("GET /api/runtime/health-snapshot", () => {
             "2026-01-01T00:00:00.000Z";
 
         fs.writeFileSync(
-            path.join(reportsDir, "wave4-performance-routes-20260318_200000.json"),
+            path.join(reportsDir, "wave5-performance-budget-20260318_200000.json"),
             JSON.stringify({ status: "pass", failureReason: null }, null, 2)
         );
         fs.writeFileSync(
-            path.join(reportsDir, "wave4-conversion-telemetry-20260318_200000.json"),
-            JSON.stringify({ status: "pass", anomalyCount: 0 }, null, 2)
+            path.join(reportsDir, "wave6-conversion-trend-live-20260318_200000.json"),
+            JSON.stringify(
+                {
+                    status: "pass",
+                    anomalyCount: 0,
+                    sourceMode: "live",
+                    sourceFreshness: {
+                        isFresh: true,
+                        ageMinutes: 2,
+                        freshnessWindowMinutes: 180,
+                    },
+                    dataQuality: {
+                        qualityScore: 95,
+                        minQualityScore: 80,
+                        status: "pass",
+                    },
+                },
+                null,
+                2
+            )
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave6-conversion-sentinel-20260318_200000.json"),
+            JSON.stringify(
+                {
+                    status: "pass",
+                    summary: {
+                        triggerCode: null,
+                        alertDispatch: {
+                            status: "no_alert",
+                        },
+                    },
+                },
+                null,
+                2
+            )
         );
         fs.writeFileSync(
             path.join(reportsDir, "wave3-canonical-og-parity-prod-2026-03-18.txt"),
@@ -162,12 +227,46 @@ describe("GET /api/runtime/health-snapshot", () => {
             "2026-03-17T00:00:00.000Z";
 
         fs.writeFileSync(
-            path.join(reportsDir, "wave4-performance-routes-20260318_200000.json"),
+            path.join(reportsDir, "wave5-performance-budget-20260318_200000.json"),
             JSON.stringify({ status: "pass", failureReason: null }, null, 2)
         );
         fs.writeFileSync(
-            path.join(reportsDir, "wave4-conversion-telemetry-20260318_200000.json"),
-            JSON.stringify({ status: "pass", anomalyCount: 0 }, null, 2)
+            path.join(reportsDir, "wave6-conversion-trend-live-20260318_200000.json"),
+            JSON.stringify(
+                {
+                    status: "pass",
+                    anomalyCount: 0,
+                    sourceMode: "live",
+                    sourceFreshness: {
+                        isFresh: true,
+                        ageMinutes: 2,
+                        freshnessWindowMinutes: 180,
+                    },
+                    dataQuality: {
+                        qualityScore: 95,
+                        minQualityScore: 80,
+                        status: "pass",
+                    },
+                },
+                null,
+                2
+            )
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave6-conversion-sentinel-20260318_200000.json"),
+            JSON.stringify(
+                {
+                    status: "pass",
+                    summary: {
+                        triggerCode: null,
+                        alertDispatch: {
+                            status: "no_alert",
+                        },
+                    },
+                },
+                null,
+                2
+            )
         );
         fs.writeFileSync(
             path.join(reportsDir, "wave3-canonical-og-parity-prod-2026-03-18.txt"),
