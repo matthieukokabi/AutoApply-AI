@@ -81,6 +81,9 @@ for run_index in $(seq 1 "$REQUIRED_SUCCESSES"); do
     fi
 
     lcp_value="null"
+    cls_value="null"
+    js_bytes="null"
+    image_bytes="null"
     lcp_error_message=""
     lcp_error_stack=""
     performance_score="null"
@@ -90,6 +93,9 @@ for run_index in $(seq 1 "$REQUIRED_SUCCESSES"); do
 
     if [[ "$attempt_status" == "pass" && -s "$tmp_lighthouse_json" ]]; then
       lcp_value="$(jq -r '.audits["largest-contentful-paint"].numericValue // "null"' "$tmp_lighthouse_json")"
+      cls_value="$(jq -r '.audits["cumulative-layout-shift"].numericValue // "null"' "$tmp_lighthouse_json")"
+      js_bytes="$(jq -r '[.audits["resource-summary"].details.items[]? | select(.resourceType == "script") | .transferSize] | add // "null"' "$tmp_lighthouse_json")"
+      image_bytes="$(jq -r '[.audits["resource-summary"].details.items[]? | select(.resourceType == "image") | .transferSize] | add // "null"' "$tmp_lighthouse_json")"
       lcp_error_message="$(jq -r '.audits["largest-contentful-paint"].errorMessage // ""' "$tmp_lighthouse_json")"
       lcp_error_stack="$(jq -r '.audits["largest-contentful-paint"].errorStack // ""' "$tmp_lighthouse_json")"
       performance_score="$(jq -r '.categories.performance.score // "null"' "$tmp_lighthouse_json")"
@@ -123,6 +129,9 @@ for run_index in $(seq 1 "$REQUIRED_SUCCESSES"); do
       --arg commandError "$command_error" \
       --argjson durationMs "$duration_ms" \
       --argjson lcpMs "$lcp_value" \
+      --argjson cls "$cls_value" \
+      --argjson jsBytes "$js_bytes" \
+      --argjson imageBytes "$image_bytes" \
       --arg lcpErrorMessage "$lcp_error_message" \
       --arg lcpErrorStack "$lcp_error_stack" \
       --argjson performanceScore "$performance_score" \
@@ -141,6 +150,9 @@ for run_index in $(seq 1 "$REQUIRED_SUCCESSES"); do
         durationMs: $durationMs,
         metrics: {
           lcpMs: $lcpMs,
+          cls: $cls,
+          jsBytes: $jsBytes,
+          imageBytes: $imageBytes,
           performanceScore: $performanceScore,
           accessibilityScore: $accessibilityScore,
           bestPracticesScore: $bestPracticesScore,

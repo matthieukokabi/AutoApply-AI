@@ -1,0 +1,28 @@
+{
+  "defaultThresholds": {
+    "lcpMs": 3500,
+    "cls": 0.15,
+    "jsBytes": 650000,
+    "imageBytes": 800000
+  },
+  "routeThresholds": {
+    "/en": {
+      "lcpMs": 3000,
+      "cls": 0.12,
+      "jsBytes": 550000,
+      "imageBytes": 700000
+    },
+    "/en/sign-up": {
+      "lcpMs": 3500,
+      "cls": 0.15,
+      "jsBytes": 650000,
+      "imageBytes": 700000
+    }
+  },
+  "maxRegressionPercent": {
+    "lcpMs": 20,
+    "cls": 20,
+    "jsBytes": 10,
+    "imageBytes": 10
+  }
+}

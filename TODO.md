@@ -103,7 +103,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 ## P1 — Wave 4 performance reliability + observability hardening
 
 - [x] Stabilize Lighthouse reliability run (`NO_LCP` mitigation) with warm-up, retries, deterministic flags, and explicit fail reason — completed on 2026-03-18 (`apps/web/scripts/lighthouse_reliability_check.sh`, npm script `perf:lighthouse:reliability`)
-- [ ] Add performance budget hard gates (LCP, CLS, JS bytes, image bytes) with CI fail-on-regression and emergency override path
+- [x] Add performance budget hard gates (LCP, CLS, JS bytes, image bytes) with CI fail-on-regression and emergency override path — completed on 2026-03-18 (`apps/web/config/performance-budgets.json`, `apps/web/scripts/performance_budget_gate.js`, `.github/workflows/web-ci.yml`, `docs/performance-budget-emergency-override.md`)
 - [ ] Pin deterministic audited routes (including one high-intent route) and fail when a required route is unavailable
 - [ ] Expand conversion telemetry funnel (`page_view` → `cta_click` → `form_start` → `captcha_pass|fail` → `submit_result`) with daily artifact + anomaly detection
 - [ ] Add protected runtime health snapshot endpoint (latest perf gate, funnel telemetry, parity status), non-indexable + auth-protected

@@ -53,3 +53,26 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Performance budget gate
+        env:
+          LIGHTHOUSE_REQUIRED_SUCCESSES: "1"
+          LIGHTHOUSE_MAX_ATTEMPTS_PER_RUN: "2"
+          LIGHTHOUSE_WARMUP_REQUESTS: "1"
+          REPORT_PATH: ../../docs/reports/wave4-lighthouse-reliability-ci-${{ github.run_id }}.json
+          PERF_BUDGET_EMERGENCY_BYPASS: ${{ vars.PERF_BUDGET_EMERGENCY_BYPASS }}
+        run: |
+          ./node_modules/.bin/next start --hostname 127.0.0.1 --port 4100 >/tmp/next-start.log 2>&1 &
+          SERVER_PID=$!
+          cleanup() {
+            kill "$SERVER_PID" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          for i in {1..60}; do
+            if curl -sS http://127.0.0.1:4100/en >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          npm run perf:lighthouse:reliability -- http://127.0.0.1:4100 /en
+          PERF_BUDGET_SOURCE_REPORT="$REPORT_PATH" npm run perf:budget:gate

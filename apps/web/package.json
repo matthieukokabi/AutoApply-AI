@@ -20,7 +20,8 @@
         "smoke:onboarding:cross-browser": "bash scripts/onboarding_cross_browser_smoke.sh",
         "smoke:uptime:prod": "bash scripts/production_uptime_check.sh https://autoapply.works",
         "smoke:squirrel:prod": "bash scripts/live_squirrel_audit.sh https://autoapply.works",
-        "perf:lighthouse:reliability": "bash scripts/lighthouse_reliability_check.sh"
+        "perf:lighthouse:reliability": "bash scripts/lighthouse_reliability_check.sh",
+        "perf:budget:gate": "node scripts/performance_budget_gate.js"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"
