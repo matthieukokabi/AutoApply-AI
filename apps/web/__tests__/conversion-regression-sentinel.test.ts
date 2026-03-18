@@ -18,7 +18,15 @@ function createTempDir() {
     return dir;
 }
 
-function writeTrendReport(filePath: string, completionRates: number[]) {
+function writeTrendReport(
+    filePath: string,
+    completionRates: number[],
+    options?: {
+        generatedAt?: string;
+        organicFormStarts?: number;
+        organicCompletionRate?: number;
+    }
+) {
     const days = completionRates.map((rate, index) => ({
         date: `2026-03-${String(index + 10).padStart(2, "0")}`,
         summary: {
@@ -31,6 +39,20 @@ function writeTrendReport(filePath: string, completionRates: number[]) {
         filePath,
         JSON.stringify(
             {
+                generatedAt: options?.generatedAt || "2026-03-18T22:00:00.000Z",
+                status: "pass",
+                sourceMode: "live",
+                channels: {
+                    organic: {
+                        formStarts: options?.organicFormStarts ?? 12,
+                        submitSuccess: Math.round(
+                            (options?.organicCompletionRate ?? 0.55) *
+                                (options?.organicFormStarts ?? 12)
+                        ),
+                        completionRateFromFormStart:
+                            options?.organicCompletionRate ?? 0.55,
+                    },
+                },
                 funnel: {
                     weekly: {
                         days,
@@ -89,5 +111,89 @@ describe("conversion regression sentinel script", () => {
         expect(output.status).toBe("fail");
         expect(output.summary.triggered).toBe(true);
         expect(output.summary.triggerReason).toContain("completion_rate_drop");
+    });
+
+    it("does not fail on sparse organic traffic even when organic completion is low", () => {
+        const tmpDir = createTempDir();
+        const trendReportPath = path.join(tmpDir, "wave5-conversion-trend-organic-sparse.json");
+        const outputReportPath = path.join(tmpDir, "wave5-conversion-sentinel-output.json");
+        const historyStorePath = path.join(tmpDir, "wave7-telemetry-history-store.json");
+
+        writeTrendReport(trendReportPath, [0.59, 0.6, 0.58, 0.6, 0.59, 0.61, 0.6], {
+            generatedAt: "2026-03-18T22:00:00.000Z",
+            organicFormStarts: 4,
+            organicCompletionRate: 0,
+        });
+
+        fs.writeFileSync(
+            historyStorePath,
+            JSON.stringify(
+                {
+                    streams: {
+                        conversion: [
+                            {
+                                generatedAt: "2026-03-10T22:00:00.000Z",
+                                sourceMode: "live",
+                                channels: {
+                                    organic: {
+                                        formStarts: 18,
+                                        completionRateFromFormStart: 0.55,
+                                    },
+                                },
+                            },
+                            {
+                                generatedAt: "2026-03-11T22:00:00.000Z",
+                                sourceMode: "live",
+                                channels: {
+                                    organic: {
+                                        formStarts: 16,
+                                        completionRateFromFormStart: 0.52,
+                                    },
+                                },
+                            },
+                            {
+                                generatedAt: "2026-03-12T22:00:00.000Z",
+                                sourceMode: "live",
+                                channels: {
+                                    organic: {
+                                        formStarts: 20,
+                                        completionRateFromFormStart: 0.57,
+                                    },
+                                },
+                            },
+                            {
+                                generatedAt: "2026-03-13T22:00:00.000Z",
+                                sourceMode: "live",
+                                channels: {
+                                    organic: {
+                                        formStarts: 14,
+                                        completionRateFromFormStart: 0.54,
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+                null,
+                2
+            )
+        );
+
+        const result = spawnSync("node", ["scripts/conversion_regression_sentinel.js"], {
+            cwd: path.resolve(process.cwd()),
+            env: {
+                ...process.env,
+                CONVERSION_SENTINEL_SOURCE_REPORT: trendReportPath,
+                CONVERSION_SENTINEL_HISTORY_STORE_PATH: historyStorePath,
+                REPORT_PATH: outputReportPath,
+            },
+            encoding: "utf8",
+        });
+
+        expect(result.status).toBe(0);
+        const output = JSON.parse(fs.readFileSync(outputReportPath, "utf8"));
+        expect(output.status).toBe("pass");
+        expect(output.channelTracks.organic.status).toBe("guarded_sparse_current");
+        expect(output.summary.organicBaseline.triggered).toBe(false);
     });
 });

@@ -39,6 +39,32 @@ const REQUIRED_FUNNEL_EVENTS = [
 ];
 const UNKNOWN_SEGMENT = "unknown";
 const OTHER_SEGMENT = "__other__";
+const DIRECT_CHANNEL = "direct";
+const ORGANIC_CHANNEL = "organic";
+const PAID_CHANNEL = "paid";
+const PAID_CHANNEL_HINTS = [
+    "paid",
+    "cpc",
+    "ppc",
+    "ads",
+    "adwords",
+    "paid_social",
+    "meta",
+    "facebook",
+    "instagram",
+    "google_ads",
+    "bing_ads",
+    "tiktok_ads",
+];
+const DIRECT_CHANNEL_EXACT_MATCH = new Set([
+    "",
+    UNKNOWN_SEGMENT,
+    OTHER_SEGMENT,
+    "direct",
+    "(direct)",
+    "none",
+    "na",
+]);
 
 function readJson(filePath) {
     return JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -226,6 +252,69 @@ function evaluateDataQuality({ funnelDaily, freshness, minQualityScore }) {
     };
 }
 
+function classifyCampaignChannel(segmentValue) {
+    const normalized =
+        typeof segmentValue === "string" ? segmentValue.trim().toLowerCase() : "";
+
+    if (DIRECT_CHANNEL_EXACT_MATCH.has(normalized)) {
+        return DIRECT_CHANNEL;
+    }
+
+    if (PAID_CHANNEL_HINTS.some((hint) => normalized.includes(hint))) {
+        return PAID_CHANNEL;
+    }
+
+    return ORGANIC_CHANNEL;
+}
+
+function aggregateChannelBreakdown(campaignSegments = []) {
+    const buckets = new Map();
+
+    for (const segment of Array.isArray(campaignSegments) ? campaignSegments : []) {
+        const channel = classifyCampaignChannel(segment?.segment);
+        const summary = segment?.summary || {};
+
+        const bucket = buckets.get(channel) || {
+            channel,
+            formStarts: 0,
+            submitSuccess: 0,
+            captchaPass: 0,
+            captchaFail: 0,
+            segments: [],
+        };
+
+        bucket.formStarts += Number(summary.formStarts || 0);
+        bucket.submitSuccess += Number(summary.submitSuccess || 0);
+        bucket.captchaPass += Number(summary.captchaPass || 0);
+        bucket.captchaFail += Number(summary.captchaFail || 0);
+        bucket.segments.push(typeof segment?.segment === "string" ? segment.segment : "unknown");
+
+        buckets.set(channel, bucket);
+    }
+
+    return [ORGANIC_CHANNEL, PAID_CHANNEL, DIRECT_CHANNEL]
+        .map((channel) => buckets.get(channel))
+        .filter(Boolean)
+        .map((bucket) => {
+            const captchaAttempts = bucket.captchaPass + bucket.captchaFail;
+            return {
+                channel: bucket.channel,
+                formStarts: bucket.formStarts,
+                submitSuccess: bucket.submitSuccess,
+                completionRateFromFormStart:
+                    bucket.formStarts > 0
+                        ? Number((bucket.submitSuccess / bucket.formStarts).toFixed(4))
+                        : 0,
+                captchaFailRate:
+                    captchaAttempts > 0
+                        ? Number((bucket.captchaFail / captchaAttempts).toFixed(4))
+                        : 0,
+                segmentCount: bucket.segments.length,
+                segments: bucket.segments.slice(0, 10),
+            };
+        });
+}
+
 async function main() {
     const workspaceRoot = path.resolve(__dirname, "../../..");
     const reportsDir = path.join(workspaceRoot, "docs", "reports");
@@ -327,6 +416,20 @@ async function main() {
     const weeklyAnomalies = funnelWeekly?.anomalies || [];
     const routeAlerts = readSegmentAlerts(funnelDaily?.segmentation?.byRoute || []);
     const campaignAlerts = readSegmentAlerts(funnelDaily?.segmentation?.byCampaign || []);
+    const channelBreakdown = aggregateChannelBreakdown(
+        funnelDaily?.segmentation?.byCampaign || []
+    );
+    const organicChannel = channelBreakdown.find(
+        (entry) => entry.channel === ORGANIC_CHANNEL
+    ) || {
+        channel: ORGANIC_CHANNEL,
+        formStarts: 0,
+        submitSuccess: 0,
+        completionRateFromFormStart: 0,
+        captchaFailRate: 0,
+        segmentCount: 0,
+        segments: [],
+    };
 
     const anomalyCount =
         dailyAnomalies.length +
@@ -431,6 +534,14 @@ async function main() {
             weekly: weeklyAnomalies,
             routeDropoff: routeAlerts,
             campaignDropoff: campaignAlerts,
+        },
+        channels: {
+            classificationVersion: "wave7_v1",
+            breakdown: channelBreakdown,
+            organic: {
+                ...organicChannel,
+                hasMinimumSample: organicChannel.formStarts >= 5,
+            },
         },
         funnel: {
             daily: funnelDaily,

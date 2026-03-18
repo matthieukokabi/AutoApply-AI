@@ -15,5 +15,14 @@
     "quality_score_below_threshold",
     "route_dimension_missing",
     "campaign_dimension_missing"
-  ]
+  ],
+  "organicBaseline": {
+    "dropThresholdPercent": 35,
+    "consecutiveRunsToFail": 2,
+    "minCurrentFormStarts": 8,
+    "minHistoryEntries": 4,
+    "minHistoryFormStarts": 25,
+    "sameWeekdayMinEntries": 2,
+    "volatilityGuardCoefficient": 0.45
+  }
 }

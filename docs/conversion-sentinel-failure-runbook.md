@@ -63,3 +63,12 @@ Use this runbook when `apps/web/scripts/conversion_regression_sentinel.js` exits
 2. Compare recent deploys and acquisition mix changes for the impacted window.
 3. Check CAPTCHA fail rates and submit failures for correlated spikes.
 4. Roll back recent conversion-impacting changes if regression is confirmed.
+
+## organic_baseline_regression
+
+1. Inspect `channelTracks.organic` in the sentinel report and verify `status: eligible`.
+2. Validate that history store data is fresh (`wave7-telemetry-history-store.json`) and not dominated by sparse/volatile samples.
+3. Check organic acquisition sources (SEO/social/referrals) for sudden quality shifts.
+4. Re-run:
+   - `npm run telemetry:history:store`
+   - `npm run telemetry:conversion:sentinel`

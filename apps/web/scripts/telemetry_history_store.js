@@ -158,6 +158,25 @@ function loadConfig(configPath) {
 
 function buildConversionEntry(reportPath, payload, nowIso) {
     const dailySummary = payload?.funnel?.daily?.summary || {};
+    const channelBreakdown = Array.isArray(payload?.channels?.breakdown)
+        ? payload.channels.breakdown
+        : [];
+    const channelSnapshots = {};
+
+    for (const item of channelBreakdown) {
+        if (typeof item?.channel !== "string") {
+            continue;
+        }
+
+        channelSnapshots[item.channel] = {
+            formStarts: toNumberOrNull(item.formStarts),
+            submitSuccess: toNumberOrNull(item.submitSuccess),
+            completionRateFromFormStart: toNumberOrNull(
+                item.completionRateFromFormStart
+            ),
+            captchaFailRate: toNumberOrNull(item.captchaFailRate),
+        };
+    }
 
     return {
         generatedAt: asIsoDate(payload?.generatedAt, nowIso),
@@ -174,6 +193,7 @@ function buildConversionEntry(reportPath, payload, nowIso) {
             toNumberOrNull(payload?.keyMetrics?.dailyCaptchaFailRate) ??
             toNumberOrNull(dailySummary?.captchaFailRate),
         qualityScore: toNumberOrNull(payload?.dataQuality?.qualityScore),
+        channels: channelSnapshots,
     };
 }
 

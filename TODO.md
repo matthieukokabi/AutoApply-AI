@@ -132,7 +132,7 @@ Last updated: 2026-03-18 (Europe/Zurich)
 ## P1 — Wave 7 telemetry reliability + decision quality
 
 - [x] Add persistent historical store for conversion/sentinel/perf windows with retention+compaction and rolling 7/14/30-day comparisons — completed on 2026-03-18 (`apps/web/scripts/telemetry_history_store.js`, `apps/web/config/telemetry-history-store.json`, `apps/web/__tests__/telemetry-history-store.test.ts`)
-- [ ] Harden organic baseline calibration (`organic` vs `paid`/`direct`) with min-sample + seasonality-aware guardrails
+- [x] Harden organic baseline calibration (`organic` vs `paid`/`direct`) with min-sample + seasonality-aware guardrails — completed on 2026-03-18 (`scripts/conversion_telemetry_weekly_report.js`, `scripts/conversion_regression_sentinel.js`, `config/conversion-regression-sentinel.json`, `__tests__/conversion-regression-sentinel.test.ts`, `__tests__/conversion-telemetry-weekly-report.test.ts`)
 - [ ] Add optional alert transport v1 (webhook/email-style sink) with retries + dedupe/cooldown and severity routing
 - [ ] Extend mission-control ops summary v2 with organic baseline health, history-store freshness, alert transport delivery status, anomaly confidence-tier trend
 - [ ] Run full Wave 7 validation (`lint`, `test`, `build`) and publish `docs/wave7-validation-report-2026-03-18.md` + `docs/reports/wave7-*` artifacts
