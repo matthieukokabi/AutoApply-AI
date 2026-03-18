@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-03-18T19:40:26Z",
+  "target": {
+    "baseUrl": "https://autoapply.works",
+    "route": "/en",
+    "url": "https://autoapply.works/en"
+  },
+  "config": {
+    "requiredSuccessfulRuns": 2,
+    "maxAttemptsPerRun": 3,
+    "warmupRequests": 1,
+    "deterministicFlags": [
+      "--quiet",
+      "--output=json",
+      "--preset=desktop",
+      "--form-factor=desktop",
+      "--throttling-method=simulate",
+      "--max-wait-for-load=45000",
+      "--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --window-size=1920,1080"
+    ]
+  },
+  "runtime": {
+    "lighthouseVersion": "13.0.3",
+    "totalDurationMs": 34476
+  },
+  "summary": {
+    "status": "pass",
+    "successfulRuns": 2,
+    "attemptCount": 2,
+    "failureReason": null
+  },
+  "attempts": [
+    {
+      "generatedAt": "2026-03-18T19:40:09Z",
+      "targetUrl": "https://autoapply.works/en",
+      "runIndex": 1,
+      "attemptIndex": 1,
+      "retryIndex": 0,
+      "status": "pass",
+      "reason": "ok",
+      "commandError": null,
+      "durationMs": 15972,
+      "metrics": {
+        "lcpMs": 519.615,
+        "cls": 0,
+        "jsBytes": 514779,
+        "imageBytes": 0,
+        "performanceScore": 1,
+        "accessibilityScore": 0.93,
+        "bestPracticesScore": 0.92,
+        "seoScore": 0.91
+      },
+      "lcpDiagnostics": {
+        "errorMessage": null,
+        "errorStack": null
+      }
+    },
+    {
+      "generatedAt": "2026-03-18T19:40:26Z",
+      "targetUrl": "https://autoapply.works/en",
+      "runIndex": 2,
+      "attemptIndex": 1,
+      "retryIndex": 0,
+      "status": "pass",
+      "reason": "ok",
+      "commandError": null,
+      "durationMs": 15148,
+      "metrics": {
+        "lcpMs": 527.898,
+        "cls": 0,
+        "jsBytes": 514763,
+        "imageBytes": 0,
+        "performanceScore": 1,
+        "accessibilityScore": 0.93,
+        "bestPracticesScore": 0.92,
+        "seoScore": 0.91
+      },
+      "lcpDiagnostics": {
+        "errorMessage": null,
+        "errorStack": null
+      }
+    }
+  ]
+}
