@@ -22,7 +22,8 @@
         "smoke:squirrel:prod": "bash scripts/live_squirrel_audit.sh https://autoapply.works",
         "perf:lighthouse:reliability": "bash scripts/lighthouse_reliability_check.sh",
         "perf:budget:gate": "node scripts/performance_budget_gate.js",
-        "perf:routes:audit": "bash scripts/performance_route_audit.sh"
+        "perf:routes:audit": "bash scripts/performance_route_audit.sh",
+        "telemetry:conversion:daily": "node scripts/conversion_telemetry_daily_report.js"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"

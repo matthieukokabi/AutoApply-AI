@@ -120,5 +120,10 @@ describe("GET /api/contact/diagnostics", () => {
         expect(data.telemetry.captcha.successRate).toBeCloseTo(1 / 3, 4);
         expect(data.telemetry.captcha.errorCodes["invalid-input-response"]).toBe(1);
         expect(data.telemetry.captcha.errorCodes.missing_token).toBe(1);
+        expect(data.telemetry.funnel.lifetime.events.captcha_pass).toBe(1);
+        expect(data.telemetry.funnel.lifetime.events.captcha_fail).toBe(2);
+        expect(
+            Array.isArray(data.telemetry.funnel.daily.summary.anomalies)
+        ).toBe(true);
     });
 });

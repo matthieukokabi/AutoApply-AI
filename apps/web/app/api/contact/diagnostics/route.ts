@@ -5,7 +5,7 @@ const CONTACT_DIAGNOSTICS_HEADER = "x-contact-diagnostics-token";
 
 /**
  * GET /api/contact/diagnostics
- * Read-only telemetry for CAPTCHA + abuse counters.
+ * Read-only telemetry for funnel + CAPTCHA + abuse counters.
  * Requires CONTACT_DIAGNOSTICS_TOKEN and matching request header.
  */
 export async function GET(req: Request) {

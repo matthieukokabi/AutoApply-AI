@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Sparkles, Mail, Check } from "lucide-react";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+type ContactFunnelClientEvent = "page_view" | "cta_click" | "form_start";
 
 declare global {
     interface Window {
@@ -40,11 +41,38 @@ export default function ContactPageClient() {
     const formStartedAtRef = useRef(Date.now());
     const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
     const turnstileWidgetIdRef = useRef<string | null>(null);
+    const pageViewTrackedRef = useRef(false);
+    const formStartTrackedRef = useRef(false);
     const formSessionIdRef = useRef(
         typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
             ? crypto.randomUUID().replace(/-/g, "")
             : `${Date.now()}_${Math.random().toString(36).slice(2, 18)}`
     );
+
+    function trackContactFunnelEvent(event: ContactFunnelClientEvent) {
+        const payload = JSON.stringify({ event });
+
+        if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+            const blob = new Blob([payload], { type: "application/json" });
+            navigator.sendBeacon("/api/contact/telemetry", blob);
+            return;
+        }
+
+        void fetch("/api/contact/telemetry", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: payload,
+            keepalive: true,
+        }).catch(() => {});
+    }
+
+    function handleFormFocusCapture() {
+        if (formStartTrackedRef.current) {
+            return;
+        }
+        formStartTrackedRef.current = true;
+        trackContactFunnelEvent("form_start");
+    }
 
     useEffect(() => {
         if (!TURNSTILE_SITE_KEY || !isTurnstileScriptLoaded) {
@@ -82,6 +110,14 @@ export default function ContactPageClient() {
             turnstileWidgetIdRef.current = null;
         };
     }, [isTurnstileScriptLoaded]);
+
+    useEffect(() => {
+        if (pageViewTrackedRef.current) {
+            return;
+        }
+        pageViewTrackedRef.current = true;
+        trackContactFunnelEvent("page_view");
+    }, []);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -166,7 +202,11 @@ export default function ContactPageClient() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                            <form
+                                onSubmit={handleSubmit}
+                                onFocusCapture={handleFormFocusCapture}
+                                className="space-y-4"
+                            >
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div>
                                         <label className="text-sm font-medium block mb-1">Name</label>
@@ -242,7 +282,12 @@ export default function ContactPageClient() {
                                 {error && (
                                     <p className="text-sm text-red-500">{error}</p>
                                 )}
-                                <Button type="submit" className="w-full" disabled={loading}>
+                                <Button
+                                    type="submit"
+                                    className="w-full"
+                                    disabled={loading}
+                                    onClick={() => trackContactFunnelEvent("cta_click")}
+                                >
                                     {loading ? "Sending..." : "Send Message"}
                                 </Button>
                             </form>

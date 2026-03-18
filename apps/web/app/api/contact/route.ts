@@ -3,6 +3,7 @@ import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 import {
     incrementAbuseCounter,
     incrementCaptchaCounter,
+    incrementFunnelEvent,
 } from "@/lib/contact-telemetry";
 
 const CONTACT_RATE_LIMIT_MAX_REQUESTS = 5;
@@ -101,6 +102,11 @@ function escapeHtml(value: string): string {
  * Body: { name, email, subject, message }
  */
 export async function POST(req: Request) {
+    const submitFailResponse = (error: string, status: number) => {
+        incrementFunnelEvent("submit_fail");
+        return NextResponse.json({ error }, { status });
+    };
+
     try {
         const body = await req.json();
         const { name, email, subject, message, website, formStartedAt, formSessionId } = body;
@@ -113,9 +119,9 @@ export async function POST(req: Request) {
 
         if (!isValidFormSessionId(formSessionId)) {
             incrementAbuseCounter("invalid_form_session");
-            return NextResponse.json(
-                { error: "Invalid form session. Please refresh and try again." },
-                { status: 400 }
+            return submitFailResponse(
+                "Invalid form session. Please refresh and try again.",
+                400
             );
         }
 
@@ -124,45 +130,39 @@ export async function POST(req: Request) {
         const now = Date.now();
         if (!Number.isFinite(startedAt)) {
             incrementAbuseCounter("invalid_form_timing");
-            return NextResponse.json(
-                { error: "Invalid form session. Please refresh and try again." },
-                { status: 400 }
+            return submitFailResponse(
+                "Invalid form session. Please refresh and try again.",
+                400
             );
         }
 
         const elapsedMs = now - startedAt;
         if (elapsedMs < CONTACT_MIN_SUBMIT_MS) {
             incrementAbuseCounter("form_too_fast");
-            return NextResponse.json(
-                { error: "Please take a moment before submitting the form." },
-                { status: 400 }
+            return submitFailResponse(
+                "Please take a moment before submitting the form.",
+                400
             );
         }
 
         if (elapsedMs > CONTACT_MAX_FORM_AGE_MS) {
             incrementAbuseCounter("form_expired");
-            return NextResponse.json(
-                { error: "Form session expired. Please refresh and submit again." },
-                { status: 400 }
+            return submitFailResponse(
+                "Form session expired. Please refresh and submit again.",
+                400
             );
         }
 
         if (!name || !email || !message) {
             incrementAbuseCounter("missing_required_fields");
-            return NextResponse.json(
-                { error: "Name, email, and message are required" },
-                { status: 400 }
-            );
+            return submitFailResponse("Name, email, and message are required", 400);
         }
 
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             incrementAbuseCounter("invalid_email");
-            return NextResponse.json(
-                { error: "Invalid email format" },
-                { status: 400 }
-            );
+            return submitFailResponse("Invalid email format", 400);
         }
 
         const clientIp = getClientIp(req);
@@ -176,9 +176,9 @@ export async function POST(req: Request) {
             if (!token) {
                 incrementAbuseCounter("missing_turnstile_token");
                 incrementCaptchaCounter("fail", ["missing_token"]);
-                return NextResponse.json(
-                    { error: "Verification challenge is required." },
-                    { status: 400 }
+                return submitFailResponse(
+                    "Verification challenge is required.",
+                    400
                 );
             }
 
@@ -194,9 +194,9 @@ export async function POST(req: Request) {
 
             if (turnstileOutcome.outcome !== "solve") {
                 incrementAbuseCounter("turnstile_failed");
-                return NextResponse.json(
-                    { error: "Verification challenge failed. Please try again." },
-                    { status: 400 }
+                return submitFailResponse(
+                    "Verification challenge failed. Please try again.",
+                    400
                 );
             }
         }
@@ -204,7 +204,7 @@ export async function POST(req: Request) {
         const resendApiKey = process.env.RESEND_API_KEY;
         if (!resendApiKey) {
             console.error("RESEND_API_KEY is required for /api/contact");
-            return NextResponse.json({ error: "Contact endpoint misconfigured" }, { status: 503 });
+            return submitFailResponse("Contact endpoint misconfigured", 503);
         }
 
         if (
@@ -217,9 +217,9 @@ export async function POST(req: Request) {
             })
         ) {
             incrementAbuseCounter("ip_rate_limited");
-            return NextResponse.json(
-                { error: "Too many requests. Please try again in a few minutes." },
-                { status: 429 }
+            return submitFailResponse(
+                "Too many requests. Please try again in a few minutes.",
+                429
             );
         }
 
@@ -232,18 +232,15 @@ export async function POST(req: Request) {
             })
         ) {
             incrementAbuseCounter("session_rate_limited");
-            return NextResponse.json(
-                { error: "Too many requests from this session. Please try again shortly." },
-                { status: 429 }
+            return submitFailResponse(
+                "Too many requests from this session. Please try again shortly.",
+                429
             );
         }
 
         if (message.length > 5000) {
             incrementAbuseCounter("message_too_long");
-            return NextResponse.json(
-                { error: "Message too long (max 5000 characters)" },
-                { status: 400 }
-            );
+            return submitFailResponse("Message too long (max 5000 characters)", 400);
         }
 
         const subjectLabels: Record<string, string> = {
@@ -279,12 +276,10 @@ export async function POST(req: Request) {
             `,
         });
 
+        incrementFunnelEvent("submit_success");
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("POST /api/contact error:", error);
-        return NextResponse.json(
-            { error: "Failed to send message. Please try again." },
-            { status: 500 }
-        );
+        return submitFailResponse("Failed to send message. Please try again.", 500);
     }
 }

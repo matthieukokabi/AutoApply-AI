@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-03-18T19:30:46.216Z",
+  "baseUrl": "http://127.0.0.1:4100",
+  "source": "http://127.0.0.1:4100/api/contact/diagnostics",
+  "status": "alert",
+  "anomalyCount": 2,
+  "keyMetrics": {
+    "completionRateFromFormStart": 0,
+    "captchaFailRate": 1
+  },
+  "telemetry": {
+    "generatedAt": "2026-03-18T19:30:46.129Z",
+    "blocked": {
+      "total": 10,
+      "byReason": {
+        "turnstile_failed": 10
+      }
+    },
+    "captcha": {
+      "solve": 0,
+      "fail": 0,
+      "error": 10,
+      "attempts": 10,
+      "successRate": 0,
+      "errorCodes": {
+        "http_400": 10
+      }
+    },
+    "funnel": {
+      "lifetime": {
+        "events": {
+          "captcha_fail": 10,
+          "captcha_pass": 0,
+          "cta_click": 15,
+          "form_start": 12,
+          "page_view": 20,
+          "submit_fail": 10,
+          "submit_success": 0
+        },
+        "summary": {
+          "pageViews": 20,
+          "ctaClicks": 15,
+          "formStarts": 12,
+          "captchaPass": 0,
+          "captchaFail": 10,
+          "submitSuccess": 0,
+          "submitFail": 10,
+          "completionRateFromPageView": 0,
+          "completionRateFromFormStart": 0,
+          "ctaToSubmitRate": 0,
+          "captchaFailRate": 1,
+          "anomalies": [
+            {
+              "id": "completion_drop",
+              "severity": "warning",
+              "message": "Completion drop detected: submit success rate from form starts is below threshold.",
+              "value": 0,
+              "threshold": 0.2
+            },
+            {
+              "id": "captcha_fail_spike",
+              "severity": "warning",
+              "message": "CAPTCHA fail spike detected: fail rate exceeded daily threshold.",
+              "value": 1,
+              "threshold": 0.6
+            }
+          ]
+        }
+      },
+      "daily": {
+        "windowHours": 24,
+        "events": {
+          "captcha_fail": 10,
+          "captcha_pass": 0,
+          "cta_click": 15,
+          "form_start": 12,
+          "page_view": 20,
+          "submit_fail": 10,
+          "submit_success": 0
+        },
+        "summary": {
+          "pageViews": 20,
+          "ctaClicks": 15,
+          "formStarts": 12,
+          "captchaPass": 0,
+          "captchaFail": 10,
+          "submitSuccess": 0,
+          "submitFail": 10,
+          "completionRateFromPageView": 0,
+          "completionRateFromFormStart": 0,
+          "ctaToSubmitRate": 0,
+          "captchaFailRate": 1,
+          "anomalies": [
+            {
+              "id": "completion_drop",
+              "severity": "warning",
+              "message": "Completion drop detected: submit success rate from form starts is below threshold.",
+              "value": 0,
+              "threshold": 0.2
+            },
+            {
+              "id": "captcha_fail_spike",
+              "severity": "warning",
+              "message": "CAPTCHA fail spike detected: fail rate exceeded daily threshold.",
+              "value": 1,
+              "threshold": 0.6
+            }
+          ]
+        }
+      }
+    }
+  }
+}
