@@ -1,0 +1,6 @@
+{
+  "retentionDays": 90,
+  "maxEntriesPerStream": 1500,
+  "rollingWindowsDays": [7, 14, 30],
+  "minSamplesPerWindow": 2
+}

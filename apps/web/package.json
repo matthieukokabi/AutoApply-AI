@@ -27,6 +27,7 @@
         "telemetry:conversion:daily": "node scripts/conversion_telemetry_daily_report.js",
         "telemetry:conversion:weekly": "node scripts/conversion_telemetry_weekly_report.js",
         "telemetry:conversion:sentinel": "node scripts/conversion_regression_sentinel.js",
+        "telemetry:history:store": "node scripts/telemetry_history_store.js",
         "perf:conversion:correlation": "node scripts/perf_conversion_correlation_report.js",
         "ops:summary": "node scripts/ops_summary_report.js",
         "wave6:ops:live": "npm run telemetry:conversion:weekly -- https://autoapply.works && npm run telemetry:conversion:sentinel && npm run perf:conversion:correlation && npm run ops:summary"

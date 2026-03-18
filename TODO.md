@@ -128,3 +128,11 @@ Last updated: 2026-03-18 (Europe/Zurich)
 - [x] Extend runtime health snapshot v3 with conversion freshness, source mode, sentinel last status, and data-quality score — completed on 2026-03-18 (`app/api/runtime/health-snapshot/route.ts`, `__tests__/api/runtime-health-snapshot.test.ts`)
 - [x] Add perf-vs-conversion correlation report and flag co-occurring perf + conversion regressions — completed on 2026-03-18 (`scripts/perf_conversion_correlation_report.js`, `config/perf-conversion-correlation.json`, `__tests__/perf-conversion-correlation.test.ts`)
 - [x] Produce Wave 6 mission-control payload + Wave 6 validation report/artifacts with seeded-to-live transition proof — completed on 2026-03-18 (`docs/reports/wave6-conversion-trend-live-20260318_221719.json`, `docs/reports/wave6-conversion-sentinel-20260318_221732.json`, `docs/reports/wave6-perf-conversion-correlation-20260318_221740.json`, `docs/reports/wave6-ops-summary-20260318_221749.json`, `docs/wave6-validation-report-2026-03-18.md`)
+
+## P1 — Wave 7 telemetry reliability + decision quality
+
+- [x] Add persistent historical store for conversion/sentinel/perf windows with retention+compaction and rolling 7/14/30-day comparisons — completed on 2026-03-18 (`apps/web/scripts/telemetry_history_store.js`, `apps/web/config/telemetry-history-store.json`, `apps/web/__tests__/telemetry-history-store.test.ts`)
+- [ ] Harden organic baseline calibration (`organic` vs `paid`/`direct`) with min-sample + seasonality-aware guardrails
+- [ ] Add optional alert transport v1 (webhook/email-style sink) with retries + dedupe/cooldown and severity routing
+- [ ] Extend mission-control ops summary v2 with organic baseline health, history-store freshness, alert transport delivery status, anomaly confidence-tier trend
+- [ ] Run full Wave 7 validation (`lint`, `test`, `build`) and publish `docs/wave7-validation-report-2026-03-18.md` + `docs/reports/wave7-*` artifacts
