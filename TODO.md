@@ -86,3 +86,15 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Re-validate hreflang reciprocity across all localized indexable pages — completed on 2026-03-18 (`__tests__/hreflang-reciprocity.test.ts` + `buildLocaleAlternates` assertions on all indexable localized routes)
 - [x] Run Wave 2 validation suite (`lint`, `test`, `build`, live squirrel audit) and document score delta vs Wave 1 — completed on 2026-03-18 (`docs/wave2-validation-report-2026-03-18.md` + local/prod squirrel artifacts)
 - [ ] Re-run `npm run smoke:squirrel:prod` after next batched Vercel production deploy and confirm `status: pass`
+
+## P1 — Wave 3 SEO + security + perf hardening
+
+- [x] Add CI guard for canonical + `og:url` parity and `/` vs `/coming-soon` metadata distinction — completed on 2026-03-18 (`lib/seo.ts` `buildCanonicalOgParity`, localized metadata migrations, `__tests__/seo-parity.test.ts`)
+- [ ] Deploy + verify canonical and `og:url` parity on all indexable pages
+- [ ] Confirm `/` versus `/coming-soon` metadata remains distinct in production
+- [ ] Add redirect regression CI assertions (max redirect hops + expected final URL)
+- [ ] Add CAPTCHA telemetry (`solve`/`fail`/`error`) and abuse diagnostics dashboard hooks
+- [ ] Advance CSP phase 2 toward nonce/hash strictness where feasible
+- [ ] Add Organization + ContactPoint structured data on trust pages
+- [ ] Run production Lighthouse + a11y benchmark and track deltas
+- [ ] Publish Wave 3 validation report with evidence

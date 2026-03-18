@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import { Sparkles } from "lucide-react";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildCanonicalOgParity } from "@/lib/seo";
 
 export async function generateMetadata({
     params,
@@ -9,12 +9,20 @@ export async function generateMetadata({
     params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
     const { locale } = await params;
+    const title = "Terms of Service — AutoApply AI";
+    const description =
+        "Read the AutoApply AI terms of service covering subscriptions, responsibilities, and acceptable use.";
+    const parity = buildCanonicalOgParity(locale, "/terms");
 
     return {
-        title: "Terms of Service — AutoApply AI",
-        description:
-            "Read the AutoApply AI terms of service covering subscriptions, responsibilities, and acceptable use.",
-        alternates: buildLocaleAlternates(locale, "/terms"),
+        title,
+        description,
+        alternates: parity.alternates,
+        openGraph: {
+            ...parity.openGraph,
+            title,
+            description,
+        },
     };
 }
 

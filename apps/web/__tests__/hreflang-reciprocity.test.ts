@@ -62,12 +62,12 @@ describe("hreflang reciprocity", () => {
         }
     });
 
-    it("keeps localized indexable metadata pages on shared alternate builder", () => {
+    it("keeps localized indexable metadata pages on shared canonical parity builder", () => {
         for (const relativeFile of INDEXABLE_METADATA_FILES) {
             const absoluteFile = path.join(process.cwd(), relativeFile);
             const fileContent = readFileSync(absoluteFile, "utf-8");
 
-            expect(fileContent).toContain("buildLocaleAlternates");
+            expect(fileContent).toContain("buildCanonicalOgParity");
         }
     });
 });

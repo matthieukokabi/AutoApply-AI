@@ -8,9 +8,8 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { CheckoutButton } from "@/components/checkout-button";
 import { buildAuthIntentUrl, getAuthPathsForLocale } from "@/lib/checkout-intent";
 import {
+    buildCanonicalOgParity,
     buildDynamicOgImageUrl,
-    buildLocaleAlternates,
-    getLocalizedAbsoluteUrl,
 } from "@/lib/seo";
 import {
     ArrowRight,
@@ -32,15 +31,16 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     const socialTitle = `AutoApply AI — ${t("badge")}`;
     const socialDescription = t("description");
     const socialImage = buildDynamicOgImageUrl(socialTitle, socialDescription);
+    const parity = buildCanonicalOgParity(locale, "/");
 
     return {
         title: socialTitle,
         description: socialDescription,
-        alternates: buildLocaleAlternates(locale, "/"),
+        alternates: parity.alternates,
         openGraph: {
+            ...parity.openGraph,
             title: socialTitle,
             description: socialDescription,
-            url: getLocalizedAbsoluteUrl(locale, "/"),
             images: [
                 {
                     url: socialImage,

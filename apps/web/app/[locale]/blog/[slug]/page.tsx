@@ -10,9 +10,8 @@ import { ArrowLeft, Calendar, Clock, User, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import ReactMarkdown from "react-markdown";
 import {
+    buildCanonicalOgParity,
     buildDynamicOgImageUrl,
-    buildLocaleAlternates,
-    getLocalizedAbsoluteUrl,
 } from "@/lib/seo";
 /**
  * Pre-render all blog post slugs at build time.
@@ -36,17 +35,18 @@ export async function generateMetadata({
     }
     const socialTitle = `${post.title} — AutoApply AI Blog`;
     const socialImage = buildDynamicOgImageUrl(post.title, post.description);
+    const parity = buildCanonicalOgParity(locale, `/blog/${slug}`);
 
     return {
         title: socialTitle,
         description: post.description,
         authors: [{ name: post.author }],
-        alternates: buildLocaleAlternates(locale, `/blog/${slug}`),
+        alternates: parity.alternates,
         openGraph: {
+            ...parity.openGraph,
             title: post.title,
             description: post.description,
             type: "article",
-            url: getLocalizedAbsoluteUrl(locale, `/blog/${slug}`),
             publishedTime: post.date,
             authors: [post.author],
             tags: post.tags,

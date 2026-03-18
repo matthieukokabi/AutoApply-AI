@@ -123,6 +123,11 @@ const nextConfig = {
                 permanent: false,
             },
             {
+                source: "/coming-soon",
+                destination: "/en/coming-soon",
+                permanent: false,
+            },
+            {
                 source: "/auth-diagnostics",
                 destination: "/en/auth-diagnostics",
                 permanent: false,

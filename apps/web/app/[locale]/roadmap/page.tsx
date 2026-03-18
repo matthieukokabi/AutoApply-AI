@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildCanonicalOgParity } from "@/lib/seo";
 import {
     Sparkles,
     CheckCircle2,
@@ -38,10 +38,18 @@ import {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     const t = await getTranslations({ locale, namespace: "roadmap" });
+    const title = `${t("title")} — AutoApply AI`;
+    const description = t("description");
+    const parity = buildCanonicalOgParity(locale, "/roadmap");
     return {
-        title: `${t("title")} — AutoApply AI`,
-        description: t("description"),
-        alternates: buildLocaleAlternates(locale, "/roadmap"),
+        title,
+        description,
+        alternates: parity.alternates,
+        openGraph: {
+            ...parity.openGraph,
+            title,
+            description,
+        },
     };
 }
 

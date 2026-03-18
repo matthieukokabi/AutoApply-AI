@@ -8,9 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Calendar, Clock, Sparkles } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import {
+    buildCanonicalOgParity,
     buildDynamicOgImageUrl,
-    buildLocaleAlternates,
-    getLocalizedAbsoluteUrl,
 } from "@/lib/seo";
 export async function generateMetadata({
     params,
@@ -22,15 +21,16 @@ export async function generateMetadata({
     const socialTitle = `${t("title")} — AutoApply AI`;
     const socialDescription = t("description");
     const socialImage = buildDynamicOgImageUrl(socialTitle, socialDescription);
+    const parity = buildCanonicalOgParity(locale, "/blog");
 
     return {
         title: socialTitle,
         description: socialDescription,
-        alternates: buildLocaleAlternates(locale, "/blog"),
+        alternates: parity.alternates,
         openGraph: {
+            ...parity.openGraph,
             title: socialTitle,
             description: socialDescription,
-            url: getLocalizedAbsoluteUrl(locale, "/blog"),
             images: [
                 {
                     url: socialImage,

@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { locales, type Locale } from "@/i18n/config";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildCanonicalOgParity } from "@/lib/seo";
 
 const seoByLocale: Record<string, { title: string; description: string; keywords: string[] }> = {
     en: {
@@ -44,12 +44,15 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
     const seo = seoByLocale[locale] || seoByLocale.en;
+    const parity = buildCanonicalOgParity(locale, "/");
+
     return {
         title: seo.title,
         description: seo.description,
         keywords: seo.keywords,
-        alternates: buildLocaleAlternates(locale, "/"),
+        alternates: parity.alternates,
         openGraph: {
+            ...parity.openGraph,
             title: seo.title,
             description: seo.description,
             locale: locale,

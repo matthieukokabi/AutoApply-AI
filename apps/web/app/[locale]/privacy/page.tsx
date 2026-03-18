@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/routing";
 import { Sparkles } from "lucide-react";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildCanonicalOgParity } from "@/lib/seo";
 
 export async function generateMetadata({
     params,
@@ -9,12 +9,20 @@ export async function generateMetadata({
     params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
     const { locale } = await params;
+    const title = "Privacy Policy — AutoApply AI";
+    const description =
+        "Read how AutoApply AI handles account, CV, and payment data with GDPR-focused privacy safeguards.";
+    const parity = buildCanonicalOgParity(locale, "/privacy");
 
     return {
-        title: "Privacy Policy — AutoApply AI",
-        description:
-            "Read how AutoApply AI handles account, CV, and payment data with GDPR-focused privacy safeguards.",
-        alternates: buildLocaleAlternates(locale, "/privacy"),
+        title,
+        description,
+        alternates: parity.alternates,
+        openGraph: {
+            ...parity.openGraph,
+            title,
+            description,
+        },
     };
 }
 

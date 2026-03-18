@@ -4,6 +4,7 @@ import { getAppBaseUrl, toAbsoluteAppUrl } from "@/lib/site-url";
 
 type MetadataAlternates = NonNullable<Metadata["alternates"]>;
 type MetadataLanguages = NonNullable<MetadataAlternates["languages"]>;
+type MetadataOpenGraph = NonNullable<Metadata["openGraph"]>;
 
 function normalizeLocale(locale: string): Locale {
     if (locales.includes(locale as Locale)) {
@@ -80,5 +81,17 @@ export function buildLocaleAlternates(
     return {
         canonical: toAbsoluteAppUrl(localePath(currentLocale, path)),
         languages: languages as MetadataLanguages,
+    };
+}
+
+export function buildCanonicalOgParity(
+    locale: string,
+    path = "/"
+): Pick<Metadata, "alternates" | "openGraph"> {
+    return {
+        alternates: buildLocaleAlternates(locale, path),
+        openGraph: {
+            url: getLocalizedAbsoluteUrl(locale, path),
+        } as MetadataOpenGraph,
     };
 }

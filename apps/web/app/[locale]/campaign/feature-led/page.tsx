@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/checkout-button";
 import { buildAuthIntentUrl, getAuthPathsForLocale } from "@/lib/checkout-intent";
-import { buildLocaleAlternates } from "@/lib/seo";
+import { buildCanonicalOgParity } from "@/lib/seo";
 
 type CampaignCopy = {
     badge: string;
@@ -157,10 +157,18 @@ const campaignCopyByLocale: Record<string, CampaignCopy> = {
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     const copy = campaignCopyByLocale[locale] ?? campaignCopyByLocale.en;
+    const title = `AutoApply AI — ${copy.badge}`;
+    const description = copy.subtitle;
+    const parity = buildCanonicalOgParity(locale, "/campaign/feature-led");
     return {
-        title: `AutoApply AI — ${copy.badge}`,
-        description: copy.subtitle,
-        alternates: buildLocaleAlternates(locale, "/campaign/feature-led"),
+        title,
+        description,
+        alternates: parity.alternates,
+        openGraph: {
+            ...parity.openGraph,
+            title,
+            description,
+        },
     };
 }
 
