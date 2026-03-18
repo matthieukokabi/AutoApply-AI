@@ -23,6 +23,7 @@
         "perf:lighthouse:reliability": "bash scripts/lighthouse_reliability_check.sh",
         "perf:budget:gate": "node scripts/performance_budget_gate.js",
         "perf:routes:audit": "bash scripts/performance_route_audit.sh",
+        "perf:trend": "node scripts/performance_trend_report.js",
         "telemetry:conversion:daily": "node scripts/conversion_telemetry_daily_report.js",
         "telemetry:conversion:weekly": "node scripts/conversion_telemetry_weekly_report.js",
         "telemetry:conversion:sentinel": "node scripts/conversion_regression_sentinel.js",

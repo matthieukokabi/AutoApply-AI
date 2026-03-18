@@ -115,6 +115,6 @@ Last updated: 2026-03-18 (Europe/Zurich)
 - [x] Add conversion regression sentinel gate for CI/release with explicit audited emergency override path — completed on 2026-03-18 (`scripts/conversion_regression_sentinel.js`, `config/conversion-regression-sentinel.json`, `.github/workflows/web-ci.yml`, `docs/conversion-regression-emergency-override.md`)
 - [x] Add mission-control runtime ops summary artifact (perf gate + lighthouse reliability + funnel + parity/squirrel) — completed on 2026-03-18 (`scripts/ops_summary_report.js`, `npm run ops:summary`, `docs/reports/wave5-ops-summary-20260318_200801.json`)
 - [x] Harden runtime health snapshot v2 (token rotation guidance, stale-token warning, rate limiting, audit logging) — completed on 2026-03-18 (`/api/runtime/health-snapshot`, `__tests__/api/runtime-health-snapshot.test.ts`, `docs/runtime-health-snapshot-token-rotation.md`)
-- [ ] Evolve performance budget checks with percentile trends + per-route regression deltas
+- [x] Evolve performance budget checks with percentile trends + per-route regression deltas — completed on 2026-03-18 (`scripts/performance_budget_gate.js`, `scripts/performance_trend_report.js`, `__tests__/performance-budget-trend.test.ts`, `docs/reports/wave5-perf-trend-20260318_201625.json`)
 - [ ] Add low-risk trust/content CRO on high-intent pages with no SEO metadata or CLS regressions
 - [ ] Publish Wave 5 validation report + required `docs/reports/wave5-*` artifacts and final Wave 6 candidate list

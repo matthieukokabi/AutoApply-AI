@@ -39,6 +39,31 @@ function toNumberOrNull(value) {
     return null;
 }
 
+function calculatePercentile(values, percentile) {
+    if (!Array.isArray(values) || values.length === 0) {
+        return null;
+    }
+
+    const sorted = [...values].sort((a, b) => a - b);
+    const rank = (percentile / 100) * (sorted.length - 1);
+    const lowIndex = Math.floor(rank);
+    const highIndex = Math.ceil(rank);
+    const lowValue = sorted[lowIndex];
+    const highValue = sorted[highIndex];
+
+    if (lowValue === undefined || highValue === undefined) {
+        return null;
+    }
+
+    if (lowIndex === highIndex) {
+        return Number(lowValue.toFixed(4));
+    }
+
+    const weight = rank - lowIndex;
+    const interpolated = lowValue + (highValue - lowValue) * weight;
+    return Number(interpolated.toFixed(4));
+}
+
 function pickLatestPassingAttempt(report) {
     if (!Array.isArray(report.attempts)) {
         return null;
@@ -101,9 +126,60 @@ function findRegressionViolation(metric, currentValue, baselineValue, maxRegress
     return null;
 }
 
+function findPercentileRegressionViolation(
+    metric,
+    currentValue,
+    percentileValue,
+    maxRegressionPercent,
+    percentile
+) {
+    if (
+        percentileValue === null ||
+        percentileValue <= 0 ||
+        currentValue === null ||
+        maxRegressionPercent === null
+    ) {
+        return null;
+    }
+
+    const regressionPercent = ((currentValue - percentileValue) / percentileValue) * 100;
+    if (regressionPercent > maxRegressionPercent) {
+        return {
+            type: "percentile_regression_exceeded",
+            metric,
+            currentValue,
+            percentileValue,
+            percentile,
+            regressionPercent: Number(regressionPercent.toFixed(2)),
+            maxRegressionPercent,
+            message: `${metric} regressed by ${regressionPercent.toFixed(
+                2
+            )}% vs p${percentile} trend (limit ${maxRegressionPercent}%)`,
+        };
+    }
+
+    return null;
+}
+
+function buildMetricDelta(currentValue, referenceValue) {
+    if (currentValue === null || referenceValue === null || referenceValue <= 0) {
+        return {
+            value: null,
+            percent: null,
+        };
+    }
+
+    const value = Number((currentValue - referenceValue).toFixed(4));
+    const percent = Number((((currentValue - referenceValue) / referenceValue) * 100).toFixed(2));
+    return { value, percent };
+}
+
 function main() {
     const workspaceRoot = path.resolve(__dirname, "../../..");
-    const reportsDir = path.join(workspaceRoot, "docs", "reports");
+    const reportsDir = path.resolve(
+        process.env.PERF_BUDGET_REPORTS_DIR ||
+            path.join(workspaceRoot, "docs", "reports")
+    );
     const budgetsPath = path.join(__dirname, "..", "config", "performance-budgets.json");
     const reportCandidates = listMatchingReports(reportsDir, "wave4-lighthouse-reliability-");
     const sourceReportPath =
@@ -127,6 +203,10 @@ function main() {
     const routeThresholds =
         budgets.routeThresholds?.[route] || budgets.defaultThresholds || {};
     const regressionThresholds = budgets.maxRegressionPercent || {};
+    const percentileGuard = budgets.percentileTrendGuard || {};
+    const trendPercentile = toNumberOrNull(percentileGuard.percentile) || 75;
+    const trendMinSamples = toNumberOrNull(percentileGuard.minSamples) || 3;
+    const trendRegressionThresholds = percentileGuard.maxRegressionPercent || {};
     const latestPassingAttempt = pickLatestPassingAttempt(report);
 
     if (!latestPassingAttempt || !latestPassingAttempt.metrics) {
@@ -169,6 +249,59 @@ function main() {
         }
     }
 
+    const allBudgetReports = [
+        ...listMatchingReports(reportsDir, "wave4-performance-budget-"),
+        ...listMatchingReports(reportsDir, "wave5-performance-budget-"),
+    ].sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs);
+
+    const routeHistoryValues = {
+        lcpMs: [],
+        cls: [],
+        jsBytes: [],
+        imageBytes: [],
+    };
+
+    for (const candidatePath of allBudgetReports) {
+        if (path.resolve(candidatePath) === path.resolve(sourceReportPath)) {
+            continue;
+        }
+
+        try {
+            const candidate = readJson(candidatePath);
+            if (candidate?.route !== route) {
+                continue;
+            }
+
+            const status = typeof candidate?.status === "string" ? candidate.status : "";
+            if (!status.startsWith("pass")) {
+                continue;
+            }
+
+            for (const metric of METRIC_KEYS) {
+                const value = toNumberOrNull(candidate?.metrics?.[metric]);
+                if (value !== null) {
+                    routeHistoryValues[metric].push(value);
+                }
+            }
+        } catch (error) {
+            console.warn(`Skipping invalid historical report ${candidatePath}:`, error);
+        }
+    }
+
+    const trendPercentiles = {};
+    for (const metric of METRIC_KEYS) {
+        const metricValues = routeHistoryValues[metric];
+        trendPercentiles[metric] = {
+            percentile: trendPercentile,
+            minSamples: trendMinSamples,
+            sampleCount: metricValues.length,
+            value:
+                metricValues.length >= trendMinSamples
+                    ? calculatePercentile(metricValues, trendPercentile)
+                    : null,
+        };
+    }
+
     const violations = [];
     for (const metric of METRIC_KEYS) {
         const thresholdValue = toNumberOrNull(routeThresholds[metric]);
@@ -196,6 +329,17 @@ function main() {
         if (regressionViolation) {
             violations.push(regressionViolation);
         }
+
+        const percentileRegressionViolation = findPercentileRegressionViolation(
+            metric,
+            currentValue,
+            toNumberOrNull(trendPercentiles[metric]?.value),
+            toNumberOrNull(trendRegressionThresholds[metric]),
+            trendPercentile
+        );
+        if (percentileRegressionViolation) {
+            violations.push(percentileRegressionViolation);
+        }
     }
 
     const emergencyBypass = process.env.PERF_BUDGET_EMERGENCY_BYPASS?.trim() || "";
@@ -214,10 +358,35 @@ function main() {
         metrics: currentMetrics,
         thresholds: routeThresholds,
         regressionThresholds,
+        trendPercentileGuard: {
+            percentile: trendPercentile,
+            minSamples: trendMinSamples,
+            regressionThresholds: trendRegressionThresholds,
+            values: trendPercentiles,
+        },
         baseline: {
             sourceReport: baselineSource,
             metrics: baselineMetrics,
         },
+        perRouteRegressionDeltas: Object.fromEntries(
+            METRIC_KEYS.map((metric) => [
+                metric,
+                {
+                    vsThreshold: buildMetricDelta(
+                        currentMetrics[metric],
+                        toNumberOrNull(routeThresholds[metric])
+                    ),
+                    vsBaseline: buildMetricDelta(
+                        currentMetrics[metric],
+                        baselineMetrics[metric]
+                    ),
+                    vsTrendPercentile: buildMetricDelta(
+                        currentMetrics[metric],
+                        toNumberOrNull(trendPercentiles[metric]?.value)
+                    ),
+                },
+            ])
+        ),
         violations,
         emergencyBypass: bypassActive
             ? {

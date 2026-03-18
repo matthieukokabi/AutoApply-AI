@@ -24,5 +24,15 @@
     "cls": 20,
     "jsBytes": 10,
     "imageBytes": 10
+  },
+  "percentileTrendGuard": {
+    "percentile": 75,
+    "minSamples": 3,
+    "maxRegressionPercent": {
+      "lcpMs": 15,
+      "cls": 15,
+      "jsBytes": 8,
+      "imageBytes": 8
+    }
   }
 }
