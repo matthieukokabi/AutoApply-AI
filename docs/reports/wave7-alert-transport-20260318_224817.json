@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-03-18T22:48:18.143Z",
+  "reportsDir": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports",
+  "statePath": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-alert-transport-state.json",
+  "status": "pass",
+  "routing": "batched",
+  "dispatchMode": "none",
+  "severity": "warning",
+  "source": "conversion_trend",
+  "reason": "alert",
+  "fingerprint": "warning:2:warning",
+  "cooldown": {
+    "active": false,
+    "minutesSinceLastDelivery": null,
+    "cooldownMinutes": 120
+  },
+  "queueInfo": {
+    "queuedWarnings": 1,
+    "warningQueueAction": "queued"
+  },
+  "delivery": {
+    "status": "no_dispatch",
+    "sinkResults": [],
+    "allDelivered": true
+  },
+  "sinksConfigured": [],
+  "sourceReports": {
+    "sentinel": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-sentinel-20260318_224817.json",
+    "trend": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-trend-live-20260318_224817.json",
+    "opsSummary": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave6-ops-summary-20260318_221749.json"
+  },
+  "localArtifactIsSourceOfTruth": true
+}

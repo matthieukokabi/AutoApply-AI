@@ -28,6 +28,7 @@
         "telemetry:conversion:weekly": "node scripts/conversion_telemetry_weekly_report.js",
         "telemetry:conversion:sentinel": "node scripts/conversion_regression_sentinel.js",
         "telemetry:history:store": "node scripts/telemetry_history_store.js",
+        "telemetry:organic:baseline": "node scripts/organic_baseline_report.js",
         "alerts:dispatch": "node scripts/alert_transport_dispatch.js",
         "perf:conversion:correlation": "node scripts/perf_conversion_correlation_report.js",
         "ops:summary": "node scripts/ops_summary_report.js",

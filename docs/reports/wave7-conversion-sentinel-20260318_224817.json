@@ -1,0 +1,188 @@
+{
+  "generatedAt": "2026-03-18T22:48:17.593Z",
+  "status": "pass",
+  "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-trend-live-20260318_224817.json",
+  "statePath": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave6-conversion-sentinel-state.json",
+  "historyStorePath": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-telemetry-history-store.json",
+  "sourceGuard": {
+    "sourceStatus": "alert",
+    "sourceMode": "seeded",
+    "sourceFailureCodes": [],
+    "matchedSourceFailures": [],
+    "triggerCodes": [],
+    "triggered": false
+  },
+  "config": {
+    "dropThresholdPercent": 30,
+    "dropThresholdPercentHigh": 45,
+    "consecutiveWindowsToFail": 2,
+    "baselineWindowSize": 3,
+    "minBaselineWindows": 2,
+    "minFormStartsPerWindow": 5,
+    "mediumConfidenceMinFormStarts": 8,
+    "highConfidenceMinFormStarts": 15,
+    "alertCooldownMinutes": 180,
+    "sourceFailureCodesToFail": [
+      "source_stale",
+      "fallback_window_exceeded",
+      "required_funnel_events_missing",
+      "quality_score_below_threshold",
+      "route_dimension_missing",
+      "campaign_dimension_missing"
+    ],
+    "organicBaseline": {
+      "dropThresholdPercent": 35,
+      "consecutiveRunsToFail": 2,
+      "minCurrentFormStarts": 8,
+      "minHistoryEntries": 4,
+      "minHistoryFormStarts": 25,
+      "sameWeekdayMinEntries": 2,
+      "volatilityGuardCoefficient": 0.45
+    }
+  },
+  "summary": {
+    "requiredConsecutiveRegressionWindows": 2,
+    "latestConsecutiveRegressionWindows": 0,
+    "maxConsecutiveRegressionWindows": 0,
+    "highestRegressionConfidence": "none",
+    "triggered": false,
+    "triggerCode": null,
+    "triggerCodes": [],
+    "triggerReason": null,
+    "regressionTriggered": false,
+    "organicBaseline": {
+      "status": "guarded_sparse_current",
+      "triggered": false,
+      "dropPercent": null,
+      "consecutiveRuns": 0,
+      "seasonalityMode": "rolling_all_days",
+      "volatilityCoefficient": 0
+    },
+    "alertDispatch": {
+      "status": "no_alert",
+      "cooldownSuppressed": false,
+      "cooldownMinutes": 180,
+      "alertFingerprint": null,
+      "minutesSinceLastAlert": null
+    }
+  },
+  "failureCodes": [],
+  "runbook": [],
+  "windows": [
+    {
+      "date": "2026-03-12",
+      "status": "insufficient_baseline",
+      "formStarts": 0,
+      "completionRateFromFormStart": 0,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "confidenceTier": "none",
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-13",
+      "status": "insufficient_baseline",
+      "formStarts": 0,
+      "completionRateFromFormStart": 0,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "confidenceTier": "none",
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-14",
+      "status": "insufficient_baseline",
+      "formStarts": 0,
+      "completionRateFromFormStart": 0,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "confidenceTier": "none",
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-15",
+      "status": "insufficient_baseline",
+      "formStarts": 0,
+      "completionRateFromFormStart": 0,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "confidenceTier": "none",
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-16",
+      "status": "insufficient_baseline",
+      "formStarts": 0,
+      "completionRateFromFormStart": 0,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "confidenceTier": "none",
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-17",
+      "status": "insufficient_baseline",
+      "formStarts": 0,
+      "completionRateFromFormStart": 0,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "confidenceTier": "none",
+      "consecutiveRegressionWindows": 0
+    },
+    {
+      "date": "2026-03-18",
+      "status": "insufficient_baseline",
+      "formStarts": 5,
+      "completionRateFromFormStart": 0,
+      "baselineCompletionRate": null,
+      "dropPercent": null,
+      "thresholdPercent": 30,
+      "confidenceTier": "none",
+      "consecutiveRegressionWindows": 0
+    }
+  ],
+  "channelTracks": {
+    "organic": {
+      "status": "guarded_sparse_current",
+      "config": {
+        "dropThresholdPercent": 35,
+        "consecutiveRunsToFail": 2,
+        "minCurrentFormStarts": 8,
+        "minHistoryEntries": 4,
+        "minHistoryFormStarts": 25,
+        "sameWeekdayMinEntries": 2,
+        "volatilityGuardCoefficient": 0.45
+      },
+      "seasonalityMode": "rolling_all_days",
+      "sourceMode": "mixed_history",
+      "current": {
+        "generatedAt": "2026-03-18T22:48:17.430Z",
+        "completionRateFromFormStart": 0,
+        "formStarts": 5
+      },
+      "baseline": {
+        "sampleCount": 0,
+        "totalFormStarts": 0,
+        "completionRateFromFormStart": null,
+        "sameWeekdaySampleCount": 0,
+        "volatilityStdDev": 0,
+        "volatilityCoefficient": 0
+      },
+      "dropPercent": null,
+      "isRegression": false,
+      "triggered": false,
+      "previousConsecutiveRuns": 0,
+      "nextConsecutiveRuns": 0
+    }
+  },
+  "emergencyBypass": {
+    "active": false,
+    "reason": null
+  }
+}

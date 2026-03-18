@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-03-18T22:48:18.005Z",
+  "status": "warning",
+  "organicBaseline": {
+    "status": "guarded_sparse_current",
+    "config": {
+      "dropThresholdPercent": 35,
+      "consecutiveRunsToFail": 2,
+      "minCurrentFormStarts": 8,
+      "minHistoryEntries": 4,
+      "minHistoryFormStarts": 25,
+      "sameWeekdayMinEntries": 2,
+      "volatilityGuardCoefficient": 0.45
+    },
+    "seasonalityMode": "rolling_all_days",
+    "sourceMode": "mixed_history",
+    "current": {
+      "generatedAt": "2026-03-18T22:48:17.430Z",
+      "completionRateFromFormStart": 0,
+      "formStarts": 5
+    },
+    "baseline": {
+      "sampleCount": 0,
+      "totalFormStarts": 0,
+      "completionRateFromFormStart": null,
+      "sameWeekdaySampleCount": 0,
+      "volatilityStdDev": 0,
+      "volatilityCoefficient": 0
+    },
+    "dropPercent": null,
+    "isRegression": false,
+    "triggered": false,
+    "previousConsecutiveRuns": 0,
+    "nextConsecutiveRuns": 0
+  },
+  "historyFreshness": "fresh",
+  "sourceReports": {
+    "sentinel": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-sentinel-20260318_224817.json",
+    "telemetryHistory": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-telemetry-history-20260318_224817.json"
+  }
+}

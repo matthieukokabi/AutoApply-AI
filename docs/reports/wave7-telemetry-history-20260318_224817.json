@@ -1,0 +1,385 @@
+{
+  "generatedAt": "2026-03-18T22:48:17.865Z",
+  "reportsDir": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports",
+  "historyStorePath": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-telemetry-history-store.json",
+  "status": "pass",
+  "policies": {
+    "retentionDays": 90,
+    "maxEntriesPerStream": 1500,
+    "rollingWindowsDays": [
+      7,
+      14,
+      30
+    ],
+    "minSamplesPerWindow": 2
+  },
+  "ingestStatus": {
+    "conversion": {
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-trend-live-20260318_224817.json",
+      "appended": true
+    },
+    "sentinel": {
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-sentinel-20260318_224817.json",
+      "appended": true
+    },
+    "perf": {
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-perf-trend-20260318_203720.json",
+      "appended": true
+    }
+  },
+  "streamCounts": {
+    "conversion": 1,
+    "sentinel": 1,
+    "perf": 1
+  },
+  "freshness": {
+    "conversion": {
+      "status": "fresh",
+      "ageMinutes": 0.01
+    },
+    "sentinel": {
+      "status": "fresh",
+      "ageMinutes": 0
+    },
+    "perf": {
+      "status": "fresh",
+      "ageMinutes": 132.94
+    }
+  },
+  "rollingComparisons": {
+    "conversion": {
+      "completionRateFromFormStart": {
+        "7d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "14d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "30d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        }
+      },
+      "captchaFailRate": {
+        "7d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "14d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "30d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        }
+      },
+      "qualityScore": {
+        "7d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 100
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "14d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 100
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "30d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 100
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        }
+      }
+    },
+    "sentinel": {
+      "failSignal": {
+        "7d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "14d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "30d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        }
+      }
+    },
+    "perf": {
+      "lcpP75": {
+        "7d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 929.4455
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "14d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 929.4455
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "30d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 929.4455
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        }
+      },
+      "clsP75": {
+        "7d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0.062
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "14d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0.062
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "30d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 0.062
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        }
+      },
+      "jsBytesP75": {
+        "7d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 528039
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "14d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 528039
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "30d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 528039
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        }
+      },
+      "imageBytesP75": {
+        "7d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 3632
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "14d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 3632
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        },
+        "30d": {
+          "status": "insufficient_data",
+          "current": {
+            "sampleCount": 1,
+            "value": 3632
+          },
+          "previous": {
+            "sampleCount": 0,
+            "value": null
+          },
+          "delta": null,
+          "deltaPercent": null
+        }
+      }
+    }
+  }
+}
