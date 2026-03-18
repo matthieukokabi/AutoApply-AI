@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import {
+    incrementAbuseCounter,
+    incrementCaptchaCounter,
+} from "@/lib/contact-telemetry";
 
 const CONTACT_RATE_LIMIT_MAX_REQUESTS = 5;
 const CONTACT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -9,38 +13,6 @@ const CONTACT_MIN_SUBMIT_MS = 2500;
 const CONTACT_MAX_FORM_AGE_MS = 2 * 60 * 60 * 1000;
 const contactRequestLog = new Map<string, number[]>();
 const contactSessionRequestLog = new Map<string, number[]>();
-const contactAbuseCounters = new Map<string, number>();
-
-type ContactAbuseReason =
-    | "honeypot"
-    | "invalid_form_session"
-    | "invalid_form_timing"
-    | "form_too_fast"
-    | "form_expired"
-    | "missing_turnstile_token"
-    | "turnstile_failed"
-    | "ip_rate_limited"
-    | "session_rate_limited"
-    | "missing_required_fields"
-    | "invalid_email"
-    | "message_too_long";
-
-function incrementAbuseCounter(reason: ContactAbuseReason) {
-    const nextCount = (contactAbuseCounters.get(reason) || 0) + 1;
-    contactAbuseCounters.set(reason, nextCount);
-
-    if (nextCount === 1 || nextCount % 25 === 0) {
-        const totalBlocked = Array.from(contactAbuseCounters.values()).reduce(
-            (sum, count) => sum + count,
-            0
-        );
-        console.warn("[contact-abuse] blocked request", {
-            reason,
-            reasonCount: nextCount,
-            totalBlocked,
-        });
-    }
-}
 
 function isValidFormSessionId(value: unknown): value is string {
     if (typeof value !== "string") {
@@ -56,38 +28,58 @@ type TurnstileVerificationResult = {
     "error-codes"?: string[];
 };
 
+type TurnstileVerificationOutcome = {
+    outcome: "solve" | "fail" | "error";
+    errorCodes: string[];
+};
+
 async function verifyTurnstileToken(
     secretKey: string,
     token: string,
     clientIp: string | null
-) {
-    const payload = new URLSearchParams({
-        secret: secretKey,
-        response: token,
-    });
+): Promise<TurnstileVerificationOutcome> {
+    try {
+        const payload = new URLSearchParams({
+            secret: secretKey,
+            response: token,
+        });
 
-    if (clientIp) {
-        payload.set("remoteip", clientIp);
-    }
-
-    const verificationResponse = await fetch(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: payload.toString(),
+        if (clientIp) {
+            payload.set("remoteip", clientIp);
         }
-    );
 
-    if (!verificationResponse.ok) {
-        return false;
+        const verificationResponse = await fetch(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: payload.toString(),
+            }
+        );
+
+        if (!verificationResponse.ok) {
+            return {
+                outcome: "error",
+                errorCodes: [`http_${verificationResponse.status}`],
+            };
+        }
+
+        const result =
+            (await verificationResponse.json()) as TurnstileVerificationResult;
+
+        if (result.success === true) {
+            return { outcome: "solve", errorCodes: [] };
+        }
+
+        return {
+            outcome: "fail",
+            errorCodes: result["error-codes"] || [],
+        };
+    } catch {
+        return { outcome: "error", errorCodes: ["network_error"] };
     }
-
-    const result =
-        (await verificationResponse.json()) as TurnstileVerificationResult;
-    return result.success === true;
 }
 
 function getResend(apiKey: string) {
@@ -183,18 +175,24 @@ export async function POST(req: Request) {
 
             if (!token) {
                 incrementAbuseCounter("missing_turnstile_token");
+                incrementCaptchaCounter("fail", ["missing_token"]);
                 return NextResponse.json(
                     { error: "Verification challenge is required." },
                     { status: 400 }
                 );
             }
 
-            const turnstilePassed = await verifyTurnstileToken(
+            const turnstileOutcome = await verifyTurnstileToken(
                 turnstileSecret,
                 token,
                 clientIp
             );
-            if (!turnstilePassed) {
+            incrementCaptchaCounter(
+                turnstileOutcome.outcome,
+                turnstileOutcome.errorCodes
+            );
+
+            if (turnstileOutcome.outcome !== "solve") {
                 incrementAbuseCounter("turnstile_failed");
                 return NextResponse.json(
                     { error: "Verification challenge failed. Please try again." },

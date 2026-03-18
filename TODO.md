@@ -93,7 +93,7 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [ ] Deploy + verify canonical and `og:url` parity on all indexable pages
 - [ ] Confirm `/` versus `/coming-soon` metadata remains distinct in production
 - [x] Add redirect regression CI assertions (max redirect hops + expected final URL) — completed on 2026-03-18 (`__tests__/redirect-regression.test.ts`)
-- [ ] Add CAPTCHA telemetry (`solve`/`fail`/`error`) and abuse diagnostics dashboard hooks
+- [x] Add CAPTCHA telemetry (`solve`/`fail`/`error`) and abuse diagnostics dashboard hooks — completed on 2026-03-18 (`lib/contact-telemetry.ts`, `/api/contact/diagnostics`, telemetry assertions in contact API tests)
 - [ ] Advance CSP phase 2 toward nonce/hash strictness where feasible
 - [ ] Add Organization + ContactPoint structured data on trust pages
 - [ ] Run production Lighthouse + a11y benchmark and track deltas

@@ -1,9 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/contact/route";
+import {
+    getContactTelemetrySnapshot,
+    resetContactTelemetryForTests,
+} from "@/lib/contact-telemetry";
 import { Resend } from "resend";
 
 beforeEach(() => {
     vi.clearAllMocks();
+    resetContactTelemetryForTests();
     process.env.RESEND_API_KEY = "re_test_key";
     delete process.env.TURNSTILE_SECRET_KEY;
 });
@@ -160,6 +165,7 @@ describe("POST /api/contact", () => {
 
         expect(response.status).toBe(400);
         expect(data.error).toContain("Verification challenge");
+        expect(getContactTelemetrySnapshot().captcha.fail).toBe(1);
     });
 
     it("returns 400 when Turnstile verification fails", async () => {
@@ -186,6 +192,7 @@ describe("POST /api/contact", () => {
 
         expect(response.status).toBe(400);
         expect(data.error).toContain("challenge failed");
+        expect(getContactTelemetrySnapshot().captcha.fail).toBe(1);
     });
 
     it("accepts request when Turnstile verification succeeds", async () => {
@@ -212,6 +219,33 @@ describe("POST /api/contact", () => {
 
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
+        expect(getContactTelemetrySnapshot().captcha.solve).toBe(1);
+    });
+
+    it("tracks Turnstile verification provider errors", async () => {
+        process.env.TURNSTILE_SECRET_KEY = "turnstile_secret";
+        vi.mocked(global.fetch).mockRejectedValueOnce(new Error("provider_down"));
+
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: withAntiBotFields({
+                name: "John Doe",
+                email: "john@example.com",
+                subject: "support",
+                message: "I need help with my account settings.",
+                turnstileToken: "error_token",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("challenge failed");
+        const telemetry = getContactTelemetrySnapshot();
+        expect(telemetry.captcha.error).toBe(1);
+        expect(telemetry.captcha.errorCodes.network_error).toBe(1);
     });
 
     it("handles missing subject gracefully (defaults to General)", async () => {
