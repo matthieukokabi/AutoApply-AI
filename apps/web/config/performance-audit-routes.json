@@ -1,0 +1,7 @@
+{
+  "requiredRoutes": [
+    "/en",
+    "/en/sign-up"
+  ],
+  "highIntentRoute": "/en/sign-up"
+}

@@ -59,7 +59,6 @@ jobs:
           LIGHTHOUSE_REQUIRED_SUCCESSES: "1"
           LIGHTHOUSE_MAX_ATTEMPTS_PER_RUN: "2"
           LIGHTHOUSE_WARMUP_REQUESTS: "1"
-          REPORT_PATH: ../../docs/reports/wave4-lighthouse-reliability-ci-${{ github.run_id }}.json
           PERF_BUDGET_EMERGENCY_BYPASS: ${{ vars.PERF_BUDGET_EMERGENCY_BYPASS }}
         run: |
           ./node_modules/.bin/next start --hostname 127.0.0.1 --port 4100 >/tmp/next-start.log 2>&1 &
@@ -74,5 +73,4 @@ jobs:
             fi
             sleep 1
           done
-          npm run perf:lighthouse:reliability -- http://127.0.0.1:4100 /en
-          PERF_BUDGET_SOURCE_REPORT="$REPORT_PATH" npm run perf:budget:gate
+          PERF_BASE_URL=http://127.0.0.1:4100 npm run perf:routes:audit

@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-03-18T19:03:59Z",
+  "baseUrl": "https://autoapply.works",
+  "status": "pass",
+  "failureReason": null,
+  "highIntentRoute": "/en/sign-up",
+  "requiredRoutes": [
+    "/en",
+    "/en/sign-up"
+  ],
+  "routeResults": [
+    {
+      "route": "/en",
+      "targetUrl": "https://autoapply.works/en",
+      "status": "pass",
+      "reason": "ok",
+      "httpStatus": "200",
+      "lighthouseReportPath": "../../docs/reports/wave4-lighthouse-reliability-20260318_200315-en.json",
+      "budgetReportPath": "../../docs/reports/wave4-performance-budget-20260318_200315-en.json"
+    },
+    {
+      "route": "/en/sign-up",
+      "targetUrl": "https://autoapply.works/en/sign-up",
+      "status": "pass",
+      "reason": "ok",
+      "httpStatus": "200",
+      "lighthouseReportPath": "../../docs/reports/wave4-lighthouse-reliability-20260318_200315-en-sign-up.json",
+      "budgetReportPath": "../../docs/reports/wave4-performance-budget-20260318_200315-en-sign-up.json"
+    }
+  ]
+}

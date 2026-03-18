@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-03-18T19:03:59.075Z",
+  "status": "pass",
+  "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave4-lighthouse-reliability-20260318_200315-en-sign-up.json",
+  "route": "/en/sign-up",
+  "metrics": {
+    "lcpMs": 929.4455,
+    "cls": 0.061995,
+    "jsBytes": 528039,
+    "imageBytes": 3632
+  },
+  "thresholds": {
+    "lcpMs": 3500,
+    "cls": 0.15,
+    "jsBytes": 650000,
+    "imageBytes": 700000
+  },
+  "regressionThresholds": {
+    "lcpMs": 20,
+    "cls": 20,
+    "jsBytes": 10,
+    "imageBytes": 10
+  },
+  "baseline": {
+    "sourceReport": null,
+    "metrics": {
+      "lcpMs": null,
+      "cls": null,
+      "jsBytes": null,
+      "imageBytes": null
+    }
+  },
+  "violations": [],
+  "emergencyBypass": {
+    "active": false,
+    "reason": null
+  }
+}

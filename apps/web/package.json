@@ -21,7 +21,8 @@
         "smoke:uptime:prod": "bash scripts/production_uptime_check.sh https://autoapply.works",
         "smoke:squirrel:prod": "bash scripts/live_squirrel_audit.sh https://autoapply.works",
         "perf:lighthouse:reliability": "bash scripts/lighthouse_reliability_check.sh",
-        "perf:budget:gate": "node scripts/performance_budget_gate.js"
+        "perf:budget:gate": "node scripts/performance_budget_gate.js",
+        "perf:routes:audit": "bash scripts/performance_route_audit.sh"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"

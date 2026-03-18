@@ -9,9 +9,11 @@ An emergency bypass exists only for short-term unblock during incident response.
 
 ## Normal behavior
 - Thresholds are defined in `apps/web/config/performance-budgets.json`.
-- CI runs:
-  1. `npm run perf:lighthouse:reliability -- http://127.0.0.1:4100 /en`
-  2. `PERF_BUDGET_SOURCE_REPORT=... npm run perf:budget:gate`
+- CI runs deterministic route audit:
+  1. `PERF_BASE_URL=http://127.0.0.1:4100 npm run perf:routes:audit`
+  2. Script checks all required routes in `apps/web/config/performance-audit-routes.json`
+  3. For each required route, Lighthouse reliability + budget gate are executed
+- If a required route is unavailable, the audit fails before budgets are evaluated.
 - If violations exist, CI fails.
 
 ## Emergency override path

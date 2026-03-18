@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-03-18T19:03:58Z",
+  "target": {
+    "baseUrl": "https://autoapply.works",
+    "route": "/en/sign-up",
+    "url": "https://autoapply.works/en/sign-up"
+  },
+  "config": {
+    "requiredSuccessfulRuns": 1,
+    "maxAttemptsPerRun": 2,
+    "warmupRequests": 1,
+    "deterministicFlags": [
+      "--quiet",
+      "--output=json",
+      "--preset=desktop",
+      "--form-factor=desktop",
+      "--throttling-method=simulate",
+      "--max-wait-for-load=45000",
+      "--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --window-size=1920,1080"
+    ]
+  },
+  "runtime": {
+    "lighthouseVersion": "13.0.3",
+    "totalDurationMs": 18209
+  },
+  "summary": {
+    "status": "pass",
+    "successfulRuns": 1,
+    "attemptCount": 1,
+    "failureReason": null
+  },
+  "attempts": [
+    {
+      "generatedAt": "2026-03-18T19:03:58Z",
+      "targetUrl": "https://autoapply.works/en/sign-up",
+      "runIndex": 1,
+      "attemptIndex": 1,
+      "retryIndex": 0,
+      "status": "pass",
+      "reason": "ok",
+      "commandError": null,
+      "durationMs": 16686,
+      "metrics": {
+        "lcpMs": 929.4455,
+        "cls": 0.061995,
+        "jsBytes": 528039,
+        "imageBytes": 3632,
+        "performanceScore": 0.98,
+        "accessibilityScore": 0.98,
+        "bestPracticesScore": 0.73,
+        "seoScore": 0.91
+      },
+      "lcpDiagnostics": {
+        "errorMessage": null,
+        "errorStack": null
+      }
+    }
+  ]
+}
