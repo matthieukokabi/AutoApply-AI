@@ -1,7 +1,19 @@
 {
   "dropThresholdPercent": 30,
+  "dropThresholdPercentHigh": 45,
   "consecutiveWindowsToFail": 2,
   "baselineWindowSize": 3,
   "minBaselineWindows": 2,
-  "minFormStartsPerWindow": 5
+  "minFormStartsPerWindow": 5,
+  "mediumConfidenceMinFormStarts": 8,
+  "highConfidenceMinFormStarts": 15,
+  "alertCooldownMinutes": 180,
+  "sourceFailureCodesToFail": [
+    "source_stale",
+    "fallback_window_exceeded",
+    "required_funnel_events_missing",
+    "quality_score_below_threshold",
+    "route_dimension_missing",
+    "campaign_dimension_missing"
+  ]
 }

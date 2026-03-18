@@ -123,8 +123,8 @@ Last updated: 2026-03-18 (Europe/Zurich)
 
 - [x] Activate live conversion trend pipeline with explicit `sourceMode` (`live` vs `seeded`) markers, freshness checks, and fallback-window failure policy — completed on 2026-03-18 (`scripts/conversion_telemetry_weekly_report.js`, `config/conversion-telemetry-source.json`)
 - [x] Add conversion data-integrity pre-checks (required events, route/campaign completeness, freshness window) and compute telemetry quality score — completed on 2026-03-18 (`scripts/conversion_telemetry_weekly_report.js`, `scripts/ops_summary_report.js`, `config/conversion-telemetry-source.json`)
-- [ ] Harden conversion sentinel v2 (rolling baseline window tuning, anomaly confidence tiers, cooldown/dedupe)
-- [ ] Add sentinel failure-code runbook mapping for rapid remediation
+- [x] Harden conversion sentinel v2 (rolling baseline window tuning, anomaly confidence tiers, cooldown/dedupe) — completed on 2026-03-18 (`scripts/conversion_regression_sentinel.js`, `config/conversion-regression-sentinel.json`, `__tests__/conversion-regression-sentinel.test.ts`)
+- [x] Add sentinel failure-code runbook mapping for rapid remediation — completed on 2026-03-18 (`scripts/conversion_regression_sentinel.js`, `docs/conversion-sentinel-failure-runbook.md`)
 - [ ] Extend runtime health snapshot v3 with conversion freshness, source mode, sentinel last status, and data-quality score
 - [ ] Add perf-vs-conversion correlation report and flag co-occurring perf + conversion regressions
 - [ ] Produce Wave 6 mission-control payload + Wave 6 validation report/artifacts with seeded-to-live transition proof
