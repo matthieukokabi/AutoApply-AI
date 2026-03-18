@@ -9,6 +9,7 @@ const TEMP_DIRS: string[] = [];
 afterEach(() => {
     delete process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN;
     delete process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR;
+    delete process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT;
 
     for (const dir of TEMP_DIRS.splice(0, TEMP_DIRS.length)) {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -54,6 +55,8 @@ describe("GET /api/runtime/health-snapshot", () => {
         const reportsDir = createReportsDir();
         process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN = "snapshot_secret";
         process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR = reportsDir;
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT =
+            "2026-03-17T00:00:00.000Z";
 
         fs.writeFileSync(
             path.join(reportsDir, "wave4-performance-routes-20260318_200000.json"),
@@ -110,5 +113,95 @@ describe("GET /api/runtime/health-snapshot", () => {
         expect(data.snapshot.parityChecks.overallStatus).toBe("pass");
         expect(data.snapshot.parityChecks.canonicalOgParity.status).toBe("pass");
         expect(data.snapshot.parityChecks.liveSquirrel.status).toBe("pass");
+        expect(data.security.tokenRotation.isStale).toBe(false);
+    });
+
+    it("returns stale token warning when rotation timestamp is too old", async () => {
+        const reportsDir = createReportsDir();
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN = "snapshot_secret";
+        process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR = reportsDir;
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT =
+            "2026-01-01T00:00:00.000Z";
+
+        fs.writeFileSync(
+            path.join(reportsDir, "wave4-performance-routes-20260318_200000.json"),
+            JSON.stringify({ status: "pass", failureReason: null }, null, 2)
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave4-conversion-telemetry-20260318_200000.json"),
+            JSON.stringify({ status: "pass", anomalyCount: 0 }, null, 2)
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave3-canonical-og-parity-prod-2026-03-18.txt"),
+            "PASS canonical_og_parity_all_indexable\n"
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave3-live-squirrel-audit-prod-2026-03-18.json"),
+            JSON.stringify({ status: "pass" }, null, 2)
+        );
+
+        const response = await GET(
+            new Request("http://localhost/api/runtime/health-snapshot", {
+                headers: {
+                    "x-health-snapshot-token": "snapshot_secret",
+                },
+            })
+        );
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.security.tokenRotation.isStale).toBe(true);
+        expect(data.security.tokenRotation.warnings[0]).toContain("stale");
+    });
+
+    it("rate limits repeated requests from the same IP", async () => {
+        const reportsDir = createReportsDir();
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN = "snapshot_secret";
+        process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR = reportsDir;
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT =
+            "2026-03-17T00:00:00.000Z";
+
+        fs.writeFileSync(
+            path.join(reportsDir, "wave4-performance-routes-20260318_200000.json"),
+            JSON.stringify({ status: "pass", failureReason: null }, null, 2)
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave4-conversion-telemetry-20260318_200000.json"),
+            JSON.stringify({ status: "pass", anomalyCount: 0 }, null, 2)
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave3-canonical-og-parity-prod-2026-03-18.txt"),
+            "PASS canonical_og_parity_all_indexable\n"
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave3-live-squirrel-audit-prod-2026-03-18.json"),
+            JSON.stringify({ status: "pass" }, null, 2)
+        );
+
+        const ip = "198.51.100.40";
+        for (let i = 0; i < 30; i += 1) {
+            const response = await GET(
+                new Request("http://localhost/api/runtime/health-snapshot", {
+                    headers: {
+                        "x-health-snapshot-token": "snapshot_secret",
+                        "x-forwarded-for": ip,
+                    },
+                })
+            );
+            expect(response.status).toBe(200);
+        }
+
+        const limitedResponse = await GET(
+            new Request("http://localhost/api/runtime/health-snapshot", {
+                headers: {
+                    "x-health-snapshot-token": "snapshot_secret",
+                    "x-forwarded-for": ip,
+                },
+            })
+        );
+        const data = await limitedResponse.json();
+
+        expect(limitedResponse.status).toBe(429);
+        expect(data.error).toContain("Too many requests");
     });
 });
