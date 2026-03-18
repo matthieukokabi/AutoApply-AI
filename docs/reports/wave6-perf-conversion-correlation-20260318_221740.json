@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-03-18T22:17:41.367Z",
+  "status": "pass",
+  "sources": {
+    "perfTrend": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-perf-trend-20260318_203720.json",
+    "conversionTrend": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave6-conversion-trend-live-20260318_221719.json"
+  },
+  "thresholds": {
+    "minFormStarts": 5,
+    "conversionDropThresholdPercent": 20,
+    "perfRegressionThresholdPercent": {
+      "lcpMs": 10,
+      "cls": 10,
+      "jsBytes": 15,
+      "imageBytes": 15
+    }
+  },
+  "totals": {
+    "routesAnalyzed": 2,
+    "cooccurrenceCount": 0,
+    "perfOnlyCount": 0,
+    "conversionOnlyCount": 0
+  },
+  "cooccurrenceFlags": [],
+  "routeInsights": [
+    {
+      "route": "/en",
+      "perf": {
+        "hasRegression": false,
+        "metrics": [
+          {
+            "metric": "lcpMs",
+            "percentDeltaVsPrevious": 0,
+            "thresholdPercent": 10,
+            "regressed": false
+          },
+          {
+            "metric": "cls",
+            "percentDeltaVsPrevious": null,
+            "thresholdPercent": 10,
+            "regressed": false
+          },
+          {
+            "metric": "jsBytes",
+            "percentDeltaVsPrevious": 0,
+            "thresholdPercent": 15,
+            "regressed": false
+          },
+          {
+            "metric": "imageBytes",
+            "percentDeltaVsPrevious": null,
+            "thresholdPercent": 15,
+            "regressed": false
+          }
+        ]
+      },
+      "conversion": {
+        "formStarts": null,
+        "completionRateFromFormStart": null,
+        "baselineCompletionRate": 0,
+        "dropPercentFromBaseline": null,
+        "thresholdPercent": 20,
+        "dropTriggered": false
+      },
+      "cooccurrence": false
+    },
+    {
+      "route": "/en/sign-up",
+      "perf": {
+        "hasRegression": false,
+        "metrics": [
+          {
+            "metric": "lcpMs",
+            "percentDeltaVsPrevious": null,
+            "thresholdPercent": 10,
+            "regressed": false
+          },
+          {
+            "metric": "cls",
+            "percentDeltaVsPrevious": null,
+            "thresholdPercent": 10,
+            "regressed": false
+          },
+          {
+            "metric": "jsBytes",
+            "percentDeltaVsPrevious": null,
+            "thresholdPercent": 15,
+            "regressed": false
+          },
+          {
+            "metric": "imageBytes",
+            "percentDeltaVsPrevious": null,
+            "thresholdPercent": 15,
+            "regressed": false
+          }
+        ]
+      },
+      "conversion": {
+        "formStarts": null,
+        "completionRateFromFormStart": null,
+        "baselineCompletionRate": 0,
+        "dropPercentFromBaseline": null,
+        "thresholdPercent": 20,
+        "dropTriggered": false
+      },
+      "cooccurrence": false
+    }
+  ]
+}
