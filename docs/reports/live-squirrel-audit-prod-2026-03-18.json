@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-03-18T07:28:58Z",
+  "baseUrl": "https://autoapply.works",
+  "locale": "en",
+  "targetUrl": "https://autoapply.works/en",
+  "authUrl": "https://autoapply.works/en/sign-in",
+  "status": "fail",
+  "metadata": {
+    "canonical": "",
+    "canonicalHasQueryOrHash": false,
+    "robots": "index, follow",
+    "authRobots": "index, follow",
+    "missingHreflang": [
+      "x-default"
+    ]
+  },
+  "headers": {
+    "csp": "",
+    "cspReportOnly": "",
+    "permissionsPolicy": "",
+    "xContentTypeOptions": "",
+    "referrerPolicy": "",
+    "xFrameOptions": "",
+    "coop": "",
+    "corp": "",
+    "missingHeaders": [
+      "Content-Security-Policy",
+      "Content-Security-Policy-Report-Only",
+      "X-Frame-Options",
+      "X-Content-Type-Options",
+      "Referrer-Policy",
+      "Permissions-Policy",
+      "Cross-Origin-Opener-Policy",
+      "Cross-Origin-Resource-Policy"
+    ]
+  }
+}

@@ -77,11 +77,12 @@ Last updated: 2026-03-17 (Europe/Zurich)
 - [x] Add `Permissions-Policy` baseline header — completed on 2026-03-18 (`next.config.js`)
 - [x] Add optional COOP/CORP baseline headers (`same-origin-allow-popups`, `same-site`) — completed on 2026-03-18 (`next.config.js`)
 - [x] Remove `unsafe-eval` from enforced CSP `script-src` — completed on 2026-03-18 (`next.config.js`)
-- [ ] Remove `unsafe-inline` from enforced CSP via nonce/hash rollout
+- [ ] Remove `unsafe-inline` from enforced CSP via nonce/hash rollout (blocking: direct removal breaks Next inline bootstrap scripts; requires nonce/hash architecture)
 - [x] Add Turnstile/hCaptcha server verification on contact endpoint (keep honeypot/timing as layer 1) — completed on 2026-03-18 (conditional Turnstile server verification + client token wiring via env keys)
 - [x] Add IP + per-session throttling on contact endpoint — completed on 2026-03-18 (`/api/contact` adds session-level limiter in addition to IP limiter)
 - [x] Add abuse telemetry counters on contact endpoint — completed on 2026-03-18 (`/api/contact` blocked-reason counters + structured warning logs)
 - [x] Add `noindex` metadata for auth and utility pages (`sign-in`, `sign-up`, `auth-diagnostics`, dashboard surface) — completed on 2026-03-18 (`(dashboard)/layout.tsx`, `sign-in/layout.tsx`, `sign-up/layout.tsx`, `auth-diagnostics/layout.tsx`, `onboarding/layout.tsx`)
 - [x] Tighten canonical handling for query-param variants — completed on 2026-03-18 (`lib/seo.ts` now strips `?query` and `#hash` before canonical/hreflang generation; covered by `__tests__/seo.test.ts`)
 - [x] Re-validate hreflang reciprocity across all localized indexable pages — completed on 2026-03-18 (`__tests__/hreflang-reciprocity.test.ts` + `buildLocaleAlternates` assertions on all indexable localized routes)
-- [ ] Run Wave 2 validation suite (`lint`, `test`, `build`, live squirrel audit) and document score delta vs Wave 1
+- [x] Run Wave 2 validation suite (`lint`, `test`, `build`, live squirrel audit) and document score delta vs Wave 1 — completed on 2026-03-18 (`docs/wave2-validation-report-2026-03-18.md` + local/prod squirrel artifacts)
+- [ ] Re-run `npm run smoke:squirrel:prod` after next batched Vercel production deploy and confirm `status: pass`
