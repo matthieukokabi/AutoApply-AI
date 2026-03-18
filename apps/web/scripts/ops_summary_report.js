@@ -111,7 +111,11 @@ function main() {
         ["wave5-lighthouse-reliability-", "wave4-lighthouse-reliability-"],
         ".json"
     );
-    const funnelPath = readLatestFile(reportsDir, "wave5-conversion-trend-", ".json");
+    const funnelPath = readLatestFromPrefixes(
+        reportsDir,
+        ["wave6-conversion-trend-live-", "wave5-conversion-trend-"],
+        ".json"
+    );
     const parityPath = readLatestFile(
         reportsDir,
         "wave3-canonical-og-parity-prod-",
@@ -132,6 +136,20 @@ function main() {
     const perfStatus = classifyStatus(toStatus(perfGate?.status));
     const lighthouseStatus = classifyStatus(toStatus(lighthouse?.summary?.status));
     const funnelStatus = classifyStatus(toStatus(funnel?.status));
+    const rawTelemetryQualityStatus = toStatus(funnel?.dataQuality?.status, "");
+    const telemetryQualityStatus = rawTelemetryQualityStatus
+        ? classifyStatus(rawTelemetryQualityStatus)
+        : funnelStatus === "pass"
+          ? "pass"
+          : "warning";
+    const telemetryQualityScore =
+        typeof funnel?.dataQuality?.qualityScore === "number"
+            ? Number(funnel.dataQuality.qualityScore.toFixed(2))
+            : null;
+    const telemetryQualityMinimum =
+        typeof funnel?.dataQuality?.minQualityScore === "number"
+            ? Number(funnel.dataQuality.minQualityScore.toFixed(2))
+            : null;
     const parityCanonicalStatus = classifyStatus(canonicalParityStatus(parityRaw));
     const paritySquirrelStatus = classifyStatus(toStatus(squirrel?.status));
 
@@ -167,6 +185,14 @@ function main() {
                 : "Conversion trend includes anomalies or alerts.",
             funnelPath
         ),
+        telemetryQuality: createComponentSummary(
+            "telemetryQuality",
+            telemetryQualityStatus,
+            telemetryQualityScore !== null && telemetryQualityMinimum !== null
+                ? `Telemetry quality score ${telemetryQualityScore}/${telemetryQualityMinimum}.`
+                : "Telemetry quality score unavailable.",
+            funnelPath
+        ),
         parityChecks: createComponentSummary(
             "parityChecks",
             parityOverallStatus,
@@ -193,6 +219,11 @@ function main() {
         `Perf gate: ${components.perfGate.status}`,
         `Lighthouse reliability: ${components.lighthouseReliability.status}`,
         `Funnel health: ${components.funnelHealth.status}`,
+        `Telemetry quality: ${components.telemetryQuality.status}${
+            telemetryQualityScore !== null
+                ? ` (${telemetryQualityScore})`
+                : ""
+        }`,
         `Parity checks: ${components.parityChecks.status}`,
     ];
 

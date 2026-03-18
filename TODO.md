@@ -122,7 +122,7 @@ Last updated: 2026-03-18 (Europe/Zurich)
 ## P1 — Wave 6 live telemetry + anomaly automation
 
 - [x] Activate live conversion trend pipeline with explicit `sourceMode` (`live` vs `seeded`) markers, freshness checks, and fallback-window failure policy — completed on 2026-03-18 (`scripts/conversion_telemetry_weekly_report.js`, `config/conversion-telemetry-source.json`)
-- [ ] Add conversion data-integrity pre-checks (required events, route/campaign completeness, freshness window) and compute telemetry quality score
+- [x] Add conversion data-integrity pre-checks (required events, route/campaign completeness, freshness window) and compute telemetry quality score — completed on 2026-03-18 (`scripts/conversion_telemetry_weekly_report.js`, `scripts/ops_summary_report.js`, `config/conversion-telemetry-source.json`)
 - [ ] Harden conversion sentinel v2 (rolling baseline window tuning, anomaly confidence tiers, cooldown/dedupe)
 - [ ] Add sentinel failure-code runbook mapping for rapid remediation
 - [ ] Extend runtime health snapshot v3 with conversion freshness, source mode, sentinel last status, and data-quality score

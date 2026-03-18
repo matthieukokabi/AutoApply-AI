@@ -28,6 +28,18 @@ function readSegmentAlerts(segments = []) {
         }));
 }
 
+const REQUIRED_FUNNEL_EVENTS = [
+    "page_view",
+    "cta_click",
+    "form_start",
+    "captcha_pass",
+    "captcha_fail",
+    "submit_success",
+    "submit_fail",
+];
+const UNKNOWN_SEGMENT = "unknown";
+const OTHER_SEGMENT = "__other__";
+
 function readJson(filePath) {
     return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -132,6 +144,88 @@ function resolveSeededReport(reportsDir, explicitPath) {
     return candidates[candidates.length - 1];
 }
 
+function validateRequiredEvents(events) {
+    const safeEvents = events && typeof events === "object" ? events : {};
+    const present = REQUIRED_FUNNEL_EVENTS.filter((eventName) =>
+        Number.isFinite(Number(safeEvents[eventName]))
+    );
+    const missing = REQUIRED_FUNNEL_EVENTS.filter(
+        (eventName) => !present.includes(eventName)
+    );
+
+    return {
+        required: REQUIRED_FUNNEL_EVENTS,
+        present,
+        missing,
+        pass: missing.length === 0,
+    };
+}
+
+function summarizeSegments(segments = []) {
+    const total = Array.isArray(segments) ? segments.length : 0;
+    const known = (Array.isArray(segments) ? segments : []).filter((item) => {
+        const segment = item?.segment;
+        if (typeof segment !== "string") {
+            return false;
+        }
+
+        return segment !== UNKNOWN_SEGMENT && segment !== OTHER_SEGMENT;
+    }).length;
+
+    return {
+        total,
+        known,
+        pass: known > 0,
+    };
+}
+
+function evaluateDataQuality({ funnelDaily, freshness, minQualityScore }) {
+    const requiredEvents = validateRequiredEvents(funnelDaily?.events);
+    const routeSegments = summarizeSegments(funnelDaily?.segmentation?.byRoute || []);
+    const campaignSegments = summarizeSegments(
+        funnelDaily?.segmentation?.byCampaign || []
+    );
+
+    const requiredCoverage =
+        requiredEvents.required.length === 0
+            ? 0
+            : requiredEvents.present.length / requiredEvents.required.length;
+
+    const qualityScore = Number(
+        (
+            requiredCoverage * 40 +
+            (routeSegments.pass ? 15 : 0) +
+            (campaignSegments.pass ? 15 : 0) +
+            (freshness.isFresh ? 30 : 0)
+        ).toFixed(2)
+    );
+
+    const status =
+        !requiredEvents.pass || !freshness.isFresh
+            ? "fail"
+            : qualityScore >= minQualityScore
+              ? "pass"
+              : "warning";
+
+    return {
+        status,
+        qualityScore,
+        minQualityScore,
+        checks: {
+            requiredEvents,
+            segmentation: {
+                route: routeSegments,
+                campaign: campaignSegments,
+            },
+            freshness: {
+                pass: freshness.isFresh,
+                ageMinutes: freshness.ageMinutes,
+                freshnessWindowMinutes: freshness.freshnessWindowMinutes,
+            },
+        },
+    };
+}
+
 async function main() {
     const workspaceRoot = path.resolve(__dirname, "../../..");
     const reportsDir = path.join(workspaceRoot, "docs", "reports");
@@ -161,6 +255,10 @@ async function main() {
     const maxFallbackReportsInWindow = parseInteger(
         process.env.CONVERSION_TELEMETRY_MAX_FALLBACK_REPORTS_IN_WINDOW,
         parseInteger(config.maxFallbackReportsInWindow, 0)
+    );
+    const minQualityScore = parseInteger(
+        process.env.CONVERSION_TELEMETRY_MIN_QUALITY_SCORE,
+        parseInteger(config.minQualityScore, 80)
     );
     const seededReportPath = resolveSeededReport(
         reportsDir,
@@ -273,6 +371,25 @@ async function main() {
         failureCodes.push("fallback_window_exceeded");
     }
 
+    const dataQuality = evaluateDataQuality({
+        funnelDaily,
+        freshness,
+        minQualityScore,
+    });
+
+    if (!dataQuality.checks.requiredEvents.pass) {
+        failureCodes.push("required_funnel_events_missing");
+    }
+    if (!dataQuality.checks.segmentation.route.pass) {
+        failureCodes.push("route_dimension_missing");
+    }
+    if (!dataQuality.checks.segmentation.campaign.pass) {
+        failureCodes.push("campaign_dimension_missing");
+    }
+    if (dataQuality.qualityScore < minQualityScore) {
+        failureCodes.push("quality_score_below_threshold");
+    }
+
     const output = {
         generatedAt: now.toISOString(),
         baseUrl,
@@ -294,7 +411,8 @@ async function main() {
                   ? "alert"
                   : "pass",
         anomalyCount,
-        failureCodes,
+        failureCodes: Array.from(new Set(failureCodes)),
+        dataQuality,
         keyMetrics: {
             dailyCompletionRateFromFormStart:
                 funnelDaily?.summary?.completionRateFromFormStart ?? null,
