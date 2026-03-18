@@ -1,6 +1,6 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-03-18 (Europe/Zurich)
+Last updated: 2026-03-19 (Europe/Zurich)
 
 ## P0 — Must complete before live payment test
 
@@ -136,3 +136,10 @@ Last updated: 2026-03-18 (Europe/Zurich)
 - [x] Add optional alert transport v1 (webhook/email-style sink) with retries + dedupe/cooldown and severity routing — completed on 2026-03-18 (`apps/web/scripts/alert_transport_dispatch.js`, `apps/web/config/alert-transport.json`, `apps/web/__tests__/alert-transport-dispatch.test.ts`)
 - [x] Extend mission-control ops summary v2 with organic baseline health, history-store freshness, alert transport delivery status, anomaly confidence-tier trend — completed on 2026-03-18 (`apps/web/scripts/ops_summary_report.js`, `apps/web/__tests__/ops-summary-report.test.ts`)
 - [x] Run full Wave 7 validation (`lint`, `test`, `build`) and publish `docs/wave7-validation-report-2026-03-18.md` + `docs/reports/wave7-*` artifacts — completed on 2026-03-18 (`docs/wave7-validation-report-2026-03-18.md`, `docs/reports/wave7-telemetry-history-20260318_224817.json`, `docs/reports/wave7-organic-baseline-20260318_224817.json`, `docs/reports/wave7-alert-transport-20260318_224817.json`, `docs/reports/wave7-ops-summary-v2-20260318_224817.json`)
+
+## P1 — Wave 7.1 prod closeout only
+
+- [x] Validate `CONTACT_DIAGNOSTICS_TOKEN` is active in production runtime and accepts authenticated diagnostics requests — completed on 2026-03-18 (`/api/contact/diagnostics` token-auth checks returned `HTTP 200`)
+- [x] Run one production-grade telemetry cycle using live source mode (seeded fallback disabled) and publish Wave 7.1 live artifacts — completed on 2026-03-18 (`docs/reports/wave7_1-telemetry-live-20260318_234850.json`, `docs/reports/wave7_1-ops-summary-live-20260318_234850.json`)
+- [x] Re-run local validation gate (`lint`, `test`, `build`) after closeout artifact publication — completed on 2026-03-19 (`apps/web`)
+- [x] Publish closeout proof with timestamp + commit SHA + source marker and move phase to observation — completed on 2026-03-19 (`docs/reports/wave7_1-closeout-2026-03-19.md`)

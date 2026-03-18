@@ -1,0 +1,141 @@
+{
+  "generatedAt": "2026-03-18T23:48:53.748Z",
+  "reportsDir": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports",
+  "overallStatus": "fail",
+  "missionControl": {
+    "seoParityStatus": "pass",
+    "perfGateStatus": "pass",
+    "conversionSentinelStatus": "fail",
+    "telemetryFreshness": {
+      "status": "pass",
+      "sourceMode": "live",
+      "ageMinutes": -0.01
+    },
+    "organicBaselineHealth": {
+      "status": "warning",
+      "currentStatus": "guarded_sparse_current",
+      "dropPercent": null,
+      "seasonalityMode": "rolling_all_days"
+    },
+    "historyStoreFreshness": {
+      "status": "pass",
+      "conversion": "fresh",
+      "sentinel": "fresh",
+      "perf": "fresh"
+    },
+    "alertTransportDelivery": {
+      "status": "pass",
+      "dispatchMode": "critical_immediate",
+      "deliveryStatus": "local_only"
+    },
+    "anomalyConfidenceTierTrend": {
+      "status": "unavailable",
+      "latest": "none",
+      "previous": "none",
+      "direction": "unknown"
+    },
+    "topAnomalies": []
+  },
+  "components": {
+    "perfGate": {
+      "name": "perfGate",
+      "status": "pass",
+      "detail": "Performance budget gate is passing.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-performance-budget-20260318_203500.json"
+    },
+    "lighthouseReliability": {
+      "name": "lighthouseReliability",
+      "status": "pass",
+      "detail": "Lighthouse reliability checks are stable.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-lighthouse-reliability-20260318_203350.json"
+    },
+    "funnelHealth": {
+      "name": "funnelHealth",
+      "status": "fail",
+      "detail": "Conversion trend includes anomalies or alerts.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-trend-live-20260318_234850.json"
+    },
+    "telemetryQuality": {
+      "name": "telemetryQuality",
+      "status": "warning",
+      "detail": "Telemetry quality score 70/80.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-trend-live-20260318_234850.json"
+    },
+    "parityChecks": {
+      "name": "parityChecks",
+      "status": "pass",
+      "detail": "Canonical parity and live squirrel checks are passing.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave3-canonical-og-parity-prod-2026-03-18.txt"
+    },
+    "conversionSentinel": {
+      "name": "conversionSentinel",
+      "status": "fail",
+      "detail": "Conversion sentinel detected a regression.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-sentinel-20260318_234850.json"
+    },
+    "telemetryFreshness": {
+      "name": "telemetryFreshness",
+      "status": "pass",
+      "detail": "Telemetry freshness checks are healthy.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-trend-live-20260318_234850.json"
+    },
+    "perfConversionCorrelation": {
+      "name": "perfConversionCorrelation",
+      "status": "pass",
+      "detail": "No co-occurring perf + conversion regressions detected.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-perf-conversion-correlation-20260318_224817.json"
+    },
+    "organicBaselineHealth": {
+      "name": "organicBaselineHealth",
+      "status": "warning",
+      "detail": "Organic baseline status guarded_sparse_current, drop n/a%.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-sentinel-20260318_234850.json"
+    },
+    "historyStoreFreshness": {
+      "name": "historyStoreFreshness",
+      "status": "pass",
+      "detail": "History store freshness: conversion=fresh, sentinel=fresh, perf=fresh.",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-telemetry-history-20260318_224817.json"
+    },
+    "alertTransportDelivery": {
+      "name": "alertTransportDelivery",
+      "status": "pass",
+      "detail": "Alert transport critical_immediate (local_only).",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-alert-transport-20260318_234850.json"
+    },
+    "anomalyConfidenceTierTrend": {
+      "name": "anomalyConfidenceTierTrend",
+      "status": "unavailable",
+      "detail": "Anomaly confidence tier trend none -> none (unknown).",
+      "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-telemetry-history-store.json"
+    }
+  },
+  "topAnomalies": [],
+  "missionControlSummary": [
+    "Overall status: FAIL",
+    "Perf gate: pass",
+    "Lighthouse reliability: pass",
+    "Funnel health: fail",
+    "Telemetry quality: warning (70)",
+    "Telemetry freshness: pass",
+    "Conversion sentinel: fail",
+    "Perf/conversion correlation: pass",
+    "Organic baseline health: warning",
+    "History store freshness: pass",
+    "Alert transport delivery: pass",
+    "Anomaly confidence trend: none->none (unknown)",
+    "Parity checks: pass",
+    "Top anomalies: 0"
+  ],
+  "sourceReports": {
+    "perfGate": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-performance-budget-20260318_203500.json",
+    "lighthouseReliability": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-lighthouse-reliability-20260318_203350.json",
+    "funnelHealth": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-trend-live-20260318_234850.json",
+    "conversionSentinel": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-conversion-sentinel-20260318_234850.json",
+    "perfConversionCorrelation": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-perf-conversion-correlation-20260318_224817.json",
+    "telemetryHistory": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-telemetry-history-20260318_224817.json",
+    "alertTransport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave7-alert-transport-20260318_234850.json",
+    "canonicalParity": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave3-canonical-og-parity-prod-2026-03-18.txt",
+    "liveSquirrel": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave3-live-squirrel-audit-prod-2026-03-18.json"
+  }
+}

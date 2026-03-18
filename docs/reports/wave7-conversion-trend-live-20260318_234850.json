@@ -1,0 +1,638 @@
+{
+  "generatedAt": "2026-03-18T23:48:51.188Z",
+  "baseUrl": "https://autoapply.works",
+  "source": "https://autoapply.works/api/contact/diagnostics",
+  "sourceMode": "live",
+  "sourceFailures": [],
+  "sourceFreshness": {
+    "isFresh": true,
+    "ageMinutes": -0.01,
+    "freshnessWindowMinutes": 180,
+    "failureCode": null
+  },
+  "sourcePolicy": {
+    "allowSeededFallback": false,
+    "fallbackWindowSize": 3,
+    "maxFallbackReportsInWindow": 0,
+    "fallbackReportsInWindow": 0,
+    "fallbackWindowExceeded": false
+  },
+  "status": "fail",
+  "anomalyCount": 0,
+  "failureCodes": [
+    "route_dimension_missing",
+    "campaign_dimension_missing",
+    "quality_score_below_threshold"
+  ],
+  "dataQuality": {
+    "status": "warning",
+    "qualityScore": 70,
+    "minQualityScore": 80,
+    "checks": {
+      "requiredEvents": {
+        "required": [
+          "page_view",
+          "cta_click",
+          "form_start",
+          "captcha_pass",
+          "captcha_fail",
+          "submit_success",
+          "submit_fail"
+        ],
+        "present": [
+          "page_view",
+          "cta_click",
+          "form_start",
+          "captcha_pass",
+          "captcha_fail",
+          "submit_success",
+          "submit_fail"
+        ],
+        "missing": [],
+        "pass": true
+      },
+      "segmentation": {
+        "route": {
+          "total": 0,
+          "known": 0,
+          "pass": false
+        },
+        "campaign": {
+          "total": 0,
+          "known": 0,
+          "pass": false
+        }
+      },
+      "freshness": {
+        "pass": true,
+        "ageMinutes": -0.01,
+        "freshnessWindowMinutes": 180
+      }
+    }
+  },
+  "keyMetrics": {
+    "dailyCompletionRateFromFormStart": 0,
+    "dailyCaptchaFailRate": 0,
+    "weeklyCompletionRateLatest": 0,
+    "weeklyCompletionRateBaseline": 0,
+    "weeklyCaptchaFailRateLatest": 0,
+    "weeklyCaptchaFailRateBaseline": 0
+  },
+  "anomalies": {
+    "daily": [],
+    "weekly": [],
+    "routeDropoff": [],
+    "campaignDropoff": []
+  },
+  "channels": {
+    "classificationVersion": "wave7_v1",
+    "breakdown": [],
+    "organic": {
+      "channel": "organic",
+      "formStarts": 0,
+      "submitSuccess": 0,
+      "completionRateFromFormStart": 0,
+      "captchaFailRate": 0,
+      "segmentCount": 0,
+      "segments": [],
+      "hasMinimumSample": false
+    }
+  },
+  "funnel": {
+    "daily": {
+      "windowHours": 24,
+      "events": {
+        "captcha_fail": 0,
+        "captcha_pass": 0,
+        "cta_click": 0,
+        "form_start": 0,
+        "page_view": 0,
+        "submit_fail": 0,
+        "submit_success": 0
+      },
+      "summary": {
+        "pageViews": 0,
+        "ctaClicks": 0,
+        "formStarts": 0,
+        "captchaPass": 0,
+        "captchaFail": 0,
+        "submitSuccess": 0,
+        "submitFail": 0,
+        "completionRateFromPageView": 0,
+        "completionRateFromFormStart": 0,
+        "ctaToSubmitRate": 0,
+        "captchaFailRate": 0,
+        "dropOffAttribution": [
+          {
+            "stage": "page_view_to_cta_click",
+            "from": "page_view",
+            "to": "cta_click",
+            "fromCount": 0,
+            "toCount": 0,
+            "dropOffCount": 0,
+            "dropOffRate": 0
+          },
+          {
+            "stage": "cta_click_to_form_start",
+            "from": "cta_click",
+            "to": "form_start",
+            "fromCount": 0,
+            "toCount": 0,
+            "dropOffCount": 0,
+            "dropOffRate": 0
+          },
+          {
+            "stage": "form_start_to_captcha_pass",
+            "from": "form_start",
+            "to": "captcha_pass",
+            "fromCount": 0,
+            "toCount": 0,
+            "dropOffCount": 0,
+            "dropOffRate": 0
+          },
+          {
+            "stage": "captcha_pass_to_submit_success",
+            "from": "captcha_pass",
+            "to": "submit_success",
+            "fromCount": 0,
+            "toCount": 0,
+            "dropOffCount": 0,
+            "dropOffRate": 0
+          }
+        ],
+        "anomalies": []
+      },
+      "segmentation": {
+        "byRoute": [],
+        "byCampaign": []
+      }
+    },
+    "weekly": {
+      "windowDays": 7,
+      "days": [
+        {
+          "date": "2026-03-12",
+          "events": {
+            "page_view": 0,
+            "cta_click": 0,
+            "form_start": 0,
+            "captcha_pass": 0,
+            "captcha_fail": 0,
+            "submit_success": 0,
+            "submit_fail": 0
+          },
+          "summary": {
+            "pageViews": 0,
+            "ctaClicks": 0,
+            "formStarts": 0,
+            "captchaPass": 0,
+            "captchaFail": 0,
+            "submitSuccess": 0,
+            "submitFail": 0,
+            "completionRateFromPageView": 0,
+            "completionRateFromFormStart": 0,
+            "ctaToSubmitRate": 0,
+            "captchaFailRate": 0,
+            "dropOffAttribution": [
+              {
+                "stage": "page_view_to_cta_click",
+                "from": "page_view",
+                "to": "cta_click",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "cta_click_to_form_start",
+                "from": "cta_click",
+                "to": "form_start",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "form_start_to_captcha_pass",
+                "from": "form_start",
+                "to": "captcha_pass",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "captcha_pass_to_submit_success",
+                "from": "captcha_pass",
+                "to": "submit_success",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              }
+            ],
+            "anomalies": []
+          }
+        },
+        {
+          "date": "2026-03-13",
+          "events": {
+            "page_view": 0,
+            "cta_click": 0,
+            "form_start": 0,
+            "captcha_pass": 0,
+            "captcha_fail": 0,
+            "submit_success": 0,
+            "submit_fail": 0
+          },
+          "summary": {
+            "pageViews": 0,
+            "ctaClicks": 0,
+            "formStarts": 0,
+            "captchaPass": 0,
+            "captchaFail": 0,
+            "submitSuccess": 0,
+            "submitFail": 0,
+            "completionRateFromPageView": 0,
+            "completionRateFromFormStart": 0,
+            "ctaToSubmitRate": 0,
+            "captchaFailRate": 0,
+            "dropOffAttribution": [
+              {
+                "stage": "page_view_to_cta_click",
+                "from": "page_view",
+                "to": "cta_click",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "cta_click_to_form_start",
+                "from": "cta_click",
+                "to": "form_start",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "form_start_to_captcha_pass",
+                "from": "form_start",
+                "to": "captcha_pass",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "captcha_pass_to_submit_success",
+                "from": "captcha_pass",
+                "to": "submit_success",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              }
+            ],
+            "anomalies": []
+          }
+        },
+        {
+          "date": "2026-03-14",
+          "events": {
+            "page_view": 0,
+            "cta_click": 0,
+            "form_start": 0,
+            "captcha_pass": 0,
+            "captcha_fail": 0,
+            "submit_success": 0,
+            "submit_fail": 0
+          },
+          "summary": {
+            "pageViews": 0,
+            "ctaClicks": 0,
+            "formStarts": 0,
+            "captchaPass": 0,
+            "captchaFail": 0,
+            "submitSuccess": 0,
+            "submitFail": 0,
+            "completionRateFromPageView": 0,
+            "completionRateFromFormStart": 0,
+            "ctaToSubmitRate": 0,
+            "captchaFailRate": 0,
+            "dropOffAttribution": [
+              {
+                "stage": "page_view_to_cta_click",
+                "from": "page_view",
+                "to": "cta_click",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "cta_click_to_form_start",
+                "from": "cta_click",
+                "to": "form_start",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "form_start_to_captcha_pass",
+                "from": "form_start",
+                "to": "captcha_pass",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "captcha_pass_to_submit_success",
+                "from": "captcha_pass",
+                "to": "submit_success",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              }
+            ],
+            "anomalies": []
+          }
+        },
+        {
+          "date": "2026-03-15",
+          "events": {
+            "page_view": 0,
+            "cta_click": 0,
+            "form_start": 0,
+            "captcha_pass": 0,
+            "captcha_fail": 0,
+            "submit_success": 0,
+            "submit_fail": 0
+          },
+          "summary": {
+            "pageViews": 0,
+            "ctaClicks": 0,
+            "formStarts": 0,
+            "captchaPass": 0,
+            "captchaFail": 0,
+            "submitSuccess": 0,
+            "submitFail": 0,
+            "completionRateFromPageView": 0,
+            "completionRateFromFormStart": 0,
+            "ctaToSubmitRate": 0,
+            "captchaFailRate": 0,
+            "dropOffAttribution": [
+              {
+                "stage": "page_view_to_cta_click",
+                "from": "page_view",
+                "to": "cta_click",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "cta_click_to_form_start",
+                "from": "cta_click",
+                "to": "form_start",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "form_start_to_captcha_pass",
+                "from": "form_start",
+                "to": "captcha_pass",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "captcha_pass_to_submit_success",
+                "from": "captcha_pass",
+                "to": "submit_success",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              }
+            ],
+            "anomalies": []
+          }
+        },
+        {
+          "date": "2026-03-16",
+          "events": {
+            "page_view": 0,
+            "cta_click": 0,
+            "form_start": 0,
+            "captcha_pass": 0,
+            "captcha_fail": 0,
+            "submit_success": 0,
+            "submit_fail": 0
+          },
+          "summary": {
+            "pageViews": 0,
+            "ctaClicks": 0,
+            "formStarts": 0,
+            "captchaPass": 0,
+            "captchaFail": 0,
+            "submitSuccess": 0,
+            "submitFail": 0,
+            "completionRateFromPageView": 0,
+            "completionRateFromFormStart": 0,
+            "ctaToSubmitRate": 0,
+            "captchaFailRate": 0,
+            "dropOffAttribution": [
+              {
+                "stage": "page_view_to_cta_click",
+                "from": "page_view",
+                "to": "cta_click",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "cta_click_to_form_start",
+                "from": "cta_click",
+                "to": "form_start",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "form_start_to_captcha_pass",
+                "from": "form_start",
+                "to": "captcha_pass",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "captcha_pass_to_submit_success",
+                "from": "captcha_pass",
+                "to": "submit_success",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              }
+            ],
+            "anomalies": []
+          }
+        },
+        {
+          "date": "2026-03-17",
+          "events": {
+            "page_view": 0,
+            "cta_click": 0,
+            "form_start": 0,
+            "captcha_pass": 0,
+            "captcha_fail": 0,
+            "submit_success": 0,
+            "submit_fail": 0
+          },
+          "summary": {
+            "pageViews": 0,
+            "ctaClicks": 0,
+            "formStarts": 0,
+            "captchaPass": 0,
+            "captchaFail": 0,
+            "submitSuccess": 0,
+            "submitFail": 0,
+            "completionRateFromPageView": 0,
+            "completionRateFromFormStart": 0,
+            "ctaToSubmitRate": 0,
+            "captchaFailRate": 0,
+            "dropOffAttribution": [
+              {
+                "stage": "page_view_to_cta_click",
+                "from": "page_view",
+                "to": "cta_click",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "cta_click_to_form_start",
+                "from": "cta_click",
+                "to": "form_start",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "form_start_to_captcha_pass",
+                "from": "form_start",
+                "to": "captcha_pass",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "captcha_pass_to_submit_success",
+                "from": "captcha_pass",
+                "to": "submit_success",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              }
+            ],
+            "anomalies": []
+          }
+        },
+        {
+          "date": "2026-03-18",
+          "events": {
+            "page_view": 0,
+            "cta_click": 0,
+            "form_start": 0,
+            "captcha_pass": 0,
+            "captcha_fail": 0,
+            "submit_success": 0,
+            "submit_fail": 0
+          },
+          "summary": {
+            "pageViews": 0,
+            "ctaClicks": 0,
+            "formStarts": 0,
+            "captchaPass": 0,
+            "captchaFail": 0,
+            "submitSuccess": 0,
+            "submitFail": 0,
+            "completionRateFromPageView": 0,
+            "completionRateFromFormStart": 0,
+            "ctaToSubmitRate": 0,
+            "captchaFailRate": 0,
+            "dropOffAttribution": [
+              {
+                "stage": "page_view_to_cta_click",
+                "from": "page_view",
+                "to": "cta_click",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "cta_click_to_form_start",
+                "from": "cta_click",
+                "to": "form_start",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "form_start_to_captcha_pass",
+                "from": "form_start",
+                "to": "captcha_pass",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              },
+              {
+                "stage": "captcha_pass_to_submit_success",
+                "from": "captcha_pass",
+                "to": "submit_success",
+                "fromCount": 0,
+                "toCount": 0,
+                "dropOffCount": 0,
+                "dropOffRate": 0
+              }
+            ],
+            "anomalies": []
+          }
+        }
+      ],
+      "trend": {
+        "latestDate": "2026-03-18",
+        "completionRateFromFormStart": {
+          "latest": 0,
+          "baseline": 0,
+          "deltaFromBaseline": 0
+        },
+        "captchaFailRate": {
+          "latest": 0,
+          "baseline": 0,
+          "deltaFromBaseline": 0
+        }
+      },
+      "anomalies": []
+    }
+  }
+}
