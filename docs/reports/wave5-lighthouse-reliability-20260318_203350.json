@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-03-18T20:33:50Z",
+  "target": {
+    "baseUrl": "https://autoapply.works",
+    "route": "/en",
+    "url": "https://autoapply.works/en"
+  },
+  "config": {
+    "requiredSuccessfulRuns": 2,
+    "maxAttemptsPerRun": 3,
+    "warmupRequests": 1,
+    "deterministicFlags": [
+      "--quiet",
+      "--output=json",
+      "--preset=desktop",
+      "--form-factor=desktop",
+      "--throttling-method=simulate",
+      "--max-wait-for-load=45000",
+      "--chrome-flags=--headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --window-size=1920,1080"
+    ]
+  },
+  "runtime": {
+    "lighthouseVersion": "13.0.3",
+    "totalDurationMs": 56920
+  },
+  "summary": {
+    "status": "pass",
+    "successfulRuns": 2,
+    "attemptCount": 3,
+    "failureReason": null
+  },
+  "attempts": [
+    {
+      "generatedAt": "2026-03-18T20:33:14Z",
+      "targetUrl": "https://autoapply.works/en",
+      "runIndex": 1,
+      "attemptIndex": 1,
+      "retryIndex": 0,
+      "status": "fail",
+      "reason": "lighthouse_command_failed",
+      "commandError": "Runtime error encountered: Something went wrong with recording the trace over your page load. Please run Lighthouse again. (NO_NAVSTART) ",
+      "durationMs": 18588,
+      "metrics": {
+        "lcpMs": null,
+        "cls": null,
+        "jsBytes": null,
+        "imageBytes": null,
+        "performanceScore": null,
+        "accessibilityScore": null,
+        "bestPracticesScore": null,
+        "seoScore": null
+      },
+      "lcpDiagnostics": {
+        "errorMessage": null,
+        "errorStack": null
+      }
+    },
+    {
+      "generatedAt": "2026-03-18T20:33:31Z",
+      "targetUrl": "https://autoapply.works/en",
+      "runIndex": 1,
+      "attemptIndex": 2,
+      "retryIndex": 1,
+      "status": "pass",
+      "reason": "ok",
+      "commandError": null,
+      "durationMs": 15453,
+      "metrics": {
+        "lcpMs": 426.42999999999995,
+        "cls": 0,
+        "jsBytes": 514845,
+        "imageBytes": 0,
+        "performanceScore": 1,
+        "accessibilityScore": 0.93,
+        "bestPracticesScore": 0.92,
+        "seoScore": 0.91
+      },
+      "lcpDiagnostics": {
+        "errorMessage": null,
+        "errorStack": null
+      }
+    },
+    {
+      "generatedAt": "2026-03-18T20:33:50Z",
+      "targetUrl": "https://autoapply.works/en",
+      "runIndex": 2,
+      "attemptIndex": 1,
+      "retryIndex": 0,
+      "status": "pass",
+      "reason": "ok",
+      "commandError": null,
+      "durationMs": 17495,
+      "metrics": {
+        "lcpMs": 660.0730000000001,
+        "cls": 0,
+        "jsBytes": 514664,
+        "imageBytes": 0,
+        "performanceScore": 1,
+        "accessibilityScore": 0.93,
+        "bestPracticesScore": 0.92,
+        "seoScore": 0.91
+      },
+      "lcpDiagnostics": {
+        "errorMessage": null,
+        "errorStack": null
+      }
+    }
+  ]
+}

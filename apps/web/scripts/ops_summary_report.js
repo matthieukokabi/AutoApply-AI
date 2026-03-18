@@ -71,6 +71,18 @@ function readLatestFile(reportsDir, prefix, extension) {
     return candidates[candidates.length - 1];
 }
 
+function readLatestFromPrefixes(reportsDir, prefixes, extension = ".json") {
+    const allCandidates = prefixes
+        .flatMap((prefix) => listMatchingReports(reportsDir, prefix, extension))
+        .sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs);
+
+    if (allCandidates.length === 0) {
+        return null;
+    }
+
+    return allCandidates[allCandidates.length - 1];
+}
+
 function createComponentSummary(name, status, detail, sourceReport) {
     return {
         name,
@@ -89,10 +101,14 @@ function main() {
         process.env.REPORT_PATH ||
         path.join(reportsDir, `wave5-ops-summary-${formatTimestamp()}.json`);
 
-    const perfGatePath = readLatestFile(reportsDir, "wave4-performance-budget-", ".json");
-    const lighthousePath = readLatestFile(
+    const perfGatePath = readLatestFromPrefixes(
         reportsDir,
-        "wave4-lighthouse-reliability-",
+        ["wave5-performance-budget-", "wave4-performance-budget-"],
+        ".json"
+    );
+    const lighthousePath = readLatestFromPrefixes(
+        reportsDir,
+        ["wave5-lighthouse-reliability-", "wave4-lighthouse-reliability-"],
         ".json"
     );
     const funnelPath = readLatestFile(reportsDir, "wave5-conversion-trend-", ".json");

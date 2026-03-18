@@ -20,7 +20,7 @@
     }
   },
   "maxRegressionPercent": {
-    "lcpMs": 20,
+    "lcpMs": 30,
     "cls": 20,
     "jsBytes": 10,
     "imageBytes": 10

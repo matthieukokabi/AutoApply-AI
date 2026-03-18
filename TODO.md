@@ -117,4 +117,4 @@ Last updated: 2026-03-18 (Europe/Zurich)
 - [x] Harden runtime health snapshot v2 (token rotation guidance, stale-token warning, rate limiting, audit logging) — completed on 2026-03-18 (`/api/runtime/health-snapshot`, `__tests__/api/runtime-health-snapshot.test.ts`, `docs/runtime-health-snapshot-token-rotation.md`)
 - [x] Evolve performance budget checks with percentile trends + per-route regression deltas — completed on 2026-03-18 (`scripts/performance_budget_gate.js`, `scripts/performance_trend_report.js`, `__tests__/performance-budget-trend.test.ts`, `docs/reports/wave5-perf-trend-20260318_201625.json`)
 - [x] Add low-risk trust/content CRO on high-intent pages with no SEO metadata or CLS regressions — completed on 2026-03-18 (`contact-page-client.tsx`, `campaign/pain-led`, `campaign/proof-led`, `campaign/feature-led`)
-- [ ] Publish Wave 5 validation report + required `docs/reports/wave5-*` artifacts and final Wave 6 candidate list
+- [x] Publish Wave 5 validation report + required `docs/reports/wave5-*` artifacts and final Wave 6 candidate list — completed on 2026-03-18 (`docs/wave5-validation-report-2026-03-18.md`, refreshed `wave5-*` reports)

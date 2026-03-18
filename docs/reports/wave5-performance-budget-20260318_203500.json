@@ -1,0 +1,132 @@
+{
+  "generatedAt": "2026-03-18T20:34:34.490Z",
+  "status": "pass",
+  "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-lighthouse-reliability-20260318_203350.json",
+  "route": "/en",
+  "metrics": {
+    "lcpMs": 660.0730000000001,
+    "cls": 0,
+    "jsBytes": 514664,
+    "imageBytes": 0
+  },
+  "thresholds": {
+    "lcpMs": 3000,
+    "cls": 0.12,
+    "jsBytes": 550000,
+    "imageBytes": 700000
+  },
+  "regressionThresholds": {
+    "lcpMs": 30,
+    "cls": 20,
+    "jsBytes": 10,
+    "imageBytes": 10
+  },
+  "trendPercentileGuard": {
+    "percentile": 75,
+    "minSamples": 3,
+    "regressionThresholds": {
+      "lcpMs": 15,
+      "cls": 15,
+      "jsBytes": 8,
+      "imageBytes": 8
+    },
+    "values": {
+      "lcpMs": {
+        "percentile": 75,
+        "minSamples": 3,
+        "sampleCount": 3,
+        "value": 643.7655
+      },
+      "cls": {
+        "percentile": 75,
+        "minSamples": 3,
+        "sampleCount": 3,
+        "value": 0
+      },
+      "jsBytes": {
+        "percentile": 75,
+        "minSamples": 3,
+        "sampleCount": 3,
+        "value": 514750
+      },
+      "imageBytes": {
+        "percentile": 75,
+        "minSamples": 3,
+        "sampleCount": 3,
+        "value": 0
+      }
+    }
+  },
+  "baseline": {
+    "sourceReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave4-performance-budget-20260318_204500.json",
+    "metrics": {
+      "lcpMs": 527.898,
+      "cls": 0,
+      "jsBytes": 514763,
+      "imageBytes": 0
+    }
+  },
+  "perRouteRegressionDeltas": {
+    "lcpMs": {
+      "vsThreshold": {
+        "value": -2339.927,
+        "percent": -78
+      },
+      "vsBaseline": {
+        "value": 132.175,
+        "percent": 25.04
+      },
+      "vsTrendPercentile": {
+        "value": 16.3075,
+        "percent": 2.53
+      }
+    },
+    "cls": {
+      "vsThreshold": {
+        "value": -0.12,
+        "percent": -100
+      },
+      "vsBaseline": {
+        "value": null,
+        "percent": null
+      },
+      "vsTrendPercentile": {
+        "value": null,
+        "percent": null
+      }
+    },
+    "jsBytes": {
+      "vsThreshold": {
+        "value": -35336,
+        "percent": -6.42
+      },
+      "vsBaseline": {
+        "value": -99,
+        "percent": -0.02
+      },
+      "vsTrendPercentile": {
+        "value": -86,
+        "percent": -0.02
+      }
+    },
+    "imageBytes": {
+      "vsThreshold": {
+        "value": -700000,
+        "percent": -100
+      },
+      "vsBaseline": {
+        "value": null,
+        "percent": null
+      },
+      "vsTrendPercentile": {
+        "value": null,
+        "percent": null
+      }
+    }
+  },
+  "violations": [],
+  "emergencyBypass": {
+    "active": false,
+    "reason": null
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "generatedAt": "2026-03-18T20:35:21.651Z",
+  "reportsDir": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports",
+  "deterministicRoutes": {
+    "requiredRoutes": [
+      "/en",
+      "/en/sign-up"
+    ],
+    "highIntentRoute": "/en/sign-up"
+  },
+  "overallStatus": "warning",
+  "routeTrends": [
+    {
+      "route": "/en",
+      "status": "pass",
+      "samples": 5,
+      "latestReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave5-performance-budget-20260318_203500.json",
+      "latestStatus": "pass",
+      "percentiles": {
+        "lcpMs": {
+          "sampleCount": 5,
+          "p50": 660.073,
+          "p75": 660.073,
+          "p90": 661.8388
+        },
+        "cls": {
+          "sampleCount": 5,
+          "p50": 0,
+          "p75": 0,
+          "p90": 0
+        },
+        "jsBytes": {
+          "sampleCount": 5,
+          "p50": 514664,
+          "p75": 514737,
+          "p90": 514752.6
+        },
+        "imageBytes": {
+          "sampleCount": 5,
+          "p50": 0,
+          "p75": 0,
+          "p90": 0
+        }
+      },
+      "perRouteRegressionDeltas": {
+        "lcpMs": {
+          "currentValue": 660.0730000000001,
+          "vsPrevious": {
+            "value": 0,
+            "percent": 0
+          },
+          "vsP75": {
+            "value": 0,
+            "percent": 0
+          },
+          "vsP90": {
+            "value": -1.7658,
+            "percent": -0.27
+          }
+        },
+        "cls": {
+          "currentValue": 0,
+          "vsPrevious": {
+            "value": null,
+            "percent": null
+          },
+          "vsP75": {
+            "value": null,
+            "percent": null
+          },
+          "vsP90": {
+            "value": null,
+            "percent": null
+          }
+        },
+        "jsBytes": {
+          "currentValue": 514664,
+          "vsPrevious": {
+            "value": 0,
+            "percent": 0
+          },
+          "vsP75": {
+            "value": -73,
+            "percent": -0.01
+          },
+          "vsP90": {
+            "value": -88.6,
+            "percent": -0.02
+          }
+        },
+        "imageBytes": {
+          "currentValue": 0,
+          "vsPrevious": {
+            "value": null,
+            "percent": null
+          },
+          "vsP75": {
+            "value": null,
+            "percent": null
+          },
+          "vsP90": {
+            "value": null,
+            "percent": null
+          }
+        }
+      }
+    },
+    {
+      "route": "/en/sign-up",
+      "status": "warning",
+      "samples": 1,
+      "latestReport": "/Users/magikmad/Documents/New project/AutoApply-AI/docs/reports/wave4-performance-budget-20260318_200315-en-sign-up.json",
+      "latestStatus": "pass",
+      "percentiles": {
+        "lcpMs": {
+          "sampleCount": 1,
+          "p50": 929.4455,
+          "p75": 929.4455,
+          "p90": 929.4455
+        },
+        "cls": {
+          "sampleCount": 1,
+          "p50": 0.062,
+          "p75": 0.062,
+          "p90": 0.062
+        },
+        "jsBytes": {
+          "sampleCount": 1,
+          "p50": 528039,
+          "p75": 528039,
+          "p90": 528039
+        },
+        "imageBytes": {
+          "sampleCount": 1,
+          "p50": 3632,
+          "p75": 3632,
+          "p90": 3632
+        }
+      },
+      "perRouteRegressionDeltas": {
+        "lcpMs": {
+          "currentValue": 929.4455,
+          "vsPrevious": {
+            "value": null,
+            "percent": null
+          },
+          "vsP75": {
+            "value": 0,
+            "percent": 0
+          },
+          "vsP90": {
+            "value": 0,
+            "percent": 0
+          }
+        },
+        "cls": {
+          "currentValue": 0.061995,
+          "vsPrevious": {
+            "value": null,
+            "percent": null
+          },
+          "vsP75": {
+            "value": 0,
+            "percent": -0.01
+          },
+          "vsP90": {
+            "value": 0,
+            "percent": -0.01
+          }
+        },
+        "jsBytes": {
+          "currentValue": 528039,
+          "vsPrevious": {
+            "value": null,
+            "percent": null
+          },
+          "vsP75": {
+            "value": 0,
+            "percent": 0
+          },
+          "vsP90": {
+            "value": 0,
+            "percent": 0
+          }
+        },
+        "imageBytes": {
+          "currentValue": 3632,
+          "vsPrevious": {
+            "value": null,
+            "percent": null
+          },
+          "vsP75": {
+            "value": 0,
+            "percent": 0
+          },
+          "vsP90": {
+            "value": 0,
+            "percent": 0
+          }
+        }
+      }
+    }
+  ]
+}
