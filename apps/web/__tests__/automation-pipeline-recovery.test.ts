@@ -85,4 +85,46 @@ describe("automation pipeline recovery script helpers", () => {
         expect(payload[0].coverLetterMarkdown).toContain("Motivation Letter");
         expect(payload[0].runId).toBe("recovery-run-id");
     });
+
+    it("builds expanded search criteria from user preferences", () => {
+        const criteria = recovery.buildSearchCriteria({
+            targetTitles: ["IT Operation Lead", "Incident Manager"],
+            locations: ["Zürich", "Zurich"],
+            remotePreference: "hybrid",
+        });
+
+        expect(criteria.searchTitle).toBe("IT Operation Lead");
+        expect(criteria.searchLocation).toBe("Zürich");
+        expect(criteria.titleCandidates).toContain("Incident Manager");
+        expect(criteria.remotePreference).toBe("hybrid");
+        expect(criteria.locationCandidates).toEqual(["Zürich", "Zurich"]);
+    });
+
+    it("filters location preference for hybrid searches", () => {
+        const hybridHit = recovery.matchesLocationPreference(
+            {
+                location: "Zürich, Switzerland",
+                title: "IT Operations Manager",
+                description: "Hybrid role with 2 days remote.",
+            },
+            {
+                locationCandidates: ["Zürich"],
+                remotePreference: "hybrid",
+            }
+        );
+        const nonMatchingOnsite = recovery.matchesLocationPreference(
+            {
+                location: "Berlin, Germany",
+                title: "IT Operations Specialist",
+                description: "On-site only, no home office.",
+            },
+            {
+                locationCandidates: ["Zürich"],
+                remotePreference: "hybrid",
+            }
+        );
+
+        expect(hybridHit).toBe(true);
+        expect(nonMatchingOnsite).toBe(false);
+    });
 });

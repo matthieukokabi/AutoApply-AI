@@ -429,6 +429,36 @@ describe("POST /api/tailor", () => {
         expect(prisma.job.upsert).not.toHaveBeenCalled();
     });
 
+    it("stores source as linkedin when tailoring from a LinkedIn job URL", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+            ...mockUser,
+            creditsRemaining: 9,
+        } as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobDescription: "LinkedIn opportunity description",
+                jobUrl: "https://www.linkedin.com/jobs/view/1234567890/",
+            }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(prisma.job.upsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                create: expect.objectContaining({
+                    source: "linkedin",
+                }),
+            })
+        );
+    });
+
     it("returns 400 when job description exceeds the max length", async () => {
         vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
         vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);

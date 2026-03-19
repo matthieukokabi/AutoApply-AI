@@ -66,8 +66,15 @@ function loadEnvIfPresent() {
 const FETCH_NORMALIZE_JS = `// Fetch jobs from all sources for this user, normalize, and deduplicate
 const user = $input.first().json;
 const config = $('Load Config').first().json;
-const searchTitle = (user.targetTitles && user.targetTitles[0] ? user.targetTitles[0] : 'software engineer').trim();
-const searchLocation = (user.locations && user.locations[0] ? user.locations[0] : '').trim();
+const primaryTitle = (user.targetTitles && user.targetTitles[0] ? user.targetTitles[0] : 'software engineer').trim();
+const fallbackTitle = (user.targetTitles && user.targetTitles[1] ? user.targetTitles[1] : '').trim();
+const searchTitle = primaryTitle;
+const searchQuery = [primaryTitle, fallbackTitle].filter(Boolean).join(' OR ');
+const primaryLocation = (user.locations && user.locations[0] ? user.locations[0] : '').trim();
+const fallbackLocation = (user.locations && user.locations[1] ? user.locations[1] : '').trim();
+const searchLocation = primaryLocation;
+const searchLocationQuery = [primaryLocation, fallbackLocation].filter(Boolean).join(' OR ');
+const remotePreference = String(user.remotePreference || 'any').toLowerCase();
 const runId = String($execution.id || Date.now());
 
 const allJobs = [];
@@ -103,7 +110,7 @@ const adzunaCountry = detectAdzunaCountry(searchLocation);
 // 1) Adzuna
 if (config.adzunaAppId && config.adzunaAppKey) {
   try {
-    const adzunaUrl = 'https://api.adzuna.com/v1/api/jobs/' + adzunaCountry + '/search/1?app_id=' + config.adzunaAppId + '&app_key=' + config.adzunaAppKey + '&what=' + encodeURIComponent(searchTitle) + '&where=' + encodeURIComponent(searchLocation) + '&results_per_page=15&content-type=application/json';
+    const adzunaUrl = 'https://api.adzuna.com/v1/api/jobs/' + adzunaCountry + '/search/1?app_id=' + config.adzunaAppId + '&app_key=' + config.adzunaAppKey + '&what=' + encodeURIComponent(searchQuery || searchTitle) + '&where=' + encodeURIComponent(searchLocationQuery || searchLocation) + '&results_per_page=15&content-type=application/json';
     const data = await safeFetch(adzunaUrl);
     if (data && Array.isArray(data.results)) {
       for (const j of data.results) {
@@ -145,7 +152,7 @@ try {
 
 // 3) Remotive
 try {
-  const remotiveUrl = 'https://remotive.com/api/remote-jobs?search=' + encodeURIComponent(searchTitle) + '&limit=15';
+  const remotiveUrl = 'https://remotive.com/api/remote-jobs?search=' + encodeURIComponent(searchQuery || searchTitle) + '&limit=15';
   const data = await safeFetch(remotiveUrl);
   if (data && Array.isArray(data.jobs)) {
     for (const j of data.jobs) {
@@ -166,7 +173,7 @@ try {
 
 // 4) Arbeitnow
 try {
-  const arbeitnowUrl = 'https://www.arbeitnow.com/api/job-board-api?search=' + encodeURIComponent(searchTitle) + '&page=1';
+  const arbeitnowUrl = 'https://www.arbeitnow.com/api/job-board-api?search=' + encodeURIComponent(searchQuery || searchTitle) + '&page=1';
   const data = await safeFetch(arbeitnowUrl);
   if (data && Array.isArray(data.data)) {
     for (const j of data.data) {
@@ -188,7 +195,7 @@ try {
 // 5) JSearch
 if (config.jsearchApiKey) {
   try {
-    const query = searchTitle + ' in ' + (searchLocation || 'remote');
+    const query = (searchQuery || searchTitle) + ' ' + (searchLocationQuery || searchLocation || 'remote');
     const jsearchUrl = 'https://jsearch.p.rapidapi.com/search?query=' + encodeURIComponent(query) + '&page=1&num_pages=1';
     const data = await safeFetch(jsearchUrl, {
       headers: {
@@ -220,7 +227,7 @@ if (config.joobleApiKey) {
     const data = await safeFetch('https://jooble.org/api/' + config.joobleApiKey, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keywords: searchTitle, location: searchLocation, page: 1 })
+      body: JSON.stringify({ keywords: (searchQuery || searchTitle), location: (searchLocationQuery || searchLocation), page: 1 })
     });
     if (data && Array.isArray(data.jobs)) {
       for (const j of data.jobs) {
@@ -244,7 +251,7 @@ if (config.joobleApiKey) {
 if (config.reedApiKey) {
   try {
     const reedAuth = btoa(config.reedApiKey + ':');
-    const reedUrl = 'https://www.reed.co.uk/api/1.0/search?keywords=' + encodeURIComponent(searchTitle) + '&locationName=' + encodeURIComponent(searchLocation) + '&resultsToTake=15';
+    const reedUrl = 'https://www.reed.co.uk/api/1.0/search?keywords=' + encodeURIComponent(searchQuery || searchTitle) + '&locationName=' + encodeURIComponent(searchLocationQuery || searchLocation) + '&resultsToTake=15';
     const data = await safeFetch(reedUrl, {
       headers: { Authorization: 'Basic ' + reedAuth }
     });
@@ -275,9 +282,36 @@ for (const job of allJobs) {
   }
 }
 
-if (uniqueJobs.length === 0) return [];
+function normalizeForMatch(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\\u0300-\\u036f]/g, '')
+    .toLowerCase();
+}
 
-return uniqueJobs.map((job) => ({
+function matchesPreferredLocation(job, locationNeedles, preference) {
+  if (!Array.isArray(locationNeedles) || locationNeedles.length === 0) return true;
+  const haystack = normalizeForMatch((job.location || '') + ' ' + (job.title || '') + ' ' + (job.description || ''));
+  const matchesLocation = locationNeedles.some((needle) => haystack.includes(needle));
+  const mentionsRemote = /(remote|home office|work from home|hybrid|teletravail|hybride)/.test(haystack);
+
+  if (preference === 'remote') return mentionsRemote;
+  if (preference === 'onsite') return matchesLocation && !mentionsRemote;
+  if (preference === 'hybrid') return matchesLocation || haystack.includes('hybrid');
+  return matchesLocation || mentionsRemote;
+}
+
+const locationNeedles = [primaryLocation, fallbackLocation]
+  .filter(Boolean)
+  .map(normalizeForMatch);
+const filteredJobs = uniqueJobs.filter((job) =>
+  matchesPreferredLocation(job, locationNeedles, remotePreference)
+);
+const finalJobs = filteredJobs.length > 0 ? filteredJobs : uniqueJobs;
+
+if (finalJobs.length === 0) return [];
+
+return finalJobs.map((job) => ({
   json: {
     ...job,
     runId,

@@ -223,6 +223,137 @@ function detectAdzunaCountry(location) {
     return "us";
 }
 
+function uniqueNonEmpty(values, max = 3) {
+    const out = [];
+    const seen = new Set();
+    for (const value of values || []) {
+        const normalized = typeof value === "string" ? value.trim() : "";
+        if (!normalized) {
+            continue;
+        }
+        const key = normalized.toLowerCase();
+        if (seen.has(key)) {
+            continue;
+        }
+        seen.add(key);
+        out.push(normalized);
+        if (out.length >= max) {
+            break;
+        }
+    }
+    return out;
+}
+
+function normalizeForMatch(value) {
+    return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+}
+
+function buildSearchCriteria(preferences) {
+    const preferredTitles = uniqueNonEmpty(preferences?.targetTitles, 3);
+    const preferredLocations = uniqueNonEmpty(preferences?.locations, 3);
+    const remotePreference = String(preferences?.remotePreference || "any")
+        .trim()
+        .toLowerCase();
+
+    const titleCandidates = uniqueNonEmpty(
+        [
+            ...preferredTitles,
+            preferredTitles[0]
+                ? preferredTitles[0]
+                      .replace(/\b(lead|manager|head)\b/gi, "")
+                      .replace(/\s{2,}/g, " ")
+                      .trim()
+                : "",
+            "IT Operations",
+        ],
+        4
+    );
+
+    if (titleCandidates.length === 0) {
+        titleCandidates.push("software engineer");
+    }
+
+    return {
+        searchTitle: titleCandidates[0],
+        searchLocation: preferredLocations[0] || "",
+        titleCandidates,
+        locationCandidates: preferredLocations,
+        remotePreference:
+            remotePreference === "remote" ||
+            remotePreference === "hybrid" ||
+            remotePreference === "onsite"
+                ? remotePreference
+                : "any",
+    };
+}
+
+function matchesLocationPreference(job, options) {
+    const locationNeedles = (options?.locationCandidates || []).map(normalizeForMatch);
+    const remotePreference = options?.remotePreference || "any";
+    const haystack = normalizeForMatch(
+        `${job?.location || ""} ${job?.title || ""} ${job?.description || ""}`
+    );
+
+    const hasLocationPreference = locationNeedles.length > 0;
+    const matchesLocation = !hasLocationPreference
+        ? true
+        : locationNeedles.some((needle) => haystack.includes(needle));
+    const mentionsRemote = /(remote|home office|work from home|hybrid|teletravail|hybride)/.test(
+        haystack
+    );
+
+    if (remotePreference === "remote") {
+        return mentionsRemote;
+    }
+
+    if (remotePreference === "onsite") {
+        return matchesLocation && !mentionsRemote;
+    }
+
+    if (remotePreference === "hybrid") {
+        return matchesLocation || haystack.includes("hybrid");
+    }
+
+    if (hasLocationPreference) {
+        return matchesLocation || mentionsRemote;
+    }
+
+    return true;
+}
+
+function aggregateConnectorResponses(responses, shapeKey) {
+    const items = [];
+    let ok = false;
+    let status = null;
+    let error = null;
+    for (const response of responses) {
+        if (!response) {
+            continue;
+        }
+        if (response.ok) {
+            ok = true;
+            status = response.status || status || 200;
+            const bucket = response.body?.[shapeKey];
+            if (Array.isArray(bucket)) {
+                items.push(...bucket);
+            }
+        } else if (!ok) {
+            status = response.status ?? status;
+            error = response.error || error;
+        }
+    }
+
+    return {
+        ok,
+        status: ok ? status || 200 : status,
+        error: ok ? null : error,
+        body: { [shapeKey]: items },
+    };
+}
+
 function normalizeJobs(source, payload) {
     const out = [];
 
@@ -613,18 +744,53 @@ async function main() {
             throw new Error("user_preferences_missing");
         }
 
-        const searchTitle = (user.preferences.targetTitles?.[0] || "software engineer").trim();
-        const searchLocation = (user.preferences.locations?.[0] || "").trim();
+        const criteria = buildSearchCriteria(user.preferences);
+        const {
+            searchTitle,
+            searchLocation,
+            titleCandidates,
+            locationCandidates,
+            remotePreference,
+        } = criteria;
         const adzunaCountry = detectAdzunaCountry(searchLocation);
         const runId = `recovery-${Date.now()}-${user.id}`;
+        const titleLocationPairs = [];
+        const locationsForPairs =
+            locationCandidates.length > 0 ? locationCandidates : [""];
+        for (const title of titleCandidates) {
+            for (const location of locationsForPairs) {
+                titleLocationPairs.push({ title, location });
+                if (titleLocationPairs.length >= 6) {
+                    break;
+                }
+            }
+            if (titleLocationPairs.length >= 6) {
+                break;
+            }
+        }
 
         const connectors = [];
         connectors.push({
             source: "adzuna",
-            fetcher: () =>
-                safeFetchJson(
-                    `https://api.adzuna.com/v1/api/jobs/${adzunaCountry}/search/1?app_id=${encodeURIComponent(config.adzunaAppId)}&app_key=${encodeURIComponent(config.adzunaAppKey)}&what=${encodeURIComponent(searchTitle)}&where=${encodeURIComponent(searchLocation)}&results_per_page=15&content-type=application/json`
-                ),
+            fetcher: async () => {
+                if (!config.adzunaAppId || !config.adzunaAppKey) {
+                    return {
+                        ok: false,
+                        status: null,
+                        error: "missing_adzuna_credentials",
+                        body: { results: [] },
+                    };
+                }
+                const responses = [];
+                for (const pair of titleLocationPairs.slice(0, 4)) {
+                    responses.push(
+                        await safeFetchJson(
+                            `https://api.adzuna.com/v1/api/jobs/${adzunaCountry}/search/1?app_id=${encodeURIComponent(config.adzunaAppId)}&app_key=${encodeURIComponent(config.adzunaAppKey)}&what=${encodeURIComponent(pair.title)}&where=${encodeURIComponent(pair.location)}&results_per_page=15&content-type=application/json`
+                        )
+                    );
+                }
+                return aggregateConnectorResponses(responses, "results");
+            },
         });
         connectors.push({
             source: "themuse",
@@ -635,21 +801,35 @@ async function main() {
         });
         connectors.push({
             source: "remotive",
-            fetcher: () =>
-                safeFetchJson(
-                    `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(searchTitle)}&limit=15`
-                ),
+            fetcher: async () => {
+                const responses = [];
+                for (const title of titleCandidates.slice(0, 3)) {
+                    responses.push(
+                        await safeFetchJson(
+                            `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(title)}&limit=15`
+                        )
+                    );
+                }
+                return aggregateConnectorResponses(responses, "jobs");
+            },
         });
         connectors.push({
             source: "arbeitnow",
-            fetcher: () =>
-                safeFetchJson(
-                    `https://www.arbeitnow.com/api/job-board-api?search=${encodeURIComponent(searchTitle)}&page=1`
-                ),
+            fetcher: async () => {
+                const responses = [];
+                for (const title of titleCandidates.slice(0, 3)) {
+                    responses.push(
+                        await safeFetchJson(
+                            `https://www.arbeitnow.com/api/job-board-api?search=${encodeURIComponent(title)}&page=1`
+                        )
+                    );
+                }
+                return aggregateConnectorResponses(responses, "data");
+            },
         });
 
         if (config.jsearchApiKey) {
-            const query = `${searchTitle} in ${searchLocation || "remote"}`;
+            const query = `${searchTitle} ${searchLocation || "remote"}`.trim();
             connectors.push({
                 source: "jsearch",
                 fetcher: () =>
@@ -668,12 +848,49 @@ async function main() {
         if (config.joobleApiKey) {
             connectors.push({
                 source: "jooble",
-                fetcher: () =>
-                    safeFetchJson(`https://jooble.org/api/${config.joobleApiKey}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ keywords: searchTitle, location: searchLocation, page: 1 }),
-                    }),
+                fetcher: async () => {
+                    const responses = [];
+                    for (const pair of titleLocationPairs.slice(0, 4)) {
+                        responses.push(
+                            await safeFetchJson(
+                                `https://jooble.org/api/${config.joobleApiKey}`,
+                                {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                        keywords: pair.title,
+                                        location: pair.location,
+                                        page: 1,
+                                    }),
+                                }
+                            )
+                        );
+                    }
+                    return aggregateConnectorResponses(responses, "jobs");
+                },
+            });
+        }
+
+        if (config.reedApiKey) {
+            connectors.push({
+                source: "reed",
+                fetcher: async () => {
+                    const auth = Buffer.from(`${config.reedApiKey}:`).toString("base64");
+                    const responses = [];
+                    for (const pair of titleLocationPairs.slice(0, 4)) {
+                        responses.push(
+                            await safeFetchJson(
+                                `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(pair.title)}&locationName=${encodeURIComponent(pair.location)}&resultsToTake=15`,
+                                {
+                                    headers: {
+                                        Authorization: `Basic ${auth}`,
+                                    },
+                                }
+                            )
+                        );
+                    }
+                    return aggregateConnectorResponses(responses, "results");
+                },
             });
         }
 
@@ -683,8 +900,19 @@ async function main() {
             rawConnectorResults.push(buildConnectorResult(connector.source, response));
         }
 
-        const dedupedJobs = dedupeJobs(
+        const allDedupedJobs = dedupeJobs(
             rawConnectorResults.flatMap((entry) => entry.normalized)
+        );
+        const preferenceFilteredJobs = allDedupedJobs.filter((job) =>
+            matchesLocationPreference(job, {
+                locationCandidates,
+                remotePreference,
+            })
+        );
+        const dedupedJobs = (
+            preferenceFilteredJobs.length > 0
+                ? preferenceFilteredJobs
+                : allDedupedJobs
         ).slice(0, args.maxJobs);
 
         const beforeApplications = await prisma.application.count({ where: { userId: user.id } });
@@ -782,8 +1010,19 @@ async function main() {
             criteria: {
                 searchTitle,
                 searchLocation,
+                titleCandidates,
+                locationCandidates,
+                remotePreference,
                 maxJobs: args.maxJobs,
                 tailorThreshold: args.tailorThreshold,
+            },
+            sourceInsights: {
+                linkedin: {
+                    automaticDiscoveryEnabled: false,
+                    reason:
+                        "linkedin_jobs_api_not_configured_in_automation_pipeline",
+                    availableVia: "manual_job_url_import",
+                },
             },
             connectors: rawConnectorResults.map((entry) => ({
                 source: entry.source,
@@ -793,6 +1032,8 @@ async function main() {
                 normalizedCount: entry.normalized.length,
             })),
             jobs: {
+                totalDedupedBeforePreferenceFilter: allDedupedJobs.length,
+                preferenceFilteredCount: preferenceFilteredJobs.length,
                 dedupedCount: dedupedJobs.length,
                 scoredCount: scored.length,
                 tailoredCandidatesCount: tailorCandidates.length,
@@ -838,6 +1079,8 @@ module.exports = {
     parseArgs,
     parseJsonFromModelText,
     detectAdzunaCountry,
+    buildSearchCriteria,
+    matchesLocationPreference,
     normalizeJobs,
     dedupeJobs,
     buildConnectorResult,

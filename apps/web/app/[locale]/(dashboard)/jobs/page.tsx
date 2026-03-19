@@ -250,6 +250,7 @@ export default function JobsPage() {
                     <option value="jsearch">JSearch</option>
                     <option value="jooble">Jooble</option>
                     <option value="reed">Reed</option>
+                    <option value="linkedin">LinkedIn (manual import)</option>
                     <option value="manual">Manual</option>
                 </select>
                 <select

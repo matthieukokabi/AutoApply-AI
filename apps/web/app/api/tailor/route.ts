@@ -13,6 +13,23 @@ const MAX_COMPANY_LENGTH = 200;
 const MAX_JOB_ID_LENGTH = 100;
 const tailorRequestLog = new Map<string, number[]>();
 
+function detectJobSourceFromUrl(jobUrl: string) {
+    if (!jobUrl) {
+        return "manual";
+    }
+
+    try {
+        const hostname = new URL(jobUrl).hostname.toLowerCase();
+        if (hostname.includes("linkedin.com")) {
+            return "linkedin";
+        }
+    } catch {
+        return "manual";
+    }
+
+    return "manual";
+}
+
 /**
  * POST /api/tailor
  * User-initiated single job tailoring.
@@ -182,6 +199,7 @@ export async function POST(req: Request) {
         } else {
             // Create or find the job record for new tailoring
             const externalId = sanitizedJobUrl || `manual-${Date.now()}`;
+            const detectedSource = detectJobSourceFromUrl(sanitizedJobUrl);
             job = await prisma.job.upsert({
                 where: { externalId },
                 create: {
@@ -190,7 +208,7 @@ export async function POST(req: Request) {
                     company: sanitizedCompany || "Unknown Company",
                     location: "Not specified",
                     description: effectiveJobDescription,
-                    source: "manual",
+                    source: detectedSource,
                     url: sanitizedJobUrl || "",
                 },
                 update: {},

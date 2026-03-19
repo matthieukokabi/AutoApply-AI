@@ -19,6 +19,7 @@ Last updated: 2026-03-19 (Europe/Zurich)
 - [x] Remove n8n DB-credential decrypt dependency from profile fetch stage by routing through signed app webhook (`fetch_active_users`) with 4h cadence gating + structured logs — completed on 2026-03-19 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`, `apps/web/__tests__/api/webhooks-n8n.test.ts`)
 - [x] Restart n8n Render service once to flush stale in-memory trigger registrations — completed on 2026-03-19 (Render deploy `9d2b7bd`, startup confirms `1 published workflow` and active pipeline load)
 - [ ] Verify first post-restart scheduled execution uses live workflow version (`f388a6db-5bf6-44fb-bfd4-33a3b5aa448c`) and no longer emits decrypt errors at fetch stage
+- [x] Improve discovery relevance for Zürich/hybrid preferences by expanding title/location query candidates, adding preference-aware location filtering fallback, and exposing explicit LinkedIn auto-source status in recovery diagnostics — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_recovery_run.js`, `apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`)
 
 ## P0 — Incident: contact endpoint + canonical social identity + mail routing
 
