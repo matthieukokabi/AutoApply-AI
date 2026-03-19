@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getContactTelemetrySnapshot } from "@/lib/contact-telemetry";
+import { getContactMailHealthSnapshot } from "@/lib/contact-mail-health";
 
 const CONTACT_DIAGNOSTICS_HEADER = "x-contact-diagnostics-token";
 
@@ -25,6 +26,7 @@ export async function GET(req: Request) {
     const response = NextResponse.json(
         {
             telemetry: getContactTelemetrySnapshot(),
+            mailHealth: getContactMailHealthSnapshot(),
         },
         { status: 200 }
     );

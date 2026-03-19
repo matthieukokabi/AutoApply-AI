@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/contact/diagnostics/route";
 import { POST } from "@/app/api/contact/route";
 import { resetContactTelemetryForTests } from "@/lib/contact-telemetry";
+import { resetContactMailHealthForTests } from "@/lib/contact-mail-health";
 
 function withAntiBotFields(payload: Record<string, unknown>) {
     const generatedSessionId = `session_${Math.random().toString(36).slice(2, 28)}`;
@@ -17,6 +18,7 @@ describe("GET /api/contact/diagnostics", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         resetContactTelemetryForTests();
+        resetContactMailHealthForTests();
         process.env.RESEND_API_KEY = "re_test_key";
         delete process.env.TURNSTILE_SECRET_KEY;
         delete process.env.CONTACT_DIAGNOSTICS_TOKEN;
@@ -122,6 +124,11 @@ describe("GET /api/contact/diagnostics", () => {
         expect(data.telemetry.captcha.errorCodes.missing_token).toBe(1);
         expect(data.telemetry.funnel.lifetime.events.captcha_pass).toBe(1);
         expect(data.telemetry.funnel.lifetime.events.captcha_fail).toBe(2);
+        expect(data.mailHealth.config.destinationEmail).toBe("contact@autoapply.works");
+        expect(data.mailHealth.config.fromEmail).toBe(
+            "AutoApply Works <contact@autoapply.works>"
+        );
+        expect(data.mailHealth.recent.totals.sent).toBe(1);
         expect(
             Array.isArray(data.telemetry.funnel.daily.summary.anomalies)
         ).toBe(true);

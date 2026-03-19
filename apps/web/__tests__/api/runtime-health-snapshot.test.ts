@@ -10,6 +10,9 @@ afterEach(() => {
     delete process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN;
     delete process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR;
     delete process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT;
+    delete process.env.RESEND_API_KEY;
+    delete process.env.CONTACT_INBOX_EMAIL;
+    delete process.env.CONTACT_FROM_EMAIL;
 
     for (const dir of TEMP_DIRS.splice(0, TEMP_DIRS.length)) {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -57,6 +60,7 @@ describe("GET /api/runtime/health-snapshot", () => {
         process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR = reportsDir;
         process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT =
             "2026-03-17T00:00:00.000Z";
+        process.env.RESEND_API_KEY = "re_test_key";
 
         fs.writeFileSync(
             path.join(reportsDir, "wave5-performance-budget-20260318_200000.json"),
@@ -144,6 +148,11 @@ describe("GET /api/runtime/health-snapshot", () => {
         expect(data.snapshot.parityChecks.overallStatus).toBe("pass");
         expect(data.snapshot.parityChecks.canonicalOgParity.status).toBe("pass");
         expect(data.snapshot.parityChecks.liveSquirrel.status).toBe("pass");
+        expect(data.snapshot.contactMail.status).toBe("configured");
+        expect(data.snapshot.contactMail.destinationEmail).toBe(
+            "contact@autoapply.works"
+        );
+        expect(data.snapshot.contactMail.missingEnv).toEqual([]);
         expect(data.security.tokenRotation.isStale).toBe(false);
     });
 

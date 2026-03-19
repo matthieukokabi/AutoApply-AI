@@ -133,10 +133,13 @@ vi.mock("@/lib/mobile-auth", () => ({
 }));
 
 // Mock Resend (for contact route)
+const mockResendSend = vi.fn().mockResolvedValue({ id: "email_123" });
+(globalThis as Record<string, unknown>).__mockResendSend = mockResendSend;
+
 vi.mock("resend", () => ({
     Resend: vi.fn().mockImplementation(() => ({
         emails: {
-            send: vi.fn().mockResolvedValue({ id: "email_123" }),
+            send: mockResendSend,
         },
     })),
 }));

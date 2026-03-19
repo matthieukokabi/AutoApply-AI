@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { getContactMailHealthSnapshot } from "@/lib/contact-mail-health";
 
 const HEALTH_SNAPSHOT_HEADER = "x-health-snapshot-token";
 const RUNTIME_HEALTH_SNAPSHOT_RATE_LIMIT_MAX_REQUESTS = 30;
@@ -293,6 +294,7 @@ export async function GET(req: Request) {
     const funnelDataQuality = asRecord(funnelReport?.dataQuality);
     const sentinelSummary = asRecord(sentinelReport?.summary);
     const sentinelAlertDispatch = asRecord(sentinelSummary.alertDispatch);
+    const contactMailHealth = getContactMailHealthSnapshot();
 
     const response = NextResponse.json(
         {
@@ -355,6 +357,16 @@ export async function GET(req: Request) {
                         status: paritySquirrelStatus,
                         sourceReport: squirrelReportFile?.filePath || null,
                     },
+                },
+                contactMail: {
+                    status: contactMailHealth.config.transportConfigured
+                        ? "configured"
+                        : "degraded",
+                    destinationEmail: contactMailHealth.config.destinationEmail,
+                    fromEmail: contactMailHealth.config.fromEmail,
+                    replyToPolicy: contactMailHealth.config.replyToPolicy,
+                    missingEnv: contactMailHealth.config.missingEnv,
+                    recent: contactMailHealth.recent,
                 },
             },
             security: {

@@ -20,6 +20,13 @@ Last updated: 2026-03-19 (Europe/Zurich)
 - [x] Restart n8n Render service once to flush stale in-memory trigger registrations — completed on 2026-03-19 (Render deploy `9d2b7bd`, startup confirms `1 published workflow` and active pipeline load)
 - [ ] Verify first post-restart scheduled execution uses live workflow version (`f388a6db-5bf6-44fb-bfd4-33a3b5aa448c`) and no longer emits decrypt errors at fetch stage
 
+## P0 — Incident: contact endpoint + canonical social identity + mail routing
+
+- [x] Restore `/api/contact` production-safe behavior when mail transport is misconfigured by queueing submissions for manual follow-up, returning actionable user-safe fallback messaging, and exposing structured reason codes/logs without secret leakage — completed on 2026-03-19 (`apps/web/app/api/contact/route.ts`, `apps/web/lib/contact-mail-health.ts`, `apps/web/__tests__/api/contact.test.ts`)
+- [x] Add contact mail health snapshot (env-name preflight + recent send/queue/fail status) to diagnostics and runtime health snapshot — completed on 2026-03-19 (`apps/web/app/api/contact/diagnostics/route.ts`, `apps/web/app/api/runtime/health-snapshot/route.ts`, `apps/web/__tests__/api/contact-diagnostics.test.ts`, `apps/web/__tests__/api/runtime-health-snapshot.test.ts`)
+- [ ] Replace legacy social links with canonical identities everywhere (UI + SEO/structured data + docs constants) and add regression assertions
+- [ ] Run production contact/mail smoke and publish incident closure report (`INCIDENT_AUTOAPPLY_CONTACT_SOCIAL_MAIL_FIX_2026-03-19.md`)
+
 ## P0 — Must complete before live payment test
 
 - [x] Run production onboarding gate (`SMOKE_BASE_URL=https://autoapply.works npm run smoke:onboarding:cross-browser` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-cross-browser-smoke-20260317_115606.jsonl`)

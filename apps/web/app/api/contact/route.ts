@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { prisma } from "@/lib/prisma";
 import {
     incrementAbuseCounter,
     incrementCaptchaCounter,
     incrementFunnelEvent,
     type ContactFunnelEventContext,
 } from "@/lib/contact-telemetry";
+import {
+    OFFICIAL_CONTACT_EMAIL,
+    getContactDestinationEmail,
+    getContactFromEmail,
+    getContactMailConfigSnapshot,
+    recordContactMailAttempt,
+    type ContactMailReasonCode,
+} from "@/lib/contact-mail-health";
 
 const CONTACT_RATE_LIMIT_MAX_REQUESTS = 5;
 const CONTACT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -98,15 +107,62 @@ function escapeHtml(value: string): string {
         .replace(/'/g, "&#39;");
 }
 
+async function queueContactSubmissionForFallback(input: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    routePath?: string;
+    campaign?: string;
+    reasonCode: ContactMailReasonCode;
+}) {
+    try {
+        await prisma.workflowError.create({
+            data: {
+                workflowId: "contact_form",
+                nodeName: "mail_transport",
+                errorType: "mail_queue_fallback",
+                message: `Contact submission queued (${input.reasonCode})`,
+                payload: {
+                    reasonCode: input.reasonCode,
+                    queuedAt: new Date().toISOString(),
+                    submitter: {
+                        name: input.name,
+                        email: input.email,
+                    },
+                    subject: input.subject,
+                    message: input.message,
+                    routePath: input.routePath || null,
+                    campaign: input.campaign || null,
+                },
+            },
+        });
+
+        return true;
+    } catch (error) {
+        console.error("[contact-mail] fallback_queue_failed", {
+            reasonCode: "fallback_queue_failed",
+            errorName: error instanceof Error ? error.name : "unknown_error",
+            errorMessage:
+                error instanceof Error ? error.message : "unknown error",
+        });
+        return false;
+    }
+}
+
 /**
  * POST /api/contact — send contact form message via email
  * Body: { name, email, subject, message }
  */
 export async function POST(req: Request) {
     let funnelContext: ContactFunnelEventContext = {};
-    const submitFailResponse = (error: string, status: number) => {
+    const submitFailResponse = (
+        error: string,
+        status: number,
+        code = "CONTACT_SUBMIT_FAILED"
+    ) => {
         incrementFunnelEvent("submit_fail", funnelContext);
-        return NextResponse.json({ error }, { status });
+        return NextResponse.json({ error, code }, { status });
     };
 
     try {
@@ -210,10 +266,60 @@ export async function POST(req: Request) {
             }
         }
 
-        const resendApiKey = process.env.RESEND_API_KEY;
-        if (!resendApiKey) {
-            console.error("RESEND_API_KEY is required for /api/contact");
-            return submitFailResponse("Contact endpoint misconfigured", 503);
+        const mailConfig = getContactMailConfigSnapshot();
+        const resendApiKey = process.env.RESEND_API_KEY?.trim();
+        if (!resendApiKey || !mailConfig.transportConfigured) {
+            const reasonCode: ContactMailReasonCode = "missing_resend_api_key";
+            recordContactMailAttempt({
+                outcome: "failed",
+                transport: "resend",
+                reasonCode,
+                statusCode: 503,
+            });
+            console.error("[contact-mail] transport_unavailable", {
+                reasonCode,
+                missingEnv: mailConfig.missingEnv,
+            });
+
+            const queued = await queueContactSubmissionForFallback({
+                name,
+                email,
+                subject,
+                message,
+                routePath: funnelContext.routePath ?? undefined,
+                campaign: funnelContext.campaign ?? undefined,
+                reasonCode,
+            });
+
+            if (queued) {
+                recordContactMailAttempt({
+                    outcome: "queued",
+                    transport: "fallback_queue",
+                    reasonCode: "queued_for_manual_followup",
+                    statusCode: 202,
+                    delivery: {
+                        destinationEmail: getContactDestinationEmail(),
+                        fromEmail: getContactFromEmail(),
+                        replyToEmail: email,
+                    },
+                });
+                incrementFunnelEvent("submit_success", funnelContext);
+                return NextResponse.json(
+                    {
+                        success: true,
+                        queued: true,
+                        code: "CONTACT_MAIL_QUEUED_NO_TRANSPORT",
+                        message: `We received your message. Our email channel is temporarily delayed — you can also write to ${OFFICIAL_CONTACT_EMAIL}.`,
+                    },
+                    { status: 202 }
+                );
+            }
+
+            return submitFailResponse(
+                `We're temporarily unable to route contact messages. Please email ${OFFICIAL_CONTACT_EMAIL}.`,
+                503,
+                "CONTACT_MAIL_TRANSPORT_UNAVAILABLE"
+            );
         }
 
         if (
@@ -267,28 +373,105 @@ export async function POST(req: Request) {
         const safeMessage = escapeHtml(message).replace(/\n/g, "<br />");
 
         const resend = getResend(resendApiKey);
-        await resend.emails.send({
-            from: "AutoApply AI <noreply@autoapply.works>",
-            to: ["support@autoapply.works"],
-            replyTo: email,
-            subject: subjectLine,
-            html: `
-                <h2>New Contact Form Submission</h2>
-                <p><strong>From:</strong> ${safeName} &lt;${safeEmail}&gt;</p>
-                <p><strong>Subject:</strong> ${safeSubject}</p>
-                <hr />
-                <p>${safeMessage}</p>
-                <hr />
-                <p style="color: #666; font-size: 12px;">
-                    Sent from the AutoApply AI contact form at ${new Date().toISOString()}
-                </p>
-            `,
-        });
+        const destinationEmail = getContactDestinationEmail();
+        const fromEmail = getContactFromEmail();
 
-        incrementFunnelEvent("submit_success", funnelContext);
-        return NextResponse.json({ success: true });
+        try {
+            await resend.emails.send({
+                from: fromEmail,
+                to: [destinationEmail],
+                replyTo: email,
+                subject: subjectLine,
+                html: `
+                    <h2>New Contact Form Submission</h2>
+                    <p><strong>From:</strong> ${safeName} &lt;${safeEmail}&gt;</p>
+                    <p><strong>Subject:</strong> ${safeSubject}</p>
+                    <hr />
+                    <p>${safeMessage}</p>
+                    <hr />
+                    <p style="color: #666; font-size: 12px;">
+                        Sent from the AutoApply AI contact form at ${new Date().toISOString()}
+                    </p>
+                `,
+            });
+
+            recordContactMailAttempt({
+                outcome: "sent",
+                transport: "resend",
+                reasonCode: "mail_sent",
+                statusCode: 200,
+                delivery: {
+                    destinationEmail,
+                    fromEmail,
+                    replyToEmail: email,
+                },
+            });
+            incrementFunnelEvent("submit_success", funnelContext);
+            return NextResponse.json({ success: true });
+        } catch (mailError) {
+            recordContactMailAttempt({
+                outcome: "failed",
+                transport: "resend",
+                reasonCode: "resend_send_failed",
+                statusCode: 502,
+            });
+            console.error("[contact-mail] send_failed", {
+                reasonCode: "resend_send_failed",
+                errorName:
+                    mailError instanceof Error
+                        ? mailError.name
+                        : "unknown_error",
+                errorMessage:
+                    mailError instanceof Error
+                        ? mailError.message
+                        : "unknown error",
+            });
+
+            const queued = await queueContactSubmissionForFallback({
+                name,
+                email,
+                subject,
+                message,
+                routePath: funnelContext.routePath ?? undefined,
+                campaign: funnelContext.campaign ?? undefined,
+                reasonCode: "resend_send_failed",
+            });
+            if (queued) {
+                recordContactMailAttempt({
+                    outcome: "queued",
+                    transport: "fallback_queue",
+                    reasonCode: "queued_for_manual_followup",
+                    statusCode: 202,
+                    delivery: {
+                        destinationEmail,
+                        fromEmail,
+                        replyToEmail: email,
+                    },
+                });
+                incrementFunnelEvent("submit_success", funnelContext);
+                return NextResponse.json(
+                    {
+                        success: true,
+                        queued: true,
+                        code: "CONTACT_MAIL_QUEUED_SEND_FAILURE",
+                        message: `We received your message. Email delivery is temporarily delayed — you can also write to ${OFFICIAL_CONTACT_EMAIL}.`,
+                    },
+                    { status: 202 }
+                );
+            }
+
+            return submitFailResponse(
+                `We couldn't deliver your message right now. Please email ${OFFICIAL_CONTACT_EMAIL}.`,
+                502,
+                "CONTACT_MAIL_SEND_FAILED"
+            );
+        }
     } catch (error) {
         console.error("POST /api/contact error:", error);
-        return submitFailResponse("Failed to send message. Please try again.", 500);
+        return submitFailResponse(
+            "Failed to process message. Please try again.",
+            500,
+            "CONTACT_REQUEST_PROCESSING_ERROR"
+        );
     }
 }

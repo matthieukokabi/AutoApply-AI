@@ -4,12 +4,19 @@ import {
     getContactTelemetrySnapshot,
     resetContactTelemetryForTests,
 } from "@/lib/contact-telemetry";
-import { Resend } from "resend";
+import {
+    getContactMailHealthSnapshot,
+    resetContactMailHealthForTests,
+} from "@/lib/contact-mail-health";
+import { prisma } from "@/lib/prisma";
 
 beforeEach(() => {
     vi.clearAllMocks();
     resetContactTelemetryForTests();
+    resetContactMailHealthForTests();
     process.env.RESEND_API_KEY = "re_test_key";
+    delete process.env.CONTACT_INBOX_EMAIL;
+    delete process.env.CONTACT_FROM_EMAIL;
     delete process.env.TURNSTILE_SECRET_KEY;
 });
 
@@ -125,7 +132,7 @@ describe("POST /api/contact", () => {
         expect(data.error).toContain("too long");
     });
 
-    it("returns 503 when RESEND_API_KEY is missing", async () => {
+    it("queues contact submission when RESEND_API_KEY is missing", async () => {
         delete process.env.RESEND_API_KEY;
 
         const request = new Request("http://localhost/api/contact", {
@@ -142,8 +149,40 @@ describe("POST /api/contact", () => {
         const response = await POST(request);
         const data = await response.json();
 
-        expect(response.status).toBe(503);
-        expect(data.error).toBe("Contact endpoint misconfigured");
+        expect(response.status).toBe(202);
+        expect(data.success).toBe(true);
+        expect(data.queued).toBe(true);
+        expect(data.code).toBe("CONTACT_MAIL_QUEUED_NO_TRANSPORT");
+        expect(vi.mocked(prisma.workflowError.create)).toHaveBeenCalledTimes(1);
+    });
+
+    it("routes contact emails to the official contact inbox", async () => {
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: withAntiBotFields({
+                name: "John Doe",
+                email: "john@example.com",
+                subject: "support",
+                message: "I need help with my account settings.",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+        const mailHealth = getContactMailHealthSnapshot();
+
+        expect(response.status).toBe(200);
+        expect(data.success).toBe(true);
+        expect(mailHealth.config.destinationEmail).toBe("contact@autoapply.works");
+        expect(mailHealth.config.fromEmail).toBe(
+            "AutoApply Works <contact@autoapply.works>"
+        );
+        expect(mailHealth.recent.lastDelivery).toEqual({
+            destinationEmail: "contact@autoapply.works",
+            fromEmail: "AutoApply Works <contact@autoapply.works>",
+            replyToEmail: "john@example.com",
+        });
     });
 
     it("returns 400 when Turnstile token is missing and verification is enabled", async () => {
@@ -377,10 +416,12 @@ describe("POST /api/contact", () => {
 
         const response = await POST(request);
         const data = await response.json();
+        const mailHealth = getContactMailHealthSnapshot();
 
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
-        expect(Resend).not.toHaveBeenCalled();
+        expect(mailHealth.recent.totals.sent).toBe(0);
+        expect(mailHealth.recent.lastDelivery).toBeNull();
     });
 
     it("returns 429 when a single form session exceeds the request limit", async () => {
