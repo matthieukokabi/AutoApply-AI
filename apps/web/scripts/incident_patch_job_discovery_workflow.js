@@ -73,7 +73,7 @@ const allJobs = [];
 
 function detectAdzunaCountry(location) {
   const locationLower = (location || '').toLowerCase();
-  if (locationLower.includes('zurich') || locationLower.includes('zürich') || locationLower.includes('bern') || locationLower.includes('geneva') || locationLower.includes('basel') || locationLower.includes('switzerland') || locationLower.includes('swiss') || locationLower.includes('lausanne')) return 'ch';
+  if (locationLower.includes('zurich') || locationLower.includes('z\\u00fcrich') || locationLower.includes('bern') || locationLower.includes('geneva') || locationLower.includes('basel') || locationLower.includes('switzerland') || locationLower.includes('swiss') || locationLower.includes('lausanne')) return 'ch';
   if (locationLower.includes('london') || locationLower.includes('manchester') || locationLower.includes('uk') || locationLower.includes('united kingdom') || locationLower.includes('england')) return 'gb';
   if (locationLower.includes('berlin') || locationLower.includes('munich') || locationLower.includes('hamburg') || locationLower.includes('germany') || locationLower.includes('frankfurt') || locationLower.includes('deutschland')) return 'de';
   if (locationLower.includes('paris') || locationLower.includes('lyon') || locationLower.includes('france') || locationLower.includes('marseille')) return 'fr';

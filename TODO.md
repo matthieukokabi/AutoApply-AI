@@ -6,6 +6,7 @@ Last updated: 2026-03-19 (Europe/Zurich)
 
 - [x] Add production diagnostics command with stage-level run visibility and per-profile health summary — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_diagnostics.js`, `npm run incident:pipeline:diagnostics`)
 - [x] Patch job-discovery workflow normalization + callback/error run correlation (`runId`) and hard-fail on callback write errors — completed on 2026-03-19 (`apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`, live workflow id `eddfsS251UHbmNIj`)
+- [x] Add safe per-profile recovery rerun command (`dry-run` default, optional `real-run`) — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_recovery_run.js`, `npm run incident:pipeline:recovery -- --help`)
 
 ## P0 — Must complete before live payment test
 
