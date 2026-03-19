@@ -97,7 +97,9 @@
         "readMore": "Continuer la lecture",
         "ctaTitle": "Prêt à décrocher le job de vos rêves ?",
         "ctaDescription": "Laissez AutoApply AI personnaliser votre CV et votre lettre de motivation pour chaque candidature.",
-        "ctaButton": "Commencer gratuitement"
+        "ctaButton": "Commencer gratuitement",
+        "postNotFoundTitle": "Article introuvable",
+        "footerRights": "© {year} AutoApply AI. Tous droits réservés."
     },
     "roadmap": {
         "title": "Feuille de route",

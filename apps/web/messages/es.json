@@ -97,7 +97,9 @@
         "readMore": "Seguir leyendo",
         "ctaTitle": "¿Listo para conseguir tu empleo ideal?",
         "ctaDescription": "Deja que AutoApply AI personalice tu CV y carta de presentación para cada solicitud.",
-        "ctaButton": "Empezar gratis"
+        "ctaButton": "Empezar gratis",
+        "postNotFoundTitle": "Artículo no encontrado",
+        "footerRights": "© {year} AutoApply AI. Todos los derechos reservados."
     },
     "roadmap": {
         "title": "Hoja de ruta",

@@ -96,7 +96,9 @@
         "readMore": "Keep Reading",
         "ctaTitle": "Ready to land your dream job?",
         "ctaDescription": "Let AutoApply AI tailor your CV and cover letter for every application.",
-        "ctaButton": "Get Started Free"
+        "ctaButton": "Get Started Free",
+        "postNotFoundTitle": "Post not found",
+        "footerRights": "© {year} AutoApply AI. All rights reserved."
     },
     "roadmap": {
         "title": "Product Roadmap",

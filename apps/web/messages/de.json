@@ -97,7 +97,9 @@
         "readMore": "Weiterlesen",
         "ctaTitle": "Bereit für Ihren Traumjob?",
         "ctaDescription": "Lassen Sie AutoApply AI Ihren Lebenslauf und Ihr Anschreiben für jede Bewerbung massschneidern.",
-        "ctaButton": "Kostenlos starten"
+        "ctaButton": "Kostenlos starten",
+        "postNotFoundTitle": "Beitrag nicht gefunden",
+        "footerRights": "© {year} AutoApply AI. Alle Rechte vorbehalten."
     },
     "roadmap": {
         "title": "Produkt-Roadmap",

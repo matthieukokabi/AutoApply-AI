@@ -97,7 +97,9 @@
         "readMore": "Continua a leggere",
         "ctaTitle": "Pronto a trovare il lavoro dei tuoi sogni?",
         "ctaDescription": "Lascia che AutoApply AI personalizzi il tuo CV e la tua lettera di presentazione per ogni candidatura.",
-        "ctaButton": "Inizia gratis"
+        "ctaButton": "Inizia gratis",
+        "postNotFoundTitle": "Articolo non trovato",
+        "footerRights": "© {year} AutoApply AI. Tutti i diritti riservati."
     },
     "roadmap": {
         "title": "Roadmap del prodotto",

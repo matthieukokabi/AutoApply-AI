@@ -29,9 +29,10 @@ export async function generateMetadata({
     params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
     const { locale, slug } = await params;
+    const t = await getTranslations({ locale, namespace: "blog" });
     const post = getPostBySlug(locale, slug);
     if (!post) {
-        return { title: "Post Not Found" };
+        return { title: t("postNotFoundTitle") };
     }
     const socialTitle = `${post.title} — AutoApply AI Blog`;
     const socialImage = buildDynamicOgImageUrl(post.title, post.description);
@@ -221,7 +222,7 @@ export default async function BlogPostPage({
             {/* Footer */}
             <footer className="border-t bg-white/50 dark:bg-slate-900/50 py-8">
                 <div className="container text-center text-sm text-muted-foreground">
-                    <p>&copy; {new Date().getFullYear()} AutoApply AI. All rights reserved.</p>
+                    <p>{t("footerRights", { year: new Date().getFullYear() })}</p>
                 </div>
             </footer>
         </div>
