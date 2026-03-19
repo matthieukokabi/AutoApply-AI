@@ -372,6 +372,49 @@
             }
         }
     },
+    "contactPage": {
+        "metadata": {
+            "title": "Kontakt — AutoApply AI",
+            "description": "Kontaktieren Sie den AutoApply AI Support zu Onboarding, Abrechnung und Produktfragen."
+        },
+        "header": {
+            "title": "Kontakt",
+            "subtitle": "Haben Sie Fragen, Feedback oder brauchen Sie Support? Wir helfen Ihnen gerne weiter.",
+            "sla": "Der Support antwortet in der Regel innerhalb eines Werktages. Nachrichten werden nur für Support und Produkt-Follow-up verwendet."
+        },
+        "success": {
+            "title": "Nachricht gesendet",
+            "description": "Vielen Dank für Ihre Nachricht. Wir melden uns innerhalb von 24-48 Stunden.",
+            "backHome": "Zur Startseite"
+        },
+        "form": {
+            "title": "Nachricht senden",
+            "description": "Füllen Sie das Formular aus, wir antworten so schnell wie möglich.",
+            "nameLabel": "Name",
+            "namePlaceholder": "Ihr Name",
+            "emailLabel": "E-Mail",
+            "emailPlaceholder": "sie@beispiel.com",
+            "subjectLabel": "Betreff",
+            "subjectPlaceholder": "Thema auswählen",
+            "messageLabel": "Nachricht",
+            "messagePlaceholder": "Wie können wir helfen?",
+            "submitIdle": "Nachricht senden",
+            "submitLoading": "Wird gesendet...",
+            "privacyNote": "Kein Marketing-Spam. Sie können jederzeit die Löschung dieser Unterhaltung anfordern.",
+            "topics": {
+                "general": "Allgemeine Anfrage",
+                "support": "Technischer Support",
+                "billing": "Frage zur Abrechnung",
+                "privacy": "Datenschutz / Datenanfrage",
+                "feedback": "Feedback"
+            }
+        },
+        "errors": {
+            "completeVerification": "Bitte schließen Sie die Verifizierung vor dem Absenden ab.",
+            "failedToSend": "Nachricht konnte nicht gesendet werden",
+            "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Zurück",

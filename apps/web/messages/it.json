@@ -372,6 +372,49 @@
             }
         }
     },
+    "contactPage": {
+        "metadata": {
+            "title": "Contattaci — AutoApply AI",
+            "description": "Contatta il supporto AutoApply AI per onboarding, fatturazione e domande sul prodotto."
+        },
+        "header": {
+            "title": "Contattaci",
+            "subtitle": "Hai domande, feedback o hai bisogno di supporto? Saremo felici di aiutarti.",
+            "sla": "Il supporto risponde di solito entro un giorno lavorativo. I messaggi sono usati solo per supporto e follow-up di prodotto."
+        },
+        "success": {
+            "title": "Messaggio inviato",
+            "description": "Grazie per averci contattato. Ti risponderemo entro 24-48 ore.",
+            "backHome": "Torna alla home"
+        },
+        "form": {
+            "title": "Inviaci un messaggio",
+            "description": "Compila il modulo qui sotto e ti risponderemo il prima possibile.",
+            "nameLabel": "Nome",
+            "namePlaceholder": "Il tuo nome",
+            "emailLabel": "Email",
+            "emailPlaceholder": "tu@esempio.com",
+            "subjectLabel": "Oggetto",
+            "subjectPlaceholder": "Seleziona un argomento",
+            "messageLabel": "Messaggio",
+            "messagePlaceholder": "Come possiamo aiutarti?",
+            "submitIdle": "Invia messaggio",
+            "submitLoading": "Invio in corso...",
+            "privacyNote": "Nessuno spam marketing. Puoi richiedere la cancellazione di questa conversazione in qualsiasi momento.",
+            "topics": {
+                "general": "Richiesta generale",
+                "support": "Supporto tecnico",
+                "billing": "Domanda di fatturazione",
+                "privacy": "Privacy / richiesta dati",
+                "feedback": "Feedback"
+            }
+        },
+        "errors": {
+            "completeVerification": "Completa la verifica prima dell'invio.",
+            "failedToSend": "Invio del messaggio non riuscito",
+            "generic": "Si è verificato un errore. Riprova."
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Indietro",

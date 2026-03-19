@@ -371,6 +371,49 @@
             }
         }
     },
+    "contactPage": {
+        "metadata": {
+            "title": "Contact Us — AutoApply AI",
+            "description": "Contact AutoApply AI support for onboarding, billing, and product questions."
+        },
+        "header": {
+            "title": "Contact Us",
+            "subtitle": "Have questions, feedback, or need support? We'd love to hear from you.",
+            "sla": "Support usually replies within one business day. Messages are used only for support and product follow-up."
+        },
+        "success": {
+            "title": "Message Sent",
+            "description": "Thank you for reaching out. We'll get back to you within 24-48 hours.",
+            "backHome": "Back to Home"
+        },
+        "form": {
+            "title": "Send us a message",
+            "description": "Fill out the form below and we'll respond as soon as possible.",
+            "nameLabel": "Name",
+            "namePlaceholder": "Your name",
+            "emailLabel": "Email",
+            "emailPlaceholder": "you@example.com",
+            "subjectLabel": "Subject",
+            "subjectPlaceholder": "Select a topic",
+            "messageLabel": "Message",
+            "messagePlaceholder": "How can we help?",
+            "submitIdle": "Send Message",
+            "submitLoading": "Sending...",
+            "privacyNote": "No marketing spam. You can request deletion of this conversation at any time.",
+            "topics": {
+                "general": "General Inquiry",
+                "support": "Technical Support",
+                "billing": "Billing Question",
+                "privacy": "Privacy / Data Request",
+                "feedback": "Feedback"
+            }
+        },
+        "errors": {
+            "completeVerification": "Please complete the verification challenge before submitting.",
+            "failedToSend": "Failed to send message",
+            "generic": "Something went wrong. Please try again."
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Back",

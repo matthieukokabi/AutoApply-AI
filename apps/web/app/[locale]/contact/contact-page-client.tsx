@@ -3,6 +3,7 @@
 import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, Mail, Check } from "lucide-react";
@@ -41,6 +42,7 @@ declare global {
 }
 
 export default function ContactPageClient() {
+    const t = useTranslations("contactPage");
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [subject, setSubject] = useState("");
@@ -152,7 +154,7 @@ export default function ContactPageClient() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (TURNSTILE_SITE_KEY && !turnstileToken) {
-            setError("Please complete the verification challenge before submitting.");
+            setError(t("errors.completeVerification"));
             return;
         }
 
@@ -178,12 +180,12 @@ export default function ContactPageClient() {
 
             if (!res.ok) {
                 const data = await res.json();
-                throw new Error(data.error || "Failed to send message");
+                throw new Error(data.error || t("errors.failedToSend"));
             }
 
             setSubmitted(true);
         } catch (err: any) {
-            setError(err.message || "Something went wrong. Please try again.");
+            setError(err.message || t("errors.generic"));
         } finally {
             setLoading(false);
         }
@@ -201,12 +203,12 @@ export default function ContactPageClient() {
             </header>
 
             <main className="container max-w-2xl py-12">
-                <h1 className="text-3xl font-bold mb-2">Contact Us</h1>
+                <h1 className="text-3xl font-bold mb-2">{t("header.title")}</h1>
                 <p className="text-muted-foreground mb-8">
-                    Have questions, feedback, or need support? We&apos;d love to hear from you.
+                    {t("header.subtitle")}
                 </p>
                 <p className="mb-8 rounded-md border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-                    Support usually replies within one business day. Messages are used only for support and product follow-up.
+                    {t("header.sla")}
                 </p>
 
                 {submitted ? (
@@ -215,12 +217,12 @@ export default function ContactPageClient() {
                             <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
                                 <Check className="h-6 w-6 text-green-600" />
                             </div>
-                            <h2 className="text-xl font-semibold mb-2">Message Sent</h2>
+                            <h2 className="text-xl font-semibold mb-2">{t("success.title")}</h2>
                             <p className="text-muted-foreground">
-                                Thank you for reaching out. We&apos;ll get back to you within 24-48 hours.
+                                {t("success.description")}
                             </p>
                             <Link href="/" className="mt-6">
-                                <Button variant="outline">Back to Home</Button>
+                                <Button variant="outline">{t("success.backHome")}</Button>
                             </Link>
                         </CardContent>
                     </Card>
@@ -229,10 +231,10 @@ export default function ContactPageClient() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Mail className="h-5 w-5" />
-                                Send us a message
+                                {t("form.title")}
                             </CardTitle>
                             <CardDescription>
-                                Fill out the form below and we&apos;ll respond as soon as possible.
+                                {t("form.description")}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -243,48 +245,56 @@ export default function ContactPageClient() {
                             >
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div>
-                                        <label className="text-sm font-medium block mb-1">Name</label>
+                                        <label className="text-sm font-medium block mb-1">
+                                            {t("form.nameLabel")}
+                                        </label>
                                         <input
                                             required
                                             className="w-full px-3 py-2 border rounded-md text-sm"
-                                            placeholder="Your name"
+                                            placeholder={t("form.namePlaceholder")}
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-sm font-medium block mb-1">Email</label>
+                                        <label className="text-sm font-medium block mb-1">
+                                            {t("form.emailLabel")}
+                                        </label>
                                         <input
                                             required
                                             type="email"
                                             className="w-full px-3 py-2 border rounded-md text-sm"
-                                            placeholder="you@example.com"
+                                            placeholder={t("form.emailPlaceholder")}
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium block mb-1">Subject</label>
+                                    <label className="text-sm font-medium block mb-1">
+                                        {t("form.subjectLabel")}
+                                    </label>
                                     <select
                                         className="w-full px-3 py-2 border rounded-md text-sm"
                                         value={subject}
                                         onChange={(e) => setSubject(e.target.value)}
                                     >
-                                        <option value="">Select a topic</option>
-                                        <option value="general">General Inquiry</option>
-                                        <option value="support">Technical Support</option>
-                                        <option value="billing">Billing Question</option>
-                                        <option value="privacy">Privacy / Data Request</option>
-                                        <option value="feedback">Feedback</option>
+                                        <option value="">{t("form.subjectPlaceholder")}</option>
+                                        <option value="general">{t("form.topics.general")}</option>
+                                        <option value="support">{t("form.topics.support")}</option>
+                                        <option value="billing">{t("form.topics.billing")}</option>
+                                        <option value="privacy">{t("form.topics.privacy")}</option>
+                                        <option value="feedback">{t("form.topics.feedback")}</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium block mb-1">Message</label>
+                                    <label className="text-sm font-medium block mb-1">
+                                        {t("form.messageLabel")}
+                                    </label>
                                     <textarea
                                         required
                                         className="w-full h-32 px-3 py-2 border rounded-md text-sm resize-none"
-                                        placeholder="How can we help?"
+                                        placeholder={t("form.messagePlaceholder")}
                                         value={messageBody}
                                         onChange={(e) => setMessageBody(e.target.value)}
                                     />
@@ -322,10 +332,10 @@ export default function ContactPageClient() {
                                     disabled={loading}
                                     onClick={() => trackContactFunnelEvent("cta_click")}
                                 >
-                                    {loading ? "Sending..." : "Send Message"}
+                                    {loading ? t("form.submitLoading") : t("form.submitIdle")}
                                 </Button>
                                 <p className="text-center text-xs text-muted-foreground">
-                                    No marketing spam. You can request deletion of this conversation at any time.
+                                    {t("form.privacyNote")}
                                 </p>
                             </form>
                         </CardContent>

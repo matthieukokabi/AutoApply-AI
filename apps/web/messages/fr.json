@@ -372,6 +372,49 @@
             }
         }
     },
+    "contactPage": {
+        "metadata": {
+            "title": "Contactez-nous — AutoApply AI",
+            "description": "Contactez le support AutoApply AI pour l'onboarding, la facturation et vos questions produit."
+        },
+        "header": {
+            "title": "Contactez-nous",
+            "subtitle": "Vous avez des questions, un retour, ou besoin d'aide ? Nous serons ravis de vous répondre.",
+            "sla": "Le support répond généralement sous un jour ouvré. Les messages sont utilisés uniquement pour le support et le suivi produit."
+        },
+        "success": {
+            "title": "Message envoyé",
+            "description": "Merci de nous avoir contactés. Nous vous répondrons sous 24 à 48 heures.",
+            "backHome": "Retour à l'accueil"
+        },
+        "form": {
+            "title": "Envoyez-nous un message",
+            "description": "Remplissez le formulaire ci-dessous et nous vous répondrons dès que possible.",
+            "nameLabel": "Nom",
+            "namePlaceholder": "Votre nom",
+            "emailLabel": "Email",
+            "emailPlaceholder": "vous@exemple.com",
+            "subjectLabel": "Sujet",
+            "subjectPlaceholder": "Sélectionnez un sujet",
+            "messageLabel": "Message",
+            "messagePlaceholder": "Comment pouvons-nous vous aider ?",
+            "submitIdle": "Envoyer le message",
+            "submitLoading": "Envoi...",
+            "privacyNote": "Aucun spam marketing. Vous pouvez demander la suppression de cette conversation à tout moment.",
+            "topics": {
+                "general": "Demande générale",
+                "support": "Support technique",
+                "billing": "Question de facturation",
+                "privacy": "Vie privée / demande de données",
+                "feedback": "Retour d'expérience"
+            }
+        },
+        "errors": {
+            "completeVerification": "Veuillez compléter la vérification avant l'envoi.",
+            "failedToSend": "Échec de l'envoi du message",
+            "generic": "Une erreur est survenue. Veuillez réessayer."
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Retour",

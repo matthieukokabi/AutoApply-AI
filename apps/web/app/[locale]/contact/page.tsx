@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ContactPageClient from "./contact-page-client";
 import { buildCanonicalOgParity } from "@/lib/seo";
 import { buildTrustPageJsonLd } from "@/lib/structured-data";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 export async function generateMetadata({
     params,
@@ -9,9 +10,12 @@ export async function generateMetadata({
     params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
     const { locale } = await params;
-    const title = "Contact Us — AutoApply AI";
-    const description =
-        "Contact AutoApply AI support for onboarding, billing, and product questions.";
+    const t = await getTranslations({
+        locale,
+        namespace: "contactPage.metadata",
+    });
+    const title = t("title");
+    const description = t("description");
     const parity = buildCanonicalOgParity(locale, "/contact");
 
     return {
@@ -32,10 +36,15 @@ export default async function ContactPage({
     params: Promise<{ locale: string }>;
 }) {
     const { locale } = await params;
+    setRequestLocale(locale);
+    const t = await getTranslations({
+        locale,
+        namespace: "contactPage.metadata",
+    });
     const jsonLd = buildTrustPageJsonLd(
         locale,
         "/contact",
-        "Contact Us — AutoApply AI"
+        t("title")
     );
 
     return (

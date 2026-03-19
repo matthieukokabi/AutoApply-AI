@@ -372,6 +372,49 @@
             }
         }
     },
+    "contactPage": {
+        "metadata": {
+            "title": "Contáctanos — AutoApply AI",
+            "description": "Contacta con el soporte de AutoApply AI para onboarding, facturación y preguntas sobre el producto."
+        },
+        "header": {
+            "title": "Contáctanos",
+            "subtitle": "¿Tienes preguntas, comentarios o necesitas ayuda? Nos encantará ayudarte.",
+            "sla": "El soporte suele responder en un día laborable. Los mensajes se usan solo para soporte y seguimiento del producto."
+        },
+        "success": {
+            "title": "Mensaje enviado",
+            "description": "Gracias por contactarnos. Te responderemos en un plazo de 24 a 48 horas.",
+            "backHome": "Volver al inicio"
+        },
+        "form": {
+            "title": "Envíanos un mensaje",
+            "description": "Completa el formulario y te responderemos lo antes posible.",
+            "nameLabel": "Nombre",
+            "namePlaceholder": "Tu nombre",
+            "emailLabel": "Correo electrónico",
+            "emailPlaceholder": "tu@ejemplo.com",
+            "subjectLabel": "Asunto",
+            "subjectPlaceholder": "Selecciona un tema",
+            "messageLabel": "Mensaje",
+            "messagePlaceholder": "¿Cómo podemos ayudarte?",
+            "submitIdle": "Enviar mensaje",
+            "submitLoading": "Enviando...",
+            "privacyNote": "Sin spam de marketing. Puedes solicitar la eliminación de esta conversación en cualquier momento.",
+            "topics": {
+                "general": "Consulta general",
+                "support": "Soporte técnico",
+                "billing": "Pregunta de facturación",
+                "privacy": "Privacidad / solicitud de datos",
+                "feedback": "Comentarios"
+            }
+        },
+        "errors": {
+            "completeVerification": "Completa la verificación antes de enviar.",
+            "failedToSend": "No se pudo enviar el mensaje",
+            "generic": "Algo salió mal. Inténtalo de nuevo."
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Atrás",
