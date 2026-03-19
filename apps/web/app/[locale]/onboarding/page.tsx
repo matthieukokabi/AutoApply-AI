@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@clerk/nextjs";
 import { Link } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,6 +26,7 @@ type Step = "welcome" | "cv" | "preferences" | "done";
 const ONBOARDING_HEALTH_TIMEOUT_MS = 8000;
 const ONBOARDING_MUTATION_TIMEOUT_MS = 15000;
 const ONBOARDING_UPLOAD_TIMEOUT_MS = 45000;
+const STEP_ORDER: Step[] = ["welcome", "cv", "preferences", "done"];
 
 const CURRENCIES = [
     { code: "USD", symbol: "$", label: "US Dollar" },
@@ -67,6 +69,7 @@ async function fetchWithTimeout(
 export default function OnboardingPage() {
     const router = useRouter();
     const { isSignedIn, isLoaded } = useAuth();
+    const t = useTranslations("onboarding");
     const [step, setStep] = useState<Step>("welcome");
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -187,15 +190,20 @@ export default function OnboardingPage() {
                 trackCvUploaded("onboarding", "file");
             } else {
                 const data = await res.json().catch(() => ({}));
-                setError(data.error || `Upload failed (${res.status}). Please try again or paste your CV text instead.`);
+                setError(
+                    data.error ||
+                        t("errors.uploadFailedWithStatus", {
+                            status: res.status,
+                        })
+                );
             }
         } catch (err) {
             if (isAbortError(err)) {
-                setError("Upload timed out — please check your connection and try again.");
+                setError(t("errors.uploadTimeout"));
                 return;
             }
             console.error("Upload failed:", err);
-            setError("Network error — please check your connection and try again.");
+            setError(t("errors.network"));
         } finally {
             setUploading(false);
         }
@@ -223,15 +231,15 @@ export default function OnboardingPage() {
                 trackCvUploaded("onboarding", "text");
             } else {
                 const data = await res.json().catch(() => ({}));
-                setError(data.error || "Failed to save CV text. Please try again.");
+                setError(data.error || t("errors.saveCvTextFailed"));
             }
         } catch (err) {
             if (isAbortError(err)) {
-                setError("Save timed out — please check your connection and try again.");
+                setError(t("errors.saveTimeout"));
                 return;
             }
             console.error("Save failed:", err);
-            setError("Network error — please check your connection and try again.");
+            setError(t("errors.network"));
         } finally {
             setUploading(false);
         }
@@ -264,15 +272,15 @@ export default function OnboardingPage() {
                 setStep("done");
             } else {
                 const data = await res.json().catch(() => ({}));
-                setError(data.error || "Failed to save preferences. Please try again.");
+                setError(data.error || t("errors.savePreferencesFailed"));
             }
         } catch (err) {
             if (isAbortError(err)) {
-                setError("Save timed out — please check your connection and try again.");
+                setError(t("errors.saveTimeout"));
                 return;
             }
             console.error("Save preferences failed:", err);
-            setError("Network error — please check your connection and try again.");
+            setError(t("errors.network"));
         } finally {
             setSaving(false);
         }
@@ -313,27 +321,28 @@ export default function OnboardingPage() {
     const healthChecks = [
         {
             id: "auth",
-            label: "Secure auth session",
+            label: t("health.auth.label"),
             ready: effectiveAuthReady,
-            waitingText: "Waiting for authentication",
+            waitingText: t("health.auth.waiting"),
         },
         {
             id: "profile",
-            label: "CV profile source",
+            label: t("health.profile.label"),
             ready: effectiveProfileReady,
-            waitingText: "Upload or paste your CV",
+            waitingText: t("health.profile.waiting"),
         },
         {
             id: "preferences",
-            label: "Job preferences",
+            label: t("health.preferences.label"),
             ready: effectivePreferencesReady,
-            waitingText: "Complete Step 2",
+            waitingText: t("health.preferences.waiting"),
         },
         {
             id: "checkout",
-            label: "Checkout configuration",
+            label: t("health.checkout.label"),
             ready: effectiveCheckoutReady,
-            waitingText: healthSnapshot?.checkoutDetail || "Verifying checkout setup",
+            waitingText:
+                healthSnapshot?.checkoutDetail || t("health.checkout.waiting"),
         },
     ];
 
@@ -352,11 +361,11 @@ export default function OnboardingPage() {
                 <div className="w-full max-w-lg">
                     {/* Progress */}
                     <div className="flex items-center justify-center gap-2 mb-8">
-                        {(["welcome", "cv", "preferences", "done"] as Step[]).map((s, i) => (
+                        {STEP_ORDER.map((s, i) => (
                             <div
                                 key={s}
                                 className={`h-2 rounded-full transition-all ${
-                                    i <= ["welcome", "cv", "preferences", "done"].indexOf(step)
+                                    i <= STEP_ORDER.indexOf(step)
                                         ? "bg-primary w-8"
                                         : "bg-muted w-4"
                                 }`}
@@ -366,11 +375,11 @@ export default function OnboardingPage() {
 
                     <div className="mb-6 rounded-lg border bg-card/60 p-4">
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="text-sm font-semibold">Onboarding health checklist</p>
+                            <p className="text-sm font-semibold">{t("health.title")}</p>
                             {healthLoading ? (
                                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                                     <Loader2 className="h-3 w-3 animate-spin" />
-                                    Checking...
+                                    {t("health.checking")}
                                 </span>
                             ) : null}
                         </div>
@@ -381,12 +390,12 @@ export default function OnboardingPage() {
                                     {check.ready ? (
                                         <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
                                             <Check className="h-3.5 w-3.5" />
-                                            Ready
+                                            {t("health.ready")}
                                         </span>
                                     ) : healthLoading ? (
                                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                                             <Circle className="h-3.5 w-3.5" />
-                                            Pending
+                                            {t("health.pending")}
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -405,15 +414,14 @@ export default function OnboardingPage() {
                                 <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                                     <Sparkles className="h-8 w-8 text-primary" />
                                 </div>
-                                <CardTitle className="text-2xl">Welcome to AutoApply AI</CardTitle>
+                                <CardTitle className="text-2xl">{t("welcome.title")}</CardTitle>
                                 <CardDescription className="text-base">
-                                    Let&apos;s set up your profile in 2 quick steps so the AI can start
-                                    matching and tailoring documents for you.
+                                    {t("welcome.description")}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex justify-center">
                                 <Button size="lg" onClick={() => setStep("cv")} className="gap-2">
-                                    Get Started <ChevronRight className="h-4 w-4" />
+                                    {t("welcome.cta")} <ChevronRight className="h-4 w-4" />
                                 </Button>
                             </CardContent>
                         </Card>
@@ -424,11 +432,10 @@ export default function OnboardingPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Upload className="h-5 w-5" />
-                                    Step 1: Upload Your CV
+                                    {t("cv.title")}
                                 </CardTitle>
                                 <CardDescription>
-                                    Upload your master CV. The AI will use it as the source of truth — it
-                                    never fabricates information.
+                                    {t("cv.description")}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -444,7 +451,7 @@ export default function OnboardingPage() {
                                     <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
                                         <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
                                         <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                                            CV uploaded successfully!
+                                            {t("cv.uploadSuccess")}
                                         </p>
                                     </div>
                                 ) : (
@@ -465,10 +472,10 @@ export default function OnboardingPage() {
                                                 <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
                                             )}
                                             <p className="mt-2 text-sm font-medium">
-                                                Drop your CV here or click to upload
+                                                {t("cv.dropzone.title")}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                PDF, DOCX, or TXT (max 5MB)
+                                                {t("cv.dropzone.subtitle")}
                                             </p>
                                             <input
                                                 ref={fileInputRef}
@@ -488,14 +495,14 @@ export default function OnboardingPage() {
                                             </div>
                                             <div className="relative flex justify-center text-xs uppercase">
                                                 <span className="bg-card px-2 text-muted-foreground">
-                                                    or paste text
+                                                    {t("cv.orPaste")}
                                                 </span>
                                             </div>
                                         </div>
 
                                         <textarea
                                             className="w-full h-32 p-3 border rounded-md text-sm resize-none"
-                                            placeholder="Paste your CV text here..."
+                                            placeholder={t("cv.textPlaceholder")}
                                             value={rawText}
                                             onChange={(e) => setRawText(e.target.value)}
                                         />
@@ -506,7 +513,7 @@ export default function OnboardingPage() {
                                                 onClick={handleSaveText}
                                                 disabled={uploading}
                                             >
-                                                Save Text
+                                                {t("cv.saveText")}
                                             </Button>
                                         )}
                                     </>
@@ -514,14 +521,14 @@ export default function OnboardingPage() {
 
                                 <div className="flex justify-between pt-2">
                                     <Button variant="ghost" onClick={() => setStep("welcome")}>
-                                        <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                                        <ChevronLeft className="h-4 w-4 mr-1" /> {t("common.back")}
                                     </Button>
                                     <Button
                                         onClick={() => setStep("preferences")}
                                         disabled={!cvUploaded}
                                         className="gap-1"
                                     >
-                                        Next <ChevronRight className="h-4 w-4" />
+                                        {t("common.next")} <ChevronRight className="h-4 w-4" />
                                     </Button>
                                 </div>
                             </CardContent>
@@ -541,51 +548,61 @@ export default function OnboardingPage() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Briefcase className="h-5 w-5" />
-                                    Step 2: Job Preferences
+                                    {t("preferences.title")}
                                 </CardTitle>
                                 <CardDescription>
-                                    Tell us what you&apos;re looking for so we can find the best matches.
+                                    {t("preferences.description")}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div>
                                     <label className="text-sm font-medium block mb-1">
-                                        Target Job Titles
+                                        {t("preferences.targetTitles.label")}
                                     </label>
                                     <input
                                         className="w-full px-3 py-2 border rounded-md text-sm"
-                                        placeholder="e.g. Frontend Engineer, React Developer"
+                                        placeholder={t("preferences.targetTitles.placeholder")}
                                         value={titles}
                                         onChange={(e) => setTitles(e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium block mb-1">Locations</label>
+                                    <label className="text-sm font-medium block mb-1">
+                                        {t("preferences.locations.label")}
+                                    </label>
                                     <input
                                         className="w-full px-3 py-2 border rounded-md text-sm"
-                                        placeholder="e.g. London, Berlin, Remote"
+                                        placeholder={t("preferences.locations.placeholder")}
                                         value={locations}
                                         onChange={(e) => setLocations(e.target.value)}
                                     />
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium block mb-1">
-                                        Remote Preference
+                                        {t("preferences.remotePreference.label")}
                                     </label>
                                     <select
                                         className="w-full px-3 py-2 border rounded-md text-sm"
                                         value={remote}
                                         onChange={(e) => setRemote(e.target.value)}
                                     >
-                                        <option value="any">Any</option>
-                                        <option value="remote">Remote Only</option>
-                                        <option value="hybrid">Hybrid</option>
-                                        <option value="onsite">On-site</option>
+                                        <option value="any">
+                                            {t("preferences.remotePreference.options.any")}
+                                        </option>
+                                        <option value="remote">
+                                            {t("preferences.remotePreference.options.remote")}
+                                        </option>
+                                        <option value="hybrid">
+                                            {t("preferences.remotePreference.options.hybrid")}
+                                        </option>
+                                        <option value="onsite">
+                                            {t("preferences.remotePreference.options.onsite")}
+                                        </option>
                                     </select>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium block mb-1">
-                                        Minimum Salary (Annual)
+                                        {t("preferences.minimumSalary.label")}
                                     </label>
                                     <div className="flex gap-2">
                                         <select
@@ -602,7 +619,9 @@ export default function OnboardingPage() {
                                         <input
                                             type="number"
                                             className="flex-1 px-3 py-2 border rounded-md text-sm"
-                                            placeholder={`e.g. ${currency === "JPY" ? "8000000" : "80000"}`}
+                                            placeholder={t("preferences.minimumSalary.placeholder", {
+                                                amount: currency === "JPY" ? "8000000" : "80000",
+                                            })}
                                             value={salary}
                                             onChange={(e) => setSalary(e.target.value)}
                                         />
@@ -611,7 +630,7 @@ export default function OnboardingPage() {
 
                                 <div className="flex justify-between pt-2">
                                     <Button variant="ghost" onClick={() => setStep("cv")}>
-                                        <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                                        <ChevronLeft className="h-4 w-4 mr-1" /> {t("common.back")}
                                     </Button>
                                     <Button
                                         onClick={handleSavePreferences}
@@ -619,7 +638,7 @@ export default function OnboardingPage() {
                                         className="gap-1"
                                     >
                                         {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                                        Complete Setup <ChevronRight className="h-4 w-4" />
+                                        {t("preferences.completeSetup")} <ChevronRight className="h-4 w-4" />
                                     </Button>
                                 </div>
                             </CardContent>
@@ -632,15 +651,14 @@ export default function OnboardingPage() {
                                 <div className="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
                                     <Check className="h-8 w-8 text-green-600" />
                                 </div>
-                                <CardTitle className="text-2xl">You&apos;re All Set!</CardTitle>
+                                <CardTitle className="text-2xl">{t("done.title")}</CardTitle>
                                 <CardDescription className="text-base">
-                                    Your profile is ready. The AI will now match jobs to your
-                                    background and generate tailored documents.
+                                    {t("done.description")}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex justify-center">
                                 <Button size="lg" onClick={() => router.push("/dashboard")}>
-                                    Go to Dashboard
+                                    {t("done.goToDashboard")}
                                 </Button>
                             </CardContent>
                         </Card>

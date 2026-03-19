@@ -274,6 +274,90 @@
             }
         }
     },
+    "onboarding": {
+        "common": {
+            "back": "Retour",
+            "next": "Suivant"
+        },
+        "errors": {
+            "uploadFailedWithStatus": "Échec du téléversement ({status}). Veuillez réessayer ou coller le texte de votre CV.",
+            "uploadTimeout": "Le téléversement a expiré — vérifiez votre connexion et réessayez.",
+            "saveCvTextFailed": "Échec de l'enregistrement du texte du CV. Veuillez réessayer.",
+            "savePreferencesFailed": "Échec de l'enregistrement des préférences. Veuillez réessayer.",
+            "saveTimeout": "L'enregistrement a expiré — vérifiez votre connexion et réessayez.",
+            "network": "Erreur réseau — vérifiez votre connexion et réessayez."
+        },
+        "health": {
+            "title": "Checklist de santé de l'onboarding",
+            "checking": "Vérification...",
+            "ready": "Prêt",
+            "pending": "En attente",
+            "auth": {
+                "label": "Session d'authentification sécurisée",
+                "waiting": "En attente d'authentification"
+            },
+            "profile": {
+                "label": "Source du profil CV",
+                "waiting": "Téléversez ou collez votre CV"
+            },
+            "preferences": {
+                "label": "Préférences d'emploi",
+                "waiting": "Terminez l'étape 2"
+            },
+            "checkout": {
+                "label": "Configuration du paiement",
+                "waiting": "Vérification de la configuration du paiement"
+            }
+        },
+        "welcome": {
+            "title": "Bienvenue sur AutoApply AI",
+            "description": "Configurons votre profil en 2 étapes rapides pour que l'IA commence à faire les correspondances et personnaliser vos documents.",
+            "cta": "Commencer"
+        },
+        "cv": {
+            "title": "Étape 1 : Téléversez votre CV",
+            "description": "Téléversez votre CV principal. L'IA l'utilisera comme source de vérité — elle n'invente jamais d'informations.",
+            "uploadSuccess": "CV téléversé avec succès !",
+            "dropzone": {
+                "title": "Déposez votre CV ici ou cliquez pour téléverser",
+                "subtitle": "PDF, DOCX ou TXT (max 5 Mo)"
+            },
+            "orPaste": "ou collez le texte",
+            "textPlaceholder": "Collez le texte de votre CV ici...",
+            "saveText": "Enregistrer le texte"
+        },
+        "preferences": {
+            "title": "Étape 2 : Préférences d'emploi",
+            "description": "Dites-nous ce que vous cherchez pour que nous trouvions les meilleures offres.",
+            "targetTitles": {
+                "label": "Intitulés visés",
+                "placeholder": "ex. Ingénieur Frontend, Développeur React"
+            },
+            "locations": {
+                "label": "Localisations",
+                "placeholder": "ex. Paris, Zürich, Télétravail"
+            },
+            "remotePreference": {
+                "label": "Préférence télétravail",
+                "options": {
+                    "any": "Peu importe",
+                    "remote": "100% télétravail",
+                    "hybrid": "Hybride",
+                    "onsite": "Sur site"
+                }
+            },
+            "minimumSalary": {
+                "label": "Salaire minimum (annuel)",
+                "placeholder": "ex. {amount}"
+            },
+            "completeSetup": "Terminer la configuration"
+        },
+        "done": {
+            "title": "Tout est prêt !",
+            "description": "Votre profil est prêt. L'IA va maintenant faire correspondre les offres et générer des documents personnalisés.",
+            "goToDashboard": "Aller au tableau de bord"
+        }
+    },
     "footer": {
         "tagline": "Assistant carrière propulsé par l'IA. Optimisé ATS, zéro fabrication.",
         "product": "Produit",

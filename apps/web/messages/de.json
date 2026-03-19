@@ -274,6 +274,90 @@
             }
         }
     },
+    "onboarding": {
+        "common": {
+            "back": "Zurück",
+            "next": "Weiter"
+        },
+        "errors": {
+            "uploadFailedWithStatus": "Upload fehlgeschlagen ({status}). Bitte versuchen Sie es erneut oder fügen Sie Ihren CV-Text ein.",
+            "uploadTimeout": "Upload-Timeout — bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+            "saveCvTextFailed": "CV-Text konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+            "savePreferencesFailed": "Präferenzen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+            "saveTimeout": "Speichern hat zu lange gedauert — bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+            "network": "Netzwerkfehler — bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+        },
+        "health": {
+            "title": "Onboarding-Health-Checkliste",
+            "checking": "Wird geprüft...",
+            "ready": "Bereit",
+            "pending": "Ausstehend",
+            "auth": {
+                "label": "Sichere Auth-Session",
+                "waiting": "Warten auf Authentifizierung"
+            },
+            "profile": {
+                "label": "CV-Profilquelle",
+                "waiting": "Laden Sie Ihren CV hoch oder fügen Sie ihn ein"
+            },
+            "preferences": {
+                "label": "Job-Präferenzen",
+                "waiting": "Schritt 2 abschließen"
+            },
+            "checkout": {
+                "label": "Checkout-Konfiguration",
+                "waiting": "Checkout-Konfiguration wird geprüft"
+            }
+        },
+        "welcome": {
+            "title": "Willkommen bei AutoApply AI",
+            "description": "Richten wir Ihr Profil in 2 schnellen Schritten ein, damit die KI mit Matching und Dokumentanpassung starten kann.",
+            "cta": "Loslegen"
+        },
+        "cv": {
+            "title": "Schritt 1: CV hochladen",
+            "description": "Laden Sie Ihren Haupt-CV hoch. Die KI nutzt ihn als verlässliche Quelle — sie erfindet keine Informationen.",
+            "uploadSuccess": "CV erfolgreich hochgeladen!",
+            "dropzone": {
+                "title": "CV hier ablegen oder zum Hochladen klicken",
+                "subtitle": "PDF, DOCX oder TXT (max. 5 MB)"
+            },
+            "orPaste": "oder Text einfügen",
+            "textPlaceholder": "Fügen Sie hier Ihren CV-Text ein...",
+            "saveText": "Text speichern"
+        },
+        "preferences": {
+            "title": "Schritt 2: Job-Präferenzen",
+            "description": "Sagen Sie uns, wonach Sie suchen, damit wir die besten Treffer finden.",
+            "targetTitles": {
+                "label": "Ziel-Jobtitel",
+                "placeholder": "z. B. Frontend Engineer, React Developer"
+            },
+            "locations": {
+                "label": "Standorte",
+                "placeholder": "z. B. Zürich, Berlin, Remote"
+            },
+            "remotePreference": {
+                "label": "Remote-Präferenz",
+                "options": {
+                    "any": "Beliebig",
+                    "remote": "Nur Remote",
+                    "hybrid": "Hybrid",
+                    "onsite": "Vor Ort"
+                }
+            },
+            "minimumSalary": {
+                "label": "Mindestgehalt (jährlich)",
+                "placeholder": "z. B. {amount}"
+            },
+            "completeSetup": "Einrichtung abschließen"
+        },
+        "done": {
+            "title": "Alles eingerichtet!",
+            "description": "Ihr Profil ist bereit. Die KI ordnet jetzt Jobs zu und erstellt personalisierte Dokumente.",
+            "goToDashboard": "Zum Dashboard"
+        }
+    },
     "footer": {
         "tagline": "KI-gestützter Karriere-Assistent. ATS-optimiert, ohne Erfindungen.",
         "product": "Produkt",

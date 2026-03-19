@@ -273,6 +273,90 @@
             }
         }
     },
+    "onboarding": {
+        "common": {
+            "back": "Back",
+            "next": "Next"
+        },
+        "errors": {
+            "uploadFailedWithStatus": "Upload failed ({status}). Please try again or paste your CV text instead.",
+            "uploadTimeout": "Upload timed out — please check your connection and try again.",
+            "saveCvTextFailed": "Failed to save CV text. Please try again.",
+            "savePreferencesFailed": "Failed to save preferences. Please try again.",
+            "saveTimeout": "Save timed out — please check your connection and try again.",
+            "network": "Network error — please check your connection and try again."
+        },
+        "health": {
+            "title": "Onboarding health checklist",
+            "checking": "Checking...",
+            "ready": "Ready",
+            "pending": "Pending",
+            "auth": {
+                "label": "Secure auth session",
+                "waiting": "Waiting for authentication"
+            },
+            "profile": {
+                "label": "CV profile source",
+                "waiting": "Upload or paste your CV"
+            },
+            "preferences": {
+                "label": "Job preferences",
+                "waiting": "Complete Step 2"
+            },
+            "checkout": {
+                "label": "Checkout configuration",
+                "waiting": "Verifying checkout setup"
+            }
+        },
+        "welcome": {
+            "title": "Welcome to AutoApply AI",
+            "description": "Let's set up your profile in 2 quick steps so the AI can start matching and tailoring documents for you.",
+            "cta": "Get Started"
+        },
+        "cv": {
+            "title": "Step 1: Upload Your CV",
+            "description": "Upload your master CV. The AI will use it as the source of truth — it never fabricates information.",
+            "uploadSuccess": "CV uploaded successfully!",
+            "dropzone": {
+                "title": "Drop your CV here or click to upload",
+                "subtitle": "PDF, DOCX, or TXT (max 5MB)"
+            },
+            "orPaste": "or paste text",
+            "textPlaceholder": "Paste your CV text here...",
+            "saveText": "Save Text"
+        },
+        "preferences": {
+            "title": "Step 2: Job Preferences",
+            "description": "Tell us what you're looking for so we can find the best matches.",
+            "targetTitles": {
+                "label": "Target Job Titles",
+                "placeholder": "e.g. Frontend Engineer, React Developer"
+            },
+            "locations": {
+                "label": "Locations",
+                "placeholder": "e.g. London, Berlin, Remote"
+            },
+            "remotePreference": {
+                "label": "Remote Preference",
+                "options": {
+                    "any": "Any",
+                    "remote": "Remote Only",
+                    "hybrid": "Hybrid",
+                    "onsite": "On-site"
+                }
+            },
+            "minimumSalary": {
+                "label": "Minimum Salary (Annual)",
+                "placeholder": "e.g. {amount}"
+            },
+            "completeSetup": "Complete Setup"
+        },
+        "done": {
+            "title": "You're All Set!",
+            "description": "Your profile is ready. The AI will now match jobs to your background and generate tailored documents.",
+            "goToDashboard": "Go to Dashboard"
+        }
+    },
     "footer": {
         "tagline": "AI-powered career assistant. ATS-optimized, zero fabrication.",
         "product": "Product",

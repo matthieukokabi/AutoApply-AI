@@ -274,6 +274,90 @@
             }
         }
     },
+    "onboarding": {
+        "common": {
+            "back": "Indietro",
+            "next": "Avanti"
+        },
+        "errors": {
+            "uploadFailedWithStatus": "Caricamento non riuscito ({status}). Riprova oppure incolla il testo del tuo CV.",
+            "uploadTimeout": "Timeout del caricamento — controlla la connessione e riprova.",
+            "saveCvTextFailed": "Impossibile salvare il testo del CV. Riprova.",
+            "savePreferencesFailed": "Impossibile salvare le preferenze. Riprova.",
+            "saveTimeout": "Timeout del salvataggio — controlla la connessione e riprova.",
+            "network": "Errore di rete — controlla la connessione e riprova."
+        },
+        "health": {
+            "title": "Checklist stato onboarding",
+            "checking": "Verifica in corso...",
+            "ready": "Pronto",
+            "pending": "In attesa",
+            "auth": {
+                "label": "Sessione di autenticazione sicura",
+                "waiting": "In attesa di autenticazione"
+            },
+            "profile": {
+                "label": "Sorgente profilo CV",
+                "waiting": "Carica o incolla il tuo CV"
+            },
+            "preferences": {
+                "label": "Preferenze lavoro",
+                "waiting": "Completa il passaggio 2"
+            },
+            "checkout": {
+                "label": "Configurazione checkout",
+                "waiting": "Verifica configurazione checkout"
+            }
+        },
+        "welcome": {
+            "title": "Benvenuto su AutoApply AI",
+            "description": "Configuriamo il tuo profilo in 2 passaggi rapidi così l'IA può iniziare ad abbinare offerte e personalizzare i documenti.",
+            "cta": "Inizia"
+        },
+        "cv": {
+            "title": "Passaggio 1: Carica il tuo CV",
+            "description": "Carica il tuo CV principale. L'IA lo usa come fonte di verità — non inventa mai informazioni.",
+            "uploadSuccess": "CV caricato con successo!",
+            "dropzone": {
+                "title": "Trascina qui il CV o clicca per caricarlo",
+                "subtitle": "PDF, DOCX o TXT (max 5 MB)"
+            },
+            "orPaste": "oppure incolla il testo",
+            "textPlaceholder": "Incolla qui il testo del tuo CV...",
+            "saveText": "Salva testo"
+        },
+        "preferences": {
+            "title": "Passaggio 2: Preferenze lavoro",
+            "description": "Dicci cosa stai cercando così troviamo le opportunità migliori.",
+            "targetTitles": {
+                "label": "Ruoli target",
+                "placeholder": "es. Frontend Engineer, React Developer"
+            },
+            "locations": {
+                "label": "Località",
+                "placeholder": "es. Milano, Roma, Remoto"
+            },
+            "remotePreference": {
+                "label": "Preferenza remoto",
+                "options": {
+                    "any": "Qualsiasi",
+                    "remote": "Solo remoto",
+                    "hybrid": "Ibrido",
+                    "onsite": "In sede"
+                }
+            },
+            "minimumSalary": {
+                "label": "Salario minimo (annuo)",
+                "placeholder": "es. {amount}"
+            },
+            "completeSetup": "Completa configurazione"
+        },
+        "done": {
+            "title": "È tutto pronto!",
+            "description": "Il tuo profilo è pronto. L'IA ora troverà offerte adatte e genererà documenti personalizzati.",
+            "goToDashboard": "Vai alla dashboard"
+        }
+    },
     "footer": {
         "tagline": "Assistente di carriera con IA. Ottimizzato ATS, senza invenzioni.",
         "product": "Prodotto",

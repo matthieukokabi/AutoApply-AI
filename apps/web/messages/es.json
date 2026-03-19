@@ -274,6 +274,90 @@
             }
         }
     },
+    "onboarding": {
+        "common": {
+            "back": "Atrás",
+            "next": "Siguiente"
+        },
+        "errors": {
+            "uploadFailedWithStatus": "Error al subir ({status}). Inténtalo de nuevo o pega el texto de tu CV.",
+            "uploadTimeout": "La subida excedió el tiempo — revisa tu conexión y vuelve a intentarlo.",
+            "saveCvTextFailed": "No se pudo guardar el texto del CV. Inténtalo de nuevo.",
+            "savePreferencesFailed": "No se pudieron guardar las preferencias. Inténtalo de nuevo.",
+            "saveTimeout": "El guardado excedió el tiempo — revisa tu conexión y vuelve a intentarlo.",
+            "network": "Error de red — revisa tu conexión y vuelve a intentarlo."
+        },
+        "health": {
+            "title": "Checklist de estado de onboarding",
+            "checking": "Comprobando...",
+            "ready": "Listo",
+            "pending": "Pendiente",
+            "auth": {
+                "label": "Sesión de autenticación segura",
+                "waiting": "Esperando autenticación"
+            },
+            "profile": {
+                "label": "Fuente del perfil CV",
+                "waiting": "Sube o pega tu CV"
+            },
+            "preferences": {
+                "label": "Preferencias de empleo",
+                "waiting": "Completa el paso 2"
+            },
+            "checkout": {
+                "label": "Configuración de pago",
+                "waiting": "Verificando la configuración de pago"
+            }
+        },
+        "welcome": {
+            "title": "Bienvenido a AutoApply AI",
+            "description": "Configuremos tu perfil en 2 pasos rápidos para que la IA empiece a hacer matching y personalizar tus documentos.",
+            "cta": "Comenzar"
+        },
+        "cv": {
+            "title": "Paso 1: Sube tu CV",
+            "description": "Sube tu CV maestro. La IA lo usará como fuente de verdad — nunca inventa información.",
+            "uploadSuccess": "¡CV subido correctamente!",
+            "dropzone": {
+                "title": "Suelta tu CV aquí o haz clic para subirlo",
+                "subtitle": "PDF, DOCX o TXT (máx. 5 MB)"
+            },
+            "orPaste": "o pega el texto",
+            "textPlaceholder": "Pega aquí el texto de tu CV...",
+            "saveText": "Guardar texto"
+        },
+        "preferences": {
+            "title": "Paso 2: Preferencias de empleo",
+            "description": "Cuéntanos qué estás buscando para encontrar las mejores coincidencias.",
+            "targetTitles": {
+                "label": "Puestos objetivo",
+                "placeholder": "p. ej. Frontend Engineer, React Developer"
+            },
+            "locations": {
+                "label": "Ubicaciones",
+                "placeholder": "p. ej. Madrid, Barcelona, Remoto"
+            },
+            "remotePreference": {
+                "label": "Preferencia de remoto",
+                "options": {
+                    "any": "Cualquiera",
+                    "remote": "Solo remoto",
+                    "hybrid": "Híbrido",
+                    "onsite": "Presencial"
+                }
+            },
+            "minimumSalary": {
+                "label": "Salario mínimo (anual)",
+                "placeholder": "p. ej. {amount}"
+            },
+            "completeSetup": "Completar configuración"
+        },
+        "done": {
+            "title": "¡Todo listo!",
+            "description": "Tu perfil está listo. La IA ahora encontrará empleos para ti y generará documentos personalizados.",
+            "goToDashboard": "Ir al panel"
+        }
+    },
     "footer": {
         "tagline": "Asistente de carrera con IA. Optimizado ATS, sin fabricación.",
         "product": "Producto",
