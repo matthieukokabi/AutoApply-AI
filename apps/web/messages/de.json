@@ -283,6 +283,58 @@
                 "pendingReview": "Zur Prüfung ausstehend"
             },
             "applicationPipeline": "Bewerbungspipeline"
+        },
+        "profilePage": {
+            "title": "Profil & CV",
+            "description": "Laden Sie Ihren Master-CV hoch und verwalten Sie Ihr strukturiertes Profil. Dies ist die verlässliche Quelle für alle KI-generierten Dokumente.",
+            "messages": {
+                "cvTextSaved": "CV-Text erfolgreich gespeichert.",
+                "saveFailed": "Speichern fehlgeschlagen.",
+                "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+                "profileSaved": "Profil erfolgreich gespeichert.",
+                "fileTooLarge": "Datei zu groß. Maximum 5 MB.",
+                "cvUploaded": "CV hochgeladen.",
+                "uploadFailed": "Upload fehlgeschlagen.",
+                "uploadRetryFailed": "Upload fehlgeschlagen. Bitte versuchen Sie es erneut."
+            },
+            "uploadCard": {
+                "title": "CV hochladen",
+                "description": "Laden Sie Ihren Master-CV als Datei hoch oder fügen Sie ihn als Text ein. Die KI analysiert ihn in strukturierte Abschnitte.",
+                "uploading": "Wird hochgeladen...",
+                "dropzoneTitle": "CV hier ablegen oder zum Hochladen klicken",
+                "dropzoneSubtitle": "PDF-, DOCX- oder TXT-Datei (max. 5 MB)",
+                "chooseFile": "Datei auswählen"
+            },
+            "pasteCard": {
+                "title": "CV-Text einfügen",
+                "description": "Alternativ können Sie den Inhalt Ihres CV direkt als Klartext einfügen.",
+                "placeholder": "Fügen Sie hier Ihren vollständigen CV-Text ein...",
+                "saveAndParse": "Speichern & Analysieren"
+            },
+            "structuredCard": {
+                "title": "Strukturiertes Profil",
+                "description": "Prüfen und bearbeiten Sie die von der KI analysierten CV-Bereiche. Diese strukturierten Daten steuern Scoring und Tailoring.",
+                "cvPhoto": {
+                    "title": "CV-Foto",
+                    "description": "Standard für Schweizer und europäische CVs. Ihr Foto erscheint auf personalisierten CVs."
+                },
+                "contact": {
+                    "title": "Kontaktinformationen",
+                    "fullName": "Vollständiger Name",
+                    "email": "E-Mail",
+                    "phone": "Telefon",
+                    "location": "Standort"
+                },
+                "summary": {
+                    "title": "Berufliche Zusammenfassung",
+                    "placeholder": "Kurze berufliche Zusammenfassung..."
+                },
+                "skills": {
+                    "title": "Fähigkeiten",
+                    "placeholder": "Kommagetrennte Fähigkeiten..."
+                },
+                "saveProfile": "Profil speichern"
+            }
         }
     },
     "onboarding": {

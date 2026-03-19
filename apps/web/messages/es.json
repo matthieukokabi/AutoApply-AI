@@ -283,6 +283,58 @@
                 "pendingReview": "Pendiente de revisión"
             },
             "applicationPipeline": "Pipeline de candidaturas"
+        },
+        "profilePage": {
+            "title": "Perfil y CV",
+            "description": "Sube tu CV principal y gestiona tu perfil estructurado. Esta es la fuente de verdad para todos los documentos generados por IA.",
+            "messages": {
+                "cvTextSaved": "Texto del CV guardado correctamente.",
+                "saveFailed": "No se pudo guardar.",
+                "networkError": "Error de red. Inténtalo de nuevo.",
+                "profileSaved": "Perfil guardado correctamente.",
+                "fileTooLarge": "Archivo demasiado grande. Máximo 5 MB.",
+                "cvUploaded": "CV subido.",
+                "uploadFailed": "Error al subir.",
+                "uploadRetryFailed": "Error al subir. Inténtalo de nuevo."
+            },
+            "uploadCard": {
+                "title": "Subir CV",
+                "description": "Sube tu CV principal como archivo de texto o pega el texto. La IA lo analizará en secciones estructuradas.",
+                "uploading": "Subiendo...",
+                "dropzoneTitle": "Suelta tu CV aquí o haz clic para subirlo",
+                "dropzoneSubtitle": "Archivo PDF, DOCX o TXT (máx. 5 MB)",
+                "chooseFile": "Elegir archivo"
+            },
+            "pasteCard": {
+                "title": "Pegar texto del CV",
+                "description": "También puedes pegar directamente el contenido de tu CV como texto plano.",
+                "placeholder": "Pega aquí el texto completo de tu CV...",
+                "saveAndParse": "Guardar y analizar"
+            },
+            "structuredCard": {
+                "title": "Perfil estructurado",
+                "description": "Revisa y edita las secciones de tu CV analizadas por la IA. Estos datos estructurados impulsan la puntuación y el tailoring.",
+                "cvPhoto": {
+                    "title": "Foto del CV",
+                    "description": "Estándar en CV suizos y europeos. Tu foto aparecerá en los CV personalizados."
+                },
+                "contact": {
+                    "title": "Información de contacto",
+                    "fullName": "Nombre completo",
+                    "email": "Correo electrónico",
+                    "phone": "Teléfono",
+                    "location": "Ubicación"
+                },
+                "summary": {
+                    "title": "Resumen profesional",
+                    "placeholder": "Breve resumen profesional..."
+                },
+                "skills": {
+                    "title": "Habilidades",
+                    "placeholder": "Habilidades separadas por comas..."
+                },
+                "saveProfile": "Guardar perfil"
+            }
         }
     },
     "onboarding": {

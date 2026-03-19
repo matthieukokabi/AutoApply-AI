@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -51,6 +52,7 @@ const emptyStructured: StructuredCV = {
 };
 
 export default function ProfilePage() {
+    const t = useTranslations("dashboard.profilePage");
     const [rawText, setRawText] = useState("");
     const [structured, setStructured] = useState<StructuredCV>(emptyStructured);
     const [loading, setLoading] = useState(true);
@@ -91,14 +93,14 @@ export default function ProfilePage() {
                 body: JSON.stringify({ rawText, structuredJson: structured }),
             });
             if (res.ok) {
-                setMessage({ type: "success", text: "CV text saved successfully." });
+                setMessage({ type: "success", text: t("messages.cvTextSaved") });
                 trackCvUploaded("profile", "text");
             } else {
                 const data = await res.json();
-                setMessage({ type: "error", text: data.error || "Failed to save." });
+                setMessage({ type: "error", text: data.error || t("messages.saveFailed") });
             }
         } catch {
-            setMessage({ type: "error", text: "Network error. Please try again." });
+            setMessage({ type: "error", text: t("messages.networkError") });
         } finally {
             setSaving(false);
         }
@@ -114,13 +116,13 @@ export default function ProfilePage() {
                 body: JSON.stringify({ rawText, structuredJson: structured }),
             });
             if (res.ok) {
-                setMessage({ type: "success", text: "Profile saved successfully." });
+                setMessage({ type: "success", text: t("messages.profileSaved") });
             } else {
                 const data = await res.json();
-                setMessage({ type: "error", text: data.error || "Failed to save." });
+                setMessage({ type: "error", text: data.error || t("messages.saveFailed") });
             }
         } catch {
-            setMessage({ type: "error", text: "Network error. Please try again." });
+            setMessage({ type: "error", text: t("messages.networkError") });
         } finally {
             setSaving(false);
         }
@@ -131,7 +133,7 @@ export default function ProfilePage() {
 
         const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-            setMessage({ type: "error", text: "File too large. Maximum 5MB." });
+            setMessage({ type: "error", text: t("messages.fileTooLarge") });
             return;
         }
 
@@ -153,14 +155,14 @@ export default function ProfilePage() {
                 if (data.profile.structuredJson) {
                     setStructured(data.profile.structuredJson);
                 }
-                setMessage({ type: "success", text: data.message || "CV uploaded." });
+                setMessage({ type: "success", text: data.message || t("messages.cvUploaded") });
                 trackCvUploaded("profile", "file");
             } else {
                 const data = await res.json();
-                setMessage({ type: "error", text: data.error || "Upload failed." });
+                setMessage({ type: "error", text: data.error || t("messages.uploadFailed") });
             }
         } catch {
-            setMessage({ type: "error", text: "Upload failed. Please try again." });
+            setMessage({ type: "error", text: t("messages.uploadRetryFailed") });
         } finally {
             setUploading(false);
         }
@@ -179,10 +181,9 @@ export default function ProfilePage() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Profile & CV</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
                 <p className="text-muted-foreground">
-                    Upload your master CV and manage your structured profile. This is the
-                    source of truth for all AI-generated documents.
+                    {t("description")}
                 </p>
             </div>
 
@@ -209,11 +210,10 @@ export default function ProfilePage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Upload className="h-5 w-5" />
-                            Upload CV
+                            {t("uploadCard.title")}
                         </CardTitle>
                         <CardDescription>
-                            Upload your master CV as a text file or paste as text. AI will
-                            parse it into structured sections.
+                            {t("uploadCard.description")}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -231,11 +231,11 @@ export default function ProfilePage() {
                             <div>
                                 <p className="font-medium">
                                     {uploading
-                                        ? "Uploading..."
-                                        : "Drop your CV here or click to upload"}
+                                        ? t("uploadCard.uploading")
+                                        : t("uploadCard.dropzoneTitle")}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    PDF, DOCX, or TXT file (max 5MB)
+                                    {t("uploadCard.dropzoneSubtitle")}
                                 </p>
                             </div>
                             <input
@@ -249,7 +249,7 @@ export default function ProfilePage() {
                                 }}
                             />
                             <Button type="button" disabled={uploading}>
-                                Choose File
+                                {t("uploadCard.chooseFile")}
                             </Button>
                         </div>
                     </CardContent>
@@ -258,15 +258,15 @@ export default function ProfilePage() {
                 {/* Raw Text */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Paste CV Text</CardTitle>
+                        <CardTitle>{t("pasteCard.title")}</CardTitle>
                         <CardDescription>
-                            Alternatively, paste your CV content directly as plain text.
+                            {t("pasteCard.description")}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <textarea
                             className="w-full h-64 p-4 border rounded-lg resize-none text-sm font-mono bg-muted/50"
-                            placeholder="Paste your complete CV text here..."
+                            placeholder={t("pasteCard.placeholder")}
                             value={rawText}
                             onChange={(e) => setRawText(e.target.value)}
                         />
@@ -278,7 +278,7 @@ export default function ProfilePage() {
                             {saving ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : null}
-                            Save & Parse
+                            {t("pasteCard.saveAndParse")}
                         </Button>
                     </CardContent>
                 </Card>
@@ -287,19 +287,18 @@ export default function ProfilePage() {
             {/* Structured Profile Editor */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Structured Profile</CardTitle>
+                    <CardTitle>{t("structuredCard.title")}</CardTitle>
                     <CardDescription>
-                        Review and edit the AI-parsed sections of your CV. This structured
-                        data powers compatibility scoring and tailoring.
+                        {t("structuredCard.description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-6">
                         {/* CV Photo */}
                         <div>
-                            <h3 className="font-semibold mb-2">CV Photo</h3>
+                            <h3 className="font-semibold mb-2">{t("structuredCard.cvPhoto.title")}</h3>
                             <p className="text-sm text-muted-foreground mb-3">
-                                Standard for Swiss and European CVs. Your photo will appear on tailored CVs.
+                                {t("structuredCard.cvPhoto.description")}
                             </p>
                             <PhotoUpload
                                 value={structured.photoBase64}
@@ -311,11 +310,11 @@ export default function ProfilePage() {
 
                         {/* Contact */}
                         <div>
-                            <h3 className="font-semibold mb-2">Contact Information</h3>
+                            <h3 className="font-semibold mb-2">{t("structuredCard.contact.title")}</h3>
                             <div className="grid gap-4 md:grid-cols-2">
                                 <input
                                     className="px-3 py-2 border rounded-md text-sm"
-                                    placeholder="Full Name"
+                                    placeholder={t("structuredCard.contact.fullName")}
                                     value={structured.contact.name}
                                     onChange={(e) =>
                                         setStructured((s) => ({
@@ -326,7 +325,7 @@ export default function ProfilePage() {
                                 />
                                 <input
                                     className="px-3 py-2 border rounded-md text-sm"
-                                    placeholder="Email"
+                                    placeholder={t("structuredCard.contact.email")}
                                     value={structured.contact.email}
                                     onChange={(e) =>
                                         setStructured((s) => ({
@@ -337,7 +336,7 @@ export default function ProfilePage() {
                                 />
                                 <input
                                     className="px-3 py-2 border rounded-md text-sm"
-                                    placeholder="Phone"
+                                    placeholder={t("structuredCard.contact.phone")}
                                     value={structured.contact.phone}
                                     onChange={(e) =>
                                         setStructured((s) => ({
@@ -348,7 +347,7 @@ export default function ProfilePage() {
                                 />
                                 <input
                                     className="px-3 py-2 border rounded-md text-sm"
-                                    placeholder="Location"
+                                    placeholder={t("structuredCard.contact.location")}
                                     value={structured.contact.location}
                                     onChange={(e) =>
                                         setStructured((s) => ({
@@ -362,10 +361,10 @@ export default function ProfilePage() {
 
                         {/* Summary */}
                         <div>
-                            <h3 className="font-semibold mb-2">Professional Summary</h3>
+                            <h3 className="font-semibold mb-2">{t("structuredCard.summary.title")}</h3>
                             <textarea
                                 className="w-full h-24 p-3 border rounded-md text-sm resize-none"
-                                placeholder="Brief professional summary..."
+                                placeholder={t("structuredCard.summary.placeholder")}
                                 value={structured.summary}
                                 onChange={(e) =>
                                     setStructured((s) => ({ ...s, summary: e.target.value }))
@@ -375,10 +374,10 @@ export default function ProfilePage() {
 
                         {/* Skills */}
                         <div>
-                            <h3 className="font-semibold mb-2">Skills</h3>
+                            <h3 className="font-semibold mb-2">{t("structuredCard.skills.title")}</h3>
                             <textarea
                                 className="w-full h-20 p-3 border rounded-md text-sm resize-none"
-                                placeholder="Comma-separated skills..."
+                                placeholder={t("structuredCard.skills.placeholder")}
                                 value={structured.skills.join(", ")}
                                 onChange={(e) =>
                                     setStructured((s) => ({
@@ -396,7 +395,7 @@ export default function ProfilePage() {
                             {saving ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : null}
-                            Save Profile
+                            {t("structuredCard.saveProfile")}
                         </Button>
                     </div>
                 </CardContent>

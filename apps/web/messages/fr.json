@@ -283,6 +283,58 @@
                 "pendingReview": "En attente de révision"
             },
             "applicationPipeline": "Pipeline des candidatures"
+        },
+        "profilePage": {
+            "title": "Profil & CV",
+            "description": "Téléversez votre CV principal et gérez votre profil structuré. C'est la source de vérité pour tous les documents générés par l'IA.",
+            "messages": {
+                "cvTextSaved": "Texte du CV enregistré avec succès.",
+                "saveFailed": "Échec de l'enregistrement.",
+                "networkError": "Erreur réseau. Veuillez réessayer.",
+                "profileSaved": "Profil enregistré avec succès.",
+                "fileTooLarge": "Fichier trop volumineux. Maximum 5 Mo.",
+                "cvUploaded": "CV téléversé.",
+                "uploadFailed": "Échec du téléversement.",
+                "uploadRetryFailed": "Le téléversement a échoué. Veuillez réessayer."
+            },
+            "uploadCard": {
+                "title": "Téléverser un CV",
+                "description": "Téléversez votre CV principal en fichier texte ou collez le texte. L'IA l'analysera en sections structurées.",
+                "uploading": "Téléversement...",
+                "dropzoneTitle": "Déposez votre CV ici ou cliquez pour téléverser",
+                "dropzoneSubtitle": "Fichier PDF, DOCX ou TXT (max 5 Mo)",
+                "chooseFile": "Choisir un fichier"
+            },
+            "pasteCard": {
+                "title": "Coller le texte du CV",
+                "description": "Sinon, collez directement le contenu de votre CV en texte brut.",
+                "placeholder": "Collez le texte complet de votre CV ici...",
+                "saveAndParse": "Enregistrer et analyser"
+            },
+            "structuredCard": {
+                "title": "Profil structuré",
+                "description": "Relisez et modifiez les sections de votre CV analysées par l'IA. Ces données structurées alimentent le scoring et la personnalisation.",
+                "cvPhoto": {
+                    "title": "Photo du CV",
+                    "description": "Standard pour les CV suisses et européens. Votre photo apparaîtra sur les CV personnalisés."
+                },
+                "contact": {
+                    "title": "Informations de contact",
+                    "fullName": "Nom complet",
+                    "email": "E-mail",
+                    "phone": "Téléphone",
+                    "location": "Localisation"
+                },
+                "summary": {
+                    "title": "Résumé professionnel",
+                    "placeholder": "Bref résumé professionnel..."
+                },
+                "skills": {
+                    "title": "Compétences",
+                    "placeholder": "Compétences séparées par des virgules..."
+                },
+                "saveProfile": "Enregistrer le profil"
+            }
         }
     },
     "onboarding": {

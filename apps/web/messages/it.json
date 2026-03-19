@@ -283,6 +283,58 @@
                 "pendingReview": "In attesa di revisione"
             },
             "applicationPipeline": "Pipeline candidature"
+        },
+        "profilePage": {
+            "title": "Profilo e CV",
+            "description": "Carica il tuo CV principale e gestisci il tuo profilo strutturato. Questa è la fonte di verità per tutti i documenti generati dall'IA.",
+            "messages": {
+                "cvTextSaved": "Testo del CV salvato con successo.",
+                "saveFailed": "Salvataggio non riuscito.",
+                "networkError": "Errore di rete. Riprova.",
+                "profileSaved": "Profilo salvato con successo.",
+                "fileTooLarge": "File troppo grande. Massimo 5 MB.",
+                "cvUploaded": "CV caricato.",
+                "uploadFailed": "Caricamento non riuscito.",
+                "uploadRetryFailed": "Caricamento non riuscito. Riprova."
+            },
+            "uploadCard": {
+                "title": "Carica CV",
+                "description": "Carica il tuo CV principale come file di testo o incolla il testo. L'IA lo analizzerà in sezioni strutturate.",
+                "uploading": "Caricamento...",
+                "dropzoneTitle": "Trascina qui il CV o clicca per caricarlo",
+                "dropzoneSubtitle": "File PDF, DOCX o TXT (max 5 MB)",
+                "chooseFile": "Scegli file"
+            },
+            "pasteCard": {
+                "title": "Incolla testo CV",
+                "description": "In alternativa, incolla direttamente il contenuto del tuo CV in testo semplice.",
+                "placeholder": "Incolla qui il testo completo del tuo CV...",
+                "saveAndParse": "Salva e analizza"
+            },
+            "structuredCard": {
+                "title": "Profilo strutturato",
+                "description": "Rivedi e modifica le sezioni del CV analizzate dall'IA. Questi dati strutturati alimentano scoring e tailoring.",
+                "cvPhoto": {
+                    "title": "Foto CV",
+                    "description": "Standard per CV svizzeri ed europei. La tua foto apparirà nei CV personalizzati."
+                },
+                "contact": {
+                    "title": "Informazioni di contatto",
+                    "fullName": "Nome completo",
+                    "email": "Email",
+                    "phone": "Telefono",
+                    "location": "Località"
+                },
+                "summary": {
+                    "title": "Riepilogo professionale",
+                    "placeholder": "Breve riepilogo professionale..."
+                },
+                "skills": {
+                    "title": "Competenze",
+                    "placeholder": "Competenze separate da virgole..."
+                },
+                "saveProfile": "Salva profilo"
+            }
         }
     },
     "onboarding": {

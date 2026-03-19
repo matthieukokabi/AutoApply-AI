@@ -282,6 +282,58 @@
                 "pendingReview": "Pending Review"
             },
             "applicationPipeline": "Application Pipeline"
+        },
+        "profilePage": {
+            "title": "Profile & CV",
+            "description": "Upload your master CV and manage your structured profile. This is the source of truth for all AI-generated documents.",
+            "messages": {
+                "cvTextSaved": "CV text saved successfully.",
+                "saveFailed": "Failed to save.",
+                "networkError": "Network error. Please try again.",
+                "profileSaved": "Profile saved successfully.",
+                "fileTooLarge": "File too large. Maximum 5MB.",
+                "cvUploaded": "CV uploaded.",
+                "uploadFailed": "Upload failed.",
+                "uploadRetryFailed": "Upload failed. Please try again."
+            },
+            "uploadCard": {
+                "title": "Upload CV",
+                "description": "Upload your master CV as a text file or paste as text. AI will parse it into structured sections.",
+                "uploading": "Uploading...",
+                "dropzoneTitle": "Drop your CV here or click to upload",
+                "dropzoneSubtitle": "PDF, DOCX, or TXT file (max 5MB)",
+                "chooseFile": "Choose File"
+            },
+            "pasteCard": {
+                "title": "Paste CV Text",
+                "description": "Alternatively, paste your CV content directly as plain text.",
+                "placeholder": "Paste your complete CV text here...",
+                "saveAndParse": "Save & Parse"
+            },
+            "structuredCard": {
+                "title": "Structured Profile",
+                "description": "Review and edit the AI-parsed sections of your CV. This structured data powers compatibility scoring and tailoring.",
+                "cvPhoto": {
+                    "title": "CV Photo",
+                    "description": "Standard for Swiss and European CVs. Your photo will appear on tailored CVs."
+                },
+                "contact": {
+                    "title": "Contact Information",
+                    "fullName": "Full Name",
+                    "email": "Email",
+                    "phone": "Phone",
+                    "location": "Location"
+                },
+                "summary": {
+                    "title": "Professional Summary",
+                    "placeholder": "Brief professional summary..."
+                },
+                "skills": {
+                    "title": "Skills",
+                    "placeholder": "Comma-separated skills..."
+                },
+                "saveProfile": "Save Profile"
+            }
         }
     },
     "onboarding": {
