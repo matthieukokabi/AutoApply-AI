@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-03-19T17:09:18.462Z",
+  "target": "https://autoapply.works/api/contact",
+  "httpStatus": 200,
+  "response": {
+    "success": true
+  },
+  "isQueuedFallback": false,
+  "source": "smtp-post-deploy-smoke",
+  "containsMisconfigured": false,
+  "smokePayload": {
+    "name": "Prod SMTP Smoke",
+    "email": "qa+smtp-smoke@autoapply.works",
+    "subject": "general",
+    "formSessionId": "SmtpSmokeSession12345",
+    "startedAtEpochMs": 1773940151484
+  }
+}
