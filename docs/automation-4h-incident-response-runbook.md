@@ -93,6 +93,15 @@ Expected after successful real run:
 - `generation_failures_detected`: tailoring/scoring stage failing; inspect model/API timeout/error fields.
 - `end_to_end_run_failure`: execution-level failure before persistence; inspect stage-level `hasError/errorMessage`.
 
+## 6.1) Runtime/cache mismatch (important)
+
+If DB metadata shows 4h schedule but diagnostics still show minute-level executions:
+
+1. Confirm `workflow_entity.versionId` and latest `workflow_history` schedule rule are correct.
+2. Treat this as stale in-memory n8n trigger registration.
+3. Restart the n8n service (Render) once to flush old runtime trigger state.
+4. Re-run diagnostics and verify recent execution timestamps no longer follow 1-minute cadence.
+
 ## 7) Incident closeout checklist
 
 1. Scheduler confirmed active with 4h cadence.
