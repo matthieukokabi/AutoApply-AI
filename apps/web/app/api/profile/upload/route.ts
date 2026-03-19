@@ -10,6 +10,21 @@ const MAX_RAW_TEXT_LENGTH = 200000;
 const MAX_FILE_NAME_LENGTH = 255;
 const profileUploadRequestLog = new Map<string, number[]>();
 
+async function extractTextFromPdf(buffer: Buffer) {
+    const pdfParseModule = await import("pdf-parse");
+    if (typeof pdfParseModule.PDFParse !== "function") {
+        throw new Error("PDF_PARSE_MODULE_INVALID");
+    }
+
+    const parser = new pdfParseModule.PDFParse({ data: new Uint8Array(buffer) });
+    try {
+        const result = await parser.getText();
+        return typeof result?.text === "string" ? result.text : "";
+    } finally {
+        await parser.destroy().catch(() => undefined);
+    }
+}
+
 /**
  * POST /api/profile/upload — handle CV file upload
  * Accepts PDF, DOCX, or TXT files as multipart/form-data.
@@ -77,14 +92,31 @@ export async function POST(req: Request) {
                     );
                 }
 
-                const pdfParseModule = await import("pdf-parse");
-                const pdfParse = (pdfParseModule as any).default || (pdfParseModule as any);
-                const result = await pdfParse(buffer);
-                rawText = result.text;
+                try {
+                    rawText = await extractTextFromPdf(buffer);
+                } catch (parseError) {
+                    console.error("POST /api/profile/upload PDF parse error:", parseError);
+                    return NextResponse.json(
+                        {
+                            error: "Unable to read this PDF. Please upload a standard PDF, DOCX, or paste your CV text.",
+                        },
+                        { status: 400 }
+                    );
+                }
             } else if (ext === "docx") {
-                const mammoth = await import("mammoth");
-                const result = await mammoth.extractRawText({ buffer });
-                rawText = result.value;
+                try {
+                    const mammoth = await import("mammoth");
+                    const result = await mammoth.extractRawText({ buffer });
+                    rawText = result.value;
+                } catch (parseError) {
+                    console.error("POST /api/profile/upload DOCX parse error:", parseError);
+                    return NextResponse.json(
+                        {
+                            error: "Unable to read this DOCX file. Please upload another DOCX, TXT, or paste your CV text.",
+                        },
+                        { status: 400 }
+                    );
+                }
             } else if (ext === "txt") {
                 rawText = buffer.toString("utf-8");
             } else {

@@ -3,6 +3,17 @@ import { POST } from "@/app/api/profile/upload/route";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
+const { mockPdfGetText, mockPdfDestroy, mockPdfParseConstructor } = vi.hoisted(() => ({
+    mockPdfGetText: vi.fn(),
+    mockPdfDestroy: vi.fn(),
+    mockPdfParseConstructor: vi.fn(),
+}));
+
+// Mock pdf-parse v2 API (ESM dynamic import in route)
+vi.mock("pdf-parse", () => ({
+    PDFParse: mockPdfParseConstructor,
+}));
+
 // Mock mammoth (ESM dynamic import in route)
 vi.mock("mammoth", () => ({
     extractRawText: vi.fn(),
@@ -30,6 +41,14 @@ const mockProfile = {
 
 beforeEach(() => {
     vi.clearAllMocks();
+    mockPdfGetText.mockResolvedValue({
+        text: "Experienced software engineer with 10 years of delivering enterprise applications and cloud migrations.",
+    });
+    mockPdfDestroy.mockResolvedValue(undefined);
+    mockPdfParseConstructor.mockImplementation(() => ({
+        getText: mockPdfGetText,
+        destroy: mockPdfDestroy,
+    }));
 });
 
 describe("POST /api/profile/upload", () => {
@@ -222,6 +241,54 @@ describe("POST /api/profile/upload", () => {
             const data = await response.json();
             expect(response.status).toBe(400);
             expect(data.error).toContain("Invalid PDF");
+        });
+
+        it("handles PDF file upload via pdf-parse v2 API", async () => {
+            vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+            vi.mocked(prisma.masterProfile.upsert).mockResolvedValue(mockProfile as any);
+
+            const file = new File([Buffer.from("%PDF-1.7 test-pdf-content")], "resume.pdf", {
+                type: "application/pdf",
+            });
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const request = new Request("http://localhost/api/profile/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.fileName).toBe("resume.pdf");
+            expect(mockPdfParseConstructor).toHaveBeenCalledOnce();
+            expect(mockPdfGetText).toHaveBeenCalledOnce();
+            expect(mockPdfDestroy).toHaveBeenCalledOnce();
+        });
+
+        it("returns 400 when PDF parser cannot extract text", async () => {
+            vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+            mockPdfGetText.mockRejectedValueOnce(new Error("bad pdf"));
+
+            const file = new File([Buffer.from("%PDF-1.7 broken-content")], "resume.pdf", {
+                type: "application/pdf",
+            });
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const request = new Request("http://localhost/api/profile/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Unable to read this PDF");
+            expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
         });
 
         it("handles DOCX file upload", async () => {
