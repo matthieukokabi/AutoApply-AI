@@ -58,7 +58,7 @@
         {
             "parameters": {
                 "operation": "executeQuery",
-                "query": "SELECT u.\"id\", u.\"email\", u.\"name\", u.\"subscriptionStatus\", u.\"creditsRemaining\", jp.\"targetTitles\", jp.\"locations\", jp.\"remotePreference\", jp.\"salaryMin\", jp.\"industries\", mp.\"rawText\" AS \"masterCvText\" FROM \"users\" u LEFT JOIN \"job_preferences\" jp ON jp.\"userId\" = u.\"id\" LEFT JOIN \"master_profiles\" mp ON mp.\"userId\" = u.\"id\" WHERE u.\"automationEnabled\" = true AND u.\"subscriptionStatus\" IN ('pro', 'unlimited') AND mp.\"rawText\" IS NOT NULL AND jp.\"id\" IS NOT NULL",
+                "query": "WITH cadence_gate AS (\n  SELECT (EXTRACT(MINUTE FROM NOW())::int = 0 AND MOD(EXTRACT(HOUR FROM NOW())::int, 4) = 0) AS should_run\n)\nSELECT\n  u.\"id\",\n  u.\"email\",\n  u.\"name\",\n  u.\"subscriptionStatus\",\n  u.\"creditsRemaining\",\n  jp.\"targetTitles\",\n  jp.\"locations\",\n  jp.\"remotePreference\",\n  jp.\"salaryMin\",\n  jp.\"industries\",\n  mp.\"rawText\" AS \"masterCvText\"\nFROM \"users\" u\nLEFT JOIN \"job_preferences\" jp ON jp.\"userId\" = u.\"id\"\nLEFT JOIN \"master_profiles\" mp ON mp.\"userId\" = u.\"id\"\nCROSS JOIN cadence_gate cg\nWHERE\n  cg.should_run = true\n  AND u.\"automationEnabled\" = true\n  AND u.\"subscriptionStatus\" IN ('pro', 'unlimited')\n  AND mp.\"rawText\" IS NOT NULL\n  AND jp.\"id\" IS NOT NULL",
                 "additionalFields": {}
             },
             "id": "fetch-active-users",

@@ -525,6 +525,32 @@ try {
 
 return [{ json: { logged: true } }];`;
 
+const FETCH_ACTIVE_USERS_SQL = `WITH cadence_gate AS (
+  SELECT (EXTRACT(MINUTE FROM NOW())::int = 0 AND MOD(EXTRACT(HOUR FROM NOW())::int, 4) = 0) AS should_run
+)
+SELECT
+  u."id",
+  u."email",
+  u."name",
+  u."subscriptionStatus",
+  u."creditsRemaining",
+  jp."targetTitles",
+  jp."locations",
+  jp."remotePreference",
+  jp."salaryMin",
+  jp."industries",
+  mp."rawText" AS "masterCvText"
+FROM "users" u
+LEFT JOIN "job_preferences" jp ON jp."userId" = u."id"
+LEFT JOIN "master_profiles" mp ON mp."userId" = u."id"
+CROSS JOIN cadence_gate cg
+WHERE
+  cg.should_run = true
+  AND u."automationEnabled" = true
+  AND u."subscriptionStatus" IN ('pro', 'unlimited')
+  AND mp."rawText" IS NOT NULL
+  AND jp."id" IS NOT NULL`;
+
 function patchWorkflowJson(workflow) {
     const copy = JSON.parse(JSON.stringify(workflow));
 
@@ -540,6 +566,13 @@ function patchWorkflowJson(workflow) {
 
         if (node.name === "Fetch & Normalize All Job Sources") {
             node.parameters = { ...(node.parameters || {}), jsCode: FETCH_NORMALIZE_JS };
+        }
+
+        if (node.name === "Fetch Active Users with Prefs & CV") {
+            node.parameters = {
+                ...(node.parameters || {}),
+                query: FETCH_ACTIVE_USERS_SQL,
+            };
         }
 
         if (node.name === "Batch Save via App API") {
