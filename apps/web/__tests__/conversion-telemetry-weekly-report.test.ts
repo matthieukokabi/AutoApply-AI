@@ -23,12 +23,13 @@ describe("conversion telemetry weekly report script", () => {
         const reportsDir = createTempDir();
         const seededPath = path.join(reportsDir, "wave5-conversion-trend-seeded.json");
         const outputPath = path.join(reportsDir, "wave6-conversion-trend-live-test.json");
+        const seededGeneratedAt = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
         fs.writeFileSync(
             seededPath,
             JSON.stringify(
                 {
-                    generatedAt: "2026-03-18T22:00:00.000Z",
+                    generatedAt: seededGeneratedAt,
                     funnel: {
                         daily: {
                             events: {

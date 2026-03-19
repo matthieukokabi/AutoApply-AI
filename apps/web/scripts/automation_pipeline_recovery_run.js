@@ -90,11 +90,12 @@ function loadEnvIfPresent() {
 }
 
 async function safeFetchJson(url, options = {}) {
+    const { timeoutMs = 20000, ...fetchOptions } = options;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-        const resp = await fetch(url, { ...options, signal: controller.signal });
+        const resp = await fetch(url, { ...fetchOptions, signal: controller.signal });
         clearTimeout(timeout);
         const text = await resp.text();
         let body = null;
@@ -114,6 +115,36 @@ async function safeFetchJson(url, options = {}) {
             error: error?.message || "fetch_failed",
         };
     }
+}
+
+function parseJsonFromModelText(rawText) {
+    const text = typeof rawText === "string" ? rawText : "";
+    const candidates = [];
+
+    if (text) {
+        candidates.push(text);
+    }
+
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fenced?.[1]) {
+        candidates.unshift(fenced[1]);
+    }
+
+    const firstBrace = text.indexOf("{");
+    const lastBrace = text.lastIndexOf("}");
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+        candidates.push(text.slice(firstBrace, lastBrace + 1));
+    }
+
+    for (const candidate of candidates) {
+        try {
+            return JSON.parse(String(candidate).trim());
+        } catch {
+            // keep trying fallback candidates
+        }
+    }
+
+    return null;
 }
 
 function extractConfigFromLoadNode(jsCode) {
@@ -348,6 +379,7 @@ async function scoreJob(job, masterCvText, anthropicApiKey) {
     const prompt = `You are an expert ATS analyst. Analyze this job against the candidate CV.\n\nReturn ONLY raw JSON (no markdown, no code blocks):\n{"compatibility_score":<0-100>,"ats_keywords":[<up to 10>],"matching_strengths":[<up to 5>],"gaps":[<up to 5>],"recommendation":"apply"|"stretch"|"skip"}\n\nScoring: skills 40%, experience 25%, education 15%, industry 20%. apply=80+, stretch=60-79, skip=<60.\n\nJOB TITLE: ${job.title}\nCOMPANY: ${job.company}\nJOB DESCRIPTION:\n${(job.description || "").substring(0, 3000)}\n\nCANDIDATE CV:\n${(masterCvText || "").substring(0, 5000)}`;
 
     const response = await safeFetchJson("https://api.anthropic.com/v1/messages", {
+        timeoutMs: 120000,
         method: "POST",
         headers: {
             "x-api-key": anthropicApiKey,
@@ -374,14 +406,8 @@ async function scoreJob(job, masterCvText, anthropicApiKey) {
     }
 
     const text = response.body?.content?.[0]?.text || "";
-    let jsonStr = text;
-    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenced) {
-        jsonStr = fenced[1];
-    }
-
-    try {
-        const parsed = JSON.parse(jsonStr.trim());
+    const parsed = parseJsonFromModelText(text);
+    if (parsed && typeof parsed === "object") {
         return {
             compatibilityScore: parsed.compatibility_score || 0,
             atsKeywords: parsed.ats_keywords || [],
@@ -390,16 +416,16 @@ async function scoreJob(job, masterCvText, anthropicApiKey) {
             recommendation: parsed.recommendation || "skip",
             scoringError: null,
         };
-    } catch {
-        return {
-            compatibilityScore: 0,
-            atsKeywords: [],
-            matchingStrengths: [],
-            gaps: [],
-            recommendation: "skip",
-            scoringError: "scoring_parse_error",
-        };
     }
+
+    return {
+        compatibilityScore: 0,
+        atsKeywords: [],
+        matchingStrengths: [],
+        gaps: [],
+        recommendation: "skip",
+        scoringError: "scoring_parse_error",
+    };
 }
 
 async function tailorJob(job, masterCvText, anthropicApiKey, atsKeywords) {
@@ -414,6 +440,7 @@ async function tailorJob(job, masterCvText, anthropicApiKey, atsKeywords) {
     const prompt = `You are an expert ATS resume writer. Rewrite this CV for the job below.\n\nReturn ONLY raw JSON (no markdown fences):\n{"tailored_cv_markdown":"<CV in markdown>","motivation_letter_markdown":"<cover letter in markdown>"}\n\nRULES: NEVER fabricate. ONLY use info from CV. MAY reorder/rephrase with ATS keywords. Clean Markdown, single-column, max 2 pages. Cover letter: 250-350 words, reference company+role, no cliches.\n\nATS KEYWORDS: ${JSON.stringify(atsKeywords || [])}\n\nJOB: ${job.title} at ${job.company}\n${(job.description || "").substring(0, 3000)}\n\nCV:\n${(masterCvText || "").substring(0, 5000)}`;
 
     const response = await safeFetchJson("https://api.anthropic.com/v1/messages", {
+        timeoutMs: 120000,
         method: "POST",
         headers: {
             "x-api-key": anthropicApiKey,
@@ -437,26 +464,47 @@ async function tailorJob(job, masterCvText, anthropicApiKey, atsKeywords) {
     }
 
     const text = response.body?.content?.[0]?.text || "";
-    let jsonStr = text;
-    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenced) {
-        jsonStr = fenced[1];
-    }
+    const parsed = parseJsonFromModelText(text);
+    if (parsed && typeof parsed === "object") {
+        const tailoredCvMarkdown =
+            parsed.tailored_cv_markdown ||
+            parsed.tailoredCvMarkdown ||
+            parsed.cv_markdown ||
+            "";
+        const coverLetterMarkdown =
+            parsed.motivation_letter_markdown ||
+            parsed.cover_letter_markdown ||
+            parsed.coverLetterMarkdown ||
+            "";
 
-    try {
-        const parsed = JSON.parse(jsonStr.trim());
+        if (!tailoredCvMarkdown && !coverLetterMarkdown && text.trim().length >= 200) {
+            return {
+                tailoredCvMarkdown: text.trim(),
+                coverLetterMarkdown: "",
+                tailoringError: "tailoring_parse_fallback_raw",
+            };
+        }
+
         return {
-            tailoredCvMarkdown: parsed.tailored_cv_markdown || "",
-            coverLetterMarkdown: parsed.motivation_letter_markdown || "",
+            tailoredCvMarkdown,
+            coverLetterMarkdown,
             tailoringError: null,
         };
-    } catch {
+    }
+
+    if (text.trim().length >= 200) {
         return {
-            tailoredCvMarkdown: "",
+            tailoredCvMarkdown: text.trim(),
             coverLetterMarkdown: "",
-            tailoringError: "tailoring_parse_error",
+            tailoringError: "tailoring_parse_fallback_raw",
         };
     }
+
+    return {
+        tailoredCvMarkdown: "",
+        coverLetterMarkdown: "",
+        tailoringError: "tailoring_parse_error",
+    };
 }
 
 async function main() {
@@ -656,6 +704,8 @@ async function main() {
                 recommendation: job.recommendation || "skip",
                 tailoredCvMarkdown: tailored?.tailoredCvMarkdown || null,
                 coverLetterMarkdown: tailored?.coverLetterMarkdown || null,
+                scoringError: job.scoringError || null,
+                tailoringError: tailored?.tailoringError || null,
                 status: isTailored ? "tailored" : "discovered",
                 runId,
             };
@@ -742,6 +792,12 @@ async function main() {
                 payloadTailoredCount: applicationsPayload.filter(
                     (app) => app.status === "tailored"
                 ).length,
+                scoringErrors: applicationsPayload
+                    .map((app) => app.scoringError)
+                    .filter(Boolean),
+                tailoringErrors: applicationsPayload
+                    .map((app) => app.tailoringError)
+                    .filter(Boolean),
             },
             persistence: {
                 beforeApplications,

@@ -73,7 +73,7 @@ const allJobs = [];
 
 function detectAdzunaCountry(location) {
   const locationLower = (location || '').toLowerCase();
-  if (locationLower.includes('zurich') || locationLower.includes('z\\u00fcrich') || locationLower.includes('bern') || locationLower.includes('geneva') || locationLower.includes('basel') || locationLower.includes('switzerland') || locationLower.includes('swiss') || locationLower.includes('lausanne')) return 'ch';
+  if (locationLower.includes('zurich') || locationLower.includes('z\u00fcrich') || locationLower.includes('bern') || locationLower.includes('geneva') || locationLower.includes('basel') || locationLower.includes('switzerland') || locationLower.includes('swiss') || locationLower.includes('lausanne')) return 'ch';
   if (locationLower.includes('london') || locationLower.includes('manchester') || locationLower.includes('uk') || locationLower.includes('united kingdom') || locationLower.includes('england')) return 'gb';
   if (locationLower.includes('berlin') || locationLower.includes('munich') || locationLower.includes('hamburg') || locationLower.includes('germany') || locationLower.includes('frankfurt') || locationLower.includes('deutschland')) return 'de';
   if (locationLower.includes('paris') || locationLower.includes('lyon') || locationLower.includes('france') || locationLower.includes('marseille')) return 'fr';
@@ -287,6 +287,137 @@ return uniqueJobs.map((job) => ({
   }
 }));`;
 
+const PARSE_SCORING_JS = `// Parse scoring response, carry forward job + user data
+const item = $input.first();
+const prev = $('Fetch & Normalize All Job Sources').item;
+
+function parseJsonFromText(rawText) {
+  const text = typeof rawText === 'string' ? rawText : '';
+  const candidates = [];
+
+  if (text) candidates.push(text);
+
+  const fenced = text.match(new RegExp("\\x60\\x60\\x60(?:json)?\\\\s*([\\\\s\\\\S]*?)\\x60\\x60\\x60", "i"));
+  if (fenced && fenced[1]) candidates.unshift(fenced[1]);
+
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    candidates.push(text.slice(firstBrace, lastBrace + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(String(candidate).trim());
+    } catch {}
+  }
+
+  return null;
+}
+
+const text = item && item.json && Array.isArray(item.json.content) && item.json.content[0]
+  ? (item.json.content[0].text || '')
+  : '';
+const parsed = parseJsonFromText(text);
+
+if (!parsed || typeof parsed !== 'object') {
+  return [{ json: {
+    ...prev.json,
+    compatibilityScore: 0,
+    atsKeywords: [],
+    matchingStrengths: [],
+    gaps: [],
+    recommendation: 'skip',
+    scoringParseError: true
+  }}];
+}
+
+return [{ json: {
+  ...prev.json,
+  compatibilityScore: parsed.compatibility_score || 0,
+  atsKeywords: Array.isArray(parsed.ats_keywords) ? parsed.ats_keywords : [],
+  matchingStrengths: Array.isArray(parsed.matching_strengths) ? parsed.matching_strengths : [],
+  gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
+  recommendation: parsed.recommendation || 'skip',
+  scoringParseError: false
+}}];`;
+
+const PARSE_TAILORED_JS = `// Parse tailoring response
+const item = $input.first();
+const prev = $('Score >= 70?').first().json;
+
+function parseJsonFromText(rawText) {
+  const text = typeof rawText === 'string' ? rawText : '';
+  const candidates = [];
+
+  if (text) candidates.push(text);
+
+  const fenced = text.match(new RegExp("\\x60\\x60\\x60(?:json)?\\\\s*([\\\\s\\\\S]*?)\\x60\\x60\\x60", "i"));
+  if (fenced && fenced[1]) candidates.unshift(fenced[1]);
+
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    candidates.push(text.slice(firstBrace, lastBrace + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(String(candidate).trim());
+    } catch {}
+  }
+
+  return null;
+}
+
+const text = item && item.json && Array.isArray(item.json.content) && item.json.content[0]
+  ? (item.json.content[0].text || '')
+  : '';
+const parsed = parseJsonFromText(text);
+
+if (!parsed || typeof parsed !== 'object') {
+  if (text && text.trim().length >= 200) {
+    return [{ json: {
+      ...prev,
+      tailoredCvMarkdown: text.trim(),
+      coverLetterMarkdown: '',
+      status: 'tailored',
+      tailoringParseError: true,
+      tailoringParseFallback: 'raw_text'
+    }}];
+  }
+
+  return [{ json: {
+    ...prev,
+    tailoredCvMarkdown: '',
+    coverLetterMarkdown: '',
+    status: 'discovered',
+    tailoringParseError: true
+  }}];
+}
+
+const tailoredCvMarkdown = parsed.tailored_cv_markdown || parsed.tailoredCvMarkdown || parsed.cv_markdown || '';
+const coverLetterMarkdown = parsed.motivation_letter_markdown || parsed.cover_letter_markdown || parsed.coverLetterMarkdown || '';
+
+if (!tailoredCvMarkdown && !coverLetterMarkdown && text && text.trim().length >= 200) {
+  return [{ json: {
+    ...prev,
+    tailoredCvMarkdown: text.trim(),
+    coverLetterMarkdown: '',
+    status: 'tailored',
+    tailoringParseError: true,
+    tailoringParseFallback: 'raw_text'
+  }}];
+}
+
+return [{ json: {
+  ...prev,
+  tailoredCvMarkdown,
+  coverLetterMarkdown,
+  status: tailoredCvMarkdown ? 'tailored' : 'discovered',
+  tailoringParseError: false
+}}];`;
+
 const BATCH_SAVE_JS = `// Collect all processed jobs (tailored + discovered) and callback to web app
 const items = $input.all();
 const config = $('Load Config').first().json;
@@ -412,6 +543,14 @@ function patchWorkflowJson(workflow) {
 
         if (node.name === "Batch Save via App API") {
             node.parameters = { ...(node.parameters || {}), jsCode: BATCH_SAVE_JS };
+        }
+
+        if (node.name === "Parse Scoring Response") {
+            node.parameters = { ...(node.parameters || {}), jsCode: PARSE_SCORING_JS };
+        }
+
+        if (node.name === "Parse Tailored Response") {
+            node.parameters = { ...(node.parameters || {}), jsCode: PARSE_TAILORED_JS };
         }
 
         if (node.name === "Error Handler") {
