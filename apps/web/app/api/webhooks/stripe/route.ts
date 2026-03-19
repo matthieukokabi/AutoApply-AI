@@ -15,6 +15,23 @@ function resolvePlanFromPriceId(priceId?: string): "pro" | "unlimited" {
     return unlimitedPrices.has(priceId) ? "unlimited" : "pro";
 }
 
+function isMissingWebhookTableError(error: unknown) {
+    if (!error || typeof error !== "object") {
+        return false;
+    }
+
+    const prismaCode = (error as { code?: string }).code;
+    if (prismaCode === "P2021") {
+        return true;
+    }
+
+    const message = (error as { message?: string }).message;
+    return (
+        typeof message === "string" &&
+        message.includes("stripe_webhook_events")
+    );
+}
+
 /**
  * POST /api/webhooks/stripe
  * Handles Stripe webhook events for subscription management.
@@ -65,7 +82,13 @@ export async function POST(req: Request) {
             if (error?.code === "P2002") {
                 return NextResponse.json({ received: true, duplicate: true });
             }
-            throw error;
+            if (isMissingWebhookTableError(error)) {
+                console.warn(
+                    "[stripe-webhook] stripe_webhook_events table missing; continuing without DB idempotency guard"
+                );
+            } else {
+                throw error;
+            }
         }
 
         switch (event.type) {
@@ -161,8 +184,10 @@ export async function POST(req: Request) {
             await prisma.stripeWebhookEvent.delete({
                 where: { eventId: event.id },
             });
-        } catch {
-            // no-op: event row may not exist if failure happened before insert
+        } catch (deleteError) {
+            if (!isMissingWebhookTableError(deleteError)) {
+                // no-op: event row may not exist if failure happened before insert
+            }
         }
         console.error("Stripe webhook error:", error);
         return NextResponse.json(

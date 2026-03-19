@@ -51,6 +51,43 @@ describe("POST /api/webhooks/stripe", () => {
         expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
+    it("continues processing when webhook idempotency table is unavailable", async () => {
+        vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+            createStripeEvent("checkout.session.completed", {
+                mode: "subscription",
+                subscription: "sub_123",
+                customer: "cus_123",
+                metadata: { userId: "user_1" },
+            }) as any
+        );
+
+        vi.mocked(prisma.stripeWebhookEvent.create).mockRejectedValue({
+            code: "P2021",
+            message: "The table `public.stripe_webhook_events` does not exist in the current database.",
+        } as any);
+        vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue({
+            items: { data: [{ price: { id: "price_pro_monthly" } }] },
+        } as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+        const response = await POST(
+            new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            })
+        );
+
+        expect(response.status).toBe(200);
+        expect(prisma.user.update).toHaveBeenCalledWith({
+            where: { id: "user_1" },
+            data: {
+                subscriptionStatus: "pro",
+                stripeCustomerId: "cus_123",
+                creditsRemaining: 50,
+            },
+        });
+    });
+
     it("returns 400 for invalid signature", async () => {
         vi.mocked(stripe.webhooks.constructEvent).mockImplementation(() => {
             throw new Error("Invalid signature");

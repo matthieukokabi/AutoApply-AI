@@ -37,6 +37,7 @@ Last updated: 2026-03-19 (Europe/Zurich)
 
 ## P0 — Must complete before live payment test
 
+- [x] Hotfix Stripe webhook processing when idempotency table (`stripe_webhook_events`) is missing in production DB: continue webhook execution without DB idempotency and avoid hard-fail before subscription sync — completed on 2026-03-19 (`apps/web/app/api/webhooks/stripe/route.ts`, `apps/web/__tests__/api/webhooks-stripe.test.ts`)
 - [x] Run production onboarding gate (`SMOKE_BASE_URL=https://autoapply.works npm run smoke:onboarding:cross-browser` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-cross-browser-smoke-20260317_115606.jsonl`)
 - [x] Run production onboarding matrix (`npm run smoke:onboarding -- https://autoapply.works` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-smoke-20260317_120732.jsonl`)
 - [x] Run production auth-blocked matrix (`npm run smoke:onboarding:auth-blocked -- https://autoapply.works` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-auth-blocked-smoke-20260317_124151.jsonl`)
