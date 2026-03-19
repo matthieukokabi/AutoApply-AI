@@ -514,6 +514,9 @@
         "retry": "Erneut versuchen",
         "goHome": "Zur Startseite"
     },
+    "checkoutButton": {
+        "genericError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    },
     "notFoundPage": {
         "title": "Seite nicht gefunden",
         "description": "Die angeforderte Seite existiert nicht oder wurde verschoben.",

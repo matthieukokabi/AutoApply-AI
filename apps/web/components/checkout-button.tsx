@@ -2,6 +2,7 @@
 
 import { useState, type MouseEvent } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import {
@@ -31,6 +32,7 @@ export function CheckoutButton({
     className,
     fallbackHref,
 }: CheckoutButtonProps) {
+    const t = useTranslations("checkoutButton");
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const { isLoaded, userId } = useAuth();
@@ -94,7 +96,7 @@ export function CheckoutButton({
                 setErrorMessage(CHECKOUT_TIMEOUT_ERROR);
                 return;
             }
-            setErrorMessage("Something went wrong. Please try again.");
+            setErrorMessage(t("genericError"));
         } finally {
             setLoading(false);
         }

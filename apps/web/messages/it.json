@@ -514,6 +514,9 @@
         "retry": "Riprova",
         "goHome": "Vai alla home"
     },
+    "checkoutButton": {
+        "genericError": "Qualcosa è andato storto. Riprova."
+    },
     "notFoundPage": {
         "title": "Pagina non trovata",
         "description": "La pagina richiesta non esiste o è stata spostata.",

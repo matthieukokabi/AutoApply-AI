@@ -514,6 +514,9 @@
         "retry": "Réessayer",
         "goHome": "Retour à l'accueil"
     },
+    "checkoutButton": {
+        "genericError": "Un problème est survenu. Veuillez réessayer."
+    },
     "notFoundPage": {
         "title": "Page introuvable",
         "description": "La page demandée n'existe pas ou a été déplacée.",

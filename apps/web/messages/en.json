@@ -513,6 +513,9 @@
         "retry": "Try Again",
         "goHome": "Go Home"
     },
+    "checkoutButton": {
+        "genericError": "Something went wrong. Please try again."
+    },
     "notFoundPage": {
         "title": "Page not found",
         "description": "The page you requested does not exist or was moved.",

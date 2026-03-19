@@ -514,6 +514,9 @@
         "retry": "Intentar de nuevo",
         "goHome": "Ir al inicio"
     },
+    "checkoutButton": {
+        "genericError": "Algo salió mal. Inténtalo de nuevo."
+    },
     "notFoundPage": {
         "title": "Página no encontrada",
         "description": "La página solicitada no existe o fue movida.",
