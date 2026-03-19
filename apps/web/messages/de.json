@@ -165,6 +165,7 @@
         "sidebar": {
             "dashboard": "Dashboard",
             "profileCv": "Profil & Lebenslauf",
+            "cvStudio": "CV-Studio",
             "jobFeed": "Job-Feed",
             "settings": "Einstellungen"
         },
@@ -336,6 +337,28 @@
                     "placeholder": "Kommagetrennte Fähigkeiten..."
                 },
                 "saveProfile": "Profil speichern"
+            }
+        },
+        "generatorPage": {
+            "title": "CV- & Motivationsstudio",
+            "description": "Erstellen Sie professionelle CV- und Motivationsschreiben von Grund auf, sehen Sie die Vorschau live und laden Sie als PDF herunter.",
+            "actions": {
+                "resetCv": "CV-Vorlage zurücksetzen",
+                "downloadCv": "CV herunterladen (PDF)",
+                "resetLetter": "Schreiben-Vorlage zurücksetzen",
+                "downloadLetter": "Motivationsschreiben herunterladen (PDF)"
+            },
+            "cv": {
+                "title": "CV-Builder",
+                "description": "Schreiben oder bearbeiten Sie Ihren CV in Markdown. Rechts sehen Sie sofort das finale Design.",
+                "editorLabel": "CV-Editor",
+                "previewLabel": "CV-Vorschau"
+            },
+            "letter": {
+                "title": "Motivationsschreiben-Builder",
+                "description": "Verfassen Sie Ihr Motivationsschreiben in Ihrem eigenen Stil und laden Sie es herunter, sobald es fertig ist.",
+                "editorLabel": "Schreiben-Editor",
+                "previewLabel": "Schreiben-Vorschau"
             }
         },
         "jobsPage": {

@@ -165,6 +165,7 @@
         "sidebar": {
             "dashboard": "Panel",
             "profileCv": "Perfil y CV",
+            "cvStudio": "Estudio CV",
             "jobFeed": "Empleos",
             "settings": "Configuración"
         },
@@ -336,6 +337,28 @@
                     "placeholder": "Habilidades separadas por comas..."
                 },
                 "saveProfile": "Guardar perfil"
+            }
+        },
+        "generatorPage": {
+            "title": "Estudio de CV y carta de motivación",
+            "description": "Crea CV y cartas de motivación profesionales desde cero, previsualiza en vivo y descarga en PDF.",
+            "actions": {
+                "resetCv": "Restablecer plantilla de CV",
+                "downloadCv": "Descargar CV (PDF)",
+                "resetLetter": "Restablecer plantilla de carta",
+                "downloadLetter": "Descargar carta de motivación (PDF)"
+            },
+            "cv": {
+                "title": "Constructor de CV",
+                "description": "Escribe o ajusta tu CV en Markdown. El panel derecho muestra el diseño final al instante.",
+                "editorLabel": "Editor de CV",
+                "previewLabel": "Vista previa del CV"
+            },
+            "letter": {
+                "title": "Constructor de carta de motivación",
+                "description": "Redacta tu carta de motivación con tu propio estilo y descárgala cuando esté lista.",
+                "editorLabel": "Editor de carta",
+                "previewLabel": "Vista previa de la carta"
             }
         },
         "jobsPage": {

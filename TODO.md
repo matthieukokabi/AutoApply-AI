@@ -1,6 +1,6 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-03-19 (Europe/Zurich)
+Last updated: 2026-03-20 (Europe/Zurich)
 
 ## P0 — Incident: onboarding CV upload returning 500
 
@@ -81,6 +81,11 @@ Last updated: 2026-03-19 (Europe/Zurich)
 - [x] Normalize Free-plan CTA locale preservation on non-EN landing pages (`/fr` should keep `/fr/sign-up`) — fixed in source on 2026-03-17 (landing links now use locale-aware `signUpPath`)
 - [x] Add production runbook page for payment incident triage (`Unauthorized`, webhook delay, missing envs) — completed on 2026-03-17 (`docs/payment-incident-triage-runbook.md`)
 - [x] Add lightweight uptime check for `/api/auth/session`, `/api/checkout`, `/api/webhooks/stripe` — completed on 2026-03-17 (`npm run smoke:uptime:prod`, report: `/tmp/production-uptime-check-20260317_141546.jsonl`)
+
+## P1 — CV + motivation generator expansion
+
+- [x] Add dashboard `CV Studio` route with side-nav access, live markdown editors, professional CV/letter previews, direct PDF download actions, and localized copy in `en|fr|de|es|it` — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/generator/page.tsx`, `apps/web/app/[locale]/(dashboard)/layout.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
+- [ ] Add AI generation mode in `CV Studio` (job brief -> `/api/tailor` dispatch -> deep link to generated docs when ready)
 
 ## P1 — Google tool integration (acquisition + measurement)
 

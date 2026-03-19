@@ -164,6 +164,7 @@
         "sidebar": {
             "dashboard": "Dashboard",
             "profileCv": "Profile & CV",
+            "cvStudio": "CV Studio",
             "jobFeed": "Job Feed",
             "settings": "Settings"
         },
@@ -335,6 +336,28 @@
                     "placeholder": "Comma-separated skills..."
                 },
                 "saveProfile": "Save Profile"
+            }
+        },
+        "generatorPage": {
+            "title": "CV & Motivation Studio",
+            "description": "Create professional CV and motivation letter drafts from scratch, preview them live, and download as PDF.",
+            "actions": {
+                "resetCv": "Reset CV Template",
+                "downloadCv": "Download CV (PDF)",
+                "resetLetter": "Reset Letter Template",
+                "downloadLetter": "Download Motivation Letter (PDF)"
+            },
+            "cv": {
+                "title": "CV Builder",
+                "description": "Write or adjust your CV in Markdown. The right panel shows the final design instantly.",
+                "editorLabel": "CV Editor",
+                "previewLabel": "CV Preview"
+            },
+            "letter": {
+                "title": "Motivation Letter Builder",
+                "description": "Draft your motivation letter with your own style and download it when ready.",
+                "editorLabel": "Letter Editor",
+                "previewLabel": "Letter Preview"
             }
         },
         "jobsPage": {

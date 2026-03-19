@@ -13,6 +13,7 @@ import {
     Settings,
     Sparkles,
     ExternalLink,
+    FileText,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -85,6 +86,11 @@ export default async function DashboardLayout({
             href: "/profile" as const,
             label: t("sidebar.profileCv"),
             icon: User,
+        },
+        {
+            href: "/generator" as const,
+            label: t("sidebar.cvStudio"),
+            icon: FileText,
         },
         { href: "/jobs" as const, label: t("sidebar.jobFeed"), icon: Briefcase },
         { href: "/settings" as const, label: t("sidebar.settings"), icon: Settings },

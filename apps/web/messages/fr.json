@@ -165,6 +165,7 @@
         "sidebar": {
             "dashboard": "Tableau de bord",
             "profileCv": "Profil & CV",
+            "cvStudio": "Studio CV",
             "jobFeed": "Offres",
             "settings": "Paramètres"
         },
@@ -336,6 +337,28 @@
                     "placeholder": "Compétences séparées par des virgules..."
                 },
                 "saveProfile": "Enregistrer le profil"
+            }
+        },
+        "generatorPage": {
+            "title": "Studio CV & lettre de motivation",
+            "description": "Créez des CV et lettres de motivation professionnels depuis zéro, prévisualisez en direct, puis téléchargez en PDF.",
+            "actions": {
+                "resetCv": "Réinitialiser le modèle CV",
+                "downloadCv": "Télécharger le CV (PDF)",
+                "resetLetter": "Réinitialiser le modèle de lettre",
+                "downloadLetter": "Télécharger la lettre (PDF)"
+            },
+            "cv": {
+                "title": "Créateur de CV",
+                "description": "Rédigez ou modifiez votre CV en Markdown. Le panneau de droite affiche le rendu final instantanément.",
+                "editorLabel": "Éditeur CV",
+                "previewLabel": "Aperçu CV"
+            },
+            "letter": {
+                "title": "Créateur de lettre de motivation",
+                "description": "Rédigez votre lettre avec votre propre style et téléchargez-la quand elle est prête.",
+                "editorLabel": "Éditeur lettre",
+                "previewLabel": "Aperçu lettre"
             }
         },
         "jobsPage": {

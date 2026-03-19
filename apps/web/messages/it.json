@@ -165,6 +165,7 @@
         "sidebar": {
             "dashboard": "Dashboard",
             "profileCv": "Profilo e CV",
+            "cvStudio": "Studio CV",
             "jobFeed": "Offerte",
             "settings": "Impostazioni"
         },
@@ -336,6 +337,28 @@
                     "placeholder": "Competenze separate da virgole..."
                 },
                 "saveProfile": "Salva profilo"
+            }
+        },
+        "generatorPage": {
+            "title": "Studio CV e lettera di motivazione",
+            "description": "Crea CV e lettere di motivazione professionali da zero, anteprima live e download in PDF.",
+            "actions": {
+                "resetCv": "Reimposta modello CV",
+                "downloadCv": "Scarica CV (PDF)",
+                "resetLetter": "Reimposta modello lettera",
+                "downloadLetter": "Scarica lettera di motivazione (PDF)"
+            },
+            "cv": {
+                "title": "Builder CV",
+                "description": "Scrivi o modifica il tuo CV in Markdown. Il pannello a destra mostra subito il design finale.",
+                "editorLabel": "Editor CV",
+                "previewLabel": "Anteprima CV"
+            },
+            "letter": {
+                "title": "Builder lettera di motivazione",
+                "description": "Redigi la tua lettera con il tuo stile e scaricala quando è pronta.",
+                "editorLabel": "Editor lettera",
+                "previewLabel": "Anteprima lettera"
             }
         },
         "jobsPage": {
