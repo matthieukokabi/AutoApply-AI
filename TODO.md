@@ -13,6 +13,8 @@ Last updated: 2026-03-19 (Europe/Zurich)
 - [x] Add executable alert check mode for pipeline diagnostics (fails on warning/critical thresholds for scheduler misses, repeated zero-jobs, generation failures, and end-to-end failures) — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_diagnostics.js --fail-on-alert`, `npm run incident:pipeline:alerts`)
 - [x] Add incident regression tests for scheduler cadence/alerts and recovery connector-dedupe-generation payload mapping (with import-safe script exports) — completed on 2026-03-19 (`apps/web/__tests__/automation-pipeline-diagnostics.test.ts`, `apps/web/__tests__/automation-pipeline-recovery.test.ts`, script helper exports)
 - [x] Publish incident runbook section for 4h automation triage/recovery (`docs/automation-4h-incident-response-runbook.md`) including diagnostics, alert checks, and safe rerun workflow — completed on 2026-03-19
+- [x] Patch n8n incident workflow publisher to write a new live version (`workflow_history` + `workflow_entity.versionId/activeVersionId` + `workflow_published_version`) so runtime references corrected schedule and hardened nodes — completed on 2026-03-19 (`apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`)
+- [ ] Restart n8n Render service once to flush stale in-memory trigger registrations, then verify scheduler settles to true 4h cadence (currently DB metadata is corrected but runtime still emits minute-level triggers until process reload)
 
 ## P0 — Must complete before live payment test
 

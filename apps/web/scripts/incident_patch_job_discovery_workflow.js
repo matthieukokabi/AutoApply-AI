@@ -15,6 +15,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { randomUUID } = require("crypto");
 const { PrismaClient } = require("@prisma/client");
 
 function parseArgs(argv) {
@@ -532,7 +533,7 @@ function patchWorkflowJson(workflow) {
             node.parameters = {
                 ...node.parameters,
                 rule: {
-                    interval: [{ field: "hours", hoursInterval: 4 }],
+                    interval: [{ field: "hours", hoursInterval: 4, triggerAtMinute: 0 }],
                 },
             };
         }
@@ -576,20 +577,49 @@ function getLoadConfigJsCode(workflow) {
 async function resolveWorkflow(prisma, workflowId) {
     if (workflowId) {
         const rows = await prisma.$queryRawUnsafe(
-            `SELECT id, name, active, nodes, connections, settings, "updatedAt" FROM n8n.workflow_entity WHERE id = $1 LIMIT 1;`,
+            `SELECT id, name, active, nodes, connections, settings, description, "versionId", "activeVersionId", "updatedAt", "versionCounter"
+             FROM n8n.workflow_entity
+             WHERE id = $1
+             LIMIT 1;`,
             workflowId
         );
         return rows[0] || null;
     }
 
     const rows = await prisma.$queryRawUnsafe(`
-        SELECT id, name, active, nodes, connections, settings, "updatedAt"
+        SELECT id, name, active, nodes, connections, settings, description, "versionId", "activeVersionId", "updatedAt", "versionCounter"
         FROM n8n.workflow_entity
         WHERE name ILIKE '%Job Discovery%Pipeline%'
         ORDER BY "updatedAt" DESC
         LIMIT 1;
     `);
     return rows[0] || null;
+}
+
+async function resolveLatestWorkflowHistory(prisma, workflowId) {
+    const rows = await prisma.$queryRawUnsafe(
+        `SELECT "versionId", "workflowId", authors, autosaved, name, description
+         FROM n8n.workflow_history
+         WHERE "workflowId" = $1
+         ORDER BY "createdAt" DESC
+         LIMIT 1;`,
+        workflowId
+    );
+    return rows[0] || null;
+}
+
+async function appendPublishHistoryActivatedEvent(prisma, workflowId, versionId) {
+    const rows = await prisma.$queryRawUnsafe(
+        `SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM n8n.workflow_publish_history;`
+    );
+    const nextId = Number(rows?.[0]?.next_id || 1);
+    await prisma.$executeRawUnsafe(
+        `INSERT INTO n8n.workflow_publish_history (id, "workflowId", "versionId", event, "userId", "createdAt")
+         VALUES ($1, $2, $3, 'activated', NULL, NOW());`,
+        nextId,
+        workflowId,
+        versionId
+    );
 }
 
 async function main() {
@@ -625,6 +655,11 @@ async function main() {
             throw new Error("live_workflow_not_found");
         }
 
+        const latestHistory = await resolveLatestWorkflowHistory(prisma, liveWorkflow.id);
+        if (!latestHistory) {
+            throw new Error("live_workflow_history_missing");
+        }
+
         const liveLoadConfig = getLoadConfigJsCode(liveWorkflow);
         if (!liveLoadConfig) {
             throw new Error("live_load_config_missing");
@@ -637,22 +672,80 @@ async function main() {
             }
         }
 
-        await prisma.$executeRawUnsafe(
-            `UPDATE n8n.workflow_entity
-             SET nodes = $1::json,
-                 connections = $2::json,
-                 settings = $3::json,
-                 "updatedAt" = NOW(),
-                 active = true
-             WHERE id = $4;`,
-            JSON.stringify(prodWorkflow.nodes || []),
-            JSON.stringify(prodWorkflow.connections || {}),
-            JSON.stringify(prodWorkflow.settings || {}),
-            liveWorkflow.id
-        );
+        const nextVersionId = randomUUID();
+        const historyAuthors = latestHistory.authors || "AutoApply Incident Bot";
+        const historyName =
+            latestHistory.name !== null && latestHistory.name !== undefined
+                ? latestHistory.name
+                : liveWorkflow.name || null;
+        const historyDescription =
+            latestHistory.description !== null && latestHistory.description !== undefined
+                ? latestHistory.description
+                : liveWorkflow.description || null;
+
+        await prisma.$transaction(async (tx) => {
+            await tx.$executeRawUnsafe(
+                `INSERT INTO n8n.workflow_history ("versionId", "workflowId", authors, "createdAt", "updatedAt", nodes, connections, name, autosaved, description)
+                 VALUES ($1, $2, $3, NOW(), NOW(), $4::json, $5::json, $6, false, $7);`,
+                nextVersionId,
+                liveWorkflow.id,
+                historyAuthors,
+                JSON.stringify(prodWorkflow.nodes || []),
+                JSON.stringify(prodWorkflow.connections || {}),
+                historyName,
+                historyDescription
+            );
+
+            await tx.$executeRawUnsafe(
+                `UPDATE n8n.workflow_entity
+                 SET nodes = $1::json,
+                     connections = $2::json,
+                     settings = $3::json,
+                     "versionId" = $4,
+                     "activeVersionId" = $4,
+                     "versionCounter" = COALESCE("versionCounter", 0) + 1,
+                     "updatedAt" = NOW(),
+                     active = true
+                 WHERE id = $5;`,
+                JSON.stringify(prodWorkflow.nodes || []),
+                JSON.stringify(prodWorkflow.connections || {}),
+                JSON.stringify(prodWorkflow.settings || {}),
+                nextVersionId,
+                liveWorkflow.id
+            );
+
+            const publishedRows = await tx.$queryRawUnsafe(
+                `SELECT "workflowId"
+                 FROM n8n.workflow_published_version
+                 WHERE "workflowId" = $1
+                 LIMIT 1;`,
+                liveWorkflow.id
+            );
+
+            if (publishedRows.length === 0) {
+                await tx.$executeRawUnsafe(
+                    `INSERT INTO n8n.workflow_published_version ("workflowId", "publishedVersionId", "createdAt", "updatedAt")
+                     VALUES ($1, $2, NOW(), NOW());`,
+                    liveWorkflow.id,
+                    nextVersionId
+                );
+            } else {
+                await tx.$executeRawUnsafe(
+                    `UPDATE n8n.workflow_published_version
+                     SET "publishedVersionId" = $1,
+                         "updatedAt" = NOW()
+                     WHERE "workflowId" = $2;`,
+                    nextVersionId,
+                    liveWorkflow.id
+                );
+            }
+
+            await appendPublishHistoryActivatedEvent(tx, liveWorkflow.id, nextVersionId);
+        });
 
         const updated = await resolveWorkflow(prisma, liveWorkflow.id);
         const scheduleNode = (updated.nodes || []).find((n) => n.name === "Schedule Trigger");
+        const latestHistoryAfter = await resolveLatestWorkflowHistory(prisma, liveWorkflow.id);
 
         console.log(
             JSON.stringify(
@@ -662,6 +755,11 @@ async function main() {
                     name: updated.name,
                     active: updated.active,
                     updatedAt: updated.updatedAt,
+                    previousVersionId: liveWorkflow.versionId || null,
+                    previousActiveVersionId: liveWorkflow.activeVersionId || null,
+                    currentVersionId: updated.versionId || null,
+                    currentActiveVersionId: updated.activeVersionId || null,
+                    latestHistoryVersionId: latestHistoryAfter?.versionId || null,
                     scheduleRule: scheduleNode?.parameters?.rule || null,
                     nodeCount: (updated.nodes || []).length,
                 },
