@@ -506,6 +506,12 @@
         "retry": "Erneut versuchen",
         "backToDashboard": "Zurück zum Dashboard"
     },
+    "localeError": {
+        "title": "Etwas ist schiefgelaufen",
+        "description": "Beim Laden dieser Seite ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+        "retry": "Erneut versuchen",
+        "goHome": "Zur Startseite"
+    },
     "onboarding": {
         "common": {
             "back": "Zurück",

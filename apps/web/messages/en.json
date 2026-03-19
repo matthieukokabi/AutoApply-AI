@@ -505,6 +505,12 @@
         "retry": "Retry",
         "backToDashboard": "Back to Dashboard"
     },
+    "localeError": {
+        "title": "Something went wrong",
+        "description": "An error occurred while loading this page. Please try again.",
+        "retry": "Try Again",
+        "goHome": "Go Home"
+    },
     "onboarding": {
         "common": {
             "back": "Back",

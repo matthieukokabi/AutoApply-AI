@@ -506,6 +506,12 @@
         "retry": "Réessayer",
         "backToDashboard": "Retour au tableau de bord"
     },
+    "localeError": {
+        "title": "Un problème est survenu",
+        "description": "Une erreur est survenue lors du chargement de cette page. Veuillez réessayer.",
+        "retry": "Réessayer",
+        "goHome": "Retour à l'accueil"
+    },
     "onboarding": {
         "common": {
             "back": "Retour",

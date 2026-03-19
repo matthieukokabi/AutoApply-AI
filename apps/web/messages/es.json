@@ -506,6 +506,12 @@
         "retry": "Reintentar",
         "backToDashboard": "Volver al panel"
     },
+    "localeError": {
+        "title": "Algo salió mal",
+        "description": "Se produjo un error al cargar esta página. Inténtalo de nuevo.",
+        "retry": "Intentar de nuevo",
+        "goHome": "Ir al inicio"
+    },
     "onboarding": {
         "common": {
             "back": "Atrás",

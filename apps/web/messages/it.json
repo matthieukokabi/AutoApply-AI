@@ -506,6 +506,12 @@
         "retry": "Riprova",
         "backToDashboard": "Torna alla dashboard"
     },
+    "localeError": {
+        "title": "Qualcosa è andato storto",
+        "description": "Si è verificato un errore durante il caricamento di questa pagina. Riprova.",
+        "retry": "Riprova",
+        "goHome": "Vai alla home"
+    },
     "onboarding": {
         "common": {
             "back": "Indietro",
