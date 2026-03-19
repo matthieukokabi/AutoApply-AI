@@ -342,6 +342,31 @@
         "generatorPage": {
             "title": "Studio CV & lettre de motivation",
             "description": "Créez des CV et lettres de motivation professionnels depuis zéro, prévisualisez en direct, puis téléchargez en PDF.",
+            "ai": {
+                "title": "Générer avec l'IA à partir d'une offre",
+                "description": "Collez une description d'offre cible et AutoApply générera un CV + une lettre de motivation personnalisés à partir de votre profil.",
+                "fields": {
+                    "jobTitle": "Intitulé du poste (optionnel)",
+                    "company": "Entreprise (optionnel)",
+                    "jobUrl": "URL de l'offre (optionnel)",
+                    "jobDescription": "Collez la description complète de l'offre...",
+                    "additionalContext": "Contexte supplémentaire pour l'IA (optionnel)"
+                },
+                "actions": {
+                    "generate": "Générer des documents personnalisés",
+                    "generating": "Génération..."
+                },
+                "messages": {
+                    "jobDescriptionRequired": "La description de l'offre est requise pour générer des documents personnalisés.",
+                    "dispatching": "Envoi de votre demande de génération...",
+                    "dispatchFailed": "Impossible de démarrer la génération des documents.",
+                    "missingJobId": "La génération a démarré mais aucune référence d'offre n'a été renvoyée.",
+                    "waitingForDocs": "Génération lancée. Nous attendons vos documents...",
+                    "ready": "Les documents sont prêts. Ouverture du visualiseur...",
+                    "pollTimeout": "La génération est encore en cours. Consultez Offres ou Documents dans quelques instants.",
+                    "networkError": "Erreur réseau. Veuillez réessayer."
+                }
+            },
             "actions": {
                 "resetCv": "Réinitialiser le modèle CV",
                 "downloadCv": "Télécharger le CV (PDF)",

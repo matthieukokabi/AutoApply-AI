@@ -342,6 +342,31 @@
         "generatorPage": {
             "title": "Studio CV e lettera di motivazione",
             "description": "Crea CV e lettere di motivazione professionali da zero, anteprima live e download in PDF.",
+            "ai": {
+                "title": "Genera con IA da un annuncio",
+                "description": "Incolla una descrizione lavoro target e AutoApply genererà CV + lettera di motivazione personalizzati a partire dal tuo profilo.",
+                "fields": {
+                    "jobTitle": "Ruolo (opzionale)",
+                    "company": "Azienda (opzionale)",
+                    "jobUrl": "URL annuncio (opzionale)",
+                    "jobDescription": "Incolla la descrizione completa dell'annuncio...",
+                    "additionalContext": "Contesto aggiuntivo per l'IA (opzionale)"
+                },
+                "actions": {
+                    "generate": "Genera documenti personalizzati",
+                    "generating": "Generazione..."
+                },
+                "messages": {
+                    "jobDescriptionRequired": "La descrizione dell'annuncio è obbligatoria per generare documenti personalizzati.",
+                    "dispatching": "Invio della richiesta di generazione...",
+                    "dispatchFailed": "Impossibile avviare la generazione dei documenti.",
+                    "missingJobId": "La generazione è partita ma non è stato restituito alcun riferimento lavoro.",
+                    "waitingForDocs": "Generazione avviata. Stiamo attendendo i tuoi documenti...",
+                    "ready": "Documenti pronti. Apertura del visualizzatore...",
+                    "pollTimeout": "La generazione è ancora in corso. Controlla Offerte o Documenti tra poco.",
+                    "networkError": "Errore di rete. Riprova."
+                }
+            },
             "actions": {
                 "resetCv": "Reimposta modello CV",
                 "downloadCv": "Scarica CV (PDF)",

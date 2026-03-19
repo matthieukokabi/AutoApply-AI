@@ -342,6 +342,31 @@
         "generatorPage": {
             "title": "Estudio de CV y carta de motivación",
             "description": "Crea CV y cartas de motivación profesionales desde cero, previsualiza en vivo y descarga en PDF.",
+            "ai": {
+                "title": "Generar con IA desde una oferta",
+                "description": "Pega una descripción de empleo objetivo y AutoApply generará CV + carta de motivación personalizados a partir de tu perfil.",
+                "fields": {
+                    "jobTitle": "Puesto (opcional)",
+                    "company": "Empresa (opcional)",
+                    "jobUrl": "URL de la oferta (opcional)",
+                    "jobDescription": "Pega la descripción completa de la oferta...",
+                    "additionalContext": "Contexto adicional para la IA (opcional)"
+                },
+                "actions": {
+                    "generate": "Generar documentos personalizados",
+                    "generating": "Generando..."
+                },
+                "messages": {
+                    "jobDescriptionRequired": "Se requiere una descripción de la oferta para generar documentos personalizados.",
+                    "dispatching": "Enviando tu solicitud de generación...",
+                    "dispatchFailed": "No se pudo iniciar la generación de documentos.",
+                    "missingJobId": "La generación comenzó, pero no se devolvió ninguna referencia de empleo.",
+                    "waitingForDocs": "Generación iniciada. Estamos esperando tus documentos...",
+                    "ready": "Los documentos están listos. Abriendo visor...",
+                    "pollTimeout": "La generación sigue en curso. Revisa Empleos o Documentos en unos momentos.",
+                    "networkError": "Error de red. Inténtalo de nuevo."
+                }
+            },
             "actions": {
                 "resetCv": "Restablecer plantilla de CV",
                 "downloadCv": "Descargar CV (PDF)",

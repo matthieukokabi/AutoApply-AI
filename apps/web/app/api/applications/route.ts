@@ -13,6 +13,7 @@ function isApplicationStatus(value: string): value is ApplicationStatus {
  * GET /api/applications — list current user's applications
  * Query params:
  *   ?status=tailored   — filter by status
+ *   ?jobId=abc123      — filter by exact job id
  *   ?limit=50          — max results (default 100)
  */
 export async function GET(req: Request) {
@@ -25,6 +26,8 @@ export async function GET(req: Request) {
         const url = new URL(req.url);
         const rawStatus = url.searchParams.get("status");
         const status = rawStatus ? rawStatus.trim() : "";
+        const rawJobId = url.searchParams.get("jobId");
+        const jobId = rawJobId ? rawJobId.trim() : "";
         const limitParam = url.searchParams.get("limit");
         const parsedLimit = limitParam ? Number.parseInt(limitParam, 10) : 100;
         const limit = Number.isNaN(parsedLimit)
@@ -37,10 +40,19 @@ export async function GET(req: Request) {
                 { status: 400 }
             );
         }
+        if (jobId.length > 100) {
+            return NextResponse.json(
+                { error: "jobId exceeds maximum length of 100 characters" },
+                { status: 400 }
+            );
+        }
 
         const where: any = { userId: user.id };
         if (status) {
             where.status = status;
+        }
+        if (jobId) {
+            where.jobId = jobId;
         }
 
         const applications = await prisma.application.findMany({

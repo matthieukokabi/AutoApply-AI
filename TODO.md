@@ -85,7 +85,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 ## P1 — CV + motivation generator expansion
 
 - [x] Add dashboard `CV Studio` route with side-nav access, live markdown editors, professional CV/letter previews, direct PDF download actions, and localized copy in `en|fr|de|es|it` — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/generator/page.tsx`, `apps/web/app/[locale]/(dashboard)/layout.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
-- [ ] Add AI generation mode in `CV Studio` (job brief -> `/api/tailor` dispatch -> deep link to generated docs when ready)
+- [x] Add AI generation mode in `CV Studio` (job brief -> `/api/tailor` dispatch -> polling for tailored result -> deep link to generated docs) and API support for `jobId` lookup in `/api/applications` — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/generator/page.tsx`, `apps/web/app/api/applications/route.ts`, `apps/web/__tests__/api/applications.test.ts`, `apps/web/messages/{en,fr,de,es,it}.json`)
 
 ## P1 — Google tool integration (acquisition + measurement)
 

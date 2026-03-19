@@ -341,6 +341,31 @@
         "generatorPage": {
             "title": "CV & Motivation Studio",
             "description": "Create professional CV and motivation letter drafts from scratch, preview them live, and download as PDF.",
+            "ai": {
+                "title": "Generate with AI from a Job Brief",
+                "description": "Paste a target job description and AutoApply will generate tailored CV + motivation documents from your profile.",
+                "fields": {
+                    "jobTitle": "Job title (optional)",
+                    "company": "Company (optional)",
+                    "jobUrl": "Job URL (optional)",
+                    "jobDescription": "Paste the full job description...",
+                    "additionalContext": "Extra context for the AI (optional)"
+                },
+                "actions": {
+                    "generate": "Generate Tailored Documents",
+                    "generating": "Generating..."
+                },
+                "messages": {
+                    "jobDescriptionRequired": "Job description is required to generate tailored documents.",
+                    "dispatching": "Dispatching your generation request...",
+                    "dispatchFailed": "Failed to start document generation.",
+                    "missingJobId": "Generation started but no job reference was returned.",
+                    "waitingForDocs": "Generation started. We are waiting for your documents...",
+                    "ready": "Documents are ready. Opening viewer...",
+                    "pollTimeout": "Generation is still running. Please check Job Feed or Documents in a few moments.",
+                    "networkError": "Network error. Please try again."
+                }
+            },
             "actions": {
                 "resetCv": "Reset CV Template",
                 "downloadCv": "Download CV (PDF)",

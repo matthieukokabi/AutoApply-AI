@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useReactToPrint } from "react-to-print";
-import { Download, RotateCcw } from "lucide-react";
+import { Download, Loader2, RotateCcw, Sparkles } from "lucide-react";
 import {
     Card,
     CardContent,
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CVDisplay } from "@/components/cv-display";
 import { CoverLetterDisplay } from "@/components/cover-letter-display";
+import { useRouter } from "@/i18n/routing";
 
 const DEFAULT_CV_TEMPLATE = `# Your Full Name
 **Target Role**
@@ -60,10 +61,34 @@ Sincerely,
 [Your Name]
 `;
 
+const POLL_MAX_ATTEMPTS = 20;
+const POLL_INTERVAL_MS = 3000;
+
+type AlertState = {
+    type: "success" | "error" | "info";
+    text: string;
+} | null;
+
+function sleep(ms: number) {
+    return new Promise((resolve) => {
+        window.setTimeout(resolve, ms);
+    });
+}
+
 export default function GeneratorPage() {
     const t = useTranslations("dashboard.generatorPage");
+    const router = useRouter();
     const [cvMarkdown, setCvMarkdown] = useState(DEFAULT_CV_TEMPLATE);
     const [letterMarkdown, setLetterMarkdown] = useState(DEFAULT_LETTER_TEMPLATE);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [alert, setAlert] = useState<AlertState>(null);
+    const [aiForm, setAiForm] = useState({
+        jobTitle: "",
+        company: "",
+        jobUrl: "",
+        additionalContext: "",
+        jobDescription: "",
+    });
 
     const cvRef = useRef<HTMLDivElement>(null);
     const letterRef = useRef<HTMLDivElement>(null);
@@ -78,12 +103,181 @@ export default function GeneratorPage() {
         documentTitle: "AutoApply-Motivation-Letter",
     });
 
+    async function waitForGeneratedDocument(jobId: string) {
+        for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
+            if (attempt > 0) {
+                await sleep(POLL_INTERVAL_MS);
+            }
+
+            const response = await fetch(
+                `/api/applications?jobId=${encodeURIComponent(jobId)}&limit=1`,
+                {
+                    cache: "no-store",
+                }
+            );
+            if (!response.ok) {
+                continue;
+            }
+
+            const payload = await response.json();
+            const application = payload.applications?.[0];
+            if (!application?.id) {
+                continue;
+            }
+
+            if (application.status === "tailored") {
+                setAlert({ type: "success", text: t("ai.messages.ready") });
+                router.push(`/documents/${application.id}`);
+                return;
+            }
+        }
+
+        setAlert({ type: "info", text: t("ai.messages.pollTimeout") });
+    }
+
+    async function handleGenerateWithAi() {
+        if (!aiForm.jobDescription.trim()) {
+            setAlert({ type: "error", text: t("ai.messages.jobDescriptionRequired") });
+            return;
+        }
+
+        setIsGenerating(true);
+        setAlert({ type: "info", text: t("ai.messages.dispatching") });
+
+        try {
+            const response = await fetch("/api/tailor", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(aiForm),
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                setAlert({
+                    type: "error",
+                    text: payload.error || t("ai.messages.dispatchFailed"),
+                });
+                return;
+            }
+
+            if (!payload.jobId) {
+                setAlert({ type: "error", text: t("ai.messages.missingJobId") });
+                return;
+            }
+
+            setAlert({ type: "info", text: t("ai.messages.waitingForDocs") });
+            await waitForGeneratedDocument(payload.jobId);
+        } catch {
+            setAlert({ type: "error", text: t("ai.messages.networkError") });
+        } finally {
+            setIsGenerating(false);
+        }
+    }
+
     return (
         <div className="space-y-8">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
                 <p className="text-muted-foreground mt-1">{t("description")}</p>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        {t("ai.title")}
+                    </CardTitle>
+                    <CardDescription>{t("ai.description")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <input
+                            className="w-full rounded-md border px-3 py-2 text-sm"
+                            placeholder={t("ai.fields.jobTitle")}
+                            value={aiForm.jobTitle}
+                            onChange={(event) =>
+                                setAiForm((current) => ({
+                                    ...current,
+                                    jobTitle: event.target.value,
+                                }))
+                            }
+                        />
+                        <input
+                            className="w-full rounded-md border px-3 py-2 text-sm"
+                            placeholder={t("ai.fields.company")}
+                            value={aiForm.company}
+                            onChange={(event) =>
+                                setAiForm((current) => ({
+                                    ...current,
+                                    company: event.target.value,
+                                }))
+                            }
+                        />
+                    </div>
+                    <input
+                        className="w-full rounded-md border px-3 py-2 text-sm"
+                        placeholder={t("ai.fields.jobUrl")}
+                        value={aiForm.jobUrl}
+                        onChange={(event) =>
+                            setAiForm((current) => ({
+                                ...current,
+                                jobUrl: event.target.value,
+                            }))
+                        }
+                    />
+                    <textarea
+                        className="w-full min-h-[160px] rounded-md border p-3 text-sm"
+                        placeholder={t("ai.fields.jobDescription")}
+                        value={aiForm.jobDescription}
+                        onChange={(event) =>
+                            setAiForm((current) => ({
+                                ...current,
+                                jobDescription: event.target.value,
+                            }))
+                        }
+                    />
+                    <textarea
+                        className="w-full min-h-[96px] rounded-md border p-3 text-sm"
+                        placeholder={t("ai.fields.additionalContext")}
+                        value={aiForm.additionalContext}
+                        onChange={(event) =>
+                            setAiForm((current) => ({
+                                ...current,
+                                additionalContext: event.target.value,
+                            }))
+                        }
+                    />
+                    {alert && (
+                        <div
+                            className={`rounded-md border px-3 py-2 text-sm ${
+                                alert.type === "success"
+                                    ? "border-green-300 bg-green-50 text-green-800"
+                                    : alert.type === "error"
+                                      ? "border-red-300 bg-red-50 text-red-800"
+                                      : "border-blue-300 bg-blue-50 text-blue-800"
+                            }`}
+                        >
+                            {alert.text}
+                        </div>
+                    )}
+                    <Button
+                        type="button"
+                        onClick={handleGenerateWithAi}
+                        disabled={isGenerating}
+                    >
+                        {isGenerating ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                            <Sparkles className="h-4 w-4 mr-2" />
+                        )}
+                        {isGenerating
+                            ? t("ai.actions.generating")
+                            : t("ai.actions.generate")}
+                    </Button>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader>

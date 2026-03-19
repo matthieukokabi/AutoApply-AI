@@ -342,6 +342,31 @@
         "generatorPage": {
             "title": "CV- & Motivationsstudio",
             "description": "Erstellen Sie professionelle CV- und Motivationsschreiben von Grund auf, sehen Sie die Vorschau live und laden Sie als PDF herunter.",
+            "ai": {
+                "title": "Mit KI aus einer Stellenbeschreibung generieren",
+                "description": "Fügen Sie eine Ziel-Stellenbeschreibung ein und AutoApply erstellt daraus einen angepassten CV + ein Motivationsschreiben auf Basis Ihres Profils.",
+                "fields": {
+                    "jobTitle": "Jobtitel (optional)",
+                    "company": "Unternehmen (optional)",
+                    "jobUrl": "Job-URL (optional)",
+                    "jobDescription": "Vollständige Stellenbeschreibung einfügen...",
+                    "additionalContext": "Zusätzlicher Kontext für die KI (optional)"
+                },
+                "actions": {
+                    "generate": "Personalisierte Dokumente generieren",
+                    "generating": "Wird generiert..."
+                },
+                "messages": {
+                    "jobDescriptionRequired": "Für die Generierung personalisierter Dokumente ist eine Stellenbeschreibung erforderlich.",
+                    "dispatching": "Ihre Generierungsanfrage wird gesendet...",
+                    "dispatchFailed": "Die Dokumentgenerierung konnte nicht gestartet werden.",
+                    "missingJobId": "Die Generierung wurde gestartet, aber es wurde keine Job-Referenz zurückgegeben.",
+                    "waitingForDocs": "Generierung gestartet. Wir warten auf Ihre Dokumente...",
+                    "ready": "Dokumente sind bereit. Viewer wird geöffnet...",
+                    "pollTimeout": "Die Generierung läuft noch. Bitte prüfen Sie in Kürze den Job-Feed oder die Dokumente.",
+                    "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut."
+                }
+            },
             "actions": {
                 "resetCv": "CV-Vorlage zurücksetzen",
                 "downloadCv": "CV herunterladen (PDF)",

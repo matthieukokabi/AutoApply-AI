@@ -82,6 +82,22 @@ describe("GET /api/applications", () => {
         );
     });
 
+    it("filters by jobId when query param provided", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue([mockApplications[0]] as any);
+
+        const request = new Request("http://localhost/api/applications?jobId=job_1&limit=1");
+        const response = await GET(request);
+
+        expect(response.status).toBe(200);
+        expect(prisma.application.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({ jobId: "job_1" }),
+                take: 1,
+            })
+        );
+    });
+
     it("returns 400 for invalid status query param", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
 
