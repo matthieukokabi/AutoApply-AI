@@ -512,6 +512,12 @@
         "retry": "Réessayer",
         "goHome": "Retour à l'accueil"
     },
+    "notFoundPage": {
+        "title": "Page introuvable",
+        "description": "La page demandée n'existe pas ou a été déplacée.",
+        "goHome": "Retour à l'accueil",
+        "goDashboard": "Aller au tableau de bord"
+    },
     "onboarding": {
         "common": {
             "back": "Retour",

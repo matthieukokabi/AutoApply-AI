@@ -512,6 +512,12 @@
         "retry": "Erneut versuchen",
         "goHome": "Zur Startseite"
     },
+    "notFoundPage": {
+        "title": "Seite nicht gefunden",
+        "description": "Die angeforderte Seite existiert nicht oder wurde verschoben.",
+        "goHome": "Zur Startseite",
+        "goDashboard": "Zum Dashboard"
+    },
     "onboarding": {
         "common": {
             "back": "Zurück",

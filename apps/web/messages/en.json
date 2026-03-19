@@ -511,6 +511,12 @@
         "retry": "Try Again",
         "goHome": "Go Home"
     },
+    "notFoundPage": {
+        "title": "Page not found",
+        "description": "The page you requested does not exist or was moved.",
+        "goHome": "Go Home",
+        "goDashboard": "Go to Dashboard"
+    },
     "onboarding": {
         "common": {
             "back": "Back",
