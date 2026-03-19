@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, FileText, TrendingUp, Clock } from "lucide-react";
 import { KanbanBoard } from "@/components/kanban-board";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
     title: "Dashboard — AutoApply AI",
@@ -72,6 +73,7 @@ async function getDashboardData(clerkId: string) {
 export default async function DashboardPage() {
     const { userId } = await auth();
     if (!userId) redirect("/sign-in");
+    const t = await getTranslations("dashboard.dashboardPage");
 
     const data = await getDashboardData(userId);
 
@@ -85,9 +87,9 @@ export default async function DashboardPage() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
                 <p className="text-muted-foreground">
-                    Track your applications and manage tailored documents.
+                    {t("description")}
                 </p>
             </div>
 
@@ -96,7 +98,7 @@ export default async function DashboardPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
-                            Total Applications
+                            {t("stats.totalApplications")}
                         </CardTitle>
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
@@ -107,7 +109,7 @@ export default async function DashboardPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
-                            Tailored Documents
+                            {t("stats.tailoredDocuments")}
                         </CardTitle>
                         <FileText className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
@@ -118,7 +120,7 @@ export default async function DashboardPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
-                            Avg. Match Score
+                            {t("stats.avgMatchScore")}
                         </CardTitle>
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
@@ -129,7 +131,7 @@ export default async function DashboardPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
-                            Pending Review
+                            {t("stats.pendingReview")}
                         </CardTitle>
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
@@ -141,7 +143,7 @@ export default async function DashboardPage() {
 
             {/* Kanban Board */}
             <div>
-                <h2 className="text-xl font-semibold mb-4">Application Pipeline</h2>
+                <h2 className="text-xl font-semibold mb-4">{t("applicationPipeline")}</h2>
                 <KanbanBoard initialApplications={data?.applications ?? []} />
             </div>
         </div>

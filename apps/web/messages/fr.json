@@ -272,6 +272,17 @@
                     "confirmButton": "Confirmer la suppression"
                 }
             }
+        },
+        "dashboardPage": {
+            "title": "Tableau de bord",
+            "description": "Suivez vos candidatures et gérez vos documents personnalisés.",
+            "stats": {
+                "totalApplications": "Candidatures totales",
+                "tailoredDocuments": "Documents personnalisés",
+                "avgMatchScore": "Score moyen de compatibilité",
+                "pendingReview": "En attente de révision"
+            },
+            "applicationPipeline": "Pipeline des candidatures"
         }
     },
     "onboarding": {

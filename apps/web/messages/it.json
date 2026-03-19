@@ -272,6 +272,17 @@
                     "confirmButton": "Conferma eliminazione"
                 }
             }
+        },
+        "dashboardPage": {
+            "title": "Dashboard",
+            "description": "Monitora le tue candidature e gestisci i documenti personalizzati.",
+            "stats": {
+                "totalApplications": "Candidature totali",
+                "tailoredDocuments": "Documenti personalizzati",
+                "avgMatchScore": "Punteggio medio di compatibilità",
+                "pendingReview": "In attesa di revisione"
+            },
+            "applicationPipeline": "Pipeline candidature"
         }
     },
     "onboarding": {

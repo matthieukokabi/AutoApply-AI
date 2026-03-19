@@ -271,6 +271,17 @@
                     "confirmButton": "Confirm Delete"
                 }
             }
+        },
+        "dashboardPage": {
+            "title": "Dashboard",
+            "description": "Track your applications and manage tailored documents.",
+            "stats": {
+                "totalApplications": "Total Applications",
+                "tailoredDocuments": "Tailored Documents",
+                "avgMatchScore": "Avg. Match Score",
+                "pendingReview": "Pending Review"
+            },
+            "applicationPipeline": "Application Pipeline"
         }
     },
     "onboarding": {

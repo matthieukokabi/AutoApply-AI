@@ -272,6 +272,17 @@
                     "confirmButton": "Löschen bestätigen"
                 }
             }
+        },
+        "dashboardPage": {
+            "title": "Dashboard",
+            "description": "Verfolgen Sie Ihre Bewerbungen und verwalten Sie personalisierte Dokumente.",
+            "stats": {
+                "totalApplications": "Gesamtbewerbungen",
+                "tailoredDocuments": "Personalisierte Dokumente",
+                "avgMatchScore": "Durchschn. Match-Score",
+                "pendingReview": "Zur Prüfung ausstehend"
+            },
+            "applicationPipeline": "Bewerbungspipeline"
         }
     },
     "onboarding": {
