@@ -517,6 +517,11 @@
     "checkoutButton": {
         "genericError": "Qualcosa è andato storto. Riprova."
     },
+    "errorBoundary": {
+        "title": "Qualcosa è andato storto",
+        "description": "Si è verificato un errore imprevisto. Ricarica la pagina.",
+        "refresh": "Ricarica pagina"
+    },
     "notFoundPage": {
         "title": "Pagina non trovata",
         "description": "La pagina richiesta non esiste o è stata spostata.",

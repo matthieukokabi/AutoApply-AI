@@ -517,6 +517,11 @@
     "checkoutButton": {
         "genericError": "Un problème est survenu. Veuillez réessayer."
     },
+    "errorBoundary": {
+        "title": "Un problème est survenu",
+        "description": "Une erreur inattendue est survenue. Veuillez actualiser la page.",
+        "refresh": "Actualiser la page"
+    },
     "notFoundPage": {
         "title": "Page introuvable",
         "description": "La page demandée n'existe pas ou a été déplacée.",

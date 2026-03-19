@@ -516,6 +516,11 @@
     "checkoutButton": {
         "genericError": "Something went wrong. Please try again."
     },
+    "errorBoundary": {
+        "title": "Something went wrong",
+        "description": "An unexpected error occurred. Please try refreshing the page.",
+        "refresh": "Refresh Page"
+    },
     "notFoundPage": {
         "title": "Page not found",
         "description": "The page you requested does not exist or was moved.",

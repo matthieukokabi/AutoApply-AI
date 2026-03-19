@@ -1,12 +1,20 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+
+interface ErrorBoundaryMessages {
+    title: string;
+    description: string;
+    refresh: string;
+}
 
 interface Props {
     children: ReactNode;
     fallback?: ReactNode;
+    messages?: Partial<ErrorBoundaryMessages>;
 }
 
 interface State {
@@ -31,13 +39,20 @@ export class ErrorBoundary extends Component<Props, State> {
     render() {
         if (this.state.hasError) {
             if (this.props.fallback) return this.props.fallback;
+            const messages: ErrorBoundaryMessages = {
+                title: this.props.messages?.title ?? "Something went wrong",
+                description:
+                    this.props.messages?.description ??
+                    "An unexpected error occurred. Please try refreshing the page.",
+                refresh: this.props.messages?.refresh ?? "Refresh Page",
+            };
 
             return (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                     <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-                    <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+                    <h2 className="text-xl font-semibold mb-2">{messages.title}</h2>
                     <p className="text-muted-foreground mb-4 max-w-md">
-                        An unexpected error occurred. Please try refreshing the page.
+                        {messages.description}
                     </p>
                     <Button
                         onClick={() => {
@@ -45,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
                             window.location.reload();
                         }}
                     >
-                        Refresh Page
+                        {messages.refresh}
                     </Button>
                 </div>
             );
@@ -53,4 +68,29 @@ export class ErrorBoundary extends Component<Props, State> {
 
         return this.props.children;
     }
+}
+
+interface LocalizedErrorBoundaryProps {
+    children: ReactNode;
+    fallback?: ReactNode;
+}
+
+export function LocalizedErrorBoundary({
+    children,
+    fallback,
+}: LocalizedErrorBoundaryProps) {
+    const t = useTranslations("errorBoundary");
+
+    return (
+        <ErrorBoundary
+            fallback={fallback}
+            messages={{
+                title: t("title"),
+                description: t("description"),
+                refresh: t("refresh"),
+            }}
+        >
+            {children}
+        </ErrorBoundary>
+    );
 }

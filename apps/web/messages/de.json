@@ -517,6 +517,11 @@
     "checkoutButton": {
         "genericError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
     },
+    "errorBoundary": {
+        "title": "Etwas ist schiefgelaufen",
+        "description": "Ein unerwarteter Fehler ist aufgetreten. Bitte laden Sie die Seite neu.",
+        "refresh": "Seite neu laden"
+    },
     "notFoundPage": {
         "title": "Seite nicht gefunden",
         "description": "Die angeforderte Seite existiert nicht oder wurde verschoben.",

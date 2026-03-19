@@ -517,6 +517,11 @@
     "checkoutButton": {
         "genericError": "Algo salió mal. Inténtalo de nuevo."
     },
+    "errorBoundary": {
+        "title": "Algo salió mal",
+        "description": "Se produjo un error inesperado. Intenta recargar la página.",
+        "refresh": "Recargar página"
+    },
     "notFoundPage": {
         "title": "Página no encontrada",
         "description": "La página solicitada no existe o fue movida.",
