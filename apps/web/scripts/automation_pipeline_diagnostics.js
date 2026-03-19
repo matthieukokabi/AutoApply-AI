@@ -61,6 +61,8 @@ function parseArgs(argv) {
         workflowId: null,
         email: null,
         jsonOnly: false,
+        failOnAlert: false,
+        minSeverity: "critical",
     };
 
     for (let i = 0; i < argv.length; i += 1) {
@@ -73,6 +75,14 @@ function parseArgs(argv) {
             i += 1;
         } else if (token === "--json") {
             parsed.jsonOnly = true;
+        } else if (token === "--fail-on-alert") {
+            parsed.failOnAlert = true;
+        } else if (token === "--min-severity") {
+            const severity = String(argv[i + 1] || "").toLowerCase();
+            if (severity === "warning" || severity === "critical") {
+                parsed.minSeverity = severity;
+            }
+            i += 1;
         }
     }
 
@@ -328,6 +338,16 @@ function inferAlerts({ cadenceMinutes, latestSuccessfulRunAt, runSummaries }) {
     return alerts;
 }
 
+function severityRank(severity) {
+    if (severity === "critical") {
+        return 2;
+    }
+    if (severity === "warning") {
+        return 1;
+    }
+    return 0;
+}
+
 async function resolveDiscoveryWorkflow(workflowIdOverride) {
     if (workflowIdOverride) {
         const [wf] = await prisma.$queryRawUnsafe(
@@ -497,6 +517,26 @@ async function main() {
         runs: runSummaries,
         alerts,
     };
+
+    if (args.failOnAlert) {
+        const minRank = severityRank(args.minSeverity);
+        const blockingAlerts = alerts.filter(
+            (alert) => severityRank(alert.severity) >= minRank
+        );
+        if (blockingAlerts.length > 0) {
+            process.stderr.write(
+                `automation_pipeline_alert_check_failed: ${JSON.stringify(
+                    {
+                        threshold: args.minSeverity,
+                        blockingAlerts,
+                    },
+                    null,
+                    2
+                )}\n`
+            );
+            process.exitCode = 1;
+        }
+    }
 
     if (args.jsonOnly) {
         process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
