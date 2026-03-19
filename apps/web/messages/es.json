@@ -500,6 +500,12 @@
             "skip": "Omitir"
         }
     },
+    "dashboardError": {
+        "title": "Error del panel",
+        "description": "Algo salió mal al cargar esta sección. Tus datos están seguros.",
+        "retry": "Reintentar",
+        "backToDashboard": "Volver al panel"
+    },
     "onboarding": {
         "common": {
             "back": "Atrás",

@@ -499,6 +499,12 @@
             "skip": "Skip"
         }
     },
+    "dashboardError": {
+        "title": "Dashboard Error",
+        "description": "Something went wrong loading this section. Your data is safe.",
+        "retry": "Retry",
+        "backToDashboard": "Back to Dashboard"
+    },
     "onboarding": {
         "common": {
             "back": "Back",

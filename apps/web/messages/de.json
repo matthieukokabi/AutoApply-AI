@@ -500,6 +500,12 @@
             "skip": "Überspringen"
         }
     },
+    "dashboardError": {
+        "title": "Dashboard-Fehler",
+        "description": "Beim Laden dieses Bereichs ist ein Fehler aufgetreten. Ihre Daten sind sicher.",
+        "retry": "Erneut versuchen",
+        "backToDashboard": "Zurück zum Dashboard"
+    },
     "onboarding": {
         "common": {
             "back": "Zurück",

@@ -500,6 +500,12 @@
             "skip": "Passer"
         }
     },
+    "dashboardError": {
+        "title": "Erreur du tableau de bord",
+        "description": "Une erreur est survenue au chargement de cette section. Vos données sont en sécurité.",
+        "retry": "Réessayer",
+        "backToDashboard": "Retour au tableau de bord"
+    },
     "onboarding": {
         "common": {
             "back": "Retour",

@@ -500,6 +500,12 @@
             "skip": "Salta"
         }
     },
+    "dashboardError": {
+        "title": "Errore dashboard",
+        "description": "Si è verificato un problema durante il caricamento di questa sezione. I tuoi dati sono al sicuro.",
+        "retry": "Riprova",
+        "backToDashboard": "Torna alla dashboard"
+    },
     "onboarding": {
         "common": {
             "back": "Indietro",
