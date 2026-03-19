@@ -155,7 +155,7 @@ export default async function BlogPage({
             {/* Footer */}
             <footer className="border-t bg-white/50 dark:bg-slate-900/50 py-8">
                 <div className="container text-center text-sm text-muted-foreground">
-                    <p>&copy; {new Date().getFullYear()} AutoApply AI. All rights reserved.</p>
+                    <p>{t("footerRights", { year: new Date().getFullYear() })}</p>
                 </div>
             </footer>
         </div>
