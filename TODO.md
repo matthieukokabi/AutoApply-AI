@@ -9,6 +9,7 @@ Last updated: 2026-03-19 (Europe/Zurich)
 - [x] Add safe per-profile recovery rerun command (`dry-run` default, optional `real-run`) — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_recovery_run.js`, `npm run incident:pipeline:recovery -- --help`)
 - [x] Harden scoring/tailoring response parsing with fallback-safe handling to prevent silent document drops — completed on 2026-03-19 (`apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`, live workflow updated at `2026-03-19T00:57:29.606Z`)
 - [x] Verify one affected real profile completes full recovery run with persisted jobs + tailored docs — completed on 2026-03-19 (`npm run incident:pipeline:recovery -- --email matthieu.kokabi@gmail.com --max-jobs 2 --real-run`, `deltaApplications=2`, `payloadTailoredCount=1`)
+- [x] Add structured stage-level webhook logging with `runId` correlation across pipeline callbacks and error paths — completed on 2026-03-19 (`apps/web/app/api/webhooks/n8n/route.ts`, covered by `apps/web/__tests__/api/webhooks-n8n.test.ts`)
 
 ## P0 — Must complete before live payment test
 

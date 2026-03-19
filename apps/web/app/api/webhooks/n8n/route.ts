@@ -2,6 +2,22 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } from "@/lib/email";
 
+function logPipelineEvent(
+    level: "info" | "warn" | "error",
+    event: string,
+    fields: Record<string, unknown>
+) {
+    const logger =
+        level === "warn" ? console.warn : level === "error" ? console.error : console.info;
+    logger(
+        JSON.stringify({
+            scope: "automation_pipeline",
+            event,
+            ...fields,
+        })
+    );
+}
+
 /**
  * POST /api/webhooks/n8n
  * Receives notifications from n8n workflows (new tailored documents, errors, etc.)
@@ -11,7 +27,9 @@ export async function POST(req: Request) {
     try {
         const expectedWebhookSecret = process.env.N8N_WEBHOOK_SECRET;
         if (!expectedWebhookSecret) {
-            console.error("N8N_WEBHOOK_SECRET is not configured");
+            logPipelineEvent("error", "webhook_misconfigured", {
+                reason: "missing_n8n_webhook_secret",
+            });
             return NextResponse.json(
                 { error: "Webhook endpoint misconfigured" },
                 { status: 503 }
@@ -21,10 +39,21 @@ export async function POST(req: Request) {
         // Verify webhook secret
         const webhookSecret = req.headers.get("x-webhook-secret");
         if (!webhookSecret || webhookSecret !== expectedWebhookSecret) {
+            logPipelineEvent("warn", "webhook_unauthorized", {
+                reason: "invalid_secret",
+                hasSecret: Boolean(webhookSecret),
+            });
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         const body = await req.json();
+        const headerRunId = req.headers.get("x-run-id");
+        const bodyRunId =
+            typeof body?.runId === "string" && body.runId.trim() ? body.runId.trim() : null;
+        const runId =
+            (typeof headerRunId === "string" && headerRunId.trim()) ||
+            bodyRunId ||
+            `webhook-${Date.now()}`;
         const type = typeof body?.type === "string" ? body.type : "";
         const data =
             body?.data && typeof body.data === "object" && !Array.isArray(body.data)
@@ -32,6 +61,10 @@ export async function POST(req: Request) {
                 : null;
 
         if (!type || !data) {
+            logPipelineEvent("warn", "webhook_invalid_envelope", {
+                runId,
+                type,
+            });
             return NextResponse.json(
                 { error: "Invalid webhook payload" },
                 { status: 400 }
@@ -45,13 +78,26 @@ export async function POST(req: Request) {
                 const applications = Array.isArray(data.applications) ? data.applications : null;
 
                 if (!userId || !applications) {
+                    logPipelineEvent("warn", "webhook_invalid_new_applications_payload", {
+                        runId,
+                        userId,
+                        hasApplicationsArray: Array.isArray(applications),
+                    });
                     return NextResponse.json(
                         { error: "Invalid new_applications payload" },
                         { status: 400 }
                     );
                 }
 
+                logPipelineEvent("info", "new_applications_received", {
+                    runId,
+                    userId,
+                    applicationsCount: applications.length,
+                });
+
                 const createdApps = [];
+                let discoveredCount = 0;
+                let tailoredCount = 0;
 
                 for (let index = 0; index < applications.length; index += 1) {
                     const app = applications[index];
@@ -116,8 +162,21 @@ export async function POST(req: Request) {
                         },
                         include: { job: true },
                     });
+                    if (result.status === "tailored") {
+                        tailoredCount += 1;
+                    } else {
+                        discoveredCount += 1;
+                    }
                     createdApps.push(result);
                 }
+
+                logPipelineEvent("info", "new_applications_persisted", {
+                    runId,
+                    userId,
+                    createdCount: createdApps.length,
+                    tailoredCount,
+                    discoveredCount,
+                });
 
                 // Send email notification for new job matches
                 try {
@@ -142,11 +201,25 @@ export async function POST(req: Request) {
                         }
                     }
                 } catch (emailError) {
-                    console.error("Email notification failed (non-blocking):", emailError);
+                    logPipelineEvent("warn", "new_applications_email_failed", {
+                        runId,
+                        userId,
+                        error:
+                            emailError instanceof Error
+                                ? emailError.message
+                                : String(emailError),
+                    });
                 }
+
+                logPipelineEvent("info", "new_applications_completed", {
+                    runId,
+                    userId,
+                    processedCount: applications.length,
+                });
 
                 return NextResponse.json({
                     message: `Processed ${applications.length} applications`,
+                    runId,
                 });
             }
 
@@ -172,6 +245,9 @@ export async function POST(req: Request) {
                     typeof tailorJobId !== "string" ||
                     !tailorJobId.trim()
                 ) {
+                    logPipelineEvent("warn", "webhook_invalid_single_tailoring_payload", {
+                        runId,
+                    });
                     return NextResponse.json(
                         { error: "Invalid single_tailoring_complete payload" },
                         { status: 400 }
@@ -231,12 +307,28 @@ export async function POST(req: Request) {
                         );
                     }
                 } catch (emailError) {
-                    console.error("Tailoring email failed (non-blocking):", emailError);
+                    logPipelineEvent("warn", "single_tailoring_email_failed", {
+                        runId,
+                        userId: normalizedTailorUserId,
+                        error:
+                            emailError instanceof Error
+                                ? emailError.message
+                                : String(emailError),
+                    });
                 }
+
+                logPipelineEvent("info", "single_tailoring_completed", {
+                    runId,
+                    userId: normalizedTailorUserId,
+                    jobId: normalizedTailorJobId,
+                    applicationId: application.id,
+                    status: application.status,
+                });
 
                 return NextResponse.json({
                     message: "Tailoring results saved",
                     applicationId: application.id,
+                    runId,
                 });
             }
 
@@ -252,6 +344,9 @@ export async function POST(req: Request) {
                     !data.errorType.trim() ||
                     !data.message.trim()
                 ) {
+                    logPipelineEvent("warn", "webhook_invalid_workflow_error_payload", {
+                        runId,
+                    });
                     return NextResponse.json(
                         { error: "Invalid workflow_error payload" },
                         { status: 400 }
@@ -269,17 +364,30 @@ export async function POST(req: Request) {
                     },
                 });
 
-                return NextResponse.json({ message: "Error logged" });
+                logPipelineEvent("error", "workflow_error_logged", {
+                    runId,
+                    workflowId: data.workflowId.trim(),
+                    nodeName: data.nodeName.trim(),
+                    errorType: data.errorType.trim(),
+                });
+
+                return NextResponse.json({ message: "Error logged", runId });
             }
 
             default:
+                logPipelineEvent("warn", "webhook_unknown_type", {
+                    runId,
+                    type,
+                });
                 return NextResponse.json(
                     { error: `Unknown webhook type: ${type}` },
                     { status: 400 }
                 );
         }
     } catch (error) {
-        console.error("n8n webhook error:", error);
+        logPipelineEvent("error", "webhook_handler_error", {
+            error: error instanceof Error ? error.message : String(error),
+        });
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
