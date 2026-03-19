@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-03-19T11:14:56.926Z",
+  "target": "https://autoapply.works/api/contact",
+  "httpStatus": 202,
+  "response": {
+    "success": true,
+    "queued": true,
+    "code": "CONTACT_MAIL_QUEUED_NO_TRANSPORT",
+    "message": "We received your message. Our email channel is temporarily delayed — you can also write to contact@autoapply.works."
+  },
+  "containsMisconfigured": false,
+  "smokePayload": {
+    "name": "Prod Smoke",
+    "email": "qa+smoke@autoapply.works",
+    "subject": "general",
+    "formSessionId": "SmokeSession123456",
+    "startedAtEpochMs": 1773918891312
+  }
+}
