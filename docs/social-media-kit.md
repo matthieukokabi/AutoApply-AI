@@ -29,7 +29,7 @@ Replace only `utm_content` when you duplicate a post variant. Keep `utm_source`,
 **Name:** AutoApply AI
 **Tagline:** Stop writing cover letters. Start getting interviews.
 **One-liner:** AI-powered job application assistant that tailors your CV and cover letter for every job in seconds.
-**Handle (suggested):** @autoapplyai
+**Handle (suggested):** @AutoApplyWorks
 
 **Brand Voice:**
 - Professional but approachable

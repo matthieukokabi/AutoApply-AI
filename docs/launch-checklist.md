@@ -1,9 +1,9 @@
 # AutoApply AI — Launch Checklist
 
-## Twitter / X (@autoapplyai)
+## Twitter / X (@AutoApplyWorks)
 
 - [x] Create account at https://twitter.com/signup
-- [x] Set username: @autoapplyai (or closest available)
+- [x] Set username: @AutoApplyWorks (or closest available)
 - [x] Upload profile picture (square logo, 400x400px)
 - [x] Upload header banner (1500x500px)
 - [x] Set bio (from social-media-kit.md)

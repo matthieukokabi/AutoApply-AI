@@ -1,7 +1,10 @@
-export const OFFICIAL_CONTACT_EMAIL = "contact@autoapply.works";
-export const OFFICIAL_X_URL = "https://x.com/AutoApplyWorks";
-export const OFFICIAL_LINKEDIN_URL =
-    "https://www.linkedin.com/company/autoapply-works/";
+import {
+    OFFICIAL_CONTACT_EMAIL,
+    OFFICIAL_LINKEDIN_URL,
+    OFFICIAL_X_URL,
+} from "@/lib/brand-identity";
+
+export { OFFICIAL_CONTACT_EMAIL, OFFICIAL_LINKEDIN_URL, OFFICIAL_X_URL };
 
 const MAX_RECENT_ATTEMPTS = 25;
 

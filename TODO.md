@@ -24,7 +24,7 @@ Last updated: 2026-03-19 (Europe/Zurich)
 
 - [x] Restore `/api/contact` production-safe behavior when mail transport is misconfigured by queueing submissions for manual follow-up, returning actionable user-safe fallback messaging, and exposing structured reason codes/logs without secret leakage — completed on 2026-03-19 (`apps/web/app/api/contact/route.ts`, `apps/web/lib/contact-mail-health.ts`, `apps/web/__tests__/api/contact.test.ts`)
 - [x] Add contact mail health snapshot (env-name preflight + recent send/queue/fail status) to diagnostics and runtime health snapshot — completed on 2026-03-19 (`apps/web/app/api/contact/diagnostics/route.ts`, `apps/web/app/api/runtime/health-snapshot/route.ts`, `apps/web/__tests__/api/contact-diagnostics.test.ts`, `apps/web/__tests__/api/runtime-health-snapshot.test.ts`)
-- [ ] Replace legacy social links with canonical identities everywhere (UI + SEO/structured data + docs constants) and add regression assertions
+- [x] Replace legacy social links with canonical identities everywhere (UI + SEO/structured data + docs constants) and add regression assertions — completed on 2026-03-19 (`apps/web/lib/brand-identity.ts`, `apps/web/app/[locale]/page.tsx`, `apps/web/app/[locale]/(dashboard)/layout.tsx`, `apps/web/lib/structured-data.ts`, `apps/web/__tests__/social-links-canonical.test.ts`, `apps/web/__tests__/structured-data-trust-pages.test.ts`, `docs/launch-checklist.md`, `docs/social-media-kit.md`)
 - [ ] Run production contact/mail smoke and publish incident closure report (`INCIDENT_AUTOAPPLY_CONTACT_SOCIAL_MAIL_FIX_2026-03-19.md`)
 
 ## P0 — Must complete before live payment test
@@ -92,7 +92,7 @@ Last updated: 2026-03-19 (Europe/Zurich)
 - [x] Fix SEO base URL fallback in `robots.ts` and `sitemap.ts` to `autoapply.works` (remove legacy `autoapply-ai.com` fallback) — completed on 2026-03-17 via `lib/site-url.ts`
 - [x] Add canonical + hreflang (`en`, `fr`, `de`, `es`, `it`, `x-default`) on all indexable localized pages — completed on 2026-03-17 (`lib/seo.ts` + localized metadata updates, including `contact` server wrapper)
 - [x] Add default `og:image` + page-level social metadata overrides for landing and blog pages — completed on 2026-03-17 (`layout.tsx` defaults + localized landing/blog metadata image overrides)
-- [x] Fix broken public LinkedIn URL(s) — completed on 2026-03-17 (normalized to `https://www.linkedin.com/company/autoapply-ai/` in landing and dashboard)
+- [x] Fix broken public LinkedIn URL(s) — completed on 2026-03-17 (normalized to canonical `https://www.linkedin.com/company/autoapply-works/` in landing and dashboard)
 - [x] Add baseline security headers in production config (`CSP`, `X-Content-Type-Options`, clickjacking policy, `Referrer-Policy`) — completed on 2026-03-17 (`next.config.js` `headers()` layer with broad-safe CSP v1)
 - [x] Add anti-bot protection on public contact form (without breaking UX) — completed on 2026-03-17 (honeypot + form timing checks in `/api/contact`, client form fields, and test coverage updates)
 

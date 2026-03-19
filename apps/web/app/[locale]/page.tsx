@@ -12,6 +12,10 @@ import {
     buildDynamicOgImageUrl,
 } from "@/lib/seo";
 import {
+    OFFICIAL_LINKEDIN_URL,
+    OFFICIAL_X_URL,
+} from "@/lib/brand-identity";
+import {
     ArrowRight,
     FileText,
     Search,
@@ -499,10 +503,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 {t("footer.tagline")}
                             </p>
                             <div className="flex items-center gap-3">
-                                <a href="https://twitter.com/autoapplyai" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
+                                <a href={OFFICIAL_X_URL} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
                                     <Twitter className="h-4 w-4" />
                                 </a>
-                                <a href="https://www.linkedin.com/company/autoapply-ai/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn">
+                                <a href={OFFICIAL_LINKEDIN_URL} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn">
                                     <Linkedin className="h-4 w-4" />
                                 </a>
                             </div>

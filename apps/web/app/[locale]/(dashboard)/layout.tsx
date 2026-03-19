@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
+import {
+    OFFICIAL_LINKEDIN_URL,
+    OFFICIAL_X_URL,
+} from "@/lib/brand-identity";
 
 export const metadata: Metadata = {
     robots: {
@@ -32,11 +36,11 @@ const sidebarItems = [
 
 const dashboardSocialLinks = [
     {
-        href: "https://twitter.com/autoapplyai",
+        href: OFFICIAL_X_URL,
         label: "X / Twitter",
     },
     {
-        href: "https://www.linkedin.com/company/autoapply-ai/",
+        href: OFFICIAL_LINKEDIN_URL,
         label: "LinkedIn",
     },
     {

@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import {
+    OFFICIAL_CONTACT_EMAIL,
+    OFFICIAL_LINKEDIN_URL,
+    OFFICIAL_X_URL,
+} from "@/lib/brand-identity";
 import { buildTrustPageJsonLd } from "@/lib/structured-data";
 
 const TRUST_PAGE_FILES = [
@@ -28,7 +33,16 @@ describe("trust page structured data", () => {
         expect(organization?.name).toBe("AutoApply AI");
         expect(organization?.contactPoint?.[0]?.["@type"]).toBe("ContactPoint");
         expect(organization?.contactPoint?.[0]?.email).toBe(
-            "support@autoapply.works"
+            OFFICIAL_CONTACT_EMAIL
+        );
+        expect(organization?.sameAs).toEqual(
+            expect.arrayContaining([OFFICIAL_X_URL, OFFICIAL_LINKEDIN_URL])
+        );
+        expect(organization?.sameAs).not.toEqual(
+            expect.arrayContaining([
+                "https://x.com/autoapplyai",
+                "https://www.linkedin.com/company/autoapply-ai/",
+            ])
         );
     });
 

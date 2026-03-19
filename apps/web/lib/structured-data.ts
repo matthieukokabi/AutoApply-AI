@@ -1,4 +1,9 @@
 import { getLocalizedAbsoluteUrl } from "@/lib/seo";
+import {
+    OFFICIAL_CONTACT_EMAIL,
+    OFFICIAL_LINKEDIN_URL,
+    OFFICIAL_X_URL,
+} from "@/lib/brand-identity";
 
 const ORGANIZATION_ID = "https://autoapply.works/#organization";
 const SUPPORT_CONTACT_POINT_ID = "https://autoapply.works/#contact-support";
@@ -10,22 +15,19 @@ function buildOrganizationSchema() {
         name: "AutoApply AI",
         url: "https://autoapply.works",
         logo: "https://autoapply.works/icon.svg",
-        email: "support@autoapply.works",
+        email: OFFICIAL_CONTACT_EMAIL,
         contactPoint: [
             {
                 "@type": "ContactPoint",
                 "@id": SUPPORT_CONTACT_POINT_ID,
                 contactType: "customer support",
-                email: "support@autoapply.works",
+                email: OFFICIAL_CONTACT_EMAIL,
                 url: "https://autoapply.works/en/contact",
                 areaServed: "Worldwide",
                 availableLanguage: ["en", "fr", "de", "es", "it"],
             },
         ],
-        sameAs: [
-            "https://www.linkedin.com/company/autoapply-ai/",
-            "https://x.com/autoapplyai",
-        ],
+        sameAs: [OFFICIAL_LINKEDIN_URL, OFFICIAL_X_URL],
     };
 }
 
