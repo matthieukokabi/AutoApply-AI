@@ -159,6 +159,121 @@
         "item_skills": "Análisis de brechas",
         "item_skills_desc": "Identifica habilidades faltantes y recibe recomendaciones de cursos."
     },
+    "dashboard": {
+        "sidebar": {
+            "dashboard": "Panel",
+            "profileCv": "Perfil y CV",
+            "jobFeed": "Empleos",
+            "settings": "Configuración"
+        },
+        "social": {
+            "followUpdates": "Seguir novedades",
+            "x": "X / Twitter",
+            "linkedin": "LinkedIn",
+            "productHunt": "Product Hunt"
+        },
+        "error": {
+            "title": "Algo salió mal",
+            "description": "No pudimos cargar tu cuenta. Inténtalo de nuevo.",
+            "retry": "Reintentar"
+        },
+        "userFallbackInitial": "U",
+        "signOut": "Cerrar sesión",
+        "settings": {
+            "title": "Configuración",
+            "description": "Configura tus preferencias de empleo y la automatización.",
+            "messages": {
+                "preferencesSaved": "Preferencias guardadas.",
+                "preferencesSaveFailed": "No se pudieron guardar las preferencias.",
+                "networkError": "Error de red.",
+                "exportFailed": "Error al exportar.",
+                "checkoutFailed": "Error en el pago.",
+                "checkoutTimeout": "El pago expiró. Inténtalo de nuevo.",
+                "startingSecureCheckout": "Iniciando pago seguro...",
+                "checkoutCancelled": "Pago cancelado. Tu plan actual no cambió.",
+                "paymentSyncing": "Pago exitoso. Sincronizando el estado de tu cuenta...",
+                "paymentSynced": "Pago exitoso. Estado de suscripción actualizado.",
+                "paymentSyncInProgress": "Pago exitoso. La sincronización sigue en curso. Actualiza de nuevo en unos segundos.",
+                "deleteFailed": "No se pudo eliminar."
+            },
+            "jobPreferences": {
+                "title": "Preferencias de empleo",
+                "description": "Define qué empleos buscas. La IA usará esto para filtrar y puntuar ofertas.",
+                "targetJobTitles": {
+                    "label": "Puestos objetivo",
+                    "placeholder": "p. ej. Frontend Engineer, Full Stack Developer, React Developer",
+                    "hint": "Lista de puestos separados por comas"
+                },
+                "locations": {
+                    "label": "Ubicaciones",
+                    "placeholder": "p. ej. Zúrich, Madrid, Barcelona"
+                },
+                "remotePreference": {
+                    "label": "Preferencia de remoto",
+                    "options": {
+                        "any": "Cualquiera",
+                        "remoteOnly": "Solo remoto",
+                        "hybrid": "Híbrido",
+                        "onsite": "Presencial"
+                    }
+                },
+                "minimumSalary": {
+                    "label": "Salario mínimo (anual)",
+                    "placeholder": "p. ej. {amount}",
+                    "hint": "Se filtrarán los empleos por debajo de este salario anual"
+                },
+                "industries": {
+                    "label": "Sectores",
+                    "placeholder": "p. ej. Tecnología, Finanzas, Salud"
+                },
+                "saveButton": "Guardar preferencias"
+            },
+            "automation": {
+                "title": "Automatización",
+                "description": "Activa el descubrimiento automático de empleos. Cuando está activo, el sistema busca nuevos empleos compatibles cada 4 horas.",
+                "toggleLabel": "Descubrimiento automático de empleos",
+                "status": {
+                    "requiresPaidPlan": "Requiere suscripción Pro o Unlimited",
+                    "active": "Activo - comprobando cada 4 horas",
+                    "disabled": "Desactivado"
+                },
+                "state": {
+                    "enabled": "Activado",
+                    "disabled": "Desactivado"
+                }
+            },
+            "subscription": {
+                "title": "Suscripción",
+                "description": "Gestiona tu plan y facturación.",
+                "currentPlan": "Plan actual",
+                "upgrade": "Mejorar plan",
+                "creditsRemaining": "Créditos restantes",
+                "creditsCount": "{count} créditos",
+                "buyCredits": "Comprar créditos",
+                "planLabels": {
+                    "free": "Gratis",
+                    "pro": "Pro",
+                    "unlimited": "Unlimited"
+                }
+            },
+            "dataManagement": {
+                "title": "Gestión de datos",
+                "description": "Controles de datos conformes con GDPR. Tienes control total sobre tus datos.",
+                "export": {
+                    "title": "Exportar mis datos",
+                    "description": "Descargar todos tus datos en formato JSON",
+                    "button": "Exportar"
+                },
+                "delete": {
+                    "title": "Eliminar cuenta",
+                    "description": "Eliminar permanentemente tu cuenta y todos los datos asociados",
+                    "confirmHint": "Haz clic de nuevo para confirmar la eliminación permanente",
+                    "button": "Eliminar cuenta",
+                    "confirmButton": "Confirmar eliminación"
+                }
+            }
+        }
+    },
     "footer": {
         "tagline": "Asistente de carrera con IA. Optimizado ATS, sin fabricación.",
         "product": "Producto",

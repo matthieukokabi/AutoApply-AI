@@ -159,6 +159,121 @@
         "item_skills": "Analisi delle lacune",
         "item_skills_desc": "Identifica le competenze mancanti e ricevi raccomandazioni sui corsi."
     },
+    "dashboard": {
+        "sidebar": {
+            "dashboard": "Dashboard",
+            "profileCv": "Profilo e CV",
+            "jobFeed": "Offerte",
+            "settings": "Impostazioni"
+        },
+        "social": {
+            "followUpdates": "Segui gli aggiornamenti",
+            "x": "X / Twitter",
+            "linkedin": "LinkedIn",
+            "productHunt": "Product Hunt"
+        },
+        "error": {
+            "title": "Qualcosa è andato storto",
+            "description": "Non siamo riusciti a caricare il tuo account. Riprova.",
+            "retry": "Riprova"
+        },
+        "userFallbackInitial": "U",
+        "signOut": "Esci",
+        "settings": {
+            "title": "Impostazioni",
+            "description": "Configura le tue preferenze di lavoro e l'automazione.",
+            "messages": {
+                "preferencesSaved": "Preferenze salvate.",
+                "preferencesSaveFailed": "Impossibile salvare le preferenze.",
+                "networkError": "Errore di rete.",
+                "exportFailed": "Esportazione non riuscita.",
+                "checkoutFailed": "Checkout non riuscito.",
+                "checkoutTimeout": "Il checkout è scaduto. Riprova.",
+                "startingSecureCheckout": "Avvio checkout sicuro...",
+                "checkoutCancelled": "Checkout annullato. Il tuo piano attuale non è cambiato.",
+                "paymentSyncing": "Pagamento riuscito. Sincronizzazione dello stato account...",
+                "paymentSynced": "Pagamento riuscito. Stato abbonamento aggiornato.",
+                "paymentSyncInProgress": "Pagamento riuscito. La sincronizzazione è ancora in corso. Aggiorna di nuovo tra pochi secondi.",
+                "deleteFailed": "Eliminazione non riuscita."
+            },
+            "jobPreferences": {
+                "title": "Preferenze lavoro",
+                "description": "Definisci quali lavori cerchi. L'IA userà queste informazioni per filtrare e valutare gli annunci.",
+                "targetJobTitles": {
+                    "label": "Ruoli target",
+                    "placeholder": "es. Frontend Engineer, Full Stack Developer, React Developer",
+                    "hint": "Elenco di ruoli separati da virgole"
+                },
+                "locations": {
+                    "label": "Località",
+                    "placeholder": "es. Zurigo, Milano, Roma"
+                },
+                "remotePreference": {
+                    "label": "Preferenza remoto",
+                    "options": {
+                        "any": "Qualsiasi",
+                        "remoteOnly": "Solo remoto",
+                        "hybrid": "Ibrido",
+                        "onsite": "In sede"
+                    }
+                },
+                "minimumSalary": {
+                    "label": "Salario minimo (annuo)",
+                    "placeholder": "es. {amount}",
+                    "hint": "I lavori sotto questo salario annuo verranno filtrati"
+                },
+                "industries": {
+                    "label": "Settori",
+                    "placeholder": "es. Tecnologia, Finanza, Sanità"
+                },
+                "saveButton": "Salva preferenze"
+            },
+            "automation": {
+                "title": "Automazione",
+                "description": "Abilita la scoperta automatica delle offerte. Quando è attiva, il sistema verifica nuovi lavori compatibili ogni 4 ore.",
+                "toggleLabel": "Scoperta automatica offerte",
+                "status": {
+                    "requiresPaidPlan": "Richiede abbonamento Pro o Unlimited",
+                    "active": "Attivo - controllo ogni 4 ore",
+                    "disabled": "Disattivato"
+                },
+                "state": {
+                    "enabled": "Attivo",
+                    "disabled": "Disattivato"
+                }
+            },
+            "subscription": {
+                "title": "Abbonamento",
+                "description": "Gestisci piano e fatturazione.",
+                "currentPlan": "Piano attuale",
+                "upgrade": "Upgrade",
+                "creditsRemaining": "Crediti rimanenti",
+                "creditsCount": "{count} crediti",
+                "buyCredits": "Acquista crediti",
+                "planLabels": {
+                    "free": "Gratis",
+                    "pro": "Pro",
+                    "unlimited": "Unlimited"
+                }
+            },
+            "dataManagement": {
+                "title": "Gestione dati",
+                "description": "Controlli dati conformi al GDPR. Hai il pieno controllo dei tuoi dati.",
+                "export": {
+                    "title": "Esporta i miei dati",
+                    "description": "Scarica tutti i tuoi dati in formato JSON",
+                    "button": "Esporta"
+                },
+                "delete": {
+                    "title": "Elimina account",
+                    "description": "Elimina definitivamente il tuo account e tutti i dati associati",
+                    "confirmHint": "Clicca di nuovo per confermare l'eliminazione permanente",
+                    "button": "Elimina account",
+                    "confirmButton": "Conferma eliminazione"
+                }
+            }
+        }
+    },
     "footer": {
         "tagline": "Assistente di carriera con IA. Ottimizzato ATS, senza invenzioni.",
         "product": "Prodotto",

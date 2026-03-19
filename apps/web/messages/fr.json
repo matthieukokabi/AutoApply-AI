@@ -159,6 +159,121 @@
         "item_skills": "Analyse des lacunes",
         "item_skills_desc": "Identifiez les compétences manquantes et recevez des recommandations de formations."
     },
+    "dashboard": {
+        "sidebar": {
+            "dashboard": "Tableau de bord",
+            "profileCv": "Profil & CV",
+            "jobFeed": "Offres",
+            "settings": "Paramètres"
+        },
+        "social": {
+            "followUpdates": "Suivre les mises à jour",
+            "x": "X / Twitter",
+            "linkedin": "LinkedIn",
+            "productHunt": "Product Hunt"
+        },
+        "error": {
+            "title": "Une erreur est survenue",
+            "description": "Impossible de charger votre compte. Veuillez réessayer.",
+            "retry": "Réessayer"
+        },
+        "userFallbackInitial": "U",
+        "signOut": "Se déconnecter",
+        "settings": {
+            "title": "Paramètres",
+            "description": "Configurez vos préférences d'emploi et l'automatisation.",
+            "messages": {
+                "preferencesSaved": "Préférences enregistrées.",
+                "preferencesSaveFailed": "Échec de l'enregistrement des préférences.",
+                "networkError": "Erreur réseau.",
+                "exportFailed": "Échec de l'export.",
+                "checkoutFailed": "Échec du paiement.",
+                "checkoutTimeout": "Le paiement a expiré. Veuillez réessayer.",
+                "startingSecureCheckout": "Démarrage du paiement sécurisé...",
+                "checkoutCancelled": "Paiement annulé. Votre plan actuel reste inchangé.",
+                "paymentSyncing": "Paiement réussi. Synchronisation de votre compte en cours...",
+                "paymentSynced": "Paiement réussi. Statut d'abonnement mis à jour.",
+                "paymentSyncInProgress": "Paiement réussi. La synchronisation est encore en cours. Actualisez dans quelques secondes.",
+                "deleteFailed": "Échec de la suppression."
+            },
+            "jobPreferences": {
+                "title": "Préférences d'emploi",
+                "description": "Définissez les postes recherchés. L'IA utilisera ces critères pour filtrer et noter les offres.",
+                "targetJobTitles": {
+                    "label": "Intitulés visés",
+                    "placeholder": "ex. Consultant SAP, Consultant fonctionnel, Product Manager",
+                    "hint": "Liste d'intitulés séparés par des virgules"
+                },
+                "locations": {
+                    "label": "Localisations",
+                    "placeholder": "ex. Paris, Zürich, Genève"
+                },
+                "remotePreference": {
+                    "label": "Préférence télétravail",
+                    "options": {
+                        "any": "Peu importe",
+                        "remoteOnly": "100% télétravail",
+                        "hybrid": "Hybride",
+                        "onsite": "Sur site"
+                    }
+                },
+                "minimumSalary": {
+                    "label": "Salaire minimum (annuel)",
+                    "placeholder": "ex. {amount}",
+                    "hint": "Les offres en dessous de ce salaire annuel seront filtrées"
+                },
+                "industries": {
+                    "label": "Secteurs",
+                    "placeholder": "ex. Technologie, Finance, Santé"
+                },
+                "saveButton": "Enregistrer les préférences"
+            },
+            "automation": {
+                "title": "Automatisation",
+                "description": "Activez la découverte automatique. Lorsqu'elle est active, le système vérifie de nouvelles offres toutes les 4 heures.",
+                "toggleLabel": "Découverte automatique d'emplois",
+                "status": {
+                    "requiresPaidPlan": "Nécessite un abonnement Pro ou Illimité",
+                    "active": "Actif - vérification toutes les 4 heures",
+                    "disabled": "Désactivé"
+                },
+                "state": {
+                    "enabled": "Activé",
+                    "disabled": "Désactivé"
+                }
+            },
+            "subscription": {
+                "title": "Abonnement",
+                "description": "Gérez votre formule et votre facturation.",
+                "currentPlan": "Plan actuel",
+                "upgrade": "Passer à Pro",
+                "creditsRemaining": "Crédits restants",
+                "creditsCount": "{count} crédits",
+                "buyCredits": "Acheter des crédits",
+                "planLabels": {
+                    "free": "Gratuit",
+                    "pro": "Pro",
+                    "unlimited": "Illimité"
+                }
+            },
+            "dataManagement": {
+                "title": "Gestion des données",
+                "description": "Contrôles conformes au RGPD. Vous gardez le contrôle total de vos données.",
+                "export": {
+                    "title": "Exporter mes données",
+                    "description": "Télécharger toutes vos données au format JSON",
+                    "button": "Exporter"
+                },
+                "delete": {
+                    "title": "Supprimer le compte",
+                    "description": "Supprime définitivement votre compte et toutes les données associées",
+                    "confirmHint": "Cliquez encore une fois pour confirmer la suppression définitive",
+                    "button": "Supprimer le compte",
+                    "confirmButton": "Confirmer la suppression"
+                }
+            }
+        }
+    },
     "footer": {
         "tagline": "Assistant carrière propulsé par l'IA. Optimisé ATS, zéro fabrication.",
         "product": "Produit",

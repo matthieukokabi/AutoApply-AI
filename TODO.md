@@ -55,6 +55,7 @@ Last updated: 2026-03-19 (Europe/Zurich)
 
 ## P1 — Onboarding reliability hardening right after live payment pass
 
+- [x] Localize dashboard settings shell/UI copy (sidebar + settings page) across `en`, `fr`, `de`, `es`, `it` so locale routes no longer show English-only labels/messages — completed on 2026-03-19 (`apps/web/app/[locale]/(dashboard)/layout.tsx`, `apps/web/app/[locale]/(dashboard)/settings/page.tsx`, `apps/web/components/sign-out-button.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
 - [x] Add E2E assertion that pricing CTA works before hydration on mobile WebKit — completed on 2026-03-17 (`mobile webkit pro CTA works before hydration` in `e2e/onboarding.cross-browser.smoke.spec.ts`, validated locally with JS disabled)
 - [x] Add smoke assertion for localization path parity (`/en`, `/fr`, `/de`, `/es`, `/it`) on sign-up handoff — completed on 2026-03-17 (`scripts/onboarding_smoke_matrix.sh`, report: `/tmp/onboarding-smoke-20260317_163628.jsonl`)
 - [x] Normalize Free-plan CTA locale preservation on non-EN landing pages (`/fr` should keep `/fr/sign-up`) — fixed in source on 2026-03-17 (landing links now use locale-aware `signUpPath`)

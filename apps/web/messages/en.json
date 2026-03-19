@@ -158,6 +158,121 @@
         "item_skills": "Skill Gap Analysis",
         "item_skills_desc": "Identify missing skills and get course recommendations."
     },
+    "dashboard": {
+        "sidebar": {
+            "dashboard": "Dashboard",
+            "profileCv": "Profile & CV",
+            "jobFeed": "Job Feed",
+            "settings": "Settings"
+        },
+        "social": {
+            "followUpdates": "Follow Updates",
+            "x": "X / Twitter",
+            "linkedin": "LinkedIn",
+            "productHunt": "Product Hunt"
+        },
+        "error": {
+            "title": "Something went wrong",
+            "description": "We couldn't load your account. Please try again.",
+            "retry": "Retry"
+        },
+        "userFallbackInitial": "U",
+        "signOut": "Sign out",
+        "settings": {
+            "title": "Settings",
+            "description": "Configure your job preferences and automation settings.",
+            "messages": {
+                "preferencesSaved": "Preferences saved.",
+                "preferencesSaveFailed": "Failed to save preferences.",
+                "networkError": "Network error.",
+                "exportFailed": "Export failed.",
+                "checkoutFailed": "Checkout failed.",
+                "checkoutTimeout": "Checkout timed out. Please try again.",
+                "startingSecureCheckout": "Starting secure checkout...",
+                "checkoutCancelled": "Checkout cancelled. Your current plan remains unchanged.",
+                "paymentSyncing": "Payment successful. Syncing your account status...",
+                "paymentSynced": "Payment successful. Subscription status refreshed.",
+                "paymentSyncInProgress": "Payment successful. Sync is still in progress. Refresh again in a few seconds.",
+                "deleteFailed": "Delete failed."
+            },
+            "jobPreferences": {
+                "title": "Job Preferences",
+                "description": "Define what jobs you're looking for. The AI will use these to filter and score job listings.",
+                "targetJobTitles": {
+                    "label": "Target Job Titles",
+                    "placeholder": "e.g. Frontend Engineer, Full Stack Developer, React Developer",
+                    "hint": "Comma-separated list of desired job titles"
+                },
+                "locations": {
+                    "label": "Locations",
+                    "placeholder": "e.g. London, Berlin, New York"
+                },
+                "remotePreference": {
+                    "label": "Remote Preference",
+                    "options": {
+                        "any": "Any",
+                        "remoteOnly": "Remote Only",
+                        "hybrid": "Hybrid",
+                        "onsite": "On-site"
+                    }
+                },
+                "minimumSalary": {
+                    "label": "Minimum Salary (Annual)",
+                    "placeholder": "e.g. {amount}",
+                    "hint": "Jobs below this annual salary will be filtered out"
+                },
+                "industries": {
+                    "label": "Industries",
+                    "placeholder": "e.g. Technology, Finance, Healthcare"
+                },
+                "saveButton": "Save Preferences"
+            },
+            "automation": {
+                "title": "Automation",
+                "description": "Enable automated job discovery. When on, the system checks for new matching jobs every 4 hours.",
+                "toggleLabel": "Automated Job Discovery",
+                "status": {
+                    "requiresPaidPlan": "Requires Pro or Unlimited subscription",
+                    "active": "Active - checking every 4 hours",
+                    "disabled": "Disabled"
+                },
+                "state": {
+                    "enabled": "Enabled",
+                    "disabled": "Disabled"
+                }
+            },
+            "subscription": {
+                "title": "Subscription",
+                "description": "Manage your plan and billing.",
+                "currentPlan": "Current Plan",
+                "upgrade": "Upgrade",
+                "creditsRemaining": "Credits Remaining",
+                "creditsCount": "{count} credits",
+                "buyCredits": "Buy Credits",
+                "planLabels": {
+                    "free": "Free",
+                    "pro": "Pro",
+                    "unlimited": "Unlimited"
+                }
+            },
+            "dataManagement": {
+                "title": "Data Management",
+                "description": "GDPR-compliant data controls. You have full control over your data.",
+                "export": {
+                    "title": "Export My Data",
+                    "description": "Download all your data in JSON format",
+                    "button": "Export"
+                },
+                "delete": {
+                    "title": "Delete Account",
+                    "description": "Permanently delete your account and all associated data",
+                    "confirmHint": "Click again to confirm permanent deletion",
+                    "button": "Delete Account",
+                    "confirmButton": "Confirm Delete"
+                }
+            }
+        }
+    },
     "footer": {
         "tagline": "AI-powered career assistant. ATS-optimized, zero fabrication.",
         "product": "Product",

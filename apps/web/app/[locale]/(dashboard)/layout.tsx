@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
@@ -27,33 +28,12 @@ export const metadata: Metadata = {
     },
 };
 
-const sidebarItems = [
-    { href: "/dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
-    { href: "/profile" as const, label: "Profile & CV", icon: User },
-    { href: "/jobs" as const, label: "Job Feed", icon: Briefcase },
-    { href: "/settings" as const, label: "Settings", icon: Settings },
-];
-
-const dashboardSocialLinks = [
-    {
-        href: OFFICIAL_X_URL,
-        label: "X / Twitter",
-    },
-    {
-        href: OFFICIAL_LINKEDIN_URL,
-        label: "LinkedIn",
-    },
-    {
-        href: "https://www.producthunt.com/posts/autoapply-ai",
-        label: "Product Hunt",
-    },
-];
-
 export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const t = await getTranslations("dashboard");
     const { userId } = await auth();
     if (!userId) redirect("/sign-in");
 
@@ -69,10 +49,10 @@ export default async function DashboardLayout({
         return (
             <div className="min-h-screen flex items-center justify-center p-8">
                 <div className="text-center space-y-4">
-                    <h1 className="text-2xl font-bold">Something went wrong</h1>
-                    <p className="text-muted-foreground">We couldn&apos;t load your account. Please try again.</p>
+                    <h1 className="text-2xl font-bold">{t("error.title")}</h1>
+                    <p className="text-muted-foreground">{t("error.description")}</p>
                     <Link href="/dashboard" className="inline-block px-4 py-2 bg-primary text-white rounded-md">
-                        Retry
+                        {t("error.retry")}
                     </Link>
                 </div>
             </div>
@@ -94,6 +74,36 @@ export default async function DashboardLayout({
     }
 
     // Note: Link and redirect from @/i18n/routing are locale-aware
+
+    const sidebarItems = [
+        {
+            href: "/dashboard" as const,
+            label: t("sidebar.dashboard"),
+            icon: LayoutDashboard,
+        },
+        {
+            href: "/profile" as const,
+            label: t("sidebar.profileCv"),
+            icon: User,
+        },
+        { href: "/jobs" as const, label: t("sidebar.jobFeed"), icon: Briefcase },
+        { href: "/settings" as const, label: t("sidebar.settings"), icon: Settings },
+    ];
+
+    const dashboardSocialLinks = [
+        {
+            href: OFFICIAL_X_URL,
+            label: t("social.x"),
+        },
+        {
+            href: OFFICIAL_LINKEDIN_URL,
+            label: t("social.linkedin"),
+        },
+        {
+            href: "https://www.producthunt.com/posts/autoapply-ai",
+            label: t("social.productHunt"),
+        },
+    ];
 
     return (
         <div className="flex h-screen">
@@ -123,7 +133,7 @@ export default async function DashboardLayout({
                 <div className="p-4 border-t space-y-2">
                     <div className="rounded-lg border p-3 space-y-2">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            Follow Updates
+                            {t("social.followUpdates")}
                         </p>
                         <div className="space-y-1">
                             {dashboardSocialLinks.map((social) => (
@@ -143,7 +153,7 @@ export default async function DashboardLayout({
 
                     <div className="flex items-center gap-3 px-3 py-2">
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
-                            {user?.firstName?.[0] || "U"}
+                            {user?.firstName?.[0] || t("userFallbackInitial")}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">
@@ -155,7 +165,7 @@ export default async function DashboardLayout({
                         </div>
                         <ThemeToggle />
                     </div>
-                    <SignOutButton />
+                    <SignOutButton label={t("signOut")} />
                 </div>
             </aside>
 

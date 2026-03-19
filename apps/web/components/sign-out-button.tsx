@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-export function SignOutButton() {
+type SignOutButtonProps = {
+    label?: string;
+};
+
+export function SignOutButton({ label = "Sign out" }: SignOutButtonProps) {
     const { signOut } = useClerk();
     const router = useRouter();
 
@@ -17,7 +21,7 @@ export function SignOutButton() {
             onClick={() => signOut(() => router.push("/"))}
         >
             <LogOut className="h-4 w-4" />
-            Sign out
+            {label}
         </Button>
     );
 }

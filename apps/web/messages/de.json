@@ -159,6 +159,121 @@
         "item_skills": "Kompetenzlücken-Analyse",
         "item_skills_desc": "Fehlende Fähigkeiten identifizieren und Kursempfehlungen erhalten."
     },
+    "dashboard": {
+        "sidebar": {
+            "dashboard": "Dashboard",
+            "profileCv": "Profil & Lebenslauf",
+            "jobFeed": "Job-Feed",
+            "settings": "Einstellungen"
+        },
+        "social": {
+            "followUpdates": "Updates folgen",
+            "x": "X / Twitter",
+            "linkedin": "LinkedIn",
+            "productHunt": "Product Hunt"
+        },
+        "error": {
+            "title": "Etwas ist schiefgelaufen",
+            "description": "Ihr Konto konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+            "retry": "Erneut versuchen"
+        },
+        "userFallbackInitial": "U",
+        "signOut": "Abmelden",
+        "settings": {
+            "title": "Einstellungen",
+            "description": "Konfigurieren Sie Ihre Job-Präferenzen und Automatisierung.",
+            "messages": {
+                "preferencesSaved": "Präferenzen gespeichert.",
+                "preferencesSaveFailed": "Präferenzen konnten nicht gespeichert werden.",
+                "networkError": "Netzwerkfehler.",
+                "exportFailed": "Export fehlgeschlagen.",
+                "checkoutFailed": "Checkout fehlgeschlagen.",
+                "checkoutTimeout": "Checkout-Timeout. Bitte versuchen Sie es erneut.",
+                "startingSecureCheckout": "Sicherer Checkout wird gestartet...",
+                "checkoutCancelled": "Checkout abgebrochen. Ihr aktueller Plan bleibt unverändert.",
+                "paymentSyncing": "Zahlung erfolgreich. Kontostatus wird synchronisiert...",
+                "paymentSynced": "Zahlung erfolgreich. Abonnementstatus aktualisiert.",
+                "paymentSyncInProgress": "Zahlung erfolgreich. Synchronisierung läuft noch. Bitte in ein paar Sekunden erneut aktualisieren.",
+                "deleteFailed": "Löschen fehlgeschlagen."
+            },
+            "jobPreferences": {
+                "title": "Job-Präferenzen",
+                "description": "Definieren Sie, nach welchen Jobs Sie suchen. Die KI nutzt dies zum Filtern und Bewerten von Stellenanzeigen.",
+                "targetJobTitles": {
+                    "label": "Ziel-Jobtitel",
+                    "placeholder": "z. B. Frontend Engineer, Full Stack Developer, React Developer",
+                    "hint": "Kommagetrennte Liste gewünschter Jobtitel"
+                },
+                "locations": {
+                    "label": "Standorte",
+                    "placeholder": "z. B. Zürich, Berlin, München"
+                },
+                "remotePreference": {
+                    "label": "Remote-Präferenz",
+                    "options": {
+                        "any": "Beliebig",
+                        "remoteOnly": "Nur Remote",
+                        "hybrid": "Hybrid",
+                        "onsite": "Vor Ort"
+                    }
+                },
+                "minimumSalary": {
+                    "label": "Mindestgehalt (jährlich)",
+                    "placeholder": "z. B. {amount}",
+                    "hint": "Jobs unterhalb dieses Jahresgehalts werden herausgefiltert"
+                },
+                "industries": {
+                    "label": "Branchen",
+                    "placeholder": "z. B. Technologie, Finanzen, Gesundheitswesen"
+                },
+                "saveButton": "Präferenzen speichern"
+            },
+            "automation": {
+                "title": "Automatisierung",
+                "description": "Aktivieren Sie die automatische Jobsuche. Wenn aktiv, prüft das System alle 4 Stunden auf neue passende Jobs.",
+                "toggleLabel": "Automatische Jobsuche",
+                "status": {
+                    "requiresPaidPlan": "Erfordert Pro- oder Unlimited-Abonnement",
+                    "active": "Aktiv - Prüfung alle 4 Stunden",
+                    "disabled": "Deaktiviert"
+                },
+                "state": {
+                    "enabled": "Aktiviert",
+                    "disabled": "Deaktiviert"
+                }
+            },
+            "subscription": {
+                "title": "Abonnement",
+                "description": "Verwalten Sie Ihren Tarif und Ihre Abrechnung.",
+                "currentPlan": "Aktueller Plan",
+                "upgrade": "Upgrade",
+                "creditsRemaining": "Verbleibende Credits",
+                "creditsCount": "{count} Credits",
+                "buyCredits": "Credits kaufen",
+                "planLabels": {
+                    "free": "Kostenlos",
+                    "pro": "Pro",
+                    "unlimited": "Unlimited"
+                }
+            },
+            "dataManagement": {
+                "title": "Datenverwaltung",
+                "description": "DSGVO-konforme Datenkontrollen. Sie haben die volle Kontrolle über Ihre Daten.",
+                "export": {
+                    "title": "Meine Daten exportieren",
+                    "description": "Alle Ihre Daten im JSON-Format herunterladen",
+                    "button": "Exportieren"
+                },
+                "delete": {
+                    "title": "Konto löschen",
+                    "description": "Löschen Sie Ihr Konto und alle zugehörigen Daten dauerhaft",
+                    "confirmHint": "Klicken Sie erneut, um die dauerhafte Löschung zu bestätigen",
+                    "button": "Konto löschen",
+                    "confirmButton": "Löschen bestätigen"
+                }
+            }
+        }
+    },
     "footer": {
         "tagline": "KI-gestützter Karriere-Assistent. ATS-optimiert, ohne Erfindungen.",
         "product": "Produkt",

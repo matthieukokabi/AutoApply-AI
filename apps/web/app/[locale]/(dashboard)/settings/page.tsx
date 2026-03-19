@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
     Card,
     CardContent,
@@ -15,7 +16,6 @@ import { Loader2, Check, AlertCircle } from "lucide-react";
 import { SettingsSkeleton } from "@/components/loading-skeleton";
 import {
     buildAuthIntentUrl,
-    CHECKOUT_TIMEOUT_ERROR,
     CHECKOUT_TIMEOUT_MS,
     getLocalizedPathForRoute,
     isCheckoutPlan,
@@ -63,6 +63,14 @@ const SETTINGS_AUTH_RETRY_DELAY_MS = 500;
 const CHECKOUT_RETURN_SYNC_ATTEMPTS = 5;
 const CHECKOUT_RETURN_SYNC_DELAY_MS = 2000;
 
+function normalizePlanStatus(value: string | null | undefined) {
+    if (value === "pro" || value === "unlimited" || value === "free") {
+        return value;
+    }
+
+    return "free";
+}
+
 async function fetchUserWithAuthRetry() {
     let response: Response | null = null;
 
@@ -87,6 +95,7 @@ async function fetchUserWithAuthRetry() {
 }
 
 export default function SettingsPage() {
+    const t = useTranslations("dashboard.settings");
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -185,13 +194,16 @@ export default function SettingsPage() {
             });
 
             if (res.ok) {
-                setMessage({ type: "success", text: "Preferences saved." });
+                setMessage({ type: "success", text: t("messages.preferencesSaved") });
             } else {
                 const data = await res.json();
-                setMessage({ type: "error", text: data.error || "Failed to save." });
+                setMessage({
+                    type: "error",
+                    text: data.error || t("messages.preferencesSaveFailed"),
+                });
             }
         } catch {
-            setMessage({ type: "error", text: "Network error." });
+            setMessage({ type: "error", text: t("messages.networkError") });
         } finally {
             setSaving(false);
         }
@@ -220,7 +232,7 @@ export default function SettingsPage() {
                 setMessage({ type: "error", text: data.error });
             }
         } catch {
-            setMessage({ type: "error", text: "Network error." });
+            setMessage({ type: "error", text: t("messages.networkError") });
         } finally {
             setTogglingAutomation(false);
         }
@@ -243,7 +255,7 @@ export default function SettingsPage() {
                 URL.revokeObjectURL(url);
             }
         } catch {
-            setMessage({ type: "error", text: "Export failed." });
+            setMessage({ type: "error", text: t("messages.exportFailed") });
         } finally {
             setExporting(false);
         }
@@ -291,16 +303,22 @@ export default function SettingsPage() {
             if (data.url) {
                 window.location.href = data.url;
             } else {
-                setMessage({ type: "error", text: data.error || "Checkout failed." });
+                setMessage({
+                    type: "error",
+                    text: data.error || t("messages.checkoutFailed"),
+                });
             }
         } catch (error) {
             if (isAbortError(error)) {
-                setMessage({ type: "error", text: CHECKOUT_TIMEOUT_ERROR });
+                setMessage({
+                    type: "error",
+                    text: t("messages.checkoutTimeout"),
+                });
                 return;
             }
-            setMessage({ type: "error", text: "Network error." });
+            setMessage({ type: "error", text: t("messages.networkError") });
         }
-    }, []);
+    }, [t]);
 
     useEffect(() => {
         if (!autoUpgradePlan || loading || !user || autoCheckoutTriggeredRef.current) {
@@ -308,7 +326,7 @@ export default function SettingsPage() {
         }
 
         autoCheckoutTriggeredRef.current = true;
-        setMessage({ type: "success", text: "Starting secure checkout..." });
+        setMessage({ type: "success", text: t("messages.startingSecureCheckout") });
 
         const nextParams = new URLSearchParams(searchParams.toString());
         nextParams.delete("upgrade");
@@ -316,7 +334,7 @@ export default function SettingsPage() {
         router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
 
         void handleCheckout(autoUpgradePlan);
-    }, [autoUpgradePlan, loading, user, pathname, router, searchParams, handleCheckout]);
+    }, [autoUpgradePlan, loading, user, pathname, router, searchParams, handleCheckout, t]);
 
     useEffect(() => {
         if (loading) {
@@ -353,7 +371,7 @@ export default function SettingsPage() {
         if (checkoutStatus === "cancelled") {
             setMessage({
                 type: "success",
-                text: "Checkout cancelled. Your current plan remains unchanged.",
+                text: t("messages.checkoutCancelled"),
             });
             return;
         }
@@ -372,7 +390,7 @@ export default function SettingsPage() {
 
         setMessage({
             type: "success",
-            text: "Payment successful. Syncing your account status...",
+            text: t("messages.paymentSyncing"),
         });
 
         void (async () => {
@@ -410,7 +428,7 @@ export default function SettingsPage() {
 
                     setMessage({
                         type: "success",
-                        text: "Payment successful. Subscription status refreshed.",
+                        text: t("messages.paymentSynced"),
                     });
                     return;
                 } catch (err) {
@@ -420,10 +438,10 @@ export default function SettingsPage() {
 
             setMessage({
                 type: "success",
-                text: "Payment successful. Sync is still in progress. Refresh again in a few seconds.",
+                text: t("messages.paymentSyncInProgress"),
             });
         })();
-    }, [loading, pathname, router, searchParams, user]);
+    }, [loading, pathname, router, searchParams, t, user]);
 
     async function handleDeleteAccount() {
         if (!confirmDelete) {
@@ -437,10 +455,13 @@ export default function SettingsPage() {
                 window.location.href = "/";
             } else {
                 const data = await res.json();
-                setMessage({ type: "error", text: data.error || "Delete failed." });
+                setMessage({
+                    type: "error",
+                    text: data.error || t("messages.deleteFailed"),
+                });
             }
         } catch {
-            setMessage({ type: "error", text: "Network error." });
+            setMessage({ type: "error", text: t("messages.networkError") });
         } finally {
             setDeleting(false);
             setConfirmDelete(false);
@@ -451,12 +472,20 @@ export default function SettingsPage() {
         return <SettingsSkeleton />;
     }
 
+    const normalizedPlanStatus = normalizePlanStatus(user?.subscriptionStatus);
+    const automationStatusText =
+        normalizedPlanStatus === "free"
+            ? t("automation.status.requiresPaidPlan")
+            : user?.automationEnabled
+              ? t("automation.status.active")
+              : t("automation.status.disabled");
+
     return (
         <div className="space-y-8 max-w-3xl">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
                 <p className="text-muted-foreground">
-                    Configure your job preferences and automation settings.
+                    {t("description")}
                 </p>
             </div>
 
@@ -480,33 +509,34 @@ export default function SettingsPage() {
             {/* Job Preferences */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Job Preferences</CardTitle>
+                    <CardTitle>{t("jobPreferences.title")}</CardTitle>
                     <CardDescription>
-                        Define what jobs you&apos;re looking for. The AI will use these to
-                        filter and score job listings.
+                        {t("jobPreferences.description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
                         <label className="text-sm font-medium block mb-1">
-                            Target Job Titles
+                            {t("jobPreferences.targetJobTitles.label")}
                         </label>
                         <input
                             className="w-full px-3 py-2 border rounded-md text-sm"
-                            placeholder="e.g. Frontend Engineer, Full Stack Developer, React Developer"
+                            placeholder={t("jobPreferences.targetJobTitles.placeholder")}
                             value={titlesStr}
                             onChange={(e) => setTitlesStr(e.target.value)}
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                            Comma-separated list of desired job titles
+                            {t("jobPreferences.targetJobTitles.hint")}
                         </p>
                     </div>
 
                     <div>
-                        <label className="text-sm font-medium block mb-1">Locations</label>
+                        <label className="text-sm font-medium block mb-1">
+                            {t("jobPreferences.locations.label")}
+                        </label>
                         <input
                             className="w-full px-3 py-2 border rounded-md text-sm"
-                            placeholder="e.g. London, Berlin, New York"
+                            placeholder={t("jobPreferences.locations.placeholder")}
                             value={locationsStr}
                             onChange={(e) => setLocationsStr(e.target.value)}
                         />
@@ -514,23 +544,31 @@ export default function SettingsPage() {
 
                     <div>
                         <label className="text-sm font-medium block mb-1">
-                            Remote Preference
+                            {t("jobPreferences.remotePreference.label")}
                         </label>
                         <select
                             className="w-full px-3 py-2 border rounded-md text-sm"
                             value={remotePref}
                             onChange={(e) => setRemotePref(e.target.value)}
                         >
-                            <option value="any">Any</option>
-                            <option value="remote">Remote Only</option>
-                            <option value="hybrid">Hybrid</option>
-                            <option value="onsite">On-site</option>
+                            <option value="any">
+                                {t("jobPreferences.remotePreference.options.any")}
+                            </option>
+                            <option value="remote">
+                                {t("jobPreferences.remotePreference.options.remoteOnly")}
+                            </option>
+                            <option value="hybrid">
+                                {t("jobPreferences.remotePreference.options.hybrid")}
+                            </option>
+                            <option value="onsite">
+                                {t("jobPreferences.remotePreference.options.onsite")}
+                            </option>
                         </select>
                     </div>
 
                     <div>
                         <label className="text-sm font-medium block mb-1">
-                            Minimum Salary (Annual)
+                            {t("jobPreferences.minimumSalary.label")}
                         </label>
                         <div className="flex gap-2">
                             <select
@@ -547,21 +585,25 @@ export default function SettingsPage() {
                             <input
                                 type="number"
                                 className="flex-1 px-3 py-2 border rounded-md text-sm"
-                                placeholder={`e.g. ${currencyCode === "JPY" ? "8000000" : "80000"}`}
+                                placeholder={t("jobPreferences.minimumSalary.placeholder", {
+                                    amount: currencyCode === "JPY" ? "8000000" : "80000",
+                                })}
                                 value={salaryStr}
                                 onChange={(e) => setSalaryStr(e.target.value)}
                             />
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            Jobs below this annual salary will be filtered out
+                            {t("jobPreferences.minimumSalary.hint")}
                         </p>
                     </div>
 
                     <div>
-                        <label className="text-sm font-medium block mb-1">Industries</label>
+                        <label className="text-sm font-medium block mb-1">
+                            {t("jobPreferences.industries.label")}
+                        </label>
                         <input
                             className="w-full px-3 py-2 border rounded-md text-sm"
-                            placeholder="e.g. Technology, Finance, Healthcare"
+                            placeholder={t("jobPreferences.industries.placeholder")}
                             value={industriesStr}
                             onChange={(e) => setIndustriesStr(e.target.value)}
                         />
@@ -571,7 +613,7 @@ export default function SettingsPage() {
                         {saving ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : null}
-                        Save Preferences
+                        {t("jobPreferences.saveButton")}
                     </Button>
                 </CardContent>
             </Card>
@@ -579,23 +621,16 @@ export default function SettingsPage() {
             {/* Automation */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Automation</CardTitle>
+                    <CardTitle>{t("automation.title")}</CardTitle>
                     <CardDescription>
-                        Enable automated job discovery. When on, the system checks for new
-                        matching jobs every 4 hours.
+                        {t("automation.description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="font-medium">Automated Job Discovery</p>
-                            <p className="text-sm text-muted-foreground">
-                                {user?.subscriptionStatus === "free"
-                                    ? "Requires Pro or Unlimited subscription"
-                                    : user?.automationEnabled
-                                      ? "Active - checking every 4 hours"
-                                      : "Disabled"}
-                            </p>
+                            <p className="font-medium">{t("automation.toggleLabel")}</p>
+                            <p className="text-sm text-muted-foreground">{automationStatusText}</p>
                         </div>
                         <Button
                             variant={user?.automationEnabled ? "default" : "outline"}
@@ -608,9 +643,9 @@ export default function SettingsPage() {
                             {togglingAutomation ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                             ) : user?.automationEnabled ? (
-                                "Enabled"
+                                t("automation.state.enabled")
                             ) : (
-                                "Disabled"
+                                t("automation.state.disabled")
                             )}
                         </Button>
                     </div>
@@ -620,33 +655,35 @@ export default function SettingsPage() {
             {/* Subscription */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Subscription</CardTitle>
-                    <CardDescription>Manage your plan and billing.</CardDescription>
+                    <CardTitle>{t("subscription.title")}</CardTitle>
+                    <CardDescription>{t("subscription.description")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="font-medium">Current Plan</p>
+                            <p className="font-medium">{t("subscription.currentPlan")}</p>
                             <Badge variant="secondary" className="capitalize">
-                                {user?.subscriptionStatus || "free"}
+                                {t(`subscription.planLabels.${normalizedPlanStatus}`)}
                             </Badge>
                         </div>
                         <Button onClick={() => handleCheckout("pro_monthly")}>
-                            Upgrade
+                            {t("subscription.upgrade")}
                         </Button>
                     </div>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="font-medium">Credits Remaining</p>
+                            <p className="font-medium">{t("subscription.creditsRemaining")}</p>
                             <p className="text-sm text-muted-foreground">
-                                {user?.creditsRemaining ?? 0} credits
+                                {t("subscription.creditsCount", {
+                                    count: user?.creditsRemaining ?? 0,
+                                })}
                             </p>
                         </div>
                         <Button
                             variant="outline"
                             onClick={() => handleCheckout("credit_pack")}
                         >
-                            Buy Credits
+                            {t("subscription.buyCredits")}
                         </Button>
                     </div>
                 </CardContent>
@@ -655,17 +692,17 @@ export default function SettingsPage() {
             {/* Data Management (GDPR) */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Data Management</CardTitle>
+                    <CardTitle>{t("dataManagement.title")}</CardTitle>
                     <CardDescription>
-                        GDPR-compliant data controls. You have full control over your data.
+                        {t("dataManagement.description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="font-medium">Export My Data</p>
+                            <p className="font-medium">{t("dataManagement.export.title")}</p>
                             <p className="text-sm text-muted-foreground">
-                                Download all your data in JSON format
+                                {t("dataManagement.export.description")}
                             </p>
                         </div>
                         <Button
@@ -676,16 +713,18 @@ export default function SettingsPage() {
                             {exporting ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : null}
-                            Export
+                            {t("dataManagement.export.button")}
                         </Button>
                     </div>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="font-medium text-destructive">Delete Account</p>
+                            <p className="font-medium text-destructive">
+                                {t("dataManagement.delete.title")}
+                            </p>
                             <p className="text-sm text-muted-foreground">
                                 {confirmDelete
-                                    ? "Click again to confirm permanent deletion"
-                                    : "Permanently delete your account and all associated data"}
+                                    ? t("dataManagement.delete.confirmHint")
+                                    : t("dataManagement.delete.description")}
                             </p>
                         </div>
                         <Button
@@ -696,7 +735,9 @@ export default function SettingsPage() {
                             {deleting ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : null}
-                            {confirmDelete ? "Confirm Delete" : "Delete Account"}
+                            {confirmDelete
+                                ? t("dataManagement.delete.confirmButton")
+                                : t("dataManagement.delete.button")}
                         </Button>
                     </div>
                 </CardContent>
