@@ -17,7 +17,8 @@ Last updated: 2026-03-19 (Europe/Zurich)
 - [x] Add in-workflow cadence gate at user-fetch stage (process jobs only on 4h slots) to mitigate minute-trigger overfiring until runtime reload — completed on 2026-03-19 (`Fetch Active Users with Prefs & CV` SQL patched via `apps/web/scripts/incident_patch_job_discovery_workflow.js`)
 - [x] Publish full incident closure report with root causes, stage mapping, commit history, validation evidence, and rollback notes — completed on 2026-03-19 (`INCIDENT_AUTOAPPLY_PIPELINE_FIX_REPORT.md`)
 - [x] Remove n8n DB-credential decrypt dependency from profile fetch stage by routing through signed app webhook (`fetch_active_users`) with 4h cadence gating + structured logs — completed on 2026-03-19 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`, `apps/web/__tests__/api/webhooks-n8n.test.ts`)
-- [ ] Restart n8n Render service once to flush stale in-memory trigger registrations, then verify scheduler settles to true 4h cadence (currently DB metadata is corrected but runtime still emits minute-level triggers until process reload)
+- [x] Restart n8n Render service once to flush stale in-memory trigger registrations — completed on 2026-03-19 (Render deploy `9d2b7bd`, startup confirms `1 published workflow` and active pipeline load)
+- [ ] Verify first post-restart scheduled execution uses live workflow version (`f388a6db-5bf6-44fb-bfd4-33a3b5aa448c`) and no longer emits decrypt errors at fetch stage
 
 ## P0 — Must complete before live payment test
 
