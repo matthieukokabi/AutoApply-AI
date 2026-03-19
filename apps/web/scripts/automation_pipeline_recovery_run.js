@@ -364,6 +364,45 @@ function dedupeJobs(jobs) {
     return out;
 }
 
+function buildConnectorResult(source, response) {
+    return {
+        source,
+        ok: Boolean(response?.ok),
+        status: response?.status ?? null,
+        error: response?.error || null,
+        normalized: response?.ok ? normalizeJobs(source, response?.body) : [],
+    };
+}
+
+function buildApplicationsPayload(scored, tailoredByExternalId, runId) {
+    return scored.map((job) => {
+        const tailored = tailoredByExternalId.get(job.externalId);
+        const isTailored = Boolean(tailored?.tailoredCvMarkdown);
+        return {
+            externalId: job.externalId,
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            description: job.description,
+            source: job.source,
+            url: job.url,
+            salary: job.salary,
+            postedAt: job.postedAt,
+            compatibilityScore: job.compatibilityScore || 0,
+            atsKeywords: job.atsKeywords || [],
+            matchingStrengths: job.matchingStrengths || [],
+            gaps: job.gaps || [],
+            recommendation: job.recommendation || "skip",
+            tailoredCvMarkdown: tailored?.tailoredCvMarkdown || null,
+            coverLetterMarkdown: tailored?.coverLetterMarkdown || null,
+            scoringError: job.scoringError || null,
+            tailoringError: tailored?.tailoringError || null,
+            status: isTailored ? "tailored" : "discovered",
+            runId,
+        };
+    });
+}
+
 async function scoreJob(job, masterCvText, anthropicApiKey) {
     if (!anthropicApiKey) {
         return {
@@ -641,13 +680,7 @@ async function main() {
         const rawConnectorResults = [];
         for (const connector of connectors) {
             const response = await connector.fetcher();
-            rawConnectorResults.push({
-                source: connector.source,
-                ok: response.ok,
-                status: response.status,
-                error: response.error || null,
-                normalized: response.ok ? normalizeJobs(connector.source, response.body) : [],
-            });
+            rawConnectorResults.push(buildConnectorResult(connector.source, response));
         }
 
         const dedupedJobs = dedupeJobs(
@@ -684,32 +717,7 @@ async function main() {
             tailoredByExternalId.set(candidate.externalId, tailored);
         }
 
-        const applicationsPayload = scored.map((job) => {
-            const tailored = tailoredByExternalId.get(job.externalId);
-            const isTailored = Boolean(tailored?.tailoredCvMarkdown);
-            return {
-                externalId: job.externalId,
-                title: job.title,
-                company: job.company,
-                location: job.location,
-                description: job.description,
-                source: job.source,
-                url: job.url,
-                salary: job.salary,
-                postedAt: job.postedAt,
-                compatibilityScore: job.compatibilityScore || 0,
-                atsKeywords: job.atsKeywords || [],
-                matchingStrengths: job.matchingStrengths || [],
-                gaps: job.gaps || [],
-                recommendation: job.recommendation || "skip",
-                tailoredCvMarkdown: tailored?.tailoredCvMarkdown || null,
-                coverLetterMarkdown: tailored?.coverLetterMarkdown || null,
-                scoringError: job.scoringError || null,
-                tailoringError: tailored?.tailoringError || null,
-                status: isTailored ? "tailored" : "discovered",
-                runId,
-            };
-        });
+        const applicationsPayload = buildApplicationsPayload(scored, tailoredByExternalId, runId);
 
         let callbackResult = null;
         if (args.realRun && applicationsPayload.length > 0) {
@@ -819,7 +827,19 @@ async function main() {
     }
 }
 
-main().catch((error) => {
-    process.stderr.write(`automation_pipeline_recovery_run_failed: ${error.message}\n`);
-    process.exit(1);
-});
+if (require.main === module) {
+    main().catch((error) => {
+        process.stderr.write(`automation_pipeline_recovery_run_failed: ${error.message}\n`);
+        process.exit(1);
+    });
+}
+
+module.exports = {
+    parseArgs,
+    parseJsonFromModelText,
+    detectAdzunaCountry,
+    normalizeJobs,
+    dedupeJobs,
+    buildConnectorResult,
+    buildApplicationsPayload,
+};

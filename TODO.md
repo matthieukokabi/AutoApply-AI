@@ -11,6 +11,7 @@ Last updated: 2026-03-19 (Europe/Zurich)
 - [x] Verify one affected real profile completes full recovery run with persisted jobs + tailored docs — completed on 2026-03-19 (`npm run incident:pipeline:recovery -- --email matthieu.kokabi@gmail.com --max-jobs 2 --real-run`, `deltaApplications=2`, `payloadTailoredCount=1`)
 - [x] Add structured stage-level webhook logging with `runId` correlation across pipeline callbacks and error paths — completed on 2026-03-19 (`apps/web/app/api/webhooks/n8n/route.ts`, covered by `apps/web/__tests__/api/webhooks-n8n.test.ts`)
 - [x] Add executable alert check mode for pipeline diagnostics (fails on warning/critical thresholds for scheduler misses, repeated zero-jobs, generation failures, and end-to-end failures) — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_diagnostics.js --fail-on-alert`, `npm run incident:pipeline:alerts`)
+- [x] Add incident regression tests for scheduler cadence/alerts and recovery connector-dedupe-generation payload mapping (with import-safe script exports) — completed on 2026-03-19 (`apps/web/__tests__/automation-pipeline-diagnostics.test.ts`, `apps/web/__tests__/automation-pipeline-recovery.test.ts`, script helper exports)
 
 ## P0 — Must complete before live payment test
 

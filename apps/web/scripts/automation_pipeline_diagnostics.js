@@ -46,10 +46,6 @@ function loadEnvIfPresent() {
     }
 }
 
-loadEnvIfPresent();
-
-const prisma = new PrismaClient();
-
 const DEFAULT_WINDOW_RUNS = 10;
 const ALERTS = {
     schedulerMissedMultiplier: 1.5,
@@ -348,7 +344,7 @@ function severityRank(severity) {
     return 0;
 }
 
-async function resolveDiscoveryWorkflow(workflowIdOverride) {
+async function resolveDiscoveryWorkflow(prisma, workflowIdOverride) {
     if (workflowIdOverride) {
         const [wf] = await prisma.$queryRawUnsafe(
             `SELECT id, name, active, nodes, settings, "updatedAt" FROM n8n.workflow_entity WHERE id = $1 LIMIT 1;`,
@@ -369,56 +365,59 @@ async function resolveDiscoveryWorkflow(workflowIdOverride) {
 }
 
 async function main() {
+    loadEnvIfPresent();
     const args = parseArgs(process.argv.slice(2));
+    const prisma = new PrismaClient();
 
-    const workflow = await resolveDiscoveryWorkflow(args.workflowId);
-    if (!workflow) {
-        throw new Error("workflow_not_found");
-    }
+    try {
+        const workflow = await resolveDiscoveryWorkflow(prisma, args.workflowId);
+        if (!workflow) {
+            throw new Error("workflow_not_found");
+        }
 
-    const users = await prisma.user.findMany({
-        where: args.email ? { email: args.email } : undefined,
-        orderBy: { createdAt: "asc" },
-        select: {
-            id: true,
-            email: true,
-            name: true,
-            automationEnabled: true,
-            subscriptionStatus: true,
-            createdAt: true,
-            updatedAt: true,
-            masterProfile: { select: { id: true, updatedAt: true } },
-            preferences: { select: { id: true, targetTitles: true, locations: true } },
-            _count: { select: { applications: true } },
-        },
-    });
+        const users = await prisma.user.findMany({
+            where: args.email ? { email: args.email } : undefined,
+            orderBy: { createdAt: "asc" },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                automationEnabled: true,
+                subscriptionStatus: true,
+                createdAt: true,
+                updatedAt: true,
+                masterProfile: { select: { id: true, updatedAt: true } },
+                preferences: { select: { id: true, targetTitles: true, locations: true } },
+                _count: { select: { applications: true } },
+            },
+        });
 
-    const executions = await prisma.$queryRawUnsafe(
-        `SELECT e.id, e.mode, e.status, e.finished, e."startedAt", e."stoppedAt", e."workflowId"
-         FROM n8n.execution_entity e
-         WHERE e."workflowId" = $1
-         ORDER BY e."startedAt" DESC
-         LIMIT $2;`,
-        workflow.id,
-        DEFAULT_WINDOW_RUNS
-    );
+        const executions = await prisma.$queryRawUnsafe(
+            `SELECT e.id, e.mode, e.status, e.finished, e."startedAt", e."stoppedAt", e."workflowId"
+             FROM n8n.execution_entity e
+             WHERE e."workflowId" = $1
+             ORDER BY e."startedAt" DESC
+             LIMIT $2;`,
+            workflow.id,
+            DEFAULT_WINDOW_RUNS
+        );
 
-    const executionIds = executions.map((row) => row.id).filter((id) => typeof id === "number");
-    const executionDataRows = executionIds.length
-        ? await prisma.$queryRawUnsafe(
-              `SELECT "executionId", data
-               FROM n8n.execution_data
-               WHERE "executionId" = ANY($1::int[])`,
-              executionIds
-          )
-        : [];
+        const executionIds = executions.map((row) => row.id).filter((id) => typeof id === "number");
+        const executionDataRows = executionIds.length
+            ? await prisma.$queryRawUnsafe(
+                  `SELECT "executionId", data
+                   FROM n8n.execution_data
+                   WHERE "executionId" = ANY($1::int[])`,
+                  executionIds
+              )
+            : [];
 
-    const executionDataMap = new Map();
-    for (const row of executionDataRows) {
-        executionDataMap.set(row.executionId, decodeExecutionData(row.data));
-    }
+        const executionDataMap = new Map();
+        for (const row of executionDataRows) {
+            executionDataMap.set(row.executionId, decodeExecutionData(row.data));
+        }
 
-    const runSummaries = executions.map((execution) => {
+        const runSummaries = executions.map((execution) => {
         const decoded = executionDataMap.get(execution.id);
         const runData = decoded?.resultData?.runData || {};
         const stageSummaries = stageSummaryFromRunData(runData);
@@ -441,12 +440,12 @@ async function main() {
             failureReason: inferFailureReason(execution, stageSummaries),
             stageSummaries,
         };
-    });
+        });
 
-    const latestSuccessfulRun = runSummaries.find((run) => run.status === "success") || null;
+        const latestSuccessfulRun = runSummaries.find((run) => run.status === "success") || null;
 
-    const perProfile = [];
-    for (const user of users) {
+        const perProfile = [];
+        for (const user of users) {
         const appStats = await prisma.application.aggregate({
             where: { userId: user.id },
             _count: { id: true },
@@ -471,7 +470,7 @@ async function main() {
             Boolean(user.masterProfile?.id) &&
             Boolean(user.preferences?.id);
 
-        perProfile.push({
+            perProfile.push({
             userId: user.id,
             email: user.email,
             name: user.name,
@@ -487,17 +486,17 @@ async function main() {
             lastApplicationAt: appStats._max.createdAt,
             documentsGeneratedTotal: tailoredStats._count.id,
             lastDocumentGeneratedAt: tailoredStats._max.createdAt,
+            });
+        }
+
+        const cadenceMinutes = pickScheduleCadenceMinutes(workflow.nodes || []);
+        const alerts = inferAlerts({
+            cadenceMinutes,
+            latestSuccessfulRunAt: latestSuccessfulRun?.startedAt || null,
+            runSummaries,
         });
-    }
 
-    const cadenceMinutes = pickScheduleCadenceMinutes(workflow.nodes || []);
-    const alerts = inferAlerts({
-        cadenceMinutes,
-        latestSuccessfulRunAt: latestSuccessfulRun?.startedAt || null,
-        runSummaries,
-    });
-
-    const summary = {
+        const summary = {
         generatedAt: new Date().toISOString(),
         workflow: {
             id: workflow.id,
@@ -516,41 +515,51 @@ async function main() {
         profiles: perProfile,
         runs: runSummaries,
         alerts,
-    };
+        };
 
-    if (args.failOnAlert) {
-        const minRank = severityRank(args.minSeverity);
-        const blockingAlerts = alerts.filter(
-            (alert) => severityRank(alert.severity) >= minRank
-        );
-        if (blockingAlerts.length > 0) {
-            process.stderr.write(
-                `automation_pipeline_alert_check_failed: ${JSON.stringify(
-                    {
-                        threshold: args.minSeverity,
-                        blockingAlerts,
-                    },
-                    null,
-                    2
-                )}\n`
+        if (args.failOnAlert) {
+            const minRank = severityRank(args.minSeverity);
+            const blockingAlerts = alerts.filter(
+                (alert) => severityRank(alert.severity) >= minRank
             );
-            process.exitCode = 1;
+            if (blockingAlerts.length > 0) {
+                process.stderr.write(
+                    `automation_pipeline_alert_check_failed: ${JSON.stringify(
+                        {
+                            threshold: args.minSeverity,
+                            blockingAlerts,
+                        },
+                        null,
+                        2
+                    )}\n`
+                );
+                process.exitCode = 1;
+            }
         }
-    }
 
-    if (args.jsonOnly) {
+        if (args.jsonOnly) {
+            process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
+            return;
+        }
+
         process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
-        return;
+    } finally {
+        await prisma.$disconnect();
     }
-
-    process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
 }
 
-main()
-    .catch((error) => {
+if (require.main === module) {
+    main().catch((error) => {
         process.stderr.write(`automation_pipeline_diagnostics_failed: ${error.message}\n`);
         process.exitCode = 1;
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
     });
+}
+
+module.exports = {
+    parseArgs,
+    pickScheduleCadenceMinutes,
+    inferAlerts,
+    inferFailureReason,
+    severityRank,
+    stageSummaryFromRunData,
+};
