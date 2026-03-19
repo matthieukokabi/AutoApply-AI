@@ -525,31 +525,40 @@ try {
 
 return [{ json: { logged: true } }];`;
 
-const FETCH_ACTIVE_USERS_SQL = `WITH cadence_gate AS (
-  SELECT (EXTRACT(MINUTE FROM NOW())::int = 0 AND MOD(EXTRACT(HOUR FROM NOW())::int, 4) = 0) AS should_run
-)
-SELECT
-  u."id",
-  u."email",
-  u."name",
-  u."subscriptionStatus",
-  u."creditsRemaining",
-  jp."targetTitles",
-  jp."locations",
-  jp."remotePreference",
-  jp."salaryMin",
-  jp."industries",
-  mp."rawText" AS "masterCvText"
-FROM "users" u
-LEFT JOIN "job_preferences" jp ON jp."userId" = u."id"
-LEFT JOIN "master_profiles" mp ON mp."userId" = u."id"
-CROSS JOIN cadence_gate cg
-WHERE
-  cg.should_run = true
-  AND u."automationEnabled" = true
-  AND u."subscriptionStatus" IN ('pro', 'unlimited')
-  AND mp."rawText" IS NOT NULL
-  AND jp."id" IS NOT NULL`;
+const PREPARE_USER_DATA_JS = `// Normalize active-users payload into per-user pipeline items
+const items = $input.all();
+const users = [];
+
+for (const item of items) {
+  const payload = item.json || {};
+  const rows = Array.isArray(payload.users) ? payload.users : [payload];
+
+  for (const row of rows) {
+    if (row && row.id && row.masterCvText) {
+      users.push({
+        json: {
+          userId: row.id,
+          email: row.email || '',
+          name: row.name || '',
+          subscriptionStatus: row.subscriptionStatus || 'free',
+          creditsRemaining: typeof row.creditsRemaining === 'number' ? row.creditsRemaining : 0,
+          targetTitles: Array.isArray(row.targetTitles) ? row.targetTitles : ['software engineer'],
+          locations: Array.isArray(row.locations) ? row.locations : ['remote'],
+          remotePreference: row.remotePreference || 'any',
+          salaryMin: typeof row.salaryMin === 'number' ? row.salaryMin : 0,
+          industries: Array.isArray(row.industries) ? row.industries : [],
+          masterCvText: row.masterCvText
+        }
+      });
+    }
+  }
+}
+
+if (users.length === 0) {
+  return [];
+}
+
+return users;`;
 
 function patchWorkflowJson(workflow) {
     const copy = JSON.parse(JSON.stringify(workflow));
@@ -570,9 +579,34 @@ function patchWorkflowJson(workflow) {
 
         if (node.name === "Fetch Active Users with Prefs & CV") {
             node.parameters = {
-                ...(node.parameters || {}),
-                query: FETCH_ACTIVE_USERS_SQL,
+                method: "POST",
+                url: "={{ $('Load Config').first().json.appUrl + '/api/webhooks/n8n' }}",
+                sendHeaders: true,
+                headerParameters: {
+                    parameters: [
+                        { name: "content-type", value: "application/json" },
+                        {
+                            name: "x-webhook-secret",
+                            value: "={{ $('Load Config').first().json.webhookSecret }}",
+                        },
+                        {
+                            name: "x-run-id",
+                            value: "={{ String($execution.id || Date.now()) }}",
+                        },
+                    ],
+                },
+                sendBody: true,
+                specifyBody: "json",
+                jsonBody: "={{ JSON.stringify({ type: 'fetch_active_users', runId: String($execution.id || Date.now()) }) }}",
+                options: { timeout: 20000 },
             };
+            node.type = "n8n-nodes-base.httpRequest";
+            node.typeVersion = 4.1;
+            delete node.credentials;
+        }
+
+        if (node.name === "Prepare User Data") {
+            node.parameters = { ...(node.parameters || {}), jsCode: PREPARE_USER_DATA_JS };
         }
 
         if (node.name === "Batch Save via App API") {

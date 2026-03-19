@@ -57,28 +57,44 @@
         },
         {
             "parameters": {
-                "operation": "executeQuery",
-                "query": "WITH cadence_gate AS (\n  SELECT (EXTRACT(MINUTE FROM NOW())::int = 0 AND MOD(EXTRACT(HOUR FROM NOW())::int, 4) = 0) AS should_run\n)\nSELECT\n  u.\"id\",\n  u.\"email\",\n  u.\"name\",\n  u.\"subscriptionStatus\",\n  u.\"creditsRemaining\",\n  jp.\"targetTitles\",\n  jp.\"locations\",\n  jp.\"remotePreference\",\n  jp.\"salaryMin\",\n  jp.\"industries\",\n  mp.\"rawText\" AS \"masterCvText\"\nFROM \"users\" u\nLEFT JOIN \"job_preferences\" jp ON jp.\"userId\" = u.\"id\"\nLEFT JOIN \"master_profiles\" mp ON mp.\"userId\" = u.\"id\"\nCROSS JOIN cadence_gate cg\nWHERE\n  cg.should_run = true\n  AND u.\"automationEnabled\" = true\n  AND u.\"subscriptionStatus\" IN ('pro', 'unlimited')\n  AND mp.\"rawText\" IS NOT NULL\n  AND jp.\"id\" IS NOT NULL",
-                "additionalFields": {}
+                "method": "POST",
+                "url": "={{ $('Load Config').first().json.appUrl + '/api/webhooks/n8n' }}",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "content-type",
+                            "value": "application/json"
+                        },
+                        {
+                            "name": "x-webhook-secret",
+                            "value": "={{ $('Load Config').first().json.webhookSecret }}"
+                        },
+                        {
+                            "name": "x-run-id",
+                            "value": "={{ String($execution.id || Date.now()) }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ type: 'fetch_active_users', runId: String($execution.id || Date.now()) }) }}",
+                "options": {
+                    "timeout": 20000
+                }
             },
             "id": "fetch-active-users",
             "name": "Fetch Active Users with Prefs & CV",
-            "type": "n8n-nodes-base.postgres",
-            "typeVersion": 2.3,
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
             "position": [
                 600,
                 0
-            ],
-            "credentials": {
-                "postgres": {
-                    "id": "WQS6PNsONFUq13eS",
-                    "name": "Neon Postgres (AutoApply)"
-                }
-            }
+            ]
         },
         {
             "parameters": {
-                "jsCode": "// Split users into individual items for processing\nconst items = $input.all();\nconst users = [];\n\nfor (const item of items) {\n  const row = item.json;\n  if (row.id && row.masterCvText) {\n    users.push({\n      json: {\n        userId: row.id,\n        email: row.email,\n        name: row.name,\n        subscriptionStatus: row.subscriptionStatus,\n        creditsRemaining: row.creditsRemaining,\n        targetTitles: row.targetTitles || ['software engineer'],\n        locations: row.locations || ['remote'],\n        remotePreference: row.remotePreference || 'any',\n        salaryMin: row.salaryMin || 0,\n        industries: row.industries || [],\n        masterCvText: row.masterCvText\n      }\n    });\n  }\n}\n\nif (users.length === 0) {\n  return [];\n}\n\nreturn users;"
+                "jsCode": "// Normalize active-users payload into per-user pipeline items\nconst items = $input.all();\nconst users = [];\n\nfor (const item of items) {\n  const payload = item.json || {};\n  const rows = Array.isArray(payload.users) ? payload.users : [payload];\n\n  for (const row of rows) {\n    if (row && row.id && row.masterCvText) {\n      users.push({\n        json: {\n          userId: row.id,\n          email: row.email || '',\n          name: row.name || '',\n          subscriptionStatus: row.subscriptionStatus || 'free',\n          creditsRemaining: typeof row.creditsRemaining === 'number' ? row.creditsRemaining : 0,\n          targetTitles: Array.isArray(row.targetTitles) ? row.targetTitles : ['software engineer'],\n          locations: Array.isArray(row.locations) ? row.locations : ['remote'],\n          remotePreference: row.remotePreference || 'any',\n          salaryMin: typeof row.salaryMin === 'number' ? row.salaryMin : 0,\n          industries: Array.isArray(row.industries) ? row.industries : [],\n          masterCvText: row.masterCvText\n        }\n      });\n    }\n  }\n}\n\nif (users.length === 0) {\n  return [];\n}\n\nreturn users;"
             },
             "id": "prepare-users",
             "name": "Prepare User Data",

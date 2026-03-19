@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } from "@/lib/email";
 
+const DISCOVERY_WORKFLOW_ID = "eddfsS251UHbmNIj";
+const DISCOVERY_CADENCE_MINUTES = 240;
+
 function logPipelineEvent(
     level: "info" | "warn" | "error",
     event: string,
@@ -16,6 +19,79 @@ function logPipelineEvent(
             ...fields,
         })
     );
+}
+
+async function getDiscoveryCadenceState() {
+    const rows = await prisma.$queryRawUnsafe<{ startedAt: Date | null }[]>(
+        `SELECT e."startedAt"
+         FROM n8n.execution_entity e
+         WHERE e."workflowId" = $1
+           AND e.status = 'success'
+         ORDER BY e."startedAt" DESC
+         LIMIT 1;`,
+        DISCOVERY_WORKFLOW_ID
+    );
+
+    const latestSuccessAt = rows[0]?.startedAt ? new Date(rows[0].startedAt) : null;
+    if (!latestSuccessAt) {
+        return {
+            throttled: false,
+            latestSuccessAt: null as Date | null,
+            nextAllowedAt: null as Date | null,
+        };
+    }
+
+    const nextAllowedAt = new Date(latestSuccessAt.getTime() + DISCOVERY_CADENCE_MINUTES * 60_000);
+    return {
+        throttled: Date.now() < nextAllowedAt.getTime(),
+        latestSuccessAt,
+        nextAllowedAt,
+    };
+}
+
+async function fetchAutomationUsers() {
+    const users = await prisma.user.findMany({
+        where: {
+            automationEnabled: true,
+            subscriptionStatus: { in: ["pro", "unlimited"] },
+            masterProfile: { isNot: null },
+            preferences: { isNot: null },
+        },
+        orderBy: { createdAt: "asc" },
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            subscriptionStatus: true,
+            creditsRemaining: true,
+            masterProfile: { select: { rawText: true } },
+            preferences: {
+                select: {
+                    targetTitles: true,
+                    locations: true,
+                    remotePreference: true,
+                    salaryMin: true,
+                    industries: true,
+                },
+            },
+        },
+    });
+
+    return users
+        .filter((user) => Boolean(user.masterProfile?.rawText))
+        .map((user) => ({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            subscriptionStatus: user.subscriptionStatus,
+            creditsRemaining: user.creditsRemaining,
+            targetTitles: user.preferences?.targetTitles ?? [],
+            locations: user.preferences?.locations ?? [],
+            remotePreference: user.preferences?.remotePreference ?? "any",
+            salaryMin: user.preferences?.salaryMin ?? 0,
+            industries: user.preferences?.industries ?? [],
+            masterCvText: user.masterProfile?.rawText ?? "",
+        }));
 }
 
 /**
@@ -72,6 +148,36 @@ export async function POST(req: Request) {
         }
 
         switch (type) {
+            case "fetch_active_users": {
+                const cadence = await getDiscoveryCadenceState();
+                if (cadence.throttled) {
+                    logPipelineEvent("info", "fetch_active_users_throttled", {
+                        runId,
+                        latestSuccessAt: cadence.latestSuccessAt?.toISOString() ?? null,
+                        nextAllowedAt: cadence.nextAllowedAt?.toISOString() ?? null,
+                    });
+                    return NextResponse.json({
+                        runId,
+                        users: [],
+                        throttled: true,
+                        latestSuccessAt: cadence.latestSuccessAt?.toISOString() ?? null,
+                        nextAllowedAt: cadence.nextAllowedAt?.toISOString() ?? null,
+                    });
+                }
+
+                const users = await fetchAutomationUsers();
+                logPipelineEvent("info", "fetch_active_users_success", {
+                    runId,
+                    usersCount: users.length,
+                });
+
+                return NextResponse.json({
+                    runId,
+                    users,
+                    throttled: false,
+                });
+            }
+
             case "new_applications": {
                 // n8n sends discovered/tailored jobs from automated pipeline
                 const userId = typeof data.userId === "string" ? data.userId.trim() : "";

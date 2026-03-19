@@ -99,6 +99,7 @@ vi.mock("@/lib/prisma", () => ({
             create: vi.fn(),
             delete: vi.fn(),
         },
+        $queryRawUnsafe: vi.fn(),
         $transaction: vi.fn(),
     },
 }));
