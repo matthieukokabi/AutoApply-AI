@@ -55,6 +55,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 
 ## P1 — Onboarding reliability hardening right after live payment pass
 
+- [x] Fix dashboard sidebar overflow so account controls (theme + sign out) remain reachable on smaller viewport heights — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/layout.tsx`)
 - [x] Localize dashboard settings shell/UI copy (sidebar + settings page) across `en`, `fr`, `de`, `es`, `it` so locale routes no longer show English-only labels/messages — completed on 2026-03-19 (`apps/web/app/[locale]/(dashboard)/layout.tsx`, `apps/web/app/[locale]/(dashboard)/settings/page.tsx`, `apps/web/components/sign-out-button.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
 - [x] Localize onboarding flow UI copy (health checklist, steps, validation/network messages, completion state) across `en`, `fr`, `de`, `es`, `it` — completed on 2026-03-19 (`apps/web/app/[locale]/onboarding/page.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
 - [x] Localize dashboard home page UI copy (header, KPI cards, pipeline title) across `en`, `fr`, `de`, `es`, `it` — completed on 2026-03-19 (`apps/web/app/[locale]/(dashboard)/dashboard/page.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)

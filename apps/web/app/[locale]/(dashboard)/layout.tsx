@@ -112,9 +112,9 @@ export default async function DashboardLayout({
     ];
 
     return (
-        <div className="flex h-screen">
+        <div className="flex h-screen min-h-0">
             {/* Sidebar */}
-            <aside className="w-64 border-r bg-card flex flex-col">
+            <aside className="w-64 border-r bg-card flex flex-col min-h-0 overflow-y-auto">
                 <div className="p-6 border-b">
                     <Link href="/" className="flex items-center space-x-2">
                         <Sparkles className="h-6 w-6 text-primary" />
@@ -136,7 +136,7 @@ export default async function DashboardLayout({
                     ))}
                 </nav>
 
-                <div className="p-4 border-t space-y-2">
+                <div className="p-4 border-t space-y-2 shrink-0">
                     <div className="rounded-lg border p-3 space-y-2">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             {t("social.followUpdates")}
