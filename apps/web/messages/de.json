@@ -415,6 +415,36 @@
             "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
         }
     },
+    "authDiagnostics": {
+        "title": "Auth-Diagnose",
+        "subtitle": "Verwenden Sie diese Seite, wenn Anmeldung/Registrierung blockiert ist. Es werden nur sichere Diagnosedaten angezeigt.",
+        "supportCodeLabel": "Support-Code:",
+        "defaultSupportCode": "AUTH_INIT_BLOCKED",
+        "shareHint": "Teilen Sie diesen Code und das Diagnose-JSON mit dem Support.",
+        "loading": "Diagnose wird ausgeführt...",
+        "unknown": "unbekannt",
+        "quickStatus": {
+            "title": "Schnellstatus",
+            "authState": "Auth-Status:",
+            "cookieHeaderPresent": "Cookie-Header vorhanden:",
+            "sessionCookiePresent": "Session-Cookie vorhanden:",
+            "knownAuthCookiePresent": "Bekannter Auth-Cookie vorhanden:",
+            "appUrlConfigured": "App-URL konfiguriert:",
+            "appUrlValid": "App-URL gültig:",
+            "appUrlHostMatches": "App-URL-Host entspricht Request-Host:"
+        },
+        "recommendationsTitle": "Empfehlungen",
+        "rawJsonTitle": "Rohes Diagnose-JSON",
+        "actions": {
+            "runAgain": "Erneut ausführen",
+            "backToSignIn": "Zurück zur Anmeldung",
+            "backToSignUp": "Zurück zur Registrierung"
+        },
+        "errors": {
+            "loadFailed": "Diagnose konnte nicht geladen werden.",
+            "network": "Netzwerkfehler beim Laden der Diagnose."
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Zurück",

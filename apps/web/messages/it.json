@@ -415,6 +415,36 @@
             "generic": "Si è verificato un errore. Riprova."
         }
     },
+    "authDiagnostics": {
+        "title": "Diagnostica autenticazione",
+        "subtitle": "Usa questa pagina quando accesso/registrazione sono bloccati. Mostra solo diagnostica sicura.",
+        "supportCodeLabel": "Codice supporto:",
+        "defaultSupportCode": "AUTH_INIT_BLOCKED",
+        "shareHint": "Condividi questo codice e il JSON diagnostico con il supporto.",
+        "loading": "Diagnostica in esecuzione...",
+        "unknown": "sconosciuto",
+        "quickStatus": {
+            "title": "Stato rapido",
+            "authState": "Stato auth:",
+            "cookieHeaderPresent": "Header cookie presente:",
+            "sessionCookiePresent": "Cookie di sessione presente:",
+            "knownAuthCookiePresent": "Cookie auth noto presente:",
+            "appUrlConfigured": "App URL configurata:",
+            "appUrlValid": "App URL valida:",
+            "appUrlHostMatches": "Host App URL corrisponde all'host richiesta:"
+        },
+        "recommendationsTitle": "Raccomandazioni",
+        "rawJsonTitle": "JSON diagnostico grezzo",
+        "actions": {
+            "runAgain": "Esegui di nuovo",
+            "backToSignIn": "Torna al login",
+            "backToSignUp": "Torna alla registrazione"
+        },
+        "errors": {
+            "loadFailed": "Impossibile caricare la diagnostica.",
+            "network": "Errore di rete durante il caricamento della diagnostica."
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Indietro",

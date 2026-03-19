@@ -414,6 +414,36 @@
             "generic": "Something went wrong. Please try again."
         }
     },
+    "authDiagnostics": {
+        "title": "Auth Diagnostics",
+        "subtitle": "Use this page when sign-in/sign-up is blocked. It returns safe diagnostics only.",
+        "supportCodeLabel": "Support code:",
+        "defaultSupportCode": "AUTH_INIT_BLOCKED",
+        "shareHint": "Share this code and the diagnostics JSON with support.",
+        "loading": "Running diagnostics...",
+        "unknown": "unknown",
+        "quickStatus": {
+            "title": "Quick Status",
+            "authState": "Auth state:",
+            "cookieHeaderPresent": "Cookie header present:",
+            "sessionCookiePresent": "Session cookie present:",
+            "knownAuthCookiePresent": "Known auth cookie present:",
+            "appUrlConfigured": "App URL configured:",
+            "appUrlValid": "App URL valid:",
+            "appUrlHostMatches": "App URL host matches request host:"
+        },
+        "recommendationsTitle": "Recommendations",
+        "rawJsonTitle": "Raw Diagnostics JSON",
+        "actions": {
+            "runAgain": "Run Again",
+            "backToSignIn": "Back to Sign In",
+            "backToSignUp": "Back to Sign Up"
+        },
+        "errors": {
+            "loadFailed": "Failed to load diagnostics.",
+            "network": "Network error while loading diagnostics."
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Back",
