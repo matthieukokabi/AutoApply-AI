@@ -1,0 +1,541 @@
+#!/usr/bin/env node
+
+/**
+ * P0 incident patch for n8n Job Discovery pipeline.
+ *
+ * - Restores robust source fetching/normalization path
+ * - Adds callback hard-fail semantics (no silent failures)
+ * - Adds run correlation id propagation (x-run-id + payload runId)
+ * - Keeps live secrets in the deployed workflow by preserving Load Config node
+ *
+ * Usage:
+ *   node scripts/incident_patch_job_discovery_workflow.js
+ *   node scripts/incident_patch_job_discovery_workflow.js --apply-prod --workflow-id <id>
+ */
+
+const fs = require("fs");
+const path = require("path");
+const { PrismaClient } = require("@prisma/client");
+
+function parseArgs(argv) {
+    return {
+        applyProd: argv.includes("--apply-prod"),
+        workflowId: (() => {
+            const idx = argv.indexOf("--workflow-id");
+            return idx >= 0 ? argv[idx + 1] || null : null;
+        })(),
+    };
+}
+
+function loadEnvIfPresent() {
+    if (process.env.DATABASE_URL) {
+        return;
+    }
+
+    const envPath = path.join(process.cwd(), ".env.local");
+    if (!fs.existsSync(envPath)) {
+        return;
+    }
+
+    const raw = fs.readFileSync(envPath, "utf8");
+    for (const line of raw.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) {
+            continue;
+        }
+        const separatorIndex = trimmed.indexOf("=");
+        if (separatorIndex <= 0) {
+            continue;
+        }
+        const key = trimmed.slice(0, separatorIndex).trim();
+        let value = trimmed.slice(separatorIndex + 1).trim();
+        if (
+            (value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))
+        ) {
+            value = value.slice(1, -1);
+        }
+        if (!key || process.env[key] !== undefined) {
+            continue;
+        }
+        process.env[key] = value;
+    }
+}
+
+const FETCH_NORMALIZE_JS = `// Fetch jobs from all sources for this user, normalize, and deduplicate
+const user = $input.first().json;
+const config = $('Load Config').first().json;
+const searchTitle = (user.targetTitles && user.targetTitles[0] ? user.targetTitles[0] : 'software engineer').trim();
+const searchLocation = (user.locations && user.locations[0] ? user.locations[0] : '').trim();
+const runId = String($execution.id || Date.now());
+
+const allJobs = [];
+
+function detectAdzunaCountry(location) {
+  const locationLower = (location || '').toLowerCase();
+  if (locationLower.includes('zurich') || locationLower.includes('zürich') || locationLower.includes('bern') || locationLower.includes('geneva') || locationLower.includes('basel') || locationLower.includes('switzerland') || locationLower.includes('swiss') || locationLower.includes('lausanne')) return 'ch';
+  if (locationLower.includes('london') || locationLower.includes('manchester') || locationLower.includes('uk') || locationLower.includes('united kingdom') || locationLower.includes('england')) return 'gb';
+  if (locationLower.includes('berlin') || locationLower.includes('munich') || locationLower.includes('hamburg') || locationLower.includes('germany') || locationLower.includes('frankfurt') || locationLower.includes('deutschland')) return 'de';
+  if (locationLower.includes('paris') || locationLower.includes('lyon') || locationLower.includes('france') || locationLower.includes('marseille')) return 'fr';
+  if (locationLower.includes('amsterdam') || locationLower.includes('netherlands') || locationLower.includes('rotterdam')) return 'nl';
+  if (locationLower.includes('vienna') || locationLower.includes('austria') || locationLower.includes('wien')) return 'at';
+  return 'us';
+}
+
+async function safeFetch(url, options) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const merged = Object.assign({}, options || {}, { signal: controller.signal });
+    const resp = await fetch(url, merged);
+    clearTimeout(timeout);
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch {
+    clearTimeout(timeout);
+    return null;
+  }
+}
+
+const adzunaCountry = detectAdzunaCountry(searchLocation);
+
+// 1) Adzuna
+if (config.adzunaAppId && config.adzunaAppKey) {
+  try {
+    const adzunaUrl = 'https://api.adzuna.com/v1/api/jobs/' + adzunaCountry + '/search/1?app_id=' + config.adzunaAppId + '&app_key=' + config.adzunaAppKey + '&what=' + encodeURIComponent(searchTitle) + '&where=' + encodeURIComponent(searchLocation) + '&results_per_page=15&content-type=application/json';
+    const data = await safeFetch(adzunaUrl);
+    if (data && Array.isArray(data.results)) {
+      for (const j of data.results) {
+        allJobs.push({
+          externalId: 'adzuna-' + j.id,
+          title: j.title || '',
+          company: (j.company && j.company.display_name) || 'Unknown',
+          location: (j.location && j.location.display_name) || '',
+          description: j.description || '',
+          source: 'adzuna',
+          url: j.redirect_url || '',
+          salary: j.salary_is_predicted === '0' ? String(j.salary_min) + '-' + String(j.salary_max) : null,
+          postedAt: j.created ? new Date(j.created).toISOString() : null
+        });
+      }
+    }
+  } catch { /* continue */ }
+}
+
+// 2) The Muse
+try {
+  const data = await safeFetch('https://www.themuse.com/api/public/jobs?category=Engineering&level=Mid%20Level&page=1');
+  if (data && Array.isArray(data.results)) {
+    for (const j of data.results) {
+      allJobs.push({
+        externalId: 'themuse-' + j.id,
+        title: j.name || '',
+        company: (j.company && j.company.name) || 'Unknown',
+        location: Array.isArray(j.locations) ? j.locations.map((l) => l.name).join(', ') : '',
+        description: (j.contents || '').replace(/<[^>]*>/g, '').substring(0, 3000),
+        source: 'themuse',
+        url: (j.refs && j.refs.landing_page) || '',
+        salary: null,
+        postedAt: j.publication_date || null
+      });
+    }
+  }
+} catch { /* continue */ }
+
+// 3) Remotive
+try {
+  const remotiveUrl = 'https://remotive.com/api/remote-jobs?search=' + encodeURIComponent(searchTitle) + '&limit=15';
+  const data = await safeFetch(remotiveUrl);
+  if (data && Array.isArray(data.jobs)) {
+    for (const j of data.jobs) {
+      allJobs.push({
+        externalId: 'remotive-' + j.id,
+        title: j.title || '',
+        company: j.company_name || 'Unknown',
+        location: j.candidate_required_location || 'Remote',
+        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),
+        source: 'remotive',
+        url: j.url || '',
+        salary: j.salary || null,
+        postedAt: j.publication_date || null
+      });
+    }
+  }
+} catch { /* continue */ }
+
+// 4) Arbeitnow
+try {
+  const arbeitnowUrl = 'https://www.arbeitnow.com/api/job-board-api?search=' + encodeURIComponent(searchTitle) + '&page=1';
+  const data = await safeFetch(arbeitnowUrl);
+  if (data && Array.isArray(data.data)) {
+    for (const j of data.data) {
+      allJobs.push({
+        externalId: 'arbeitnow-' + (j.slug || j.id || Date.now()),
+        title: j.title || '',
+        company: j.company_name || 'Unknown',
+        location: j.location || '',
+        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),
+        source: 'arbeitnow',
+        url: j.url || '',
+        salary: null,
+        postedAt: j.created_at || null
+      });
+    }
+  }
+} catch { /* continue */ }
+
+// 5) JSearch
+if (config.jsearchApiKey) {
+  try {
+    const query = searchTitle + ' in ' + (searchLocation || 'remote');
+    const jsearchUrl = 'https://jsearch.p.rapidapi.com/search?query=' + encodeURIComponent(query) + '&page=1&num_pages=1';
+    const data = await safeFetch(jsearchUrl, {
+      headers: {
+        'X-RapidAPI-Key': config.jsearchApiKey,
+        'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'
+      }
+    });
+    if (data && Array.isArray(data.data)) {
+      for (const j of data.data) {
+        allJobs.push({
+          externalId: 'jsearch-' + j.job_id,
+          title: j.job_title || '',
+          company: j.employer_name || 'Unknown',
+          location: j.job_city ? (j.job_city + ', ' + (j.job_state || j.job_country || '')) : (j.job_country || ''),
+          description: (j.job_description || '').substring(0, 3000),
+          source: 'jsearch',
+          url: j.job_apply_link || j.job_google_link || '',
+          salary: j.job_min_salary ? String(j.job_min_salary) + '-' + String(j.job_max_salary) : null,
+          postedAt: j.job_posted_at_datetime_utc || null
+        });
+      }
+    }
+  } catch { /* continue */ }
+}
+
+// 6) Jooble
+if (config.joobleApiKey) {
+  try {
+    const data = await safeFetch('https://jooble.org/api/' + config.joobleApiKey, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keywords: searchTitle, location: searchLocation, page: 1 })
+    });
+    if (data && Array.isArray(data.jobs)) {
+      for (const j of data.jobs) {
+        allJobs.push({
+          externalId: 'jooble-' + (j.id || Date.now()),
+          title: j.title || '',
+          company: j.company || 'Unknown',
+          location: j.location || '',
+          description: (j.snippet || '').substring(0, 3000),
+          source: 'jooble',
+          url: j.link || '',
+          salary: j.salary || null,
+          postedAt: j.updated || null
+        });
+      }
+    }
+  } catch { /* continue */ }
+}
+
+// 7) Reed
+if (config.reedApiKey) {
+  try {
+    const reedAuth = btoa(config.reedApiKey + ':');
+    const reedUrl = 'https://www.reed.co.uk/api/1.0/search?keywords=' + encodeURIComponent(searchTitle) + '&locationName=' + encodeURIComponent(searchLocation) + '&resultsToTake=15';
+    const data = await safeFetch(reedUrl, {
+      headers: { Authorization: 'Basic ' + reedAuth }
+    });
+    if (data && Array.isArray(data.results)) {
+      for (const j of data.results) {
+        allJobs.push({
+          externalId: 'reed-' + j.jobId,
+          title: j.jobTitle || '',
+          company: j.employerName || 'Unknown',
+          location: j.locationName || '',
+          description: (j.jobDescription || '').substring(0, 3000),
+          source: 'reed',
+          url: j.jobUrl || '',
+          salary: j.minimumSalary ? String(j.minimumSalary) + '-' + String(j.maximumSalary) : null,
+          postedAt: j.date || null
+        });
+      }
+    }
+  } catch { /* continue */ }
+}
+
+const seen = new Set();
+const uniqueJobs = [];
+for (const job of allJobs) {
+  if (!seen.has(job.externalId) && job.title && job.description.length > 50) {
+    seen.add(job.externalId);
+    uniqueJobs.push(job);
+  }
+}
+
+if (uniqueJobs.length === 0) return [];
+
+return uniqueJobs.map((job) => ({
+  json: {
+    ...job,
+    runId,
+    userId: user.userId,
+    masterCvText: user.masterCvText,
+    subscriptionStatus: user.subscriptionStatus,
+    creditsRemaining: user.creditsRemaining
+  }
+}));`;
+
+const BATCH_SAVE_JS = `// Collect all processed jobs (tailored + discovered) and callback to web app
+const items = $input.all();
+const config = $('Load Config').first().json;
+
+if (items.length === 0) return [];
+
+const byUser = {};
+for (const item of items) {
+  const d = item.json;
+  if (!d || !d.userId) continue;
+  if (!byUser[d.userId]) byUser[d.userId] = [];
+  byUser[d.userId].push({
+    externalId: d.externalId,
+    title: d.title,
+    company: d.company,
+    location: d.location,
+    description: d.description,
+    source: d.source,
+    url: d.url,
+    salary: d.salary,
+    postedAt: d.postedAt,
+    compatibilityScore: d.compatibilityScore,
+    atsKeywords: d.atsKeywords,
+    matchingStrengths: d.matchingStrengths,
+    gaps: d.gaps,
+    recommendation: d.recommendation,
+    tailoredCvMarkdown: d.tailoredCvMarkdown || null,
+    coverLetterMarkdown: d.coverLetterMarkdown || null,
+    status: d.status,
+    runId: d.runId || null
+  });
+}
+
+const appUrl = config.appUrl || 'https://autoapply.works';
+const secret = config.webhookSecret || '';
+const callbackErrors = [];
+let processed = 0;
+
+for (const [userId, apps] of Object.entries(byUser)) {
+  const runId = apps[0] && apps[0].runId ? String(apps[0].runId) : String($execution.id || Date.now());
+  try {
+    const resp = await fetch(appUrl + '/api/webhooks/n8n', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-webhook-secret': secret,
+        'x-run-id': runId
+      },
+      body: JSON.stringify({
+        type: 'new_applications',
+        runId,
+        data: { userId, applications: apps }
+      })
+    });
+
+    if (!resp.ok) {
+      const body = await resp.text();
+      callbackErrors.push({ userId, status: resp.status, body: String(body || '').slice(0, 300) });
+      continue;
+    }
+
+    processed += apps.length;
+  } catch (e) {
+    callbackErrors.push({ userId, status: null, body: e && e.message ? e.message : 'network_error' });
+  }
+}
+
+if (callbackErrors.length > 0) {
+  throw new Error('batch_save_callback_failed:' + JSON.stringify(callbackErrors).slice(0, 500));
+}
+
+return [{ json: { processed, users: Object.keys(byUser).length } }];`;
+
+const ERROR_HANDLER_JS = `// Error handler - log to workflow_errors via web app
+const error = $input.first().json;
+const config = $('Load Config').first().json;
+const appUrl = config.appUrl || 'https://autoapply.works';
+const secret = config.webhookSecret || '';
+const runId = String($execution.id || Date.now());
+
+try {
+  await fetch(appUrl + '/api/webhooks/n8n', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-webhook-secret': secret,
+      'x-run-id': runId
+    },
+    body: JSON.stringify({
+      type: 'workflow_error',
+      runId,
+      data: {
+        workflowId: 'job-discovery-pipeline',
+        nodeName: error.node && error.node.name ? error.node.name : 'unknown',
+        errorType: error.type || 'UNKNOWN',
+        message: error.message || 'Unknown error',
+        payload: JSON.stringify(error)
+      }
+    })
+  });
+} catch (e) {
+  console.log('Error logging failed:', e && e.message ? e.message : e);
+}
+
+return [{ json: { logged: true } }];`;
+
+function patchWorkflowJson(workflow) {
+    const copy = JSON.parse(JSON.stringify(workflow));
+
+    for (const node of copy.nodes || []) {
+        if (node.name === "Schedule Trigger") {
+            node.parameters = {
+                ...node.parameters,
+                rule: {
+                    interval: [{ field: "hours", hoursInterval: 4 }],
+                },
+            };
+        }
+
+        if (node.name === "Fetch & Normalize All Job Sources") {
+            node.parameters = { ...(node.parameters || {}), jsCode: FETCH_NORMALIZE_JS };
+        }
+
+        if (node.name === "Batch Save via App API") {
+            node.parameters = { ...(node.parameters || {}), jsCode: BATCH_SAVE_JS };
+        }
+
+        if (node.name === "Error Handler") {
+            node.parameters = { ...(node.parameters || {}), jsCode: ERROR_HANDLER_JS };
+        }
+    }
+
+    return copy;
+}
+
+function stringifyJsonAscii(value, spaces) {
+    return JSON.stringify(value, null, spaces).replace(
+        /[\u007f-\uffff]/g,
+        (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`
+    );
+}
+
+function getLoadConfigJsCode(workflow) {
+    const node = (workflow.nodes || []).find((item) => item.name === "Load Config");
+    return node?.parameters?.jsCode || null;
+}
+
+async function resolveWorkflow(prisma, workflowId) {
+    if (workflowId) {
+        const rows = await prisma.$queryRawUnsafe(
+            `SELECT id, name, active, nodes, connections, settings, "updatedAt" FROM n8n.workflow_entity WHERE id = $1 LIMIT 1;`,
+            workflowId
+        );
+        return rows[0] || null;
+    }
+
+    const rows = await prisma.$queryRawUnsafe(`
+        SELECT id, name, active, nodes, connections, settings, "updatedAt"
+        FROM n8n.workflow_entity
+        WHERE name ILIKE '%Job Discovery%Pipeline%'
+        ORDER BY "updatedAt" DESC
+        LIMIT 1;
+    `);
+    return rows[0] || null;
+}
+
+async function main() {
+    const args = parseArgs(process.argv.slice(2));
+    const workspaceRoot = path.resolve(__dirname, "..", "..", "..");
+    const templatePath = path.join(workspaceRoot, "n8n", "workflows", "job-discovery-pipeline.json");
+
+    const templateWorkflow = JSON.parse(fs.readFileSync(templatePath, "utf8"));
+    const patchedTemplate = patchWorkflowJson(templateWorkflow);
+    fs.writeFileSync(templatePath, `${stringifyJsonAscii(patchedTemplate, 4)}\n`);
+
+    if (!args.applyProd) {
+        console.log(
+            JSON.stringify(
+                {
+                    mode: "template_only",
+                    templatePath,
+                    message: "Patched local workflow template. Re-run with --apply-prod to update live n8n workflow.",
+                },
+                null,
+                2
+            )
+        );
+        return;
+    }
+
+    loadEnvIfPresent();
+    const prisma = new PrismaClient();
+
+    try {
+        const liveWorkflow = await resolveWorkflow(prisma, args.workflowId);
+        if (!liveWorkflow) {
+            throw new Error("live_workflow_not_found");
+        }
+
+        const liveLoadConfig = getLoadConfigJsCode(liveWorkflow);
+        if (!liveLoadConfig) {
+            throw new Error("live_load_config_missing");
+        }
+
+        const prodWorkflow = JSON.parse(JSON.stringify(patchedTemplate));
+        for (const node of prodWorkflow.nodes || []) {
+            if (node.name === "Load Config") {
+                node.parameters = { ...(node.parameters || {}), jsCode: liveLoadConfig };
+            }
+        }
+
+        await prisma.$executeRawUnsafe(
+            `UPDATE n8n.workflow_entity
+             SET nodes = $1::json,
+                 connections = $2::json,
+                 settings = $3::json,
+                 "updatedAt" = NOW(),
+                 active = true
+             WHERE id = $4;`,
+            JSON.stringify(prodWorkflow.nodes || []),
+            JSON.stringify(prodWorkflow.connections || {}),
+            JSON.stringify(prodWorkflow.settings || {}),
+            liveWorkflow.id
+        );
+
+        const updated = await resolveWorkflow(prisma, liveWorkflow.id);
+        const scheduleNode = (updated.nodes || []).find((n) => n.name === "Schedule Trigger");
+
+        console.log(
+            JSON.stringify(
+                {
+                    mode: "template_and_prod",
+                    workflowId: updated.id,
+                    name: updated.name,
+                    active: updated.active,
+                    updatedAt: updated.updatedAt,
+                    scheduleRule: scheduleNode?.parameters?.rule || null,
+                    nodeCount: (updated.nodes || []).length,
+                },
+                null,
+                2
+            )
+        );
+    } finally {
+        await prisma.$disconnect();
+    }
+}
+
+main().catch((error) => {
+    console.error(`incident_patch_job_discovery_workflow_failed: ${error.message}`);
+    process.exit(1);
+});
