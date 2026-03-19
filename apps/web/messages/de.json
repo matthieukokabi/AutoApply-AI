@@ -454,6 +454,52 @@
         "description": "Wir bereiten das nächste Release vor. Schauen Sie bald wieder vorbei.",
         "backToHome": "Zurück zu AutoApply"
     },
+    "documentViewer": {
+        "metadata": {
+            "title": "Dokumentenansicht — AutoApply AI",
+            "description": "Vergleichen Sie Ihren ursprünglichen Lebenslauf mit der KI-angepassten Version."
+        },
+        "print": {
+            "cvTitle": "CV - {jobTitle} - {company}",
+            "letterTitle": "Anschreiben - {jobTitle} - {company}"
+        },
+        "tabs": {
+            "tailoredCv": "Angepasstes CV",
+            "coverLetter": "Anschreiben",
+            "originalCv": "Originales CV"
+        },
+        "match": "Match",
+        "actions": {
+            "downloadCv": "CV herunterladen",
+            "downloadLetter": "Anschreiben herunterladen"
+        },
+        "empty": {
+            "noTailoredCv": "Noch kein angepasstes CV verfügbar.",
+            "noCoverLetter": "Noch kein Anschreiben verfügbar.",
+            "noOriginalCv": "Originales CV nicht verfügbar."
+        },
+        "atsKeywords": "ATS-Schlüsselwörter",
+        "strengths": "Stärken",
+        "gaps": {
+            "title": "Lücken, die adressiert werden sollten",
+            "iHaveThis": "Habe ich",
+            "describeExperience": "Beschreiben Sie Ihre Erfahrung...",
+            "done": "Fertig",
+            "fillAtLeastOne": "Bitte füllen Sie mindestens eine Lücke aus, bevor Sie neu anpassen.",
+            "retailorStarted": "Neu-Anpassung gestartet. Ihre aktualisierten Dokumente erscheinen in ~30 Sekunden. Die Seite wird automatisch aktualisiert.",
+            "retailorFailed": "Neu-Anpassung konnte nicht gestartet werden.",
+            "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+            "retailoring": "Neu-Anpassung läuft...",
+            "retailorWithSingle": "Neu anpassen mit {count} Update",
+            "retailorWithMultiple": "Neu anpassen mit {count} Updates"
+        },
+        "recommendation": {
+            "label": "Empfehlung",
+            "apply": "Bewerben",
+            "stretch": "Stretch",
+            "skip": "Überspringen"
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Zurück",

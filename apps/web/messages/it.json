@@ -454,6 +454,52 @@
         "description": "Stiamo preparando la prossima release. Torna presto per gli aggiornamenti.",
         "backToHome": "Torna ad AutoApply"
     },
+    "documentViewer": {
+        "metadata": {
+            "title": "Visualizzatore documenti — AutoApply AI",
+            "description": "Confronta il tuo CV originale con la versione personalizzata dall'IA."
+        },
+        "print": {
+            "cvTitle": "CV - {jobTitle} - {company}",
+            "letterTitle": "Lettera di presentazione - {jobTitle} - {company}"
+        },
+        "tabs": {
+            "tailoredCv": "CV personalizzato",
+            "coverLetter": "Lettera di presentazione",
+            "originalCv": "CV originale"
+        },
+        "match": "match",
+        "actions": {
+            "downloadCv": "Scarica CV",
+            "downloadLetter": "Scarica lettera"
+        },
+        "empty": {
+            "noTailoredCv": "Nessun CV personalizzato disponibile al momento.",
+            "noCoverLetter": "Nessuna lettera di presentazione disponibile al momento.",
+            "noOriginalCv": "CV originale non disponibile."
+        },
+        "atsKeywords": "Parole chiave ATS",
+        "strengths": "Punti di forza",
+        "gaps": {
+            "title": "Gap da colmare",
+            "iHaveThis": "Ce l'ho",
+            "describeExperience": "Descrivi la tua esperienza...",
+            "done": "Fatto",
+            "fillAtLeastOne": "Compila almeno un gap prima di ri-personalizzare.",
+            "retailorStarted": "Ri-personalizzazione avviata. I documenti aggiornati appariranno tra ~30 secondi. La pagina verrà aggiornata automaticamente.",
+            "retailorFailed": "Impossibile avviare la ri-personalizzazione.",
+            "networkError": "Errore di rete. Riprova.",
+            "retailoring": "Ri-personalizzazione in corso...",
+            "retailorWithSingle": "Ri-personalizza con {count} aggiornamento",
+            "retailorWithMultiple": "Ri-personalizza con {count} aggiornamenti"
+        },
+        "recommendation": {
+            "label": "Raccomandazione",
+            "apply": "Candidati",
+            "stretch": "Ambizioso",
+            "skip": "Salta"
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Indietro",

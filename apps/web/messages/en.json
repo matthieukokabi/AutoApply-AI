@@ -453,6 +453,52 @@
         "description": "We're preparing the next release. Check back soon for updates.",
         "backToHome": "Back to AutoApply"
     },
+    "documentViewer": {
+        "metadata": {
+            "title": "Document Viewer — AutoApply AI",
+            "description": "Compare your original CV with the AI-tailored version."
+        },
+        "print": {
+            "cvTitle": "CV - {jobTitle} - {company}",
+            "letterTitle": "Cover Letter - {jobTitle} - {company}"
+        },
+        "tabs": {
+            "tailoredCv": "Tailored CV",
+            "coverLetter": "Cover Letter",
+            "originalCv": "Original CV"
+        },
+        "match": "match",
+        "actions": {
+            "downloadCv": "Download CV",
+            "downloadLetter": "Download Letter"
+        },
+        "empty": {
+            "noTailoredCv": "No tailored CV available yet.",
+            "noCoverLetter": "No cover letter available yet.",
+            "noOriginalCv": "Original CV not available."
+        },
+        "atsKeywords": "ATS Keywords",
+        "strengths": "Strengths",
+        "gaps": {
+            "title": "Gaps to Address",
+            "iHaveThis": "I have this",
+            "describeExperience": "Describe your experience...",
+            "done": "Done",
+            "fillAtLeastOne": "Please fill in at least one gap before re-tailoring.",
+            "retailorStarted": "Re-tailoring started! Your updated documents will appear in ~30 seconds. The page will refresh automatically.",
+            "retailorFailed": "Failed to start re-tailoring.",
+            "networkError": "Network error. Please try again.",
+            "retailoring": "Re-tailoring...",
+            "retailorWithSingle": "Re-tailor with {count} update",
+            "retailorWithMultiple": "Re-tailor with {count} updates"
+        },
+        "recommendation": {
+            "label": "Recommendation",
+            "apply": "Apply",
+            "stretch": "Stretch",
+            "skip": "Skip"
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Back",

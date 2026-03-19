@@ -454,6 +454,52 @@
         "description": "Estamos preparando la próxima versión. Vuelve pronto para ver novedades.",
         "backToHome": "Volver a AutoApply"
     },
+    "documentViewer": {
+        "metadata": {
+            "title": "Visor de documentos — AutoApply AI",
+            "description": "Compara tu CV original con la versión personalizada por IA."
+        },
+        "print": {
+            "cvTitle": "CV - {jobTitle} - {company}",
+            "letterTitle": "Carta de presentación - {jobTitle} - {company}"
+        },
+        "tabs": {
+            "tailoredCv": "CV personalizado",
+            "coverLetter": "Carta de presentación",
+            "originalCv": "CV original"
+        },
+        "match": "match",
+        "actions": {
+            "downloadCv": "Descargar CV",
+            "downloadLetter": "Descargar carta"
+        },
+        "empty": {
+            "noTailoredCv": "Aún no hay CV personalizado disponible.",
+            "noCoverLetter": "Aún no hay carta de presentación disponible.",
+            "noOriginalCv": "CV original no disponible."
+        },
+        "atsKeywords": "Palabras clave ATS",
+        "strengths": "Fortalezas",
+        "gaps": {
+            "title": "Brechas a cubrir",
+            "iHaveThis": "Lo tengo",
+            "describeExperience": "Describe tu experiencia...",
+            "done": "Listo",
+            "fillAtLeastOne": "Completa al menos una brecha antes de volver a personalizar.",
+            "retailorStarted": "¡La nueva personalización ha comenzado! Tus documentos actualizados aparecerán en ~30 segundos. La página se actualizará automáticamente.",
+            "retailorFailed": "No se pudo iniciar la nueva personalización.",
+            "networkError": "Error de red. Inténtalo de nuevo.",
+            "retailoring": "Personalizando de nuevo...",
+            "retailorWithSingle": "Volver a personalizar con {count} actualización",
+            "retailorWithMultiple": "Volver a personalizar con {count} actualizaciones"
+        },
+        "recommendation": {
+            "label": "Recomendación",
+            "apply": "Aplicar",
+            "stretch": "Ambicioso",
+            "skip": "Omitir"
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Atrás",

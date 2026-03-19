@@ -20,7 +20,8 @@ import {
     X,
     Loader2,
 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 
 interface DocumentViewerProps {
     application: {
@@ -55,6 +56,7 @@ export function DocumentViewer({
     photoBase64,
     originalCvText,
 }: DocumentViewerProps) {
+    const t = useTranslations("documentViewer");
     const [activeTab, setActiveTab] = useState<Tab>("cv");
     const cvRef = useRef<HTMLDivElement>(null);
     const letterRef = useRef<HTMLDivElement>(null);
@@ -72,7 +74,10 @@ export function DocumentViewer({
 
     const handlePrintCV = useReactToPrint({
         contentRef: cvRef,
-        documentTitle: `CV - ${job.title} - ${job.company}`,
+        documentTitle: t("print.cvTitle", {
+            jobTitle: job.title,
+            company: job.company,
+        }),
         pageStyle: `
             @page { size: A4; margin: 12mm; }
             @media print {
@@ -84,7 +89,10 @@ export function DocumentViewer({
 
     const handlePrintLetter = useReactToPrint({
         contentRef: letterRef,
-        documentTitle: `Cover Letter - ${job.title} - ${job.company}`,
+        documentTitle: t("print.letterTitle", {
+            jobTitle: job.title,
+            company: job.company,
+        }),
         pageStyle: `
             @page { size: A4; margin: 15mm; }
             @media print {
@@ -106,7 +114,7 @@ export function DocumentViewer({
         if (filledGaps.length === 0) {
             setRetailorMessage({
                 type: "error",
-                text: "Please fill in at least one gap before re-tailoring.",
+                text: t("gaps.fillAtLeastOne"),
             });
             return;
         }
@@ -130,7 +138,7 @@ export function DocumentViewer({
             if (res.ok) {
                 setRetailorMessage({
                     type: "success",
-                    text: "Re-tailoring started! Your updated documents will appear in ~30 seconds. The page will refresh automatically.",
+                    text: t("gaps.retailorStarted"),
                 });
                 setGapResponses({});
                 setActiveGapIndex(null);
@@ -143,13 +151,13 @@ export function DocumentViewer({
                 const data = await res.json();
                 setRetailorMessage({
                     type: "error",
-                    text: data.error || "Failed to start re-tailoring.",
+                    text: data.error || t("gaps.retailorFailed"),
                 });
             }
         } catch {
             setRetailorMessage({
                 type: "error",
-                text: "Network error. Please try again.",
+                text: t("gaps.networkError"),
             });
         } finally {
             setRetailoring(false);
@@ -170,17 +178,17 @@ export function DocumentViewer({
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
         {
             id: "cv",
-            label: "Tailored CV",
+            label: t("tabs.tailoredCv"),
             icon: <FileText className="w-4 h-4" />,
         },
         {
             id: "letter",
-            label: "Cover Letter",
+            label: t("tabs.coverLetter"),
             icon: <Mail className="w-4 h-4" />,
         },
         {
             id: "original",
-            label: "Original CV",
+            label: t("tabs.originalCv"),
             icon: <FileText className="w-4 h-4" />,
         },
     ];
@@ -208,7 +216,7 @@ export function DocumentViewer({
                         className={`text-base px-3 py-1 ${scoreColor}`}
                     >
                         <Sparkles className="w-4 h-4 mr-1" />
-                        {application.compatibilityScore}% match
+                        {application.compatibilityScore}% {t("match")}
                     </Badge>
                     {activeTab === "cv" && application.tailoredCvMarkdown && (
                         <Button
@@ -217,7 +225,7 @@ export function DocumentViewer({
                             className="gap-2"
                         >
                             <FileDown className="w-4 h-4" />
-                            Download CV
+                            {t("actions.downloadCv")}
                         </Button>
                     )}
                     {activeTab === "letter" &&
@@ -228,7 +236,7 @@ export function DocumentViewer({
                                 className="gap-2"
                             >
                                 <FileDown className="w-4 h-4" />
-                                Download Letter
+                                {t("actions.downloadLetter")}
                             </Button>
                         )}
                 </div>
@@ -265,7 +273,7 @@ export function DocumentViewer({
                                     photoBase64={photoBase64}
                                 />
                             ) : (
-                                <EmptyState message="No tailored CV available yet." />
+                                <EmptyState message={t("empty.noTailoredCv")} />
                             )}
                         </>
                     )}
@@ -278,7 +286,7 @@ export function DocumentViewer({
                                     markdown={application.coverLetterMarkdown}
                                 />
                             ) : (
-                                <EmptyState message="No cover letter available yet." />
+                                <EmptyState message={t("empty.noCoverLetter")} />
                             )}
                         </>
                     )}
@@ -291,7 +299,7 @@ export function DocumentViewer({
                                         {originalCvText}
                                     </pre>
                                 ) : (
-                                    <EmptyState message="Original CV not available." />
+                                    <EmptyState message={t("empty.noOriginalCv")} />
                                 )}
                             </CardContent>
                         </Card>
@@ -305,7 +313,7 @@ export function DocumentViewer({
                         <Card>
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-sm font-semibold">
-                                    ATS Keywords
+                                    {t("atsKeywords")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -332,7 +340,7 @@ export function DocumentViewer({
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
-                                    Strengths
+                                    {t("strengths")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -361,7 +369,7 @@ export function DocumentViewer({
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                                     <AlertTriangle className="w-4 h-4 text-amber-500" />
-                                    Gaps to Address
+                                    {t("gaps.title")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -386,7 +394,7 @@ export function DocumentViewer({
                                                             className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap flex-shrink-0"
                                                         >
                                                             <Plus className="w-3 h-3 inline mr-0.5" />
-                                                            I have this
+                                                            {t("gaps.iHaveThis")}
                                                         </button>
                                                     )}
                                             </div>
@@ -397,7 +405,7 @@ export function DocumentViewer({
                                                     <textarea
                                                         className="w-full p-2 text-xs border rounded-md resize-none bg-muted/50 focus:outline-none focus:ring-1 focus:ring-primary"
                                                         rows={2}
-                                                        placeholder="Describe your experience..."
+                                                        placeholder={t("gaps.describeExperience")}
                                                         value={
                                                             gapResponses[i] ||
                                                             ""
@@ -445,7 +453,7 @@ export function DocumentViewer({
                                                                 }
                                                             }}
                                                         >
-                                                            Done
+                                                            {t("gaps.done")}
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -499,8 +507,14 @@ export function DocumentViewer({
                                                 <RefreshCw className="w-3.5 h-3.5" />
                                             )}
                                             {retailoring
-                                                ? "Re-tailoring..."
-                                                : `Re-tailor with ${filledCount} update${filledCount > 1 ? "s" : ""}`}
+                                                ? t("gaps.retailoring")
+                                                : filledCount > 1
+                                                  ? t("gaps.retailorWithMultiple", {
+                                                      count: filledCount,
+                                                  })
+                                                  : t("gaps.retailorWithSingle", {
+                                                      count: filledCount,
+                                                  })}
                                         </Button>
                                     </div>
                                 )}
@@ -526,7 +540,7 @@ export function DocumentViewer({
                         <CardContent className="pt-6">
                             <div className="text-center">
                                 <p className="text-xs text-muted-foreground mb-1">
-                                    Recommendation
+                                    {t("recommendation.label")}
                                 </p>
                                 <Badge
                                     variant={
@@ -544,11 +558,11 @@ export function DocumentViewer({
                                     }`}
                                 >
                                     {application.recommendation === "apply"
-                                        ? "Apply"
+                                        ? t("recommendation.apply")
                                         : application.recommendation ===
                                             "stretch"
-                                          ? "Stretch"
-                                          : "Skip"}
+                                          ? t("recommendation.stretch")
+                                          : t("recommendation.skip")}
                                 </Badge>
                             </div>
                         </CardContent>

@@ -454,6 +454,52 @@
         "description": "Nous préparons la prochaine version. Revenez bientôt pour les mises à jour.",
         "backToHome": "Retour à AutoApply"
     },
+    "documentViewer": {
+        "metadata": {
+            "title": "Visionneuse de documents — AutoApply AI",
+            "description": "Comparez votre CV original avec la version personnalisée par l'IA."
+        },
+        "print": {
+            "cvTitle": "CV - {jobTitle} - {company}",
+            "letterTitle": "Lettre de motivation - {jobTitle} - {company}"
+        },
+        "tabs": {
+            "tailoredCv": "CV personnalisé",
+            "coverLetter": "Lettre de motivation",
+            "originalCv": "CV original"
+        },
+        "match": "match",
+        "actions": {
+            "downloadCv": "Télécharger le CV",
+            "downloadLetter": "Télécharger la lettre"
+        },
+        "empty": {
+            "noTailoredCv": "Aucun CV personnalisé disponible pour le moment.",
+            "noCoverLetter": "Aucune lettre de motivation disponible pour le moment.",
+            "noOriginalCv": "CV original indisponible."
+        },
+        "atsKeywords": "Mots-clés ATS",
+        "strengths": "Forces",
+        "gaps": {
+            "title": "Points à couvrir",
+            "iHaveThis": "Je l'ai",
+            "describeExperience": "Décrivez votre expérience...",
+            "done": "Terminé",
+            "fillAtLeastOne": "Veuillez compléter au moins un point avant de relancer la personnalisation.",
+            "retailorStarted": "La nouvelle personnalisation a démarré. Vos documents mis à jour apparaîtront sous ~30 secondes. La page se rafraîchira automatiquement.",
+            "retailorFailed": "Échec du démarrage de la nouvelle personnalisation.",
+            "networkError": "Erreur réseau. Veuillez réessayer.",
+            "retailoring": "Nouvelle personnalisation...",
+            "retailorWithSingle": "Relancer avec {count} mise à jour",
+            "retailorWithMultiple": "Relancer avec {count} mises à jour"
+        },
+        "recommendation": {
+            "label": "Recommandation",
+            "apply": "Postuler",
+            "stretch": "Ambitieux",
+            "skip": "Passer"
+        }
+    },
     "onboarding": {
         "common": {
             "back": "Retour",

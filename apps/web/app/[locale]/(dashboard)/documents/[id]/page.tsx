@@ -3,11 +3,24 @@ import { auth } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { DocumentViewer } from "@/components/document-viewer";
+import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-    title: "Document Viewer — AutoApply AI",
-    description: "Compare your original CV with the AI-tailored version",
-};
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ locale: string; id: string }>;
+}): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({
+        locale,
+        namespace: "documentViewer.metadata",
+    });
+
+    return {
+        title: t("title"),
+        description: t("description"),
+    };
+}
 
 async function getApplication(clerkId: string, applicationId: string) {
     const user = await prisma.user.findFirst({
@@ -33,11 +46,11 @@ async function getApplication(clerkId: string, applicationId: string) {
 export default async function DocumentViewerPage({
     params,
 }: {
-    params: Promise<{ id: string }>;
+    params: Promise<{ locale: string; id: string }>;
 }) {
     const { userId } = await auth();
-    if (!userId) redirect("/sign-in");
-    const { id } = await params;
+    const { id, locale } = await params;
+    if (!userId) redirect(`/${locale}/sign-in`);
 
     const data = await getApplication(userId, id);
 
