@@ -335,6 +335,41 @@
                 },
                 "saveProfile": "Salva profilo"
             }
+        },
+        "jobsPage": {
+            "title": "Feed offerte",
+            "description": "Sfoglia le offerte trovate ordinate per punteggio di compatibilità.",
+            "actions": {
+                "pasteJob": "Incolla offerta",
+                "view": "Vedi",
+                "viewDocs": "Vedi documenti",
+                "tailorCv": "Personalizza CV"
+            },
+            "labels": {
+                "match": "Match"
+            },
+            "pasteDialog": {
+                "title": "Incolla descrizione offerta",
+                "description": "Incolla una descrizione di offerta e personalizzeremo il tuo CV.",
+                "jobTitle": "Ruolo",
+                "company": "Azienda",
+                "jobUrl": "URL offerta (opzionale)",
+                "jobDescription": "Incolla qui la descrizione completa dell'offerta...",
+                "submitting": "Invio in corso...",
+                "tailorMyCv": "Personalizza il mio CV"
+            },
+            "filters": {
+                "searchPlaceholder": "Cerca per ruolo o azienda...",
+                "allSources": "Tutte le fonti",
+                "linkedinManualImport": "LinkedIn (import manuale)",
+                "manual": "Manuale",
+                "minScoreAny": "Punteggio min: qualsiasi"
+            },
+            "empty": {
+                "title": "Nessuna offerta trovata al momento",
+                "description": "Configura le preferenze in Impostazioni o incolla un'offerta per iniziare.",
+                "configurePreferences": "Configura preferenze"
+            }
         }
     },
     "onboarding": {

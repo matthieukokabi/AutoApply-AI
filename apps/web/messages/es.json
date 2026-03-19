@@ -335,6 +335,41 @@
                 },
                 "saveProfile": "Guardar perfil"
             }
+        },
+        "jobsPage": {
+            "title": "Feed de empleo",
+            "description": "Explora empleos descubiertos ordenados por puntuación de compatibilidad.",
+            "actions": {
+                "pasteJob": "Pegar oferta",
+                "view": "Ver",
+                "viewDocs": "Ver docs",
+                "tailorCv": "Personalizar CV"
+            },
+            "labels": {
+                "match": "Match"
+            },
+            "pasteDialog": {
+                "title": "Pegar descripción de oferta",
+                "description": "Pega una descripción de oferta y personalizaremos tu CV para ella.",
+                "jobTitle": "Puesto",
+                "company": "Empresa",
+                "jobUrl": "URL de la oferta (opcional)",
+                "jobDescription": "Pega aquí la descripción completa de la oferta...",
+                "submitting": "Enviando...",
+                "tailorMyCv": "Personalizar mi CV"
+            },
+            "filters": {
+                "searchPlaceholder": "Buscar por puesto o empresa...",
+                "allSources": "Todas las fuentes",
+                "linkedinManualImport": "LinkedIn (importación manual)",
+                "manual": "Manual",
+                "minScoreAny": "Puntuación mín.: cualquiera"
+            },
+            "empty": {
+                "title": "Aún no se descubrieron empleos",
+                "description": "Configura tus preferencias en Ajustes o pega una oferta para empezar.",
+                "configurePreferences": "Configurar preferencias"
+            }
         }
     },
     "onboarding": {

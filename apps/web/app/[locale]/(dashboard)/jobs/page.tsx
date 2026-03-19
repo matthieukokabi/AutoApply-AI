@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
     Card,
     CardContent,
@@ -42,6 +43,7 @@ interface JobWithApplication {
 }
 
 export default function JobsPage() {
+    const t = useTranslations("dashboard.jobsPage");
     const [jobs, setJobs] = useState<JobWithApplication[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -144,14 +146,14 @@ export default function JobsPage() {
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Job Feed</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
                     <p className="text-muted-foreground">
-                        Browse discovered jobs sorted by compatibility score.
+                        {t("description")}
                     </p>
                 </div>
                 <Button className="gap-2" onClick={() => setShowPasteDialog(true)}>
                     <Plus className="h-4 w-4" />
-                    Paste Job
+                    {t("actions.pasteJob")}
                 </Button>
             </div>
 
@@ -160,7 +162,7 @@ export default function JobsPage() {
                 <Card className="border-primary">
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle>Paste Job Description</CardTitle>
+                            <CardTitle>{t("pasteDialog.title")}</CardTitle>
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -170,14 +172,14 @@ export default function JobsPage() {
                             </Button>
                         </div>
                         <CardDescription>
-                            Paste a job description and we&apos;ll tailor your CV to it.
+                            {t("pasteDialog.description")}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
                             <input
                                 className="px-3 py-2 border rounded-md text-sm"
-                                placeholder="Job Title"
+                                placeholder={t("pasteDialog.jobTitle")}
                                 value={pasteForm.jobTitle}
                                 onChange={(e) =>
                                     setPasteForm((f) => ({ ...f, jobTitle: e.target.value }))
@@ -185,7 +187,7 @@ export default function JobsPage() {
                             />
                             <input
                                 className="px-3 py-2 border rounded-md text-sm"
-                                placeholder="Company"
+                                placeholder={t("pasteDialog.company")}
                                 value={pasteForm.company}
                                 onChange={(e) =>
                                     setPasteForm((f) => ({ ...f, company: e.target.value }))
@@ -194,7 +196,7 @@ export default function JobsPage() {
                         </div>
                         <input
                             className="w-full px-3 py-2 border rounded-md text-sm"
-                            placeholder="Job URL (optional)"
+                            placeholder={t("pasteDialog.jobUrl")}
                             value={pasteForm.jobUrl}
                             onChange={(e) =>
                                 setPasteForm((f) => ({ ...f, jobUrl: e.target.value }))
@@ -202,7 +204,7 @@ export default function JobsPage() {
                         />
                         <textarea
                             className="w-full h-48 p-3 border rounded-md text-sm resize-none"
-                            placeholder="Paste the full job description here..."
+                            placeholder={t("pasteDialog.jobDescription")}
                             value={pasteForm.jobDescription}
                             onChange={(e) =>
                                 setPasteForm((f) => ({
@@ -219,10 +221,10 @@ export default function JobsPage() {
                             {submitting ? (
                                 <>
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    Submitting...
+                                    {t("pasteDialog.submitting")}
                                 </>
                             ) : (
-                                "Tailor My CV"
+                                t("pasteDialog.tailorMyCv")
                             )}
                         </Button>
                     </CardContent>
@@ -233,7 +235,7 @@ export default function JobsPage() {
             <div className="flex gap-4 flex-wrap">
                 <input
                     className="px-3 py-2 border rounded-md text-sm w-64"
-                    placeholder="Search by title or company..."
+                    placeholder={t("filters.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
@@ -242,7 +244,7 @@ export default function JobsPage() {
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
                 >
-                    <option value="">All Sources</option>
+                    <option value="">{t("filters.allSources")}</option>
                     <option value="adzuna">Adzuna</option>
                     <option value="themuse">The Muse</option>
                     <option value="remotive">Remotive</option>
@@ -250,15 +252,15 @@ export default function JobsPage() {
                     <option value="jsearch">JSearch</option>
                     <option value="jooble">Jooble</option>
                     <option value="reed">Reed</option>
-                    <option value="linkedin">LinkedIn (manual import)</option>
-                    <option value="manual">Manual</option>
+                    <option value="linkedin">{t("filters.linkedinManualImport")}</option>
+                    <option value="manual">{t("filters.manual")}</option>
                 </select>
                 <select
                     className="px-3 py-2 border rounded-md text-sm"
                     value={minScore}
                     onChange={(e) => setMinScore(e.target.value)}
                 >
-                    <option value="">Min Score: Any</option>
+                    <option value="">{t("filters.minScoreAny")}</option>
                     <option value="60">60+</option>
                     <option value="75">75+</option>
                     <option value="90">90+</option>
@@ -296,18 +298,17 @@ export default function JobsPage() {
                         <CardContent className="py-12 text-center">
                             <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                             <h3 className="text-lg font-semibold mb-2">
-                                No jobs discovered yet
+                                {t("empty.title")}
                             </h3>
                             <p className="text-muted-foreground mb-4">
-                                Set up your preferences in Settings, or paste a job to get
-                                started.
+                                {t("empty.description")}
                             </p>
                             <div className="flex gap-3 justify-center">
                                 <Link href="/settings">
-                                    <Button variant="outline">Configure Preferences</Button>
+                                    <Button variant="outline">{t("empty.configurePreferences")}</Button>
                                 </Link>
                                 <Button onClick={() => setShowPasteDialog(true)}>
-                                    Paste Job
+                                    {t("actions.pasteJob")}
                                 </Button>
                             </div>
                         </CardContent>
@@ -332,7 +333,7 @@ export default function JobsPage() {
                                                     )}
                                                 >
                                                     {job.application.compatibilityScore}%
-                                                    Match
+                                                    {t("labels.match")}
                                                 </Badge>
                                             )}
                                         </div>
@@ -379,7 +380,7 @@ export default function JobsPage() {
                                             >
                                                 <Button variant="outline" size="sm">
                                                     <ExternalLink className="h-3 w-3 mr-1" />{" "}
-                                                    View
+                                                    {t("actions.view")}
                                                 </Button>
                                             </a>
                                         )}
@@ -388,7 +389,7 @@ export default function JobsPage() {
                                                 href={`/documents/${job.application.id}`}
                                             >
                                                 <Button size="sm" variant="secondary">
-                                                    View Docs
+                                                    {t("actions.viewDocs")}
                                                 </Button>
                                             </Link>
                                         ) : (
@@ -400,7 +401,7 @@ export default function JobsPage() {
                                                 {tailoringJobId === job.id ? (
                                                     <Loader2 className="h-3 w-3 animate-spin mr-1" />
                                                 ) : null}
-                                                Tailor CV
+                                                {t("actions.tailorCv")}
                                             </Button>
                                         )}
                                     </div>

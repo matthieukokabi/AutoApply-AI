@@ -335,6 +335,41 @@
                 },
                 "saveProfile": "Profil speichern"
             }
+        },
+        "jobsPage": {
+            "title": "Job-Feed",
+            "description": "Durchsuchen Sie gefundene Jobs, sortiert nach Kompatibilitäts-Score.",
+            "actions": {
+                "pasteJob": "Job einfügen",
+                "view": "Ansehen",
+                "viewDocs": "Dokumente ansehen",
+                "tailorCv": "CV anpassen"
+            },
+            "labels": {
+                "match": "Match"
+            },
+            "pasteDialog": {
+                "title": "Stellenbeschreibung einfügen",
+                "description": "Fügen Sie eine Stellenbeschreibung ein und wir passen Ihren CV darauf an.",
+                "jobTitle": "Jobtitel",
+                "company": "Unternehmen",
+                "jobUrl": "Job-URL (optional)",
+                "jobDescription": "Fügen Sie hier die vollständige Stellenbeschreibung ein...",
+                "submitting": "Wird gesendet...",
+                "tailorMyCv": "Meinen CV anpassen"
+            },
+            "filters": {
+                "searchPlaceholder": "Nach Titel oder Unternehmen suchen...",
+                "allSources": "Alle Quellen",
+                "linkedinManualImport": "LinkedIn (manueller Import)",
+                "manual": "Manuell",
+                "minScoreAny": "Mindest-Score: Beliebig"
+            },
+            "empty": {
+                "title": "Noch keine Jobs gefunden",
+                "description": "Richten Sie Ihre Präferenzen in den Einstellungen ein oder fügen Sie einen Job ein, um zu starten.",
+                "configurePreferences": "Präferenzen konfigurieren"
+            }
         }
     },
     "onboarding": {

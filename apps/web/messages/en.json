@@ -334,6 +334,41 @@
                 },
                 "saveProfile": "Save Profile"
             }
+        },
+        "jobsPage": {
+            "title": "Job Feed",
+            "description": "Browse discovered jobs sorted by compatibility score.",
+            "actions": {
+                "pasteJob": "Paste Job",
+                "view": "View",
+                "viewDocs": "View Docs",
+                "tailorCv": "Tailor CV"
+            },
+            "labels": {
+                "match": "Match"
+            },
+            "pasteDialog": {
+                "title": "Paste Job Description",
+                "description": "Paste a job description and we'll tailor your CV to it.",
+                "jobTitle": "Job Title",
+                "company": "Company",
+                "jobUrl": "Job URL (optional)",
+                "jobDescription": "Paste the full job description here...",
+                "submitting": "Submitting...",
+                "tailorMyCv": "Tailor My CV"
+            },
+            "filters": {
+                "searchPlaceholder": "Search by title or company...",
+                "allSources": "All Sources",
+                "linkedinManualImport": "LinkedIn (manual import)",
+                "manual": "Manual",
+                "minScoreAny": "Min Score: Any"
+            },
+            "empty": {
+                "title": "No jobs discovered yet",
+                "description": "Set up your preferences in Settings, or paste a job to get started.",
+                "configurePreferences": "Configure Preferences"
+            }
         }
     },
     "onboarding": {
