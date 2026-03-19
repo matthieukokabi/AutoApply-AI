@@ -2,6 +2,10 @@
 
 Last updated: 2026-03-19 (Europe/Zurich)
 
+## P0 — Incident: 4h automation pipeline outage (job discovery + tailoring)
+
+- [x] Add production diagnostics command with stage-level run visibility and per-profile health summary — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_diagnostics.js`, `npm run incident:pipeline:diagnostics`)
+
 ## P0 — Must complete before live payment test
 
 - [x] Run production onboarding gate (`SMOKE_BASE_URL=https://autoapply.works npm run smoke:onboarding:cross-browser` in `apps/web`) — passed on 2026-03-17 (`/tmp/onboarding-cross-browser-smoke-20260317_115606.jsonl`)
