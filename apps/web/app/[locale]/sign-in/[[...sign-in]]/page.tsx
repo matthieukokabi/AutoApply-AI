@@ -9,6 +9,7 @@ import {
 } from "@clerk/nextjs";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { AuthRecoveryCard } from "@/components/auth-recovery-card";
 import {
     buildAuthIntentUrl,
@@ -25,6 +26,7 @@ const CLERK_LOAD_TIMEOUT_MS = 8000;
 const CLERK_WIDGET_MOUNT_TIMEOUT_MS = 5000;
 
 export default function SignInPage() {
+    const t = useTranslations("auth.signIn");
     const params = useParams<{ locale?: string }>();
     const searchParams = useSearchParams();
     const localeParam = typeof params?.locale === "string" ? params.locale : undefined;
@@ -133,10 +135,10 @@ export default function SignInPage() {
             <div className="w-full max-w-md">
                 <div className="text-center mb-6">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                        Welcome back
+                        {t("title")}
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400 mt-1">
-                        Sign in to your AutoApply AI account
+                        {t("description")}
                     </p>
                 </div>
 
@@ -151,14 +153,14 @@ export default function SignInPage() {
                 {shouldShowLoadingCard ? (
                     <div className="rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Loading secure sign-in...
+                            {t("loading")}
                         </p>
                         <div className="mt-3 flex items-center justify-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                             <a href={diagnosticsUrl} className="underline-offset-2 hover:underline">
-                                Open diagnostics
+                                {t("openDiagnostics")}
                             </a>
                             <a href={signUpUrl} className="underline-offset-2 hover:underline">
-                                Go to sign-up
+                                {t("goToSignUp")}
                             </a>
                         </div>
                     </div>

@@ -455,6 +455,45 @@
             "goToDashboard": "Go to Dashboard"
         }
     },
+    "auth": {
+        "signIn": {
+            "title": "Welcome back",
+            "description": "Sign in to your AutoApply AI account",
+            "loading": "Loading secure sign-in...",
+            "openDiagnostics": "Open diagnostics",
+            "goToSignUp": "Go to sign-up"
+        },
+        "signUp": {
+            "title": "Create your account",
+            "description": "Start tailoring your CV with AI in minutes",
+            "loading": "Loading secure sign-up...",
+            "openDiagnostics": "Open diagnostics",
+            "goToSignIn": "Go to sign-in"
+        },
+        "recovery": {
+            "secureSignInBlocked": "Secure sign-in is currently blocked",
+            "secureSignUpBlocked": "Secure sign-up is currently blocked",
+            "description": "Authentication could not initialize. This is usually caused by blocked cookies, strict privacy settings, ad blockers, or VPN/DNS filters blocking secure auth requests.",
+            "detectedOnDevice": "Detected on this device:",
+            "hints": {
+                "cookies_disabled": "Cookies are disabled in this browser.",
+                "storage_blocked": "This browser is blocking local storage/cookies required for secure auth.",
+                "brave_shields": "Brave Shields may block required secure authentication requests.",
+                "privacy_blocking": "Browser privacy settings are blocking required authentication storage."
+            },
+            "steps": {
+                "enableCookies": "Enable cookies for `autoapply.works`.",
+                "allowClerkHost": "Allow `clerk.autoapply.works` in blocker/VPN/private DNS settings.",
+                "disableStrictTracking": "Disable strict tracking protection for this site and retry.",
+                "tryAnotherBrowser": "If still blocked, try another browser or non-private tab."
+            },
+            "errorCode": "Error code",
+            "retry": "Retry",
+            "goToSignUp": "Go to sign up",
+            "goToSignIn": "Go to sign in",
+            "runAuthDiagnostics": "Run auth diagnostics"
+        }
+    },
     "footer": {
         "tagline": "AI-powered career assistant. ATS-optimized, zero fabrication.",
         "product": "Product",

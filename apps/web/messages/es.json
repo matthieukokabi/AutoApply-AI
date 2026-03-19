@@ -456,6 +456,45 @@
             "goToDashboard": "Ir al panel"
         }
     },
+    "auth": {
+        "signIn": {
+            "title": "Bienvenido de nuevo",
+            "description": "Inicia sesión en tu cuenta de AutoApply AI",
+            "loading": "Cargando inicio de sesión seguro...",
+            "openDiagnostics": "Abrir diagnósticos",
+            "goToSignUp": "Ir a registro"
+        },
+        "signUp": {
+            "title": "Crea tu cuenta",
+            "description": "Empieza a personalizar tu CV con IA en minutos",
+            "loading": "Cargando registro seguro...",
+            "openDiagnostics": "Abrir diagnósticos",
+            "goToSignIn": "Ir a iniciar sesión"
+        },
+        "recovery": {
+            "secureSignInBlocked": "El inicio de sesión seguro está bloqueado actualmente",
+            "secureSignUpBlocked": "El registro seguro está bloqueado actualmente",
+            "description": "No se pudo inicializar la autenticación. Normalmente se debe a cookies bloqueadas, ajustes estrictos de privacidad, bloqueadores de anuncios o filtros VPN/DNS que bloquean solicitudes seguras de autenticación.",
+            "detectedOnDevice": "Detectado en este dispositivo:",
+            "hints": {
+                "cookies_disabled": "Las cookies están desactivadas en este navegador.",
+                "storage_blocked": "Este navegador bloquea el almacenamiento local/cookies necesarios para la autenticación segura.",
+                "brave_shields": "Brave Shields puede bloquear solicitudes seguras de autenticación necesarias.",
+                "privacy_blocking": "La configuración de privacidad del navegador está bloqueando el almacenamiento de autenticación requerido."
+            },
+            "steps": {
+                "enableCookies": "Activa las cookies para `autoapply.works`.",
+                "allowClerkHost": "Permite `clerk.autoapply.works` en la configuración de bloqueador/VPN/DNS privado.",
+                "disableStrictTracking": "Desactiva la protección de rastreo estricta para este sitio y vuelve a intentarlo.",
+                "tryAnotherBrowser": "Si sigue bloqueado, prueba otro navegador o una pestaña no privada."
+            },
+            "errorCode": "Código de error",
+            "retry": "Reintentar",
+            "goToSignUp": "Ir a registro",
+            "goToSignIn": "Ir a iniciar sesión",
+            "runAuthDiagnostics": "Ejecutar diagnósticos de autenticación"
+        }
+    },
     "footer": {
         "tagline": "Asistente de carrera con IA. Optimizado ATS, sin fabricación.",
         "product": "Producto",

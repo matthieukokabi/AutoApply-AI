@@ -3,12 +3,19 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface AuthRecoveryCardProps {
     mode: "sign-in" | "sign-up";
     alternateUrl: string;
     diagnosticsUrl?: string;
 }
+
+type AuthBlockerHint =
+    | "cookies_disabled"
+    | "storage_blocked"
+    | "brave_shields"
+    | "privacy_blocking";
 
 function detectAuthBlockerHint() {
     if (typeof window === "undefined") {
@@ -17,7 +24,7 @@ function detectAuthBlockerHint() {
 
     try {
         if (!navigator.cookieEnabled) {
-            return "Cookies are disabled in this browser.";
+            return "cookies_disabled" as const;
         }
 
         const probeName = "__autoapply_auth_probe";
@@ -26,14 +33,14 @@ function detectAuthBlockerHint() {
         document.cookie = `${probeName}=; Max-Age=0; Path=/; SameSite=Lax`;
 
         if (!canReadCookie) {
-            return "This browser is blocking local storage/cookies required for secure auth.";
+            return "storage_blocked" as const;
         }
 
         if ("brave" in navigator) {
-            return "Brave Shields may block required secure authentication requests.";
+            return "brave_shields" as const;
         }
     } catch {
-        return "Browser privacy settings are blocking required authentication storage.";
+        return "privacy_blocking" as const;
     }
 
     return null;
@@ -44,7 +51,8 @@ export function AuthRecoveryCard({
     alternateUrl,
     diagnosticsUrl,
 }: AuthRecoveryCardProps) {
-    const [detectedHint, setDetectedHint] = useState<string | null>(null);
+    const t = useTranslations("auth.recovery");
+    const [detectedHint, setDetectedHint] = useState<AuthBlockerHint | null>(null);
 
     useEffect(() => {
         setDetectedHint(detectAuthBlockerHint());
@@ -59,26 +67,25 @@ export function AuthRecoveryCard({
             </div>
             <h2 className="text-base font-semibold text-amber-900 dark:text-amber-100">
                 {isSignInMode
-                    ? "Secure sign-in is currently blocked"
-                    : "Secure sign-up is currently blocked"}
+                    ? t("secureSignInBlocked")
+                    : t("secureSignUpBlocked")}
             </h2>
             <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
-                Authentication could not initialize. This is usually caused by blocked cookies,
-                strict privacy settings, ad blockers, or VPN/DNS filters blocking secure auth requests.
+                {t("description")}
             </p>
 
             {detectedHint ? (
                 <p className="mt-3 rounded-md border border-amber-300 bg-amber-100/80 px-3 py-2 text-left text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-100">
-                    Detected on this device: {detectedHint}
+                    {t("detectedOnDevice")} {t(`hints.${detectedHint}`)}
                 </p>
             ) : null}
 
             <div className="mt-4 rounded-md border border-amber-200 bg-white/70 p-3 text-left text-xs text-slate-700 dark:border-amber-800 dark:bg-slate-900/60 dark:text-slate-200">
-                <p>1. Enable cookies for `autoapply.works`.</p>
-                <p>2. Allow `clerk.autoapply.works` in blocker/VPN/private DNS settings.</p>
-                <p>3. Disable strict tracking protection for this site and retry.</p>
-                <p>4. If still blocked, try another browser or non-private tab.</p>
-                <p className="mt-2 font-medium">Error code: AUTH_INIT_BLOCKED</p>
+                <p>1. {t("steps.enableCookies")}</p>
+                <p>2. {t("steps.allowClerkHost")}</p>
+                <p>3. {t("steps.disableStrictTracking")}</p>
+                <p>4. {t("steps.tryAnotherBrowser")}</p>
+                <p className="mt-2 font-medium">{t("errorCode")}: AUTH_INIT_BLOCKED</p>
             </div>
 
             <div className="mt-4 flex flex-col gap-2">
@@ -87,7 +94,7 @@ export function AuthRecoveryCard({
                     onClick={() => window.location.reload()}
                     className="w-full"
                 >
-                    Retry
+                    {t("retry")}
                 </Button>
                 <Button
                     type="button"
@@ -97,7 +104,7 @@ export function AuthRecoveryCard({
                         window.location.href = alternateUrl;
                     }}
                 >
-                    {isSignInMode ? "Go to sign up" : "Go to sign in"}
+                    {isSignInMode ? t("goToSignUp") : t("goToSignIn")}
                 </Button>
                 {diagnosticsUrl ? (
                     <Button
@@ -108,7 +115,7 @@ export function AuthRecoveryCard({
                             window.location.href = diagnosticsUrl;
                         }}
                     >
-                        Run auth diagnostics
+                        {t("runAuthDiagnostics")}
                     </Button>
                 ) : null}
             </div>

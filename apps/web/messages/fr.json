@@ -456,6 +456,45 @@
             "goToDashboard": "Aller au tableau de bord"
         }
     },
+    "auth": {
+        "signIn": {
+            "title": "Bon retour",
+            "description": "Connectez-vous à votre compte AutoApply AI",
+            "loading": "Chargement de la connexion sécurisée...",
+            "openDiagnostics": "Ouvrir les diagnostics",
+            "goToSignUp": "Aller à l'inscription"
+        },
+        "signUp": {
+            "title": "Créez votre compte",
+            "description": "Commencez à personnaliser votre CV avec l'IA en quelques minutes",
+            "loading": "Chargement de l'inscription sécurisée...",
+            "openDiagnostics": "Ouvrir les diagnostics",
+            "goToSignIn": "Aller à la connexion"
+        },
+        "recovery": {
+            "secureSignInBlocked": "La connexion sécurisée est actuellement bloquée",
+            "secureSignUpBlocked": "L'inscription sécurisée est actuellement bloquée",
+            "description": "L'authentification n'a pas pu s'initialiser. Cela est généralement causé par des cookies bloqués, des paramètres de confidentialité stricts, des bloqueurs de pub, ou des filtres VPN/DNS qui bloquent les requêtes d'authentification.",
+            "detectedOnDevice": "Détecté sur cet appareil :",
+            "hints": {
+                "cookies_disabled": "Les cookies sont désactivés dans ce navigateur.",
+                "storage_blocked": "Ce navigateur bloque le stockage local/cookies nécessaires à l'authentification.",
+                "brave_shields": "Brave Shields peut bloquer les requêtes d'authentification requises.",
+                "privacy_blocking": "Les paramètres de confidentialité du navigateur bloquent le stockage d'authentification."
+            },
+            "steps": {
+                "enableCookies": "Activez les cookies pour `autoapply.works`.",
+                "allowClerkHost": "Autorisez `clerk.autoapply.works` dans les paramètres bloqueur/VPN/DNS privé.",
+                "disableStrictTracking": "Désactivez la protection anti-tracking stricte pour ce site puis réessayez.",
+                "tryAnotherBrowser": "Si c'est toujours bloqué, essayez un autre navigateur ou un onglet non privé."
+            },
+            "errorCode": "Code erreur",
+            "retry": "Réessayer",
+            "goToSignUp": "Aller à l'inscription",
+            "goToSignIn": "Aller à la connexion",
+            "runAuthDiagnostics": "Lancer les diagnostics d'authentification"
+        }
+    },
     "footer": {
         "tagline": "Assistant carrière propulsé par l'IA. Optimisé ATS, zéro fabrication.",
         "product": "Produit",

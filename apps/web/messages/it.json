@@ -456,6 +456,45 @@
             "goToDashboard": "Vai alla dashboard"
         }
     },
+    "auth": {
+        "signIn": {
+            "title": "Bentornato",
+            "description": "Accedi al tuo account AutoApply AI",
+            "loading": "Caricamento accesso sicuro...",
+            "openDiagnostics": "Apri diagnostica",
+            "goToSignUp": "Vai alla registrazione"
+        },
+        "signUp": {
+            "title": "Crea il tuo account",
+            "description": "Inizia a personalizzare il tuo CV con l'IA in pochi minuti",
+            "loading": "Caricamento registrazione sicura...",
+            "openDiagnostics": "Apri diagnostica",
+            "goToSignIn": "Vai all'accesso"
+        },
+        "recovery": {
+            "secureSignInBlocked": "L'accesso sicuro è attualmente bloccato",
+            "secureSignUpBlocked": "La registrazione sicura è attualmente bloccata",
+            "description": "Impossibile inizializzare l'autenticazione. Di solito è causato da cookie bloccati, impostazioni privacy restrittive, ad blocker o filtri VPN/DNS che bloccano le richieste di autenticazione sicura.",
+            "detectedOnDevice": "Rilevato su questo dispositivo:",
+            "hints": {
+                "cookies_disabled": "I cookie sono disattivati in questo browser.",
+                "storage_blocked": "Questo browser blocca archivio locale/cookie necessari per l'autenticazione sicura.",
+                "brave_shields": "Brave Shields potrebbe bloccare richieste di autenticazione sicura necessarie.",
+                "privacy_blocking": "Le impostazioni privacy del browser stanno bloccando l'archiviazione necessaria per l'autenticazione."
+            },
+            "steps": {
+                "enableCookies": "Abilita i cookie per `autoapply.works`.",
+                "allowClerkHost": "Consenti `clerk.autoapply.works` nelle impostazioni blocker/VPN/DNS privato.",
+                "disableStrictTracking": "Disattiva la protezione antitracciamento rigida per questo sito e riprova.",
+                "tryAnotherBrowser": "Se ancora bloccato, prova un altro browser o una scheda non privata."
+            },
+            "errorCode": "Codice errore",
+            "retry": "Riprova",
+            "goToSignUp": "Vai alla registrazione",
+            "goToSignIn": "Vai all'accesso",
+            "runAuthDiagnostics": "Esegui diagnostica autenticazione"
+        }
+    },
     "footer": {
         "tagline": "Assistente di carriera con IA. Ottimizzato ATS, senza invenzioni.",
         "product": "Prodotto",

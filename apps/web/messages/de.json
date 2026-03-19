@@ -456,6 +456,45 @@
             "goToDashboard": "Zum Dashboard"
         }
     },
+    "auth": {
+        "signIn": {
+            "title": "Willkommen zurück",
+            "description": "Melden Sie sich bei Ihrem AutoApply AI Konto an",
+            "loading": "Sicherer Sign-in wird geladen...",
+            "openDiagnostics": "Diagnose öffnen",
+            "goToSignUp": "Zur Registrierung"
+        },
+        "signUp": {
+            "title": "Konto erstellen",
+            "description": "Starten Sie in wenigen Minuten mit KI-gestützter CV-Personalisierung",
+            "loading": "Sicherer Sign-up wird geladen...",
+            "openDiagnostics": "Diagnose öffnen",
+            "goToSignIn": "Zum Sign-in"
+        },
+        "recovery": {
+            "secureSignInBlocked": "Sicherer Sign-in ist derzeit blockiert",
+            "secureSignUpBlocked": "Sicherer Sign-up ist derzeit blockiert",
+            "description": "Die Authentifizierung konnte nicht initialisiert werden. Ursache sind meist blockierte Cookies, strenge Datenschutzeinstellungen, Werbeblocker oder VPN-/DNS-Filter, die sichere Auth-Anfragen blockieren.",
+            "detectedOnDevice": "Auf diesem Gerät erkannt:",
+            "hints": {
+                "cookies_disabled": "Cookies sind in diesem Browser deaktiviert.",
+                "storage_blocked": "Dieser Browser blockiert lokalen Speicher/Cookies, die für sichere Authentifizierung erforderlich sind.",
+                "brave_shields": "Brave Shields können erforderliche sichere Authentifizierungsanfragen blockieren.",
+                "privacy_blocking": "Datenschutzeinstellungen des Browsers blockieren erforderlichen Authentifizierungs-Speicher."
+            },
+            "steps": {
+                "enableCookies": "Aktivieren Sie Cookies für `autoapply.works`.",
+                "allowClerkHost": "Erlauben Sie `clerk.autoapply.works` in Blocker-/VPN-/Private-DNS-Einstellungen.",
+                "disableStrictTracking": "Deaktivieren Sie strengen Tracking-Schutz für diese Seite und versuchen Sie es erneut.",
+                "tryAnotherBrowser": "Wenn weiterhin blockiert, versuchen Sie einen anderen Browser oder einen nicht-privaten Tab."
+            },
+            "errorCode": "Fehlercode",
+            "retry": "Erneut versuchen",
+            "goToSignUp": "Zur Registrierung",
+            "goToSignIn": "Zum Sign-in",
+            "runAuthDiagnostics": "Auth-Diagnose ausführen"
+        }
+    },
     "footer": {
         "tagline": "KI-gestützter Karriere-Assistent. ATS-optimiert, ohne Erfindungen.",
         "product": "Produkt",
