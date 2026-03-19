@@ -445,6 +445,15 @@
             "network": "Netzwerkfehler beim Laden der Diagnose."
         }
     },
+    "comingSoon": {
+        "metadata": {
+            "title": "Demnächst verfügbar — AutoApply AI",
+            "description": "Eine Vorschauseite für kommende AutoApply AI Releases und Launch-Updates."
+        },
+        "title": "Demnächst verfügbar",
+        "description": "Wir bereiten das nächste Release vor. Schauen Sie bald wieder vorbei.",
+        "backToHome": "Zurück zu AutoApply"
+    },
     "onboarding": {
         "common": {
             "back": "Zurück",

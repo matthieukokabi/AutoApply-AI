@@ -444,6 +444,15 @@
             "network": "Network error while loading diagnostics."
         }
     },
+    "comingSoon": {
+        "metadata": {
+            "title": "Coming Soon — AutoApply AI",
+            "description": "A preview page for upcoming AutoApply AI releases and launch updates."
+        },
+        "title": "Coming Soon",
+        "description": "We're preparing the next release. Check back soon for updates.",
+        "backToHome": "Back to AutoApply"
+    },
     "onboarding": {
         "common": {
             "back": "Back",

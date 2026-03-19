@@ -445,6 +445,15 @@
             "network": "Error de red al cargar el diagnóstico."
         }
     },
+    "comingSoon": {
+        "metadata": {
+            "title": "Próximamente — AutoApply AI",
+            "description": "Una página de vista previa de los próximos lanzamientos y novedades de AutoApply AI."
+        },
+        "title": "Próximamente",
+        "description": "Estamos preparando la próxima versión. Vuelve pronto para ver novedades.",
+        "backToHome": "Volver a AutoApply"
+    },
     "onboarding": {
         "common": {
             "back": "Atrás",

@@ -56,7 +56,8 @@ describe("canonical/og:url parity", () => {
             "utf-8"
         );
 
-        expect(comingSoonFile).toContain("Coming Soon — AutoApply AI");
-        expect(landingFile).not.toContain("Coming Soon — AutoApply AI");
+        expect(comingSoonFile).toContain('namespace: "comingSoon.metadata"');
+        expect(comingSoonFile).toContain('buildCanonicalOgParity(locale, "/coming-soon")');
+        expect(landingFile).not.toContain('namespace: "comingSoon.metadata"');
     });
 });

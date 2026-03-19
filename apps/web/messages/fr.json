@@ -445,6 +445,15 @@
             "network": "Erreur réseau pendant le chargement du diagnostic."
         }
     },
+    "comingSoon": {
+        "metadata": {
+            "title": "Bientôt disponible — AutoApply AI",
+            "description": "Une page d'aperçu des prochaines versions et mises à jour de lancement d'AutoApply AI."
+        },
+        "title": "Bientôt disponible",
+        "description": "Nous préparons la prochaine version. Revenez bientôt pour les mises à jour.",
+        "backToHome": "Retour à AutoApply"
+    },
     "onboarding": {
         "common": {
             "back": "Retour",
