@@ -112,6 +112,37 @@ function escapeHtml(value: string): string {
         .replace(/'/g, "&#39;");
 }
 
+function buildContactAcknowledgement(input: { name: string }) {
+    const normalizedName = input.name.trim();
+    const recipientName = normalizedName || "there";
+
+    return {
+        subject: "We received your message — AutoApply Works",
+        html: `
+            <div style="font-family: Inter, Arial, sans-serif; color: #0f172a; line-height: 1.6; max-width: 640px;">
+                <h2 style="margin: 0 0 12px;">Hi ${escapeHtml(recipientName)},</h2>
+                <p style="margin: 0 0 12px;">
+                    Thanks for contacting AutoApply Works. We received your message and our team will reply as soon as possible.
+                </p>
+                <p style="margin: 0 0 12px;">
+                    If your request is urgent, you can also email us directly at
+                    <a href="mailto:${OFFICIAL_CONTACT_EMAIL}">${OFFICIAL_CONTACT_EMAIL}</a>.
+                </p>
+                <p style="margin: 20px 0 0;">AutoApply Works Team</p>
+            </div>
+        `,
+        text: [
+            `Hi ${recipientName},`,
+            "",
+            "Thanks for contacting AutoApply Works. We received your message and our team will reply as soon as possible.",
+            "",
+            `If your request is urgent, you can also email us directly at ${OFFICIAL_CONTACT_EMAIL}.`,
+            "",
+            "AutoApply Works Team",
+        ].join("\n"),
+    };
+}
+
 async function sendContactEmailViaSmtp(input: {
     host: string;
     port: number;
@@ -145,6 +176,26 @@ async function sendContactEmailViaSmtp(input: {
     });
 
     await transporter.sendMail({
+        from: input.from,
+        to: [input.to],
+        replyTo: input.replyTo,
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+    });
+}
+
+async function sendContactEmailViaResend(input: {
+    apiKey: string;
+    from: string;
+    to: string;
+    replyTo: string;
+    subject: string;
+    html: string;
+    text: string;
+}) {
+    const resend = getResend(input.apiKey);
+    await resend.emails.send({
         from: input.from,
         to: [input.to],
         replyTo: input.replyTo,
@@ -440,6 +491,7 @@ export async function POST(req: Request) {
             "",
             message,
         ].join("\n");
+        const acknowledgement = buildContactAcknowledgement({ name });
 
         try {
             if (mailConfig.transport === "smtp") {
@@ -461,20 +513,73 @@ export async function POST(req: Request) {
                     html: htmlContent,
                     text: textContent,
                 });
+
+                try {
+                    await sendContactEmailViaSmtp({
+                        host: smtpConfig.config.host,
+                        port: smtpConfig.config.port,
+                        secure: smtpConfig.config.secure,
+                        user: smtpConfig.config.user,
+                        pass: smtpConfig.config.pass,
+                        from: fromEmail,
+                        to: email,
+                        replyTo: destinationEmail,
+                        subject: acknowledgement.subject,
+                        html: acknowledgement.html,
+                        text: acknowledgement.text,
+                    });
+                } catch (ackError) {
+                    console.warn("[contact-mail] acknowledgement_send_failed", {
+                        transport: "smtp",
+                        errorName:
+                            ackError instanceof Error
+                                ? ackError.name
+                                : "unknown_error",
+                        errorMessage:
+                            ackError instanceof Error
+                                ? ackError.message
+                                : "unknown error",
+                    });
+                }
             } else {
                 const resendApiKey = process.env.RESEND_API_KEY?.trim();
                 if (!resendApiKey) {
                     throw new Error("RESEND_API_KEY missing while resend transport selected");
                 }
 
-                const resend = getResend(resendApiKey);
-                await resend.emails.send({
+                await sendContactEmailViaResend({
+                    apiKey: resendApiKey,
                     from: fromEmail,
-                    to: [destinationEmail],
+                    to: destinationEmail,
                     replyTo: email,
                     subject: subjectLine,
                     html: htmlContent,
+                    text: textContent,
                 });
+
+                try {
+                    await sendContactEmailViaResend({
+                        apiKey: resendApiKey,
+                        from: fromEmail,
+                        to: email,
+                        replyTo: destinationEmail,
+                        subject: acknowledgement.subject,
+                        html: acknowledgement.html,
+                        text: acknowledgement.text,
+                    });
+                } catch (ackError) {
+                    console.warn("[contact-mail] acknowledgement_send_failed", {
+                        transport: "resend",
+                        errorName:
+                            ackError instanceof Error
+                                ? ackError.name
+                                : "unknown_error",
+                        errorMessage:
+                            ackError instanceof Error
+                                ? ackError.message
+                                : "unknown error",
+                    });
+                }
             }
 
             recordContactMailAttempt({

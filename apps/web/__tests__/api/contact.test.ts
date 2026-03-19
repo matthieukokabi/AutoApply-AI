@@ -188,9 +188,25 @@ describe("POST /api/contact", () => {
         const response = await POST(request);
         const data = await response.json();
         const mailHealth = getContactMailHealthSnapshot();
+        const mockSmtpSend = (globalThis as Record<string, any>).__mockSmtpSend;
 
         expect(response.status).toBe(200);
         expect(data.success).toBe(true);
+        expect(mockSmtpSend).toHaveBeenCalledTimes(2);
+        expect(mockSmtpSend).toHaveBeenNthCalledWith(
+            1,
+            expect.objectContaining({
+                to: "contact@autoapply.works",
+                replyTo: "smtp-user@example.com",
+            })
+        );
+        expect(mockSmtpSend).toHaveBeenNthCalledWith(
+            2,
+            expect.objectContaining({
+                to: "smtp-user@example.com",
+                replyTo: "contact@autoapply.works",
+            })
+        );
         expect(mailHealth.config.transport).toBe("smtp");
         expect(mailHealth.recent.totals.sent).toBe(1);
         expect(mailHealth.recent.lastDelivery).toEqual({
