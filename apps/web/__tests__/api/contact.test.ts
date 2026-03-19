@@ -15,6 +15,11 @@ beforeEach(() => {
     resetContactTelemetryForTests();
     resetContactMailHealthForTests();
     process.env.RESEND_API_KEY = "re_test_key";
+    delete process.env.SMTP_HOST;
+    delete process.env.SMTP_PORT;
+    delete process.env.SMTP_SECURE;
+    delete process.env.SMTP_USER;
+    delete process.env.SMTP_PASS;
     delete process.env.CONTACT_INBOX_EMAIL;
     delete process.env.CONTACT_FROM_EMAIL;
     delete process.env.TURNSTILE_SECRET_KEY;
@@ -132,8 +137,13 @@ describe("POST /api/contact", () => {
         expect(data.error).toContain("too long");
     });
 
-    it("queues contact submission when RESEND_API_KEY is missing", async () => {
+    it("queues contact submission when no mail transport is configured", async () => {
         delete process.env.RESEND_API_KEY;
+        delete process.env.SMTP_HOST;
+        delete process.env.SMTP_PORT;
+        delete process.env.SMTP_SECURE;
+        delete process.env.SMTP_USER;
+        delete process.env.SMTP_PASS;
 
         const request = new Request("http://localhost/api/contact", {
             method: "POST",
@@ -154,6 +164,40 @@ describe("POST /api/contact", () => {
         expect(data.queued).toBe(true);
         expect(data.code).toBe("CONTACT_MAIL_QUEUED_NO_TRANSPORT");
         expect(vi.mocked(prisma.workflowError.create)).toHaveBeenCalledTimes(1);
+    });
+
+    it("sends contact form via SMTP when configured", async () => {
+        delete process.env.RESEND_API_KEY;
+        process.env.SMTP_HOST = "smtp.hostinger.com";
+        process.env.SMTP_PORT = "465";
+        process.env.SMTP_SECURE = "true";
+        process.env.SMTP_USER = "contact@autoapply.works";
+        process.env.SMTP_PASS = "smtp_test_password";
+
+        const request = new Request("http://localhost/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: withAntiBotFields({
+                name: "SMTP User",
+                email: "smtp-user@example.com",
+                subject: "support",
+                message: "SMTP transport test message.",
+            }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+        const mailHealth = getContactMailHealthSnapshot();
+
+        expect(response.status).toBe(200);
+        expect(data.success).toBe(true);
+        expect(mailHealth.config.transport).toBe("smtp");
+        expect(mailHealth.recent.totals.sent).toBe(1);
+        expect(mailHealth.recent.lastDelivery).toEqual({
+            destinationEmail: "contact@autoapply.works",
+            fromEmail: "AutoApply Works <contact@autoapply.works>",
+            replyToEmail: "smtp-user@example.com",
+        });
     });
 
     it("routes contact emails to the official contact inbox", async () => {

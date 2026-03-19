@@ -8,9 +8,12 @@ export { OFFICIAL_CONTACT_EMAIL, OFFICIAL_LINKEDIN_URL, OFFICIAL_X_URL };
 
 const MAX_RECENT_ATTEMPTS = 25;
 
+export type ContactMailTransportKind = "smtp" | "resend" | "none";
+
 export type ContactMailReasonCode =
     | "mail_sent"
-    | "missing_resend_api_key"
+    | "missing_mail_transport"
+    | "smtp_send_failed"
     | "resend_send_failed"
     | "queued_for_manual_followup"
     | "fallback_queue_failed";
@@ -18,7 +21,7 @@ export type ContactMailReasonCode =
 type ContactMailAttempt = {
     at: string;
     outcome: "sent" | "queued" | "failed";
-    transport: "resend" | "fallback_queue";
+    transport: "smtp" | "resend" | "fallback_queue" | "none";
     reasonCode: ContactMailReasonCode;
     statusCode: number | null;
 };
@@ -53,6 +56,14 @@ function normalizeEmail(value: string) {
     return value.trim().toLowerCase();
 }
 
+type ContactSmtpTransportConfig = {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+};
+
 export function getContactDestinationEmail() {
     const configured = process.env.CONTACT_INBOX_EMAIL?.trim();
     if (configured) {
@@ -71,26 +82,150 @@ export function getContactFromEmail() {
     return `AutoApply Works <${OFFICIAL_CONTACT_EMAIL}>`;
 }
 
-export function getContactMailConfigSnapshot() {
-    const missingEnv: string[] = [];
-    const resendApiKey = process.env.RESEND_API_KEY?.trim();
-
-    if (!resendApiKey) {
-        missingEnv.push("RESEND_API_KEY");
+function normalizeSmtpPort(value: string | undefined) {
+    if (!value) {
+        return 465;
     }
 
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function normalizeSmtpSecure(value: string | undefined, port: number) {
+    if (!value) {
+        return port === 465;
+    }
+
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "yes";
+}
+
+export function getContactSmtpTransportConfig():
+    | {
+          configured: true;
+          missingEnv: [];
+          config: ContactSmtpTransportConfig;
+      }
+    | {
+          configured: false;
+          missingEnv: string[];
+          config: null;
+      } {
+    const missingEnv: string[] = [];
+    const host = process.env.SMTP_HOST?.trim();
+    const user = process.env.SMTP_USER?.trim();
+    const pass = process.env.SMTP_PASS?.trim();
+    const portValue = process.env.SMTP_PORT?.trim();
+    const port = normalizeSmtpPort(portValue);
+
+    if (!host) {
+        missingEnv.push("SMTP_HOST");
+    }
+    if (!user) {
+        missingEnv.push("SMTP_USER");
+    }
+    if (!pass) {
+        missingEnv.push("SMTP_PASS");
+    }
+    if (port === null) {
+        missingEnv.push("SMTP_PORT");
+    }
+
+    if (missingEnv.length > 0 || port === null || !host || !user || !pass) {
+        return {
+            configured: false,
+            missingEnv,
+            config: null,
+        };
+    }
+
+    return {
+        configured: true,
+        missingEnv: [],
+        config: {
+            host,
+            port,
+            secure: normalizeSmtpSecure(process.env.SMTP_SECURE, port),
+            user,
+            pass,
+        },
+    };
+}
+
+export function getContactMailConfigSnapshot() {
+    const smtp = getContactSmtpTransportConfig();
+    const resendApiKey = process.env.RESEND_API_KEY?.trim() || "";
+    const resendConfigured = Boolean(resendApiKey);
+
+    if (smtp.configured) {
+        return {
+            destinationEmail: getContactDestinationEmail(),
+            fromEmail: getContactFromEmail(),
+            replyToPolicy: "submitter_email",
+            transport: "smtp" as ContactMailTransportKind,
+            transportConfigured: true,
+            missingEnv: [] as string[],
+            smtp: {
+                configured: true,
+                missingEnv: [] as string[],
+                host: smtp.config.host,
+                port: smtp.config.port,
+                secure: smtp.config.secure,
+            },
+            resend: {
+                configured: resendConfigured,
+                missingEnv: resendConfigured ? [] : ["RESEND_API_KEY"],
+            },
+        };
+    }
+
+    if (resendConfigured) {
+        return {
+            destinationEmail: getContactDestinationEmail(),
+            fromEmail: getContactFromEmail(),
+            replyToPolicy: "submitter_email",
+            transport: "resend" as ContactMailTransportKind,
+            transportConfigured: true,
+            missingEnv: [] as string[],
+            smtp: {
+                configured: false,
+                missingEnv: smtp.missingEnv,
+                host: null,
+                port: null,
+                secure: null,
+            },
+            resend: {
+                configured: true,
+                missingEnv: [] as string[],
+            },
+        };
+    }
+
+    const missingEnv = Array.from(new Set([...smtp.missingEnv, "RESEND_API_KEY"]));
     return {
         destinationEmail: getContactDestinationEmail(),
         fromEmail: getContactFromEmail(),
         replyToPolicy: "submitter_email",
+        transport: "none" as ContactMailTransportKind,
         transportConfigured: missingEnv.length === 0,
         missingEnv,
+        smtp: {
+            configured: false,
+            missingEnv: smtp.missingEnv,
+            host: null,
+            port: null,
+            secure: null,
+        },
+        resend: {
+            configured: false,
+            missingEnv: ["RESEND_API_KEY"],
+        },
     };
 }
 
 export function recordContactMailAttempt(input: {
     outcome: "sent" | "queued" | "failed";
-    transport: "resend" | "fallback_queue";
+    transport: "smtp" | "resend" | "fallback_queue" | "none";
     reasonCode: ContactMailReasonCode;
     statusCode?: number | null;
     delivery?: {

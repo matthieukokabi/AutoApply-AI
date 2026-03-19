@@ -144,6 +144,21 @@ vi.mock("resend", () => ({
     })),
 }));
 
+// Mock Nodemailer SMTP transport (for contact route)
+const mockSmtpSend = vi.fn().mockResolvedValue({ messageId: "smtp_123" });
+(globalThis as Record<string, unknown>).__mockSmtpSend = mockSmtpSend;
+
+vi.mock("nodemailer", () => ({
+    createTransport: vi.fn().mockImplementation(() => ({
+        sendMail: mockSmtpSend,
+    })),
+    default: {
+        createTransport: vi.fn().mockImplementation(() => ({
+            sendMail: mockSmtpSend,
+        })),
+    },
+}));
+
 // Mock next/headers (for stripe webhook)
 vi.mock("next/headers", () => ({
     headers: vi.fn(() => ({

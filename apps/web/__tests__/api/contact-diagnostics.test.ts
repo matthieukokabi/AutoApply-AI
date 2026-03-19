@@ -20,6 +20,11 @@ describe("GET /api/contact/diagnostics", () => {
         resetContactTelemetryForTests();
         resetContactMailHealthForTests();
         process.env.RESEND_API_KEY = "re_test_key";
+        delete process.env.SMTP_HOST;
+        delete process.env.SMTP_PORT;
+        delete process.env.SMTP_SECURE;
+        delete process.env.SMTP_USER;
+        delete process.env.SMTP_PASS;
         delete process.env.TURNSTILE_SECRET_KEY;
         delete process.env.CONTACT_DIAGNOSTICS_TOKEN;
     });

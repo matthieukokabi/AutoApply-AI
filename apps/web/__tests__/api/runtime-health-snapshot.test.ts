@@ -1,16 +1,35 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { GET } from "@/app/api/runtime/health-snapshot/route";
 
 const TEMP_DIRS: string[] = [];
+
+beforeEach(() => {
+    delete process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN;
+    delete process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR;
+    delete process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT;
+    delete process.env.RESEND_API_KEY;
+    delete process.env.SMTP_HOST;
+    delete process.env.SMTP_PORT;
+    delete process.env.SMTP_SECURE;
+    delete process.env.SMTP_USER;
+    delete process.env.SMTP_PASS;
+    delete process.env.CONTACT_INBOX_EMAIL;
+    delete process.env.CONTACT_FROM_EMAIL;
+});
 
 afterEach(() => {
     delete process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN;
     delete process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR;
     delete process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT;
     delete process.env.RESEND_API_KEY;
+    delete process.env.SMTP_HOST;
+    delete process.env.SMTP_PORT;
+    delete process.env.SMTP_SECURE;
+    delete process.env.SMTP_USER;
+    delete process.env.SMTP_PASS;
     delete process.env.CONTACT_INBOX_EMAIL;
     delete process.env.CONTACT_FROM_EMAIL;
 

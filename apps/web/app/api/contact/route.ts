@@ -12,6 +12,7 @@ import {
     getContactDestinationEmail,
     getContactFromEmail,
     getContactMailConfigSnapshot,
+    getContactSmtpTransportConfig,
     recordContactMailAttempt,
     type ContactMailReasonCode,
 } from "@/lib/contact-mail-health";
@@ -98,6 +99,10 @@ function getResend(apiKey: string) {
     return new Resend(apiKey);
 }
 
+function getNodemailer() {
+    return require("nodemailer");
+}
+
 function escapeHtml(value: string): string {
     return value
         .replace(/&/g, "&amp;")
@@ -105,6 +110,48 @@ function escapeHtml(value: string): string {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
+}
+
+async function sendContactEmailViaSmtp(input: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    from: string;
+    to: string;
+    replyTo: string;
+    subject: string;
+    html: string;
+    text: string;
+}) {
+    const mockedSend = (globalThis as Record<string, unknown>).__mockSmtpSend;
+    if (typeof mockedSend === "function") {
+        await (mockedSend as (payload: Record<string, unknown>) => Promise<unknown>)(
+            input
+        );
+        return;
+    }
+
+    const nodemailer = getNodemailer();
+    const transporter = nodemailer.createTransport({
+        host: input.host,
+        port: input.port,
+        secure: input.secure,
+        auth: {
+            user: input.user,
+            pass: input.pass,
+        },
+    });
+
+    await transporter.sendMail({
+        from: input.from,
+        to: [input.to],
+        replyTo: input.replyTo,
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+    });
 }
 
 async function queueContactSubmissionForFallback(input: {
@@ -267,17 +314,20 @@ export async function POST(req: Request) {
         }
 
         const mailConfig = getContactMailConfigSnapshot();
-        const resendApiKey = process.env.RESEND_API_KEY?.trim();
-        if (!resendApiKey || !mailConfig.transportConfigured) {
-            const reasonCode: ContactMailReasonCode = "missing_resend_api_key";
+        const destinationEmail = getContactDestinationEmail();
+        const fromEmail = getContactFromEmail();
+
+        if (!mailConfig.transportConfigured || mailConfig.transport === "none") {
+            const reasonCode: ContactMailReasonCode = "missing_mail_transport";
             recordContactMailAttempt({
                 outcome: "failed",
-                transport: "resend",
+                transport: "none",
                 reasonCode,
                 statusCode: 503,
             });
             console.error("[contact-mail] transport_unavailable", {
                 reasonCode,
+                selectedTransport: mailConfig.transport,
                 missingEnv: mailConfig.missingEnv,
             });
 
@@ -298,8 +348,8 @@ export async function POST(req: Request) {
                     reasonCode: "queued_for_manual_followup",
                     statusCode: 202,
                     delivery: {
-                        destinationEmail: getContactDestinationEmail(),
-                        fromEmail: getContactFromEmail(),
+                        destinationEmail,
+                        fromEmail,
                         replyToEmail: email,
                     },
                 });
@@ -372,17 +422,7 @@ export async function POST(req: Request) {
         const safeSubject = escapeHtml(subjectLabels[subject] || "General");
         const safeMessage = escapeHtml(message).replace(/\n/g, "<br />");
 
-        const resend = getResend(resendApiKey);
-        const destinationEmail = getContactDestinationEmail();
-        const fromEmail = getContactFromEmail();
-
-        try {
-            await resend.emails.send({
-                from: fromEmail,
-                to: [destinationEmail],
-                replyTo: email,
-                subject: subjectLine,
-                html: `
+        const htmlContent = `
                     <h2>New Contact Form Submission</h2>
                     <p><strong>From:</strong> ${safeName} &lt;${safeEmail}&gt;</p>
                     <p><strong>Subject:</strong> ${safeSubject}</p>
@@ -392,12 +432,54 @@ export async function POST(req: Request) {
                     <p style="color: #666; font-size: 12px;">
                         Sent from the AutoApply AI contact form at ${new Date().toISOString()}
                     </p>
-                `,
-            });
+                `;
+        const textContent = [
+            "New Contact Form Submission",
+            `From: ${name} <${email}>`,
+            `Subject: ${subjectLabels[subject] || "General"}`,
+            "",
+            message,
+        ].join("\n");
+
+        try {
+            if (mailConfig.transport === "smtp") {
+                const smtpConfig = getContactSmtpTransportConfig();
+                if (!smtpConfig.configured || !smtpConfig.config) {
+                    throw new Error("SMTP configuration became unavailable");
+                }
+
+                await sendContactEmailViaSmtp({
+                    host: smtpConfig.config.host,
+                    port: smtpConfig.config.port,
+                    secure: smtpConfig.config.secure,
+                    user: smtpConfig.config.user,
+                    pass: smtpConfig.config.pass,
+                    from: fromEmail,
+                    to: destinationEmail,
+                    replyTo: email,
+                    subject: subjectLine,
+                    html: htmlContent,
+                    text: textContent,
+                });
+            } else {
+                const resendApiKey = process.env.RESEND_API_KEY?.trim();
+                if (!resendApiKey) {
+                    throw new Error("RESEND_API_KEY missing while resend transport selected");
+                }
+
+                const resend = getResend(resendApiKey);
+                await resend.emails.send({
+                    from: fromEmail,
+                    to: [destinationEmail],
+                    replyTo: email,
+                    subject: subjectLine,
+                    html: htmlContent,
+                });
+            }
 
             recordContactMailAttempt({
                 outcome: "sent",
-                transport: "resend",
+                transport: mailConfig.transport,
                 reasonCode: "mail_sent",
                 statusCode: 200,
                 delivery: {
@@ -409,14 +491,19 @@ export async function POST(req: Request) {
             incrementFunnelEvent("submit_success", funnelContext);
             return NextResponse.json({ success: true });
         } catch (mailError) {
+            const reasonCode: ContactMailReasonCode =
+                mailConfig.transport === "smtp"
+                    ? "smtp_send_failed"
+                    : "resend_send_failed";
             recordContactMailAttempt({
                 outcome: "failed",
-                transport: "resend",
-                reasonCode: "resend_send_failed",
+                transport: mailConfig.transport,
+                reasonCode,
                 statusCode: 502,
             });
             console.error("[contact-mail] send_failed", {
-                reasonCode: "resend_send_failed",
+                reasonCode,
+                selectedTransport: mailConfig.transport,
                 errorName:
                     mailError instanceof Error
                         ? mailError.name
@@ -434,7 +521,7 @@ export async function POST(req: Request) {
                 message,
                 routePath: funnelContext.routePath ?? undefined,
                 campaign: funnelContext.campaign ?? undefined,
-                reasonCode: "resend_send_failed",
+                reasonCode,
             });
             if (queued) {
                 recordContactMailAttempt({
