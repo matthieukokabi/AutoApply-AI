@@ -314,11 +314,14 @@ function matchesLocationPreference(job, options) {
     }
 
     if (remotePreference === "hybrid") {
-        return matchesLocation || haystack.includes("hybrid");
+        if (hasLocationPreference) {
+            return matchesLocation;
+        }
+        return haystack.includes("hybrid") || mentionsRemote;
     }
 
     if (hasLocationPreference) {
-        return matchesLocation || mentionsRemote;
+        return matchesLocation;
     }
 
     return true;

@@ -27,6 +27,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [ ] Verify first post-restart scheduled execution uses live workflow version (`f388a6db-5bf6-44fb-bfd4-33a3b5aa448c`) and no longer emits decrypt errors at fetch stage (2026-03-20 update: production webhook smoke for `fetch_active_users` now returns HTTP 200 after deploy `631f04a`; awaiting next scheduled n8n execution to close)
 - [x] One-time production reconciliation for affected first live paid user (`armand.kokabi+auto@gmail.com`): `subscriptionStatus=pro` with `automationEnabled=false` corrected to `automationEnabled=true` — completed on 2026-03-20 (operational Prisma update + diagnostics recheck)
 - [x] Improve discovery relevance for Zürich/hybrid preferences by expanding title/location query candidates, adding preference-aware location filtering fallback, and exposing explicit LinkedIn auto-source status in recovery diagnostics — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_recovery_run.js`, `apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`)
+- [x] Tighten hybrid/location relevance to reject out-of-region “hybrid” matches when users set explicit target cities (e.g., Zürich) and keep only location-aligned results — completed on 2026-03-20 (`apps/web/scripts/automation_pipeline_recovery_run.js`, `apps/web/scripts/incident_patch_job_discovery_workflow.js`, `apps/web/__tests__/automation-pipeline-recovery.test.ts`)
 
 ## P0 — Incident: contact endpoint + canonical social identity + mail routing
 

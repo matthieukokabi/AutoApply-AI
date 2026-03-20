@@ -127,4 +127,20 @@ describe("automation pipeline recovery script helpers", () => {
         expect(hybridHit).toBe(true);
         expect(nonMatchingOnsite).toBe(false);
     });
+
+    it("rejects hybrid jobs outside preferred location when location is explicit", () => {
+        const remoteButWrongRegion = recovery.matchesLocationPreference(
+            {
+                location: "München, Germany",
+                title: "IT Operations Engineer",
+                description: "Hybrid role with 3 days remote.",
+            },
+            {
+                locationCandidates: ["Zürich"],
+                remotePreference: "hybrid",
+            }
+        );
+
+        expect(remoteButWrongRegion).toBe(false);
+    });
 });

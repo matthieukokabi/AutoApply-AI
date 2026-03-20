@@ -297,8 +297,8 @@ function matchesPreferredLocation(job, locationNeedles, preference) {
 
   if (preference === 'remote') return mentionsRemote;
   if (preference === 'onsite') return matchesLocation && !mentionsRemote;
-  if (preference === 'hybrid') return matchesLocation || haystack.includes('hybrid');
-  return matchesLocation || mentionsRemote;
+  if (preference === 'hybrid') return matchesLocation;
+  return matchesLocation;
 }
 
 const locationNeedles = [primaryLocation, fallbackLocation]
