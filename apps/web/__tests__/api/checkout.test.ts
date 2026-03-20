@@ -47,6 +47,7 @@ describe("POST /api/checkout", () => {
         expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 mode: "subscription",
+                allow_promotion_codes: true,
                 metadata: { userId: "user_1" },
             })
         );
@@ -69,7 +70,10 @@ describe("POST /api/checkout", () => {
 
         expect(response.status).toBe(200);
         expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
-            expect.objectContaining({ mode: "payment" })
+            expect.objectContaining({
+                mode: "payment",
+                allow_promotion_codes: true,
+            })
         );
     });
 

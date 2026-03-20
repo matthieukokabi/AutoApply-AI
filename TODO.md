@@ -53,7 +53,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [ ] Verify cancel return does not alter plan state
 - [ ] Verify webhook delivery and idempotency on latest payment events in Stripe dashboard (log with `docs/live-payment-verification-log-template.md`)
 - [ ] Manual family live payment test (real card, production mode) and record outcome with screenshots + Stripe event IDs (use `docs/live-payment-test-runbook.md` + `docs/live-payment-verification-log-template.md`)
-- [ ] Enable Stripe promotion code redemption in checkout (support the existing `50% off for 3 months` campaign code) and expose coupon usage in the pricing/settings upgrade path
+- [x] Enable Stripe promotion code redemption in checkout (support the existing `50% off for 3 months` campaign code) and expose coupon usage in the pricing/settings upgrade path — completed on 2026-03-20 (`apps/web/app/api/checkout/route.ts`, `apps/web/__tests__/api/checkout.test.ts`)
 
 ## P1 — Onboarding reliability hardening right after live payment pass
 

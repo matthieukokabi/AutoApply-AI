@@ -183,6 +183,7 @@ export async function POST(req: Request) {
             mode,
             payment_method_types: ["card"],
             line_items: [{ price: priceId, quantity: 1 }],
+            allow_promotion_codes: true,
             success_url: successUrl.toString(),
             cancel_url: cancelUrl.toString(),
             metadata: { userId: user.id },
