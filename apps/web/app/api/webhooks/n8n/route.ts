@@ -101,7 +101,7 @@ async function fetchAutomationUsers() {
  */
 export async function POST(req: Request) {
     try {
-        const expectedWebhookSecret = process.env.N8N_WEBHOOK_SECRET;
+        const expectedWebhookSecret = process.env.N8N_WEBHOOK_SECRET?.trim();
         if (!expectedWebhookSecret) {
             logPipelineEvent("error", "webhook_misconfigured", {
                 reason: "missing_n8n_webhook_secret",
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
         }
 
         // Verify webhook secret
-        const webhookSecret = req.headers.get("x-webhook-secret");
+        const webhookSecret = req.headers.get("x-webhook-secret")?.trim();
         if (!webhookSecret || webhookSecret !== expectedWebhookSecret) {
             logPipelineEvent("warn", "webhook_unauthorized", {
                 reason: "invalid_secret",
@@ -122,7 +122,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await req.json();
+        const rawBody = await req.json();
+        let parsedBody: unknown = rawBody;
+        if (typeof rawBody === "string") {
+            try {
+                parsedBody = JSON.parse(rawBody);
+            } catch {
+                parsedBody = rawBody;
+            }
+        }
+        const body =
+            parsedBody && typeof parsedBody === "object" && !Array.isArray(parsedBody)
+                ? (parsedBody as Record<string, unknown>)
+                : {};
         const headerRunId = req.headers.get("x-run-id");
         const bodyRunId =
             typeof body?.runId === "string" && body.runId.trim() ? body.runId.trim() : null;

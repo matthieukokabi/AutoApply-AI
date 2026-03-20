@@ -46,6 +46,17 @@ function createWebhookRequest(type: string, data?: any) {
     });
 }
 
+function createRawWebhookRequest(body: unknown, secret = "test_webhook_secret") {
+    return new Request("http://localhost/api/webhooks/n8n", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-webhook-secret": secret,
+        },
+        body: JSON.stringify(body),
+    });
+}
+
 describe("POST /api/webhooks/n8n", () => {
     it("returns 503 when webhook secret is not configured", async () => {
         delete process.env.N8N_WEBHOOK_SECRET;
@@ -88,6 +99,19 @@ describe("POST /api/webhooks/n8n", () => {
         expect(response.status).toBe(401);
     });
 
+    it("accepts webhook secret with surrounding whitespace", async () => {
+        vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([]);
+        vi.mocked(prisma.user.findMany).mockResolvedValue([] as any);
+
+        const request = createRawWebhookRequest(
+            { type: "fetch_active_users" },
+            "  test_webhook_secret  "
+        );
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+    });
+
     it("returns 400 for unknown webhook type", async () => {
         const request = createWebhookRequest("unknown_type", {});
         const response = await POST(request);
@@ -115,6 +139,24 @@ describe("POST /api/webhooks/n8n", () => {
     });
 
     describe("fetch_active_users", () => {
+        it("accepts stringified JSON payloads from n8n expression bodies", async () => {
+            vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([]);
+            vi.mocked(prisma.user.findMany).mockResolvedValue([] as any);
+
+            const request = createRawWebhookRequest(
+                JSON.stringify({
+                    type: "fetch_active_users",
+                    runId: "n8n-string-payload",
+                })
+            );
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.throttled).toBe(false);
+            expect(data.users).toEqual([]);
+        });
+
         it("accepts fetch_active_users payload without data envelope", async () => {
             vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([]);
             vi.mocked(prisma.user.findMany).mockResolvedValue([] as any);
