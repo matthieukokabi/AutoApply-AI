@@ -34,6 +34,26 @@ const publicRoutes = [
 
 const isPublicRoute = createRouteMatcher(publicRoutes);
 
+function isRecruiterBetaRoute(pathname: string) {
+    return (
+        pathname === "/labs/recruiter" ||
+        pathname.startsWith("/labs/recruiter/")
+    );
+}
+
+function applyRecruiterBetaRobotsHeader(
+    pathname: string,
+    response: NextResponse | undefined
+) {
+    if (!isRecruiterBetaRoute(pathname)) {
+        return response;
+    }
+
+    const nextResponse = response ?? NextResponse.next();
+    nextResponse.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return nextResponse;
+}
+
 function isLikelyBot(userAgent: string | null) {
     if (!userAgent) {
         return false;
@@ -54,6 +74,7 @@ function hasLikelySessionCookie(cookieHeader: string | null) {
 
 export default clerkMiddleware(async (auth, req) => {
     const url = req.nextUrl;
+    const isRecruiterLabRoute = isRecruiterBetaRoute(url.pathname);
 
     // API routes still match middleware so Clerk can attach auth context,
     // but this middleware callback does not need to execute auth/i18n logic for them.
@@ -64,7 +85,8 @@ export default clerkMiddleware(async (auth, req) => {
     let intlResponse: ReturnType<typeof intlMiddleware> | undefined;
 
     // Skip locale routing for Clerk internals
-    if (!url.pathname.startsWith("/__clerk")) {
+    // and keep hidden labs routes non-localized.
+    if (!url.pathname.startsWith("/__clerk") && !isRecruiterLabRoute) {
         intlResponse = intlMiddleware(req);
     }
 
@@ -86,7 +108,7 @@ export default clerkMiddleware(async (auth, req) => {
         requiresPublicAuthLookup;
 
     if (!needsAuthLookup) {
-        return intlResponse;
+        return applyRecruiterBetaRobotsHeader(url.pathname, intlResponse);
     }
 
     const { userId } = await auth();
@@ -111,7 +133,10 @@ export default clerkMiddleware(async (auth, req) => {
         !isClerkInternalRoute &&
         (url.pathname === "/" || isLocaleRoot)
     ) {
-        return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
+        return applyRecruiterBetaRobotsHeader(
+            url.pathname,
+            NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url))
+        );
     }
 
     // If user is signed in and on sign-in/sign-up page, redirect to dashboard
@@ -120,16 +145,22 @@ export default clerkMiddleware(async (auth, req) => {
         !isClerkInternalRoute &&
         isAuthPage
     ) {
-        return NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url));
+        return applyRecruiterBetaRobotsHeader(
+            url.pathname,
+            NextResponse.redirect(new URL(`${localePrefix}/dashboard`, req.url))
+        );
     }
 
     // If user is NOT signed in and trying to access a protected route
     if (!userId && !isPublicRoute(req)) {
-        return NextResponse.redirect(new URL(`${localePrefix}/sign-in`, req.url));
+        return applyRecruiterBetaRobotsHeader(
+            url.pathname,
+            NextResponse.redirect(new URL(`${localePrefix}/sign-in`, req.url))
+        );
     }
 
     // Preserve locale rewrite/redirect response from intl middleware when set.
-    return intlResponse;
+    return applyRecruiterBetaRobotsHeader(url.pathname, intlResponse);
 });
 
 export const config = {
@@ -157,6 +188,8 @@ export const config = {
         "/settings/:path*",
         "/documents/:path*",
         "/onboarding/:path*",
+        // Hidden recruiter beta routes (protected)
+        "/labs/recruiter/:path*",
         // Public bare pages and auth bare routes are handled by static Next.js redirects in
         // next.config.js, so they are excluded from middleware matcher scope.
         // Authenticated API routes only (avoid unnecessary middleware invocations

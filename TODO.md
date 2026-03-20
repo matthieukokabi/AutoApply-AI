@@ -2,6 +2,15 @@
 
 Last updated: 2026-03-20 (Europe/Zurich)
 
+## P0 — Recruiter beta hidden track (isolated from production-critical flows)
+
+- [x] Step 1: establish hidden `/labs/recruiter` beta foundation with auth + feature-flag gating, noindex/noarchive crawler protection, and non-indexed robots policy without touching onboarding/contact/mail behavior — completed on 2026-03-20 (`apps/web/app/labs/layout.tsx`, `apps/web/app/labs/recruiter/page.tsx`, `apps/web/lib/recruiter-beta.ts`, `apps/web/middleware.ts`, `apps/web/app/robots.ts`, `apps/web/__tests__/middleware.test.ts`, `apps/web/__tests__/recruiter-beta.test.ts`, `apps/web/__tests__/robots.test.ts`, `.env.example`)
+- [ ] Step 2: introduce recruiter/team/org domain schema (orgs, seats, roles, requisitions, candidates, pipeline stages, activity log) with migration-safe backward-compatible rollout
+- [ ] Step 3: implement recruiter MVP workflows (create requisition, manual candidate import, match scoring, stage movement, team dashboard)
+- [ ] Step 4: add recruiter workflow operational safety (structured logs + correlation IDs, health indicators, critical-failure alert conditions)
+- [ ] Step 5: deliver recruiter cost/pricing model benchmark (`docs/recruiter/cost-pricing-model.md`) with dated assumptions and Starter/Team/Enterprise margin rationale
+- [ ] Step 6: deliver recruiter documentation pack (`docs/recruiter/implementation-plan.md`, `docs/recruiter/rollout-runbook.md`, `docs/recruiter/risk-rollback.md`)
+
 ## P0 — Incident: onboarding CV upload returning 500
 
 - [x] Hotfix CV PDF upload parser compatibility with `pdf-parse` v2 API (`PDFParse#getText`) and return actionable 400 errors (no generic 500) when PDF/DOCX parsing fails — completed on 2026-03-19 (`apps/web/app/api/profile/upload/route.ts`, `apps/web/__tests__/api/profile-upload.test.ts`)

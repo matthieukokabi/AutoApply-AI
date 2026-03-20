@@ -64,6 +64,34 @@ describe("middleware auth + i18n routing", () => {
         expect(response?.headers.get("location")).toBe("https://example.com/fr/sign-in");
     });
 
+    it("redirects signed-out users on recruiter labs route to sign-in", async () => {
+        const auth = vi.fn().mockResolvedValue({ userId: null });
+
+        const response = await (middleware as any)(
+            auth,
+            mockRequest("/labs/recruiter")
+        );
+
+        expect(response?.status).toBe(307);
+        expect(response?.headers.get("location")).toBe(
+            "https://example.com/sign-in"
+        );
+        expect(response?.headers.get("x-robots-tag")).toContain("noindex");
+    });
+
+    it("adds noindex x-robots-tag headers to recruiter labs route", async () => {
+        const auth = vi.fn().mockResolvedValue({ userId: "clerk_user_1" });
+
+        const response = await (middleware as any)(
+            auth,
+            mockRequest("/labs/recruiter")
+        );
+
+        expect(response?.status).toBe(200);
+        expect(response?.headers.get("x-robots-tag")).toContain("noindex");
+        expect(response?.headers.get("x-robots-tag")).toContain("noarchive");
+    });
+
     it("allows signed-out users on public auth pages", async () => {
         const auth = vi.fn().mockResolvedValue({ userId: null });
 
@@ -165,5 +193,6 @@ describe("middleware auth + i18n routing", () => {
         expect(matcher).not.toContain("/api/auth/diagnostics");
         expect(matcher).not.toContain("/api/runtime/health-snapshot");
         expect(matcher).not.toContain("/api/debug/auth");
+        expect(matcher).toContain("/labs/recruiter/:path*");
     });
 });
