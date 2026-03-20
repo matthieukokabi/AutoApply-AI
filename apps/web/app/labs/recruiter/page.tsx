@@ -210,6 +210,7 @@ export default async function RecruiterLabsPage() {
 
     const dashboard = await listRecruiterDashboardData(workspace.organizationId);
     const adminTrackingUrl = toAbsoluteAppUrl("/labs/recruiter");
+    const healthTrackingUrl = toAbsoluteAppUrl("/api/recruiter-beta/health");
     const teamOptions = dashboard.teams;
     const stageOptions = dashboard.stages;
 
@@ -230,6 +231,14 @@ export default async function RecruiterLabsPage() {
                             className="font-mono text-xs underline underline-offset-4"
                         >
                             {adminTrackingUrl}
+                        </a>
+                        <br />
+                        Health endpoint:{" "}
+                        <a
+                            href={healthTrackingUrl}
+                            className="font-mono text-xs underline underline-offset-4"
+                        >
+                            {healthTrackingUrl}
                         </a>
                     </CardDescription>
                 </CardHeader>

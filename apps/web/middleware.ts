@@ -203,6 +203,7 @@ export const config = {
         "/api/preferences",
         "/api/profile",
         "/api/profile/:path*",
+        "/api/recruiter-beta/health",
         "/api/stats",
         "/api/tailor",
         "/api/user",
