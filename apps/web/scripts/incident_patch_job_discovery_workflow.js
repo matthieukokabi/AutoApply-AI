@@ -68,16 +68,31 @@ const user = $input.first().json;
 const config = $('Load Config').first().json;
 const primaryTitle = (user.targetTitles && user.targetTitles[0] ? user.targetTitles[0] : 'software engineer').trim();
 const fallbackTitle = (user.targetTitles && user.targetTitles[1] ? user.targetTitles[1] : '').trim();
-const searchTitle = primaryTitle;
-const searchQuery = [primaryTitle, fallbackTitle].filter(Boolean).join(' OR ');
-const primaryLocation = (user.locations && user.locations[0] ? user.locations[0] : '').trim();
-const fallbackLocation = (user.locations && user.locations[1] ? user.locations[1] : '').trim();
-const searchLocation = primaryLocation;
-const searchLocationQuery = [primaryLocation, fallbackLocation].filter(Boolean).join(' OR ');
+const titleCandidates = [primaryTitle, fallbackTitle].filter(Boolean);
+const searchTitle = titleCandidates.length > 0 ? titleCandidates[0] : 'software engineer';
+const normalizedTitleCandidates = titleCandidates.length > 0 ? titleCandidates : [searchTitle];
+const locationCandidates = Array.isArray(user.locations)
+  ? user.locations.map((location) => String(location || '').trim()).filter(Boolean).slice(0, 3)
+  : [];
+const searchLocation = locationCandidates.length > 0 ? locationCandidates[0] : '';
 const remotePreference = String(user.remotePreference || 'any').toLowerCase();
 const runId = String($execution.id || Date.now());
 
 const allJobs = [];
+
+function buildSearchPairs(titles, locations, limit) {
+  const pairs = [];
+  const safeTitles = Array.isArray(titles) && titles.length > 0 ? titles : ['software engineer'];
+  const safeLocations = Array.isArray(locations) && locations.length > 0 ? locations : [''];
+  const max = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 4;
+  for (const title of safeTitles) {
+    for (const location of safeLocations) {
+      pairs.push({ title, location });
+      if (pairs.length >= max) return pairs;
+    }
+  }
+  return pairs;
+}
 
 function detectAdzunaCountry(location) {
   const locationLower = (location || '').toLowerCase();
@@ -106,25 +121,28 @@ async function safeFetch(url, options) {
 }
 
 const adzunaCountry = detectAdzunaCountry(searchLocation);
+const searchPairs = buildSearchPairs(normalizedTitleCandidates.slice(0, 3), locationCandidates, 6);
 
 // 1) Adzuna
 if (config.adzunaAppId && config.adzunaAppKey) {
   try {
-    const adzunaUrl = 'https://api.adzuna.com/v1/api/jobs/' + adzunaCountry + '/search/1?app_id=' + config.adzunaAppId + '&app_key=' + config.adzunaAppKey + '&what=' + encodeURIComponent(searchQuery || searchTitle) + '&where=' + encodeURIComponent(searchLocationQuery || searchLocation) + '&results_per_page=15&content-type=application/json';
-    const data = await safeFetch(adzunaUrl);
-    if (data && Array.isArray(data.results)) {
-      for (const j of data.results) {
-        allJobs.push({
-          externalId: 'adzuna-' + j.id,
-          title: j.title || '',
-          company: (j.company && j.company.display_name) || 'Unknown',
-          location: (j.location && j.location.display_name) || '',
-          description: j.description || '',
-          source: 'adzuna',
-          url: j.redirect_url || '',
-          salary: j.salary_is_predicted === '0' ? String(j.salary_min) + '-' + String(j.salary_max) : null,
-          postedAt: j.created ? new Date(j.created).toISOString() : null
-        });
+    for (const pair of searchPairs.slice(0, 4)) {
+      const adzunaUrl = 'https://api.adzuna.com/v1/api/jobs/' + adzunaCountry + '/search/1?app_id=' + config.adzunaAppId + '&app_key=' + config.adzunaAppKey + '&what=' + encodeURIComponent(pair.title || searchTitle) + '&where=' + encodeURIComponent(pair.location || searchLocation) + '&results_per_page=15&content-type=application/json';
+      const data = await safeFetch(adzunaUrl);
+      if (data && Array.isArray(data.results)) {
+        for (const j of data.results) {
+          allJobs.push({
+            externalId: 'adzuna-' + j.id,
+            title: j.title || '',
+            company: (j.company && j.company.display_name) || 'Unknown',
+            location: (j.location && j.location.display_name) || '',
+            description: j.description || '',
+            source: 'adzuna',
+            url: j.redirect_url || '',
+            salary: j.salary_is_predicted === '0' ? String(j.salary_min) + '-' + String(j.salary_max) : null,
+            postedAt: j.created ? new Date(j.created).toISOString() : null
+          });
+        }
       }
     }
   } catch { /* continue */ }
@@ -152,42 +170,46 @@ try {
 
 // 3) Remotive
 try {
-  const remotiveUrl = 'https://remotive.com/api/remote-jobs?search=' + encodeURIComponent(searchQuery || searchTitle) + '&limit=15';
-  const data = await safeFetch(remotiveUrl);
-  if (data && Array.isArray(data.jobs)) {
-    for (const j of data.jobs) {
-      allJobs.push({
-        externalId: 'remotive-' + j.id,
-        title: j.title || '',
-        company: j.company_name || 'Unknown',
-        location: j.candidate_required_location || 'Remote',
-        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),
-        source: 'remotive',
-        url: j.url || '',
-        salary: j.salary || null,
-        postedAt: j.publication_date || null
-      });
+  for (const title of normalizedTitleCandidates.slice(0, 3)) {
+    const remotiveUrl = 'https://remotive.com/api/remote-jobs?search=' + encodeURIComponent(title || searchTitle) + '&limit=15';
+    const data = await safeFetch(remotiveUrl);
+    if (data && Array.isArray(data.jobs)) {
+      for (const j of data.jobs) {
+        allJobs.push({
+          externalId: 'remotive-' + j.id,
+          title: j.title || '',
+          company: j.company_name || 'Unknown',
+          location: j.candidate_required_location || 'Remote',
+          description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),
+          source: 'remotive',
+          url: j.url || '',
+          salary: j.salary || null,
+          postedAt: j.publication_date || null
+        });
+      }
     }
   }
 } catch { /* continue */ }
 
 // 4) Arbeitnow
 try {
-  const arbeitnowUrl = 'https://www.arbeitnow.com/api/job-board-api?search=' + encodeURIComponent(searchQuery || searchTitle) + '&page=1';
-  const data = await safeFetch(arbeitnowUrl);
-  if (data && Array.isArray(data.data)) {
-    for (const j of data.data) {
-      allJobs.push({
-        externalId: 'arbeitnow-' + (j.slug || j.id || Date.now()),
-        title: j.title || '',
-        company: j.company_name || 'Unknown',
-        location: j.location || '',
-        description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),
-        source: 'arbeitnow',
-        url: j.url || '',
-        salary: null,
-        postedAt: j.created_at || null
-      });
+  for (const title of normalizedTitleCandidates.slice(0, 3)) {
+    const arbeitnowUrl = 'https://www.arbeitnow.com/api/job-board-api?search=' + encodeURIComponent(title || searchTitle) + '&page=1';
+    const data = await safeFetch(arbeitnowUrl);
+    if (data && Array.isArray(data.data)) {
+      for (const j of data.data) {
+        allJobs.push({
+          externalId: 'arbeitnow-' + (j.slug || j.id || Date.now()),
+          title: j.title || '',
+          company: j.company_name || 'Unknown',
+          location: j.location || '',
+          description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),
+          source: 'arbeitnow',
+          url: j.url || '',
+          salary: null,
+          postedAt: j.created_at || null
+        });
+      }
     }
   }
 } catch { /* continue */ }
@@ -195,7 +217,8 @@ try {
 // 5) JSearch
 if (config.jsearchApiKey) {
   try {
-    const query = (searchQuery || searchTitle) + ' ' + (searchLocationQuery || searchLocation || 'remote');
+    const jsearchPair = searchPairs.length > 0 ? searchPairs[0] : { title: searchTitle, location: searchLocation };
+    const query = String(jsearchPair.title || searchTitle || 'software engineer') + ' ' + String(jsearchPair.location || searchLocation || 'remote');
     const jsearchUrl = 'https://jsearch.p.rapidapi.com/search?query=' + encodeURIComponent(query) + '&page=1&num_pages=1';
     const data = await safeFetch(jsearchUrl, {
       headers: {
@@ -224,24 +247,26 @@ if (config.jsearchApiKey) {
 // 6) Jooble
 if (config.joobleApiKey) {
   try {
-    const data = await safeFetch('https://jooble.org/api/' + config.joobleApiKey, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keywords: (searchQuery || searchTitle), location: (searchLocationQuery || searchLocation), page: 1 })
-    });
-    if (data && Array.isArray(data.jobs)) {
-      for (const j of data.jobs) {
-        allJobs.push({
-          externalId: 'jooble-' + (j.id || Date.now()),
-          title: j.title || '',
-          company: j.company || 'Unknown',
-          location: j.location || '',
-          description: (j.snippet || '').substring(0, 3000),
-          source: 'jooble',
-          url: j.link || '',
-          salary: j.salary || null,
-          postedAt: j.updated || null
-        });
+    for (const pair of searchPairs.slice(0, 4)) {
+      const data = await safeFetch('https://jooble.org/api/' + config.joobleApiKey, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords: (pair.title || searchTitle), location: (pair.location || searchLocation), page: 1 })
+      });
+      if (data && Array.isArray(data.jobs)) {
+        for (const j of data.jobs) {
+          allJobs.push({
+            externalId: 'jooble-' + (j.id || Date.now()),
+            title: j.title || '',
+            company: j.company || 'Unknown',
+            location: j.location || '',
+            description: (j.snippet || '').substring(0, 3000),
+            source: 'jooble',
+            url: j.link || '',
+            salary: j.salary || null,
+            postedAt: j.updated || null
+          });
+        }
       }
     }
   } catch { /* continue */ }
@@ -251,23 +276,25 @@ if (config.joobleApiKey) {
 if (config.reedApiKey) {
   try {
     const reedAuth = btoa(config.reedApiKey + ':');
-    const reedUrl = 'https://www.reed.co.uk/api/1.0/search?keywords=' + encodeURIComponent(searchQuery || searchTitle) + '&locationName=' + encodeURIComponent(searchLocationQuery || searchLocation) + '&resultsToTake=15';
-    const data = await safeFetch(reedUrl, {
-      headers: { Authorization: 'Basic ' + reedAuth }
-    });
-    if (data && Array.isArray(data.results)) {
-      for (const j of data.results) {
-        allJobs.push({
-          externalId: 'reed-' + j.jobId,
-          title: j.jobTitle || '',
-          company: j.employerName || 'Unknown',
-          location: j.locationName || '',
-          description: (j.jobDescription || '').substring(0, 3000),
-          source: 'reed',
-          url: j.jobUrl || '',
-          salary: j.minimumSalary ? String(j.minimumSalary) + '-' + String(j.maximumSalary) : null,
-          postedAt: j.date || null
-        });
+    for (const pair of searchPairs.slice(0, 4)) {
+      const reedUrl = 'https://www.reed.co.uk/api/1.0/search?keywords=' + encodeURIComponent(pair.title || searchTitle) + '&locationName=' + encodeURIComponent(pair.location || searchLocation) + '&resultsToTake=15';
+      const data = await safeFetch(reedUrl, {
+        headers: { Authorization: 'Basic ' + reedAuth }
+      });
+      if (data && Array.isArray(data.results)) {
+        for (const j of data.results) {
+          allJobs.push({
+            externalId: 'reed-' + j.jobId,
+            title: j.jobTitle || '',
+            company: j.employerName || 'Unknown',
+            location: j.locationName || '',
+            description: (j.jobDescription || '').substring(0, 3000),
+            source: 'reed',
+            url: j.jobUrl || '',
+            salary: j.minimumSalary ? String(j.minimumSalary) + '-' + String(j.maximumSalary) : null,
+            postedAt: j.date || null
+          });
+        }
       }
     }
   } catch { /* continue */ }
@@ -301,9 +328,7 @@ function matchesPreferredLocation(job, locationNeedles, preference) {
   return matchesLocation;
 }
 
-const locationNeedles = [primaryLocation, fallbackLocation]
-  .filter(Boolean)
-  .map(normalizeForMatch);
+const locationNeedles = locationCandidates.map(normalizeForMatch);
 const filteredJobs = uniqueJobs.filter((job) =>
   matchesPreferredLocation(job, locationNeedles, remotePreference)
 );
