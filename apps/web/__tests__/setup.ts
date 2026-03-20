@@ -190,6 +190,9 @@ vi.mock("@/lib/stripe", () => ({
         subscriptions: {
             retrieve: vi.fn(),
         },
+        customers: {
+            retrieve: vi.fn(),
+        },
     },
     PLANS: {
         free: { name: "Free", credits: 3, price: 0 },

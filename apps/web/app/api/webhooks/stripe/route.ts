@@ -32,6 +32,23 @@ function resolveCheckoutSessionUserWhere(session: Stripe.Checkout.Session) {
     return null;
 }
 
+async function resolveCustomerEmailFromStripe(customerId: string) {
+    try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if ("deleted" in customer && customer.deleted) {
+            return null;
+        }
+
+        return customer.email?.trim().toLowerCase() || null;
+    } catch (error) {
+        console.warn("[stripe-webhook] failed to resolve customer email", {
+            customerId,
+            error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+    }
+}
+
 function isMissingWebhookTableError(error: unknown) {
     if (!error || typeof error !== "object") {
         return false;
@@ -166,13 +183,30 @@ export async function POST(req: Request) {
 
                 // Only activate if subscription is active/trialing
                 if (status === "active" || status === "trialing") {
-                    await prisma.user.updateMany({
+                    const updateResult = await prisma.user.updateMany({
                         where: { stripeCustomerId: customer },
                         data: {
                             subscriptionStatus: plan,
                             creditsRemaining: plan === "unlimited" ? 9999 : 50,
                         },
                     });
+
+                    if (updateResult.count === 0) {
+                        const customerEmail =
+                            await resolveCustomerEmailFromStripe(customer);
+                        if (customerEmail) {
+                            await prisma.user.updateMany({
+                                where: { email: customerEmail },
+                                data: {
+                                    subscriptionStatus: plan,
+                                    stripeCustomerId: customer,
+                                    creditsRemaining:
+                                        plan === "unlimited" ? 9999 : 50,
+                                    automationEnabled: true,
+                                },
+                            });
+                        }
+                    }
                 } else if (status === "past_due" || status === "unpaid") {
                     console.warn(`Subscription ${subscription.id} status: ${status} for customer: ${customer}`);
                 }

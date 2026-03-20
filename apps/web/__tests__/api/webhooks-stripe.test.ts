@@ -419,6 +419,49 @@ describe("POST /api/webhooks/stripe", () => {
             expect(response.status).toBe(200);
             expect(prisma.user.updateMany).not.toHaveBeenCalled();
         });
+
+        it("falls back to email mapping when stripeCustomerId is not linked yet", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("customer.subscription.created", {
+                    customer: "cus_email_fallback",
+                    status: "active",
+                    items: { data: [{ price: { id: "price_pro_monthly" } }] },
+                }) as any
+            );
+
+            vi.mocked(prisma.user.updateMany)
+                .mockResolvedValueOnce({ count: 0 } as any)
+                .mockResolvedValueOnce({ count: 1 } as any);
+            vi.mocked(stripe.customers.retrieve).mockResolvedValue({
+                id: "cus_email_fallback",
+                email: "fallback-sub@example.com",
+            } as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            expect(prisma.user.updateMany).toHaveBeenNthCalledWith(1, {
+                where: { stripeCustomerId: "cus_email_fallback" },
+                data: {
+                    subscriptionStatus: "pro",
+                    creditsRemaining: 50,
+                },
+            });
+            expect(prisma.user.updateMany).toHaveBeenNthCalledWith(2, {
+                where: { email: "fallback-sub@example.com" },
+                data: {
+                    subscriptionStatus: "pro",
+                    stripeCustomerId: "cus_email_fallback",
+                    creditsRemaining: 50,
+                    automationEnabled: true,
+                },
+            });
+        });
     });
 
     describe("customer.subscription.deleted", () => {
