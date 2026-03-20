@@ -121,6 +121,8 @@
         "viewRoadmap": "Roadmap ansehen",
         "item_ai_cv": "KI-Lebenslauf",
         "item_ai_cv_desc": "Massgeschneiderter Lebenslauf für jede Stelle, ATS-optimiert mit Ihrer echten Erfahrung.",
+        "item_cv_studio": "CV-Studio",
+        "item_cv_studio_desc": "Erstellen Sie professionelle Lebenslauf- und Anschreiben-Entwürfe oder exportieren Sie generierte Dokumente als PDF.",
         "item_cover_letter": "KI-Anschreiben",
         "item_cover_letter_desc": "Personalisiertes Anschreiben pro Stelle, abgestimmt auf Ihr Profil.",
         "item_job_apis": "7 Job-APIs",

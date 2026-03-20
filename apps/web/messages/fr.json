@@ -121,6 +121,8 @@
         "viewRoadmap": "Voir la feuille de route",
         "item_ai_cv": "CV personnalisé par IA",
         "item_ai_cv_desc": "CV sur mesure pour chaque poste, optimisé ATS avec votre vraie expérience.",
+        "item_cv_studio": "Studio CV",
+        "item_cv_studio_desc": "Créez des CV et lettres professionnels depuis zéro ou exportez vos documents générés en PDF.",
         "item_cover_letter": "Lettre de motivation IA",
         "item_cover_letter_desc": "Lettre de motivation personnalisée par poste, adaptée à votre profil.",
         "item_job_apis": "7 APIs d'emploi",

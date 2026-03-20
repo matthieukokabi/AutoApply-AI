@@ -121,6 +121,8 @@
         "viewRoadmap": "Vedi roadmap",
         "item_ai_cv": "CV personalizzato con IA",
         "item_ai_cv_desc": "CV su misura per ogni posizione, ottimizzato ATS con la tua esperienza reale.",
+        "item_cv_studio": "CV Studio",
+        "item_cv_studio_desc": "Crea bozze professionali di CV e lettera da zero oppure esporta in PDF i documenti generati.",
         "item_cover_letter": "Lettera di presentazione IA",
         "item_cover_letter_desc": "Lettera personalizzata per ogni posizione, adattata al tuo profilo.",
         "item_job_apis": "7 API di lavoro",

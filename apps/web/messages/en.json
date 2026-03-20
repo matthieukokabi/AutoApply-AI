@@ -120,6 +120,8 @@
         "viewRoadmap": "View Roadmap",
         "item_ai_cv": "AI CV Tailoring",
         "item_ai_cv_desc": "Tailored resume for every job, ATS-optimized with your real experience.",
+        "item_cv_studio": "CV Studio",
+        "item_cv_studio_desc": "Create polished CV and cover-letter drafts from scratch or export your generated documents as PDF.",
         "item_cover_letter": "AI Cover Letter",
         "item_cover_letter_desc": "Personalized cover letter per job, matching your profile to the role.",
         "item_job_apis": "7 Job Board APIs",

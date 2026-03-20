@@ -56,6 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 // Roadmap items grouped by status
 const shippedItems = [
     { key: "ai_cv", icon: FileText },
+    { key: "cv_studio", icon: Sparkles },
     { key: "cover_letter", icon: Mail },
     { key: "job_apis", icon: Search },
     { key: "scoring", icon: BarChart3 },

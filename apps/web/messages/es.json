@@ -121,6 +121,8 @@
         "viewRoadmap": "Ver hoja de ruta",
         "item_ai_cv": "CV personalizado con IA",
         "item_ai_cv_desc": "CV a medida para cada puesto, optimizado ATS con tu experiencia real.",
+        "item_cv_studio": "CV Studio",
+        "item_cv_studio_desc": "Crea borradores profesionales de CV y carta desde cero o exporta tus documentos generados en PDF.",
         "item_cover_letter": "Carta de presentación IA",
         "item_cover_letter_desc": "Carta personalizada por puesto, adaptada a tu perfil.",
         "item_job_apis": "7 APIs de empleo",

@@ -90,6 +90,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [x] Add AI generation mode in `CV Studio` (job brief -> `/api/tailor` dispatch -> polling for tailored result -> deep link to generated docs) and API support for `jobId` lookup in `/api/applications` — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/generator/page.tsx`, `apps/web/app/api/applications/route.ts`, `apps/web/__tests__/api/applications.test.ts`, `apps/web/messages/{en,fr,de,es,it}.json`)
 - [x] Protect localized + non-localized `/generator` routes in middleware matcher so signed-out access redirects cleanly instead of 404/500 in production — completed on 2026-03-20 (`apps/web/middleware.ts`, `apps/web/__tests__/middleware.test.ts`)
 - [x] Surface `CV Studio` clearly on public landing pages (features + pricing copy) across `en|fr|de|es|it` so new users see the capability before sign-up — completed on 2026-03-20 (`apps/web/app/[locale]/page.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
+- [x] Add `CV Studio` to the public roadmap shipped column across `en|fr|de|es|it` so the feature status is explicit for new visitors — completed on 2026-03-20 (`apps/web/app/[locale]/roadmap/page.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
 
 ## P1 — Google tool integration (acquisition + measurement)
 
