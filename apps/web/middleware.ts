@@ -143,6 +143,7 @@ export const config = {
         // Dashboard routes — with locale prefix (protected — need auth)
         "/(en|fr|de|es|it)/dashboard/:path*",
         "/(en|fr|de|es|it)/profile/:path*",
+        "/(en|fr|de|es|it)/generator/:path*",
         "/(en|fr|de|es|it)/jobs/:path*",
         "/(en|fr|de|es|it)/settings/:path*",
         "/(en|fr|de|es|it)/documents/:path*",
@@ -151,6 +152,7 @@ export const config = {
         // Required because Clerk redirects to /dashboard after sign-in
         "/dashboard/:path*",
         "/profile/:path*",
+        "/generator/:path*",
         "/jobs/:path*",
         "/settings/:path*",
         "/documents/:path*",

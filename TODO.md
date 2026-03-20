@@ -56,6 +56,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 ## P1 — Onboarding reliability hardening right after live payment pass
 
 - [x] Fix dashboard sidebar overflow so account controls (theme + sign out) remain reachable on smaller viewport heights — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/layout.tsx`)
+- [x] Keep dashboard sign-out control persistently visible by isolating sidebar scroll to nav-only area (prevents bottom account block clipping on desktop/mobile viewport edge cases) — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/layout.tsx`)
 - [x] Localize dashboard settings shell/UI copy (sidebar + settings page) across `en`, `fr`, `de`, `es`, `it` so locale routes no longer show English-only labels/messages — completed on 2026-03-19 (`apps/web/app/[locale]/(dashboard)/layout.tsx`, `apps/web/app/[locale]/(dashboard)/settings/page.tsx`, `apps/web/components/sign-out-button.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
 - [x] Localize onboarding flow UI copy (health checklist, steps, validation/network messages, completion state) across `en`, `fr`, `de`, `es`, `it` — completed on 2026-03-19 (`apps/web/app/[locale]/onboarding/page.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
 - [x] Localize dashboard home page UI copy (header, KPI cards, pipeline title) across `en`, `fr`, `de`, `es`, `it` — completed on 2026-03-19 (`apps/web/app/[locale]/(dashboard)/dashboard/page.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
@@ -87,6 +88,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 
 - [x] Add dashboard `CV Studio` route with side-nav access, live markdown editors, professional CV/letter previews, direct PDF download actions, and localized copy in `en|fr|de|es|it` — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/generator/page.tsx`, `apps/web/app/[locale]/(dashboard)/layout.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`)
 - [x] Add AI generation mode in `CV Studio` (job brief -> `/api/tailor` dispatch -> polling for tailored result -> deep link to generated docs) and API support for `jobId` lookup in `/api/applications` — completed on 2026-03-20 (`apps/web/app/[locale]/(dashboard)/generator/page.tsx`, `apps/web/app/api/applications/route.ts`, `apps/web/__tests__/api/applications.test.ts`, `apps/web/messages/{en,fr,de,es,it}.json`)
+- [x] Protect localized + non-localized `/generator` routes in middleware matcher so signed-out access redirects cleanly instead of 404/500 in production — completed on 2026-03-20 (`apps/web/middleware.ts`, `apps/web/__tests__/middleware.test.ts`)
 
 ## P1 — Google tool integration (acquisition + measurement)
 

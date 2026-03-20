@@ -112,9 +112,9 @@ export default async function DashboardLayout({
     ];
 
     return (
-        <div className="flex h-screen min-h-0">
+        <div className="flex h-dvh min-h-0">
             {/* Sidebar */}
-            <aside className="w-64 border-r bg-card flex flex-col min-h-0 overflow-y-auto">
+            <aside className="w-64 border-r bg-card flex flex-col min-h-0 overflow-hidden">
                 <div className="p-6 border-b">
                     <Link href="/" className="flex items-center space-x-2">
                         <Sparkles className="h-6 w-6 text-primary" />
@@ -122,7 +122,7 @@ export default async function DashboardLayout({
                     </Link>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1">
+                <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
                     {sidebarItems.map((item) => (
                         <Link key={item.href} href={item.href}>
                             <Button
@@ -136,7 +136,7 @@ export default async function DashboardLayout({
                     ))}
                 </nav>
 
-                <div className="p-4 border-t space-y-2 shrink-0">
+                <div className="p-4 border-t space-y-2 shrink-0 bg-card">
                     <div className="rounded-lg border p-3 space-y-2">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             {t("social.followUpdates")}
