@@ -236,6 +236,7 @@
             "automation": {
                 "title": "Automation",
                 "description": "Enable automated job discovery. When on, the system checks for new matching jobs every 4 hours.",
+                "linkedinModeNote": "LinkedIn automatic discovery is not enabled yet. Use LinkedIn URL import from Job Feed.",
                 "toggleLabel": "Automated Job Discovery",
                 "status": {
                     "requiresPaidPlan": "Requires Pro or Unlimited subscription",

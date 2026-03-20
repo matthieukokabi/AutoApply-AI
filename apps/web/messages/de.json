@@ -237,6 +237,7 @@
             "automation": {
                 "title": "Automatisierung",
                 "description": "Aktivieren Sie die automatische Jobsuche. Wenn aktiv, prüft das System alle 4 Stunden auf neue passende Jobs.",
+                "linkedinModeNote": "Die automatische LinkedIn-Suche ist noch nicht aktiviert. Nutzen Sie den LinkedIn-URL-Import im Job-Feed.",
                 "toggleLabel": "Automatische Jobsuche",
                 "status": {
                     "requiresPaidPlan": "Erfordert Pro- oder Unlimited-Abonnement",

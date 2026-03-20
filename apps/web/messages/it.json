@@ -237,6 +237,7 @@
             "automation": {
                 "title": "Automazione",
                 "description": "Abilita la scoperta automatica delle offerte. Quando è attiva, il sistema verifica nuovi lavori compatibili ogni 4 ore.",
+                "linkedinModeNote": "La scoperta automatica LinkedIn non è ancora attiva. Usa l'importazione URL LinkedIn dalla sezione Job Feed.",
                 "toggleLabel": "Scoperta automatica offerte",
                 "status": {
                     "requiresPaidPlan": "Richiede abbonamento Pro o Unlimited",

@@ -237,6 +237,7 @@
             "automation": {
                 "title": "Automatisation",
                 "description": "Activez la découverte automatique. Lorsqu'elle est active, le système vérifie de nouvelles offres toutes les 4 heures.",
+                "linkedinModeNote": "La découverte automatique LinkedIn n'est pas encore activée. Utilisez l'import d'URL LinkedIn dans Job Feed.",
                 "toggleLabel": "Découverte automatique d'emplois",
                 "status": {
                     "requiresPaidPlan": "Nécessite un abonnement Pro ou Illimité",

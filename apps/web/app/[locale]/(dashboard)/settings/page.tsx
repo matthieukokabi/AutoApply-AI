@@ -631,6 +631,9 @@ export default function SettingsPage() {
                         <div>
                             <p className="font-medium">{t("automation.toggleLabel")}</p>
                             <p className="text-sm text-muted-foreground">{automationStatusText}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {t("automation.linkedinModeNote")}
+                            </p>
                         </div>
                         <Button
                             variant={user?.automationEnabled ? "default" : "outline"}

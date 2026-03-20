@@ -237,6 +237,7 @@
             "automation": {
                 "title": "Automatización",
                 "description": "Activa el descubrimiento automático de empleos. Cuando está activo, el sistema busca nuevos empleos compatibles cada 4 horas.",
+                "linkedinModeNote": "La detección automática de LinkedIn aún no está habilitada. Usa la importación de URL de LinkedIn desde Job Feed.",
                 "toggleLabel": "Descubrimiento automático de empleos",
                 "status": {
                     "requiresPaidPlan": "Requiere suscripción Pro o Unlimited",
