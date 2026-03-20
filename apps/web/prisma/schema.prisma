@@ -10,21 +10,27 @@ datasource db {
 // ─── User & Authentication ──────────────────────────────────
 
 model User {
-  id                 String    @id @default(cuid())
-  email              String    @unique
-  clerkId            String    @unique
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  clerkId            String   @unique
   name               String
-  automationEnabled  Boolean   @default(false)
-  subscriptionStatus String    @default("free") // free | pro | unlimited
-  stripeCustomerId   String?   @unique
-  creditsRemaining   Int       @default(3)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  automationEnabled  Boolean  @default(false)
+  subscriptionStatus String   @default("free") // free | pro | unlimited
+  stripeCustomerId   String?  @unique
+  creditsRemaining   Int      @default(3)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  masterProfile  MasterProfile?
-  preferences    JobPreferences?
-  applications   Application[]
-  appliedJobIds  String[]       @default([])
+  masterProfile                 MasterProfile?
+  preferences                   JobPreferences?
+  applications                  Application[]
+  appliedJobIds                 String[]                          @default([])
+  createdRecruiterOrganizations RecruiterOrganization[]           @relation("RecruiterOrganizationCreator")
+  recruiterMemberships          RecruiterOrganizationMembership[] @relation("RecruiterMembershipUser")
+  createdRecruiterTeams         RecruiterTeam[]                   @relation("RecruiterTeamCreator")
+  createdRecruiterCandidates    RecruiterCandidate[]              @relation("RecruiterCandidateCreator")
+  createdRecruiterRequisitions  RecruiterRequisition[]            @relation("RecruiterRequisitionCreator")
+  recruiterActivityLogs         RecruiterActivityLog[]            @relation("RecruiterActivityActor")
 
   @@map("users")
 }
@@ -35,8 +41,8 @@ model MasterProfile {
   id             String   @id @default(cuid())
   userId         String   @unique
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rawText        String   // Full CV as plain text
-  structuredJson Json     // Parsed sections: contact, summary, experience, education, skills
+  rawText        String // Full CV as plain text
+  structuredJson Json // Parsed sections: contact, summary, experience, education, skills
   updatedAt      DateTime @updatedAt
 
   @@map("master_profiles")
@@ -67,7 +73,7 @@ model Job {
   company     String
   location    String
   description String
-  source      String    // adzuna | themuse | remotive | arbeitnow | jsearch | jooble | reed | manual
+  source      String // adzuna | themuse | remotive | arbeitnow | jsearch | jooble | reed | manual
   url         String
   salary      String?
   postedAt    DateTime?
@@ -83,25 +89,25 @@ model Job {
 // ─── Applications (Tailored Documents) ──────────────────────
 
 model Application {
-  id                 String    @id @default(cuid())
-  userId             String
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobId              String
-  job                Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  compatibilityScore Int
-  atsKeywords        String[]  @default([])
-  matchingStrengths  String[]  @default([])
-  gaps               String[]  @default([])
-  recommendation     String?   // apply | stretch | skip
-  tailoredCvUrl      String?
-  coverLetterUrl     String?
-  tailoredCvMarkdown String?
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId               String
+  job                 Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  compatibilityScore  Int
+  atsKeywords         String[]  @default([])
+  matchingStrengths   String[]  @default([])
+  gaps                String[]  @default([])
+  recommendation      String? // apply | stretch | skip
+  tailoredCvUrl       String?
+  coverLetterUrl      String?
+  tailoredCvMarkdown  String?
   coverLetterMarkdown String?
-  status             String    @default("tailored") // discovered | tailored | applied | interview | offer | rejected
-  appliedAt          DateTime?
-  notes              String?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  status              String    @default("tailored") // discovered | tailored | applied | interview | offer | rejected
+  appliedAt           DateTime?
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@unique([userId, jobId])
   @@index([userId, status])
@@ -112,14 +118,14 @@ model Application {
 // ─── Workflow Errors (n8n error logging) ────────────────────
 
 model WorkflowError {
-  id          String   @id @default(cuid())
-  workflowId  String
-  nodeName    String
-  errorType   String
-  message     String
-  payload     Json?
-  userId      String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  workflowId String
+  nodeName   String
+  errorType  String
+  message    String
+  payload    Json?
+  userId     String?
+  createdAt  DateTime @default(now())
 
   @@index([workflowId])
   @@index([createdAt])
@@ -137,4 +143,247 @@ model StripeWebhookEvent {
   @@index([eventType])
   @@index([createdAt])
   @@map("stripe_webhook_events")
+}
+
+// ─── Recruiter Beta Domain (isolated track) ───────────────────────
+
+enum RecruiterSeatRole {
+  OWNER
+  ADMIN
+  RECRUITER
+  VIEWER
+}
+
+enum RecruiterMembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+enum RecruiterCandidateSource {
+  MANUAL
+  IMPORT
+  REFERRAL
+}
+
+enum RecruiterRequisitionStatus {
+  DRAFT
+  OPEN
+  ON_HOLD
+  CLOSED
+}
+
+enum RecruiterCandidatePipelineStatus {
+  ACTIVE
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+enum RecruiterActivityEntityType {
+  ORGANIZATION
+  TEAM
+  MEMBERSHIP
+  REQUISITION
+  CANDIDATE
+  PIPELINE_STAGE
+  CANDIDATE_PIPELINE
+}
+
+model RecruiterOrganization {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  createdByUserId String?
+  createdByUser   User?    @relation("RecruiterOrganizationCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  teams              RecruiterTeam[]
+  memberships        RecruiterOrganizationMembership[]
+  candidates         RecruiterCandidate[]
+  requisitions       RecruiterRequisition[]
+  pipelineStages     RecruiterPipelineStage[]
+  candidatePipelines RecruiterCandidatePipeline[]
+  activityLogs       RecruiterActivityLog[]
+
+  @@index([createdByUserId])
+  @@map("recruiter_organizations")
+}
+
+model RecruiterTeam {
+  id              String                @id @default(cuid())
+  organizationId  String
+  organization    RecruiterOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  createdByUserId String?
+  createdByUser   User?                 @relation("RecruiterTeamCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  requisitions    RecruiterRequisition[]
+  teamMemberships RecruiterTeamMembership[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([createdByUserId])
+  @@map("recruiter_teams")
+}
+
+model RecruiterOrganizationMembership {
+  id                    String                            @id @default(cuid())
+  organizationId        String
+  organization          RecruiterOrganization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId                String?
+  user                  User?                             @relation("RecruiterMembershipUser", fields: [userId], references: [id], onDelete: SetNull)
+  invitedEmail          String?
+  role                  RecruiterSeatRole                 @default(RECRUITER)
+  status                RecruiterMembershipStatus         @default(INVITED)
+  invitedByMembershipId String?
+  invitedByMembership   RecruiterOrganizationMembership?  @relation("RecruiterMembershipInviter", fields: [invitedByMembershipId], references: [id], onDelete: SetNull)
+  invitedMembers        RecruiterOrganizationMembership[] @relation("RecruiterMembershipInviter")
+  seatLabel             String?
+  joinedAt              DateTime?
+  createdAt             DateTime                          @default(now())
+  updatedAt             DateTime                          @updatedAt
+
+  teamMemberships RecruiterTeamMembership[]
+  activityLogs    RecruiterActivityLog[]    @relation("RecruiterActivityActorMembership")
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, role, status])
+  @@index([invitedEmail])
+  @@index([invitedByMembershipId])
+  @@map("recruiter_organization_memberships")
+}
+
+model RecruiterTeamMembership {
+  id           String                          @id @default(cuid())
+  teamId       String
+  team         RecruiterTeam                   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  membershipId String
+  membership   RecruiterOrganizationMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  createdAt    DateTime                        @default(now())
+
+  @@unique([teamId, membershipId])
+  @@index([membershipId])
+  @@map("recruiter_team_memberships")
+}
+
+model RecruiterCandidate {
+  id              String                   @id @default(cuid())
+  organizationId  String
+  organization    RecruiterOrganization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fullName        String
+  email           String?
+  phone           String?
+  location        String?
+  headline        String?
+  source          RecruiterCandidateSource @default(MANUAL)
+  profileJson     Json?
+  createdByUserId String?
+  createdByUser   User?                    @relation("RecruiterCandidateCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  candidatePipelines RecruiterCandidatePipeline[]
+
+  @@index([organizationId, fullName])
+  @@index([email])
+  @@index([createdByUserId])
+  @@map("recruiter_candidates")
+}
+
+model RecruiterRequisition {
+  id              String                     @id @default(cuid())
+  organizationId  String
+  organization    RecruiterOrganization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamId          String?
+  team            RecruiterTeam?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  title           String
+  department      String?
+  location        String?
+  employmentType  String?
+  description     String
+  status          RecruiterRequisitionStatus @default(DRAFT)
+  createdByUserId String?
+  createdByUser   User?                      @relation("RecruiterRequisitionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  openedAt        DateTime?
+  closedAt        DateTime?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  candidatePipelines RecruiterCandidatePipeline[]
+
+  @@index([organizationId, status])
+  @@index([teamId])
+  @@index([createdByUserId])
+  @@map("recruiter_requisitions")
+}
+
+model RecruiterPipelineStage {
+  id             String                @id @default(cuid())
+  organizationId String
+  organization   RecruiterOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  position       Int
+  isDefault      Boolean               @default(false)
+  isTerminal     Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  candidatePipelines RecruiterCandidatePipeline[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, position])
+  @@index([organizationId, isDefault])
+  @@map("recruiter_pipeline_stages")
+}
+
+model RecruiterCandidatePipeline {
+  id             String                           @id @default(cuid())
+  organizationId String
+  organization   RecruiterOrganization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  candidateId    String
+  candidate      RecruiterCandidate               @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  requisitionId  String
+  requisition    RecruiterRequisition             @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  currentStageId String?
+  currentStage   RecruiterPipelineStage?          @relation(fields: [currentStageId], references: [id], onDelete: SetNull)
+  matchScore     Int?
+  status         RecruiterCandidatePipelineStatus @default(ACTIVE)
+  notes          String?
+  lastMovedAt    DateTime?
+  createdAt      DateTime                         @default(now())
+  updatedAt      DateTime                         @updatedAt
+
+  @@unique([candidateId, requisitionId])
+  @@index([organizationId, status])
+  @@index([requisitionId, currentStageId])
+  @@map("recruiter_candidate_pipelines")
+}
+
+model RecruiterActivityLog {
+  id                String                           @id @default(cuid())
+  organizationId    String
+  organization      RecruiterOrganization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorUserId       String?
+  actorUser         User?                            @relation("RecruiterActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorMembershipId String?
+  actorMembership   RecruiterOrganizationMembership? @relation("RecruiterActivityActorMembership", fields: [actorMembershipId], references: [id], onDelete: SetNull)
+  entityType        RecruiterActivityEntityType
+  entityId          String
+  action            String
+  payload           Json?
+  correlationId     String?
+  createdAt         DateTime                         @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@index([correlationId])
+  @@index([actorUserId])
+  @@index([actorMembershipId])
+  @@map("recruiter_activity_logs")
 }
