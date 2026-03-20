@@ -9,6 +9,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 ## P0 — Incident: 4h automation pipeline outage (job discovery + tailoring)
 
 - [x] Add production diagnostics command with stage-level run visibility and per-profile health summary — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_diagnostics.js`, `npm run incident:pipeline:diagnostics`)
+- [x] Scope pipeline alerting to post-workflow-update execution window and emit explicit `post_update_run_pending` warning (instead of stale critical failures before first terminal run after publish) — completed on 2026-03-20 (`apps/web/scripts/automation_pipeline_diagnostics.js`, `apps/web/__tests__/automation-pipeline-diagnostics.test.ts`)
 - [x] Patch job-discovery workflow normalization + callback/error run correlation (`runId`) and hard-fail on callback write errors — completed on 2026-03-19 (`apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`, live workflow id `eddfsS251UHbmNIj`)
 - [x] Add safe per-profile recovery rerun command (`dry-run` default, optional `real-run`) — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_recovery_run.js`, `npm run incident:pipeline:recovery -- --help`)
 - [x] Harden scoring/tailoring response parsing with fallback-safe handling to prevent silent document drops — completed on 2026-03-19 (`apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`, live workflow updated at `2026-03-19T00:57:29.606Z`)

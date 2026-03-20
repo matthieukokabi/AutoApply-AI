@@ -67,4 +67,32 @@ describe("automation pipeline diagnostics script helpers", () => {
         expect(codes.has("generation_failures_detected")).toBe(true);
         expect(codes.has("end_to_end_run_failure")).toBe(true);
     });
+
+    it("scopes terminal failure alerts to post-update runs and reports pending post-update execution", () => {
+        const now = Date.now();
+        const workflowUpdatedAt = new Date(now).toISOString();
+        const alerts = diagnostics.inferAlerts({
+            cadenceMinutes: 240,
+            latestSuccessfulRunAt: null,
+            workflowUpdatedAt,
+            runSummaries: [
+                {
+                    status: "error",
+                    startedAt: new Date(now - 10 * 60 * 1000).toISOString(),
+                    failureReason: "execution_error",
+                    stageSummaries: [],
+                },
+                {
+                    status: "waiting",
+                    startedAt: new Date(now + 5 * 1000).toISOString(),
+                    failureReason: "batch_save_not_reached",
+                    stageSummaries: [],
+                },
+            ],
+        });
+
+        const codes = new Set(alerts.map((alert: { code: string }) => alert.code));
+        expect(codes.has("post_update_run_pending")).toBe(true);
+        expect(codes.has("end_to_end_run_failure")).toBe(false);
+    });
 });

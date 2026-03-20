@@ -271,9 +271,44 @@ function pickScheduleCadenceMinutes(workflowNodes) {
     return null;
 }
 
-function inferAlerts({ cadenceMinutes, latestSuccessfulRunAt, runSummaries }) {
+function toTimestamp(value) {
+    if (!value) {
+        return null;
+    }
+    const ms = new Date(value).getTime();
+    if (!Number.isFinite(ms)) {
+        return null;
+    }
+    return ms;
+}
+
+function inferAlerts({
+    cadenceMinutes,
+    latestSuccessfulRunAt,
+    runSummaries,
+    workflowUpdatedAt = null,
+}) {
     const alerts = [];
     const now = Date.now();
+    const workflowUpdatedAtMs = toTimestamp(workflowUpdatedAt);
+
+    const runsInScope =
+        workflowUpdatedAtMs === null
+            ? runSummaries
+            : runSummaries.filter((run) => {
+                  const startedAtMs = toTimestamp(run.startedAt);
+                  return startedAtMs !== null && startedAtMs >= workflowUpdatedAtMs;
+              });
+
+    const terminalRunsInScope = runsInScope.filter((run) => run.status !== "waiting");
+
+    if (workflowUpdatedAtMs !== null && terminalRunsInScope.length === 0) {
+        alerts.push({
+            code: "post_update_run_pending",
+            severity: "warning",
+            detail: "workflow updated but no terminal run observed yet in diagnostics window",
+        });
+    }
 
     if (cadenceMinutes && latestSuccessfulRunAt) {
         const thresholdMs = cadenceMinutes * ALERTS.schedulerMissedMultiplier * 60 * 1000;
@@ -287,7 +322,7 @@ function inferAlerts({ cadenceMinutes, latestSuccessfulRunAt, runSummaries }) {
         }
     }
 
-    const recentCompleted = runSummaries
+    const recentCompleted = terminalRunsInScope
         .filter((run) => run.status === "success")
         .slice(0, ALERTS.repeatedZeroJobsThreshold);
 
@@ -302,9 +337,8 @@ function inferAlerts({ cadenceMinutes, latestSuccessfulRunAt, runSummaries }) {
         });
     }
 
-    const generationFailures = runSummaries.filter(
+    const generationFailures = terminalRunsInScope.filter(
         (run) =>
-            run.status !== "waiting" &&
             run.stageSummaries.some(
                 (stage) =>
                     (stage.stage === "LLM CV Tailoring" || stage.stage === "Parse Tailored Response") &&
@@ -320,9 +354,7 @@ function inferAlerts({ cadenceMinutes, latestSuccessfulRunAt, runSummaries }) {
         });
     }
 
-    const e2eFailures = runSummaries.filter(
-        (run) => run.status !== "success" && run.status !== "waiting"
-    );
+    const e2eFailures = terminalRunsInScope.filter((run) => run.status !== "success");
     if (e2eFailures.length > 0) {
         alerts.push({
             code: "end_to_end_run_failure",
@@ -494,6 +526,7 @@ async function main() {
             cadenceMinutes,
             latestSuccessfulRunAt: latestSuccessfulRun?.startedAt || null,
             runSummaries,
+            workflowUpdatedAt: workflow.updatedAt || null,
         });
 
         const summary = {
