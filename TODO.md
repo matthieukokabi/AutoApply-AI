@@ -8,7 +8,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [x] Step 2: introduce recruiter/team/org domain schema (orgs, seats, roles, requisitions, candidates, pipeline stages, activity log) with migration-safe backward-compatible rollout — completed on 2026-03-20 (`apps/web/prisma/schema.prisma`)
 - [x] Step 3: implement recruiter MVP workflows (create requisition, manual candidate import, match scoring, stage movement, team dashboard) — completed on 2026-03-20 (`apps/web/app/labs/recruiter/page.tsx`, `apps/web/lib/recruiter-mvp.ts`, `apps/web/__tests__/recruiter-mvp.test.ts`)
 - [x] Step 4: add recruiter workflow operational safety (structured logs + correlation IDs, health indicators, critical-failure alert conditions) — completed on 2026-03-20 (`apps/web/lib/recruiter-mvp.ts`, `apps/web/app/api/recruiter-beta/health/route.ts`, `apps/web/__tests__/api/recruiter-beta-health.test.ts`, `apps/web/middleware.ts`, `apps/web/app/labs/recruiter/page.tsx`)
-- [ ] Step 5: deliver recruiter cost/pricing model benchmark (`docs/recruiter/cost-pricing-model.md`) with dated assumptions and Starter/Team/Enterprise margin rationale
+- [x] Step 5: deliver recruiter cost/pricing model benchmark (`docs/recruiter/cost-pricing-model.md`) with dated assumptions and Starter/Team/Enterprise margin rationale — completed on 2026-03-20 (`docs/recruiter/cost-pricing-model.md`)
 - [ ] Step 6: deliver recruiter documentation pack (`docs/recruiter/implementation-plan.md`, `docs/recruiter/rollout-runbook.md`, `docs/recruiter/risk-rollback.md`)
 
 ## P0 — Incident: onboarding CV upload returning 500
