@@ -84,6 +84,7 @@ describe("POST /api/webhooks/stripe", () => {
                 subscriptionStatus: "pro",
                 stripeCustomerId: "cus_123",
                 creditsRemaining: 50,
+                automationEnabled: true,
             },
         });
     });
@@ -168,6 +169,7 @@ describe("POST /api/webhooks/stripe", () => {
                     subscriptionStatus: "pro",
                     stripeCustomerId: "cus_123",
                     creditsRemaining: 50,
+                    automationEnabled: true,
                 },
             });
         });
@@ -202,6 +204,7 @@ describe("POST /api/webhooks/stripe", () => {
                     subscriptionStatus: "unlimited",
                     stripeCustomerId: "cus_456",
                     creditsRemaining: 9999,
+                    automationEnabled: true,
                 },
             });
         });
@@ -236,6 +239,42 @@ describe("POST /api/webhooks/stripe", () => {
                     subscriptionStatus: "unlimited",
                     stripeCustomerId: "cus_999",
                     creditsRemaining: 9999,
+                    automationEnabled: true,
+                },
+            });
+        });
+
+        it("falls back to customer email when metadata.userId is missing", async () => {
+            vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
+                createStripeEvent("checkout.session.completed", {
+                    mode: "subscription",
+                    subscription: "sub_fallback",
+                    customer: "cus_fallback",
+                    customer_email: "FallbackUser@example.com",
+                    metadata: {},
+                }) as any
+            );
+
+            vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue({
+                items: { data: [{ price: { id: "price_pro_monthly" } }] },
+            } as any);
+            vi.mocked(prisma.user.update).mockResolvedValue({} as any);
+
+            const request = new Request("http://localhost/api/webhooks/stripe", {
+                method: "POST",
+                body: JSON.stringify({}),
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+
+            expect(prisma.user.update).toHaveBeenCalledWith({
+                where: { email: "fallbackuser@example.com" },
+                data: {
+                    subscriptionStatus: "pro",
+                    stripeCustomerId: "cus_fallback",
+                    creditsRemaining: 50,
+                    automationEnabled: true,
                 },
             });
         });
@@ -265,7 +304,7 @@ describe("POST /api/webhooks/stripe", () => {
             });
         });
 
-        it("ignores event when metadata has no userId", async () => {
+        it("ignores event when user mapping is missing", async () => {
             vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(
                 createStripeEvent("checkout.session.completed", {
                     mode: "subscription",

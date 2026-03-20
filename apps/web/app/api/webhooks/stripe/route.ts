@@ -15,6 +15,23 @@ function resolvePlanFromPriceId(priceId?: string): "pro" | "unlimited" {
     return unlimitedPrices.has(priceId) ? "unlimited" : "pro";
 }
 
+function resolveCheckoutSessionUserWhere(session: Stripe.Checkout.Session) {
+    const metadataUserId = session.metadata?.userId?.trim();
+    if (metadataUserId) {
+        return { id: metadataUserId } as const;
+    }
+
+    const fallbackEmail =
+        session.customer_details?.email?.trim().toLowerCase() ||
+        session.customer_email?.trim().toLowerCase();
+
+    if (fallbackEmail) {
+        return { email: fallbackEmail } as const;
+    }
+
+    return null;
+}
+
 function isMissingWebhookTableError(error: unknown) {
     if (!error || typeof error !== "object") {
         return false;
@@ -94,8 +111,17 @@ export async function POST(req: Request) {
         switch (event.type) {
             case "checkout.session.completed": {
                 const session = event.data.object as Stripe.Checkout.Session;
-                const userId = session.metadata?.userId;
-                if (!userId) break;
+                const userWhere = resolveCheckoutSessionUserWhere(session);
+                if (!userWhere) {
+                    console.warn(
+                        "[stripe-webhook] checkout.session.completed missing user mapping",
+                        {
+                            eventId: event.id,
+                            sessionId: session.id,
+                        }
+                    );
+                    break;
+                }
 
                 if (session.mode === "subscription") {
                     // Subscription purchase
@@ -104,19 +130,24 @@ export async function POST(req: Request) {
                     );
                     const priceId = subscription.items.data[0]?.price.id;
                     const plan = resolvePlanFromPriceId(priceId);
+                    const stripeCustomerId =
+                        typeof session.customer === "string"
+                            ? session.customer
+                            : session.customer?.id;
 
                     await prisma.user.update({
-                        where: { id: userId },
+                        where: userWhere,
                         data: {
                             subscriptionStatus: plan,
-                            stripeCustomerId: session.customer as string,
+                            stripeCustomerId,
                             creditsRemaining: plan === "unlimited" ? 9999 : 50,
+                            automationEnabled: true,
                         },
                     });
                 } else if (session.mode === "payment") {
                     // One-time credit pack purchase
                     await prisma.user.update({
-                        where: { id: userId },
+                        where: userWhere,
                         data: {
                             creditsRemaining: { increment: 10 },
                         },

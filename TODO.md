@@ -54,6 +54,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [ ] Verify webhook delivery and idempotency on latest payment events in Stripe dashboard (log with `docs/live-payment-verification-log-template.md`)
 - [ ] Manual family live payment test (real card, production mode) and record outcome with screenshots + Stripe event IDs (use `docs/live-payment-test-runbook.md` + `docs/live-payment-verification-log-template.md`)
 - [x] Enable Stripe promotion code redemption in checkout (support the existing `50% off for 3 months` campaign code) and expose coupon usage in the pricing/settings upgrade path — completed on 2026-03-20 (`apps/web/app/api/checkout/route.ts`, `apps/web/__tests__/api/checkout.test.ts`)
+- [x] Harden Stripe checkout webhook user mapping (`metadata.userId` -> customer email fallback) and auto-enable job automation on successful subscription checkout to avoid paid users remaining blocked on Free/Disabled right after onboarding — completed on 2026-03-20 (`apps/web/app/api/webhooks/stripe/route.ts`, `apps/web/__tests__/api/webhooks-stripe.test.ts`, `apps/web/__tests__/integration/stripe-workflow.test.ts`)
 
 ## P1 — Onboarding reliability hardening right after live payment pass
 

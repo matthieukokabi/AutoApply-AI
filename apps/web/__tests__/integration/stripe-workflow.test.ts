@@ -94,6 +94,7 @@ describe("Stripe Checkout → Webhook Workflow", () => {
                 subscriptionStatus: "pro",
                 stripeCustomerId: "cus_new",
                 creditsRemaining: 50,
+                automationEnabled: true,
             },
         });
     });
