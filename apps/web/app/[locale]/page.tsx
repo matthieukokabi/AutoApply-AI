@@ -383,6 +383,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                                    {t("pricing.cvStudioExport")}
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-primary flex-shrink-0" />
                                     {t("pricing.emailNotifications")}
                                 </li>
                             </ul>
