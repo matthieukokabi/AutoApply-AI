@@ -135,8 +135,10 @@ export async function POST(req: Request) {
             body?.data && typeof body.data === "object" && !Array.isArray(body.data)
                 ? (body.data as Record<string, unknown>)
                 : null;
+        const allowsMissingData = type === "fetch_active_users";
+        const webhookData = data ?? {};
 
-        if (!type || !data) {
+        if (!type || (!allowsMissingData && !data)) {
             logPipelineEvent("warn", "webhook_invalid_envelope", {
                 runId,
                 type,
@@ -180,8 +182,11 @@ export async function POST(req: Request) {
 
             case "new_applications": {
                 // n8n sends discovered/tailored jobs from automated pipeline
-                const userId = typeof data.userId === "string" ? data.userId.trim() : "";
-                const applications = Array.isArray(data.applications) ? data.applications : null;
+                const userId =
+                    typeof webhookData.userId === "string" ? webhookData.userId.trim() : "";
+                const applications = Array.isArray(webhookData.applications)
+                    ? webhookData.applications
+                    : null;
 
                 if (!userId || !applications) {
                     logPipelineEvent("warn", "webhook_invalid_new_applications_payload", {
@@ -343,7 +348,7 @@ export async function POST(req: Request) {
                     recommendation,
                     tailoredCvMarkdown,
                     coverLetterMarkdown,
-                } = data as Record<string, any>;
+                } = webhookData as Record<string, any>;
 
                 if (
                     typeof tailorUserId !== "string" ||
@@ -441,14 +446,14 @@ export async function POST(req: Request) {
             case "workflow_error": {
                 // Log workflow errors
                 if (
-                    typeof data.workflowId !== "string" ||
-                    typeof data.nodeName !== "string" ||
-                    typeof data.errorType !== "string" ||
-                    typeof data.message !== "string" ||
-                    !data.workflowId.trim() ||
-                    !data.nodeName.trim() ||
-                    !data.errorType.trim() ||
-                    !data.message.trim()
+                    typeof webhookData.workflowId !== "string" ||
+                    typeof webhookData.nodeName !== "string" ||
+                    typeof webhookData.errorType !== "string" ||
+                    typeof webhookData.message !== "string" ||
+                    !webhookData.workflowId.trim() ||
+                    !webhookData.nodeName.trim() ||
+                    !webhookData.errorType.trim() ||
+                    !webhookData.message.trim()
                 ) {
                     logPipelineEvent("warn", "webhook_invalid_workflow_error_payload", {
                         runId,
@@ -461,20 +466,23 @@ export async function POST(req: Request) {
 
                 await prisma.workflowError.create({
                     data: {
-                        workflowId: data.workflowId.trim(),
-                        nodeName: data.nodeName.trim(),
-                        errorType: data.errorType.trim(),
-                        message: data.message.trim(),
-                        payload: data.payload as any,
-                        userId: typeof data.userId === "string" ? data.userId : undefined,
+                        workflowId: webhookData.workflowId.trim(),
+                        nodeName: webhookData.nodeName.trim(),
+                        errorType: webhookData.errorType.trim(),
+                        message: webhookData.message.trim(),
+                        payload: webhookData.payload as any,
+                        userId:
+                            typeof webhookData.userId === "string"
+                                ? webhookData.userId
+                                : undefined,
                     },
                 });
 
                 logPipelineEvent("error", "workflow_error_logged", {
                     runId,
-                    workflowId: data.workflowId.trim(),
-                    nodeName: data.nodeName.trim(),
-                    errorType: data.errorType.trim(),
+                    workflowId: webhookData.workflowId.trim(),
+                    nodeName: webhookData.nodeName.trim(),
+                    errorType: webhookData.errorType.trim(),
                 });
 
                 return NextResponse.json({ message: "Error logged", runId });

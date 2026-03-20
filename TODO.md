@@ -21,6 +21,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [x] Add in-workflow cadence gate at user-fetch stage (process jobs only on 4h slots) to mitigate minute-trigger overfiring until runtime reload — completed on 2026-03-19 (`Fetch Active Users with Prefs & CV` SQL patched via `apps/web/scripts/incident_patch_job_discovery_workflow.js`)
 - [x] Publish full incident closure report with root causes, stage mapping, commit history, validation evidence, and rollback notes — completed on 2026-03-19 (`INCIDENT_AUTOAPPLY_PIPELINE_FIX_REPORT.md`)
 - [x] Remove n8n DB-credential decrypt dependency from profile fetch stage by routing through signed app webhook (`fetch_active_users`) with 4h cadence gating + structured logs — completed on 2026-03-19 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`, `apps/web/__tests__/api/webhooks-n8n.test.ts`)
+- [x] Restore `fetch_active_users` compatibility for scheduled n8n runs by accepting webhook envelopes without `data` for that type (n8n currently posts `{type, runId}` only), preventing HTTP 400 at fetch stage — completed on 2026-03-20 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/__tests__/api/webhooks-n8n.test.ts`)
 - [x] Restart n8n Render service once to flush stale in-memory trigger registrations — completed on 2026-03-19 (Render deploy `9d2b7bd`, startup confirms `1 published workflow` and active pipeline load)
 - [ ] Verify first post-restart scheduled execution uses live workflow version (`f388a6db-5bf6-44fb-bfd4-33a3b5aa448c`) and no longer emits decrypt errors at fetch stage
 - [x] Improve discovery relevance for Zürich/hybrid preferences by expanding title/location query candidates, adding preference-aware location filtering fallback, and exposing explicit LinkedIn auto-source status in recovery diagnostics — completed on 2026-03-19 (`apps/web/scripts/automation_pipeline_recovery_run.js`, `apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`)
@@ -52,6 +53,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [ ] Verify cancel return does not alter plan state
 - [ ] Verify webhook delivery and idempotency on latest payment events in Stripe dashboard (log with `docs/live-payment-verification-log-template.md`)
 - [ ] Manual family live payment test (real card, production mode) and record outcome with screenshots + Stripe event IDs (use `docs/live-payment-test-runbook.md` + `docs/live-payment-verification-log-template.md`)
+- [ ] Enable Stripe promotion code redemption in checkout (support the existing `50% off for 3 months` campaign code) and expose coupon usage in the pricing/settings upgrade path
 
 ## P1 — Onboarding reliability hardening right after live payment pass
 

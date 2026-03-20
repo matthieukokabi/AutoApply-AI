@@ -31,14 +31,18 @@ beforeEach(() => {
     process.env.N8N_WEBHOOK_SECRET = "test_webhook_secret";
 });
 
-function createWebhookRequest(type: string, data: any) {
+function createWebhookRequest(type: string, data?: any) {
     return new Request("http://localhost/api/webhooks/n8n", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "x-webhook-secret": "test_webhook_secret",
         },
-        body: JSON.stringify({ type, data }),
+        body: JSON.stringify(
+            data === undefined
+                ? { type }
+                : { type, data }
+        ),
     });
 }
 
@@ -111,6 +115,19 @@ describe("POST /api/webhooks/n8n", () => {
     });
 
     describe("fetch_active_users", () => {
+        it("accepts fetch_active_users payload without data envelope", async () => {
+            vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([]);
+            vi.mocked(prisma.user.findMany).mockResolvedValue([] as any);
+
+            const request = createWebhookRequest("fetch_active_users");
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.throttled).toBe(false);
+            expect(data.users).toEqual([]);
+        });
+
         it("returns users when cadence window is open", async () => {
             vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([]);
             vi.mocked(prisma.user.findMany).mockResolvedValue([
