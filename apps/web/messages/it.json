@@ -200,6 +200,7 @@
                 "paymentSyncing": "Pagamento riuscito. Sincronizzazione dello stato account...",
                 "paymentSynced": "Pagamento riuscito. Stato abbonamento aggiornato.",
                 "paymentSyncInProgress": "Pagamento riuscito. La sincronizzazione è ancora in corso. Aggiorna di nuovo tra pochi secondi.",
+                "billingPortalFailed": "Impossibile aprire il portale di fatturazione in questo momento. Riprova tra poco.",
                 "deleteFailed": "Eliminazione non riuscita."
             },
             "jobPreferences": {
@@ -254,6 +255,10 @@
                 "description": "Gestisci piano e fatturazione.",
                 "currentPlan": "Piano attuale",
                 "upgrade": "Upgrade",
+                "changePlan": "Cambia piano",
+                "manageBilling": "Gestisci fatturazione",
+                "autoRenewNotice": "I piani a pagamento si rinnovano automaticamente finché non vengono annullati da Gestisci fatturazione.",
+                "freePlanNotice": "Puoi fare upgrade in qualsiasi momento. Il piano Gratis non prevede addebiti ricorrenti.",
                 "creditsRemaining": "Crediti rimanenti",
                 "creditsCount": "{count} crediti",
                 "buyCredits": "Acquista crediti",

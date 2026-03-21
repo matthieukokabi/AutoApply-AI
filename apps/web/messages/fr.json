@@ -200,6 +200,7 @@
                 "paymentSyncing": "Paiement réussi. Synchronisation de votre compte en cours...",
                 "paymentSynced": "Paiement réussi. Statut d'abonnement mis à jour.",
                 "paymentSyncInProgress": "Paiement réussi. La synchronisation est encore en cours. Actualisez dans quelques secondes.",
+                "billingPortalFailed": "Impossible d'ouvrir le portail de facturation pour le moment. Réessayez dans un instant.",
                 "deleteFailed": "Échec de la suppression."
             },
             "jobPreferences": {
@@ -254,6 +255,10 @@
                 "description": "Gérez votre formule et votre facturation.",
                 "currentPlan": "Plan actuel",
                 "upgrade": "Passer à Pro",
+                "changePlan": "Changer de formule",
+                "manageBilling": "Gérer la facturation",
+                "autoRenewNotice": "Les plans payants se renouvellent automatiquement jusqu'à résiliation depuis Gérer la facturation.",
+                "freePlanNotice": "Vous pouvez passer à un plan payant à tout moment. Aucun prélèvement récurrent sur le plan gratuit.",
                 "creditsRemaining": "Crédits restants",
                 "creditsCount": "{count} crédits",
                 "buyCredits": "Acheter des crédits",

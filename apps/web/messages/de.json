@@ -200,6 +200,7 @@
                 "paymentSyncing": "Zahlung erfolgreich. Kontostatus wird synchronisiert...",
                 "paymentSynced": "Zahlung erfolgreich. Abonnementstatus aktualisiert.",
                 "paymentSyncInProgress": "Zahlung erfolgreich. Synchronisierung läuft noch. Bitte in ein paar Sekunden erneut aktualisieren.",
+                "billingPortalFailed": "Das Abrechnungsportal konnte gerade nicht geöffnet werden. Bitte versuchen Sie es gleich erneut.",
                 "deleteFailed": "Löschen fehlgeschlagen."
             },
             "jobPreferences": {
@@ -254,6 +255,10 @@
                 "description": "Verwalten Sie Ihren Tarif und Ihre Abrechnung.",
                 "currentPlan": "Aktueller Plan",
                 "upgrade": "Upgrade",
+                "changePlan": "Plan wechseln",
+                "manageBilling": "Abrechnung verwalten",
+                "autoRenewNotice": "Bezahlte Pläne verlängern sich automatisch, bis sie in „Abrechnung verwalten“ gekündigt werden.",
+                "freePlanNotice": "Sie können jederzeit upgraden. Beim Free-Plan gibt es keine wiederkehrende Abbuchung.",
                 "creditsRemaining": "Verbleibende Credits",
                 "creditsCount": "{count} Credits",
                 "buyCredits": "Credits kaufen",

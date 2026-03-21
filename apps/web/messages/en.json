@@ -199,6 +199,7 @@
                 "paymentSyncing": "Payment successful. Syncing your account status...",
                 "paymentSynced": "Payment successful. Subscription status refreshed.",
                 "paymentSyncInProgress": "Payment successful. Sync is still in progress. Refresh again in a few seconds.",
+                "billingPortalFailed": "Unable to open billing portal right now. Please try again in a moment.",
                 "deleteFailed": "Delete failed."
             },
             "jobPreferences": {
@@ -253,6 +254,10 @@
                 "description": "Manage your plan and billing.",
                 "currentPlan": "Current Plan",
                 "upgrade": "Upgrade",
+                "changePlan": "Change Plan",
+                "manageBilling": "Manage Billing",
+                "autoRenewNotice": "Paid plans auto-renew until cancelled from Manage Billing.",
+                "freePlanNotice": "You can upgrade anytime. No recurring charge on the Free plan.",
                 "creditsRemaining": "Credits Remaining",
                 "creditsCount": "{count} credits",
                 "buyCredits": "Buy Credits",

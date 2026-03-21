@@ -115,6 +115,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [togglingAutomation, setTogglingAutomation] = useState(false);
+    const [openingBillingPortal, setOpeningBillingPortal] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -320,6 +321,51 @@ export default function SettingsPage() {
         }
     }, [t]);
 
+    async function handleOpenBillingPortal() {
+        setOpeningBillingPortal(true);
+        setMessage(null);
+
+        try {
+            const res = await fetch("/api/billing-portal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    returnPath: window.location.pathname,
+                }),
+            });
+            const data = await res
+                .json()
+                .catch(() => ({})) as { url?: string; error?: string };
+
+            if (isUnauthorizedCheckoutError(res.status, data.error)) {
+                const signInPath = getLocalizedPathForRoute(
+                    window.location.pathname,
+                    "sign-in"
+                );
+                window.location.href = buildAuthIntentUrl(
+                    signInPath,
+                    null,
+                    window.location.pathname
+                );
+                return;
+            }
+
+            if (!res.ok || !data.url) {
+                setMessage({
+                    type: "error",
+                    text: data.error || t("messages.billingPortalFailed"),
+                });
+                return;
+            }
+
+            window.location.href = data.url;
+        } catch {
+            setMessage({ type: "error", text: t("messages.billingPortalFailed") });
+        } finally {
+            setOpeningBillingPortal(false);
+        }
+    }
+
     useEffect(() => {
         if (!autoUpgradePlan || loading || !user || autoCheckoutTriggeredRef.current) {
             return;
@@ -473,6 +519,7 @@ export default function SettingsPage() {
     }
 
     const normalizedPlanStatus = normalizePlanStatus(user?.subscriptionStatus);
+    const isPaidPlan = normalizedPlanStatus !== "free";
     const automationStatusText =
         normalizedPlanStatus === "free"
             ? t("automation.status.requiresPaidPlan")
@@ -668,10 +715,31 @@ export default function SettingsPage() {
                             <Badge variant="secondary" className="capitalize">
                                 {t(`subscription.planLabels.${normalizedPlanStatus}`)}
                             </Badge>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                {isPaidPlan
+                                    ? t("subscription.autoRenewNotice")
+                                    : t("subscription.freePlanNotice")}
+                            </p>
                         </div>
-                        <Button onClick={() => handleCheckout("pro_monthly")}>
-                            {t("subscription.upgrade")}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            {isPaidPlan ? (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleOpenBillingPortal}
+                                    disabled={openingBillingPortal}
+                                >
+                                    {openingBillingPortal ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : null}
+                                    {t("subscription.manageBilling")}
+                                </Button>
+                            ) : null}
+                            <Button onClick={() => handleCheckout("pro_monthly")}>
+                                {isPaidPlan
+                                    ? t("subscription.changePlan")
+                                    : t("subscription.upgrade")}
+                            </Button>
+                        </div>
                     </div>
                     <div className="flex items-center justify-between">
                         <div>

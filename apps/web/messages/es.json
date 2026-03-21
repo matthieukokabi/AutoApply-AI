@@ -200,6 +200,7 @@
                 "paymentSyncing": "Pago exitoso. Sincronizando el estado de tu cuenta...",
                 "paymentSynced": "Pago exitoso. Estado de suscripción actualizado.",
                 "paymentSyncInProgress": "Pago exitoso. La sincronización sigue en curso. Actualiza de nuevo en unos segundos.",
+                "billingPortalFailed": "No se pudo abrir el portal de facturación ahora mismo. Inténtalo de nuevo en un momento.",
                 "deleteFailed": "No se pudo eliminar."
             },
             "jobPreferences": {
@@ -254,6 +255,10 @@
                 "description": "Gestiona tu plan y facturación.",
                 "currentPlan": "Plan actual",
                 "upgrade": "Mejorar plan",
+                "changePlan": "Cambiar plan",
+                "manageBilling": "Gestionar facturación",
+                "autoRenewNotice": "Los planes de pago se renuevan automáticamente hasta que se cancelen en Gestionar facturación.",
+                "freePlanNotice": "Puedes mejorar de plan en cualquier momento. El plan Gratis no tiene cobro recurrente.",
                 "creditsRemaining": "Créditos restantes",
                 "creditsCount": "{count} créditos",
                 "buyCredits": "Comprar créditos",

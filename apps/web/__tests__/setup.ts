@@ -184,6 +184,11 @@ vi.mock("@/lib/stripe", () => ({
                 create: vi.fn(),
             },
         },
+        billingPortal: {
+            sessions: {
+                create: vi.fn(),
+            },
+        },
         webhooks: {
             constructEvent: vi.fn(),
         },
@@ -192,6 +197,7 @@ vi.mock("@/lib/stripe", () => ({
         },
         customers: {
             retrieve: vi.fn(),
+            list: vi.fn(),
         },
     },
     PLANS: {
