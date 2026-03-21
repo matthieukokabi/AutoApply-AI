@@ -63,340 +63,51 @@ function loadEnvIfPresent() {
     }
 }
 
-const FETCH_NORMALIZE_JS = `// Fetch jobs from all sources for this user, normalize, and deduplicate
-const user = $input.first().json;
-const config = $('Load Config').first().json;
-const primaryTitle = (user.targetTitles && user.targetTitles[0] ? user.targetTitles[0] : 'software engineer').trim();
-const fallbackTitle = (user.targetTitles && user.targetTitles[1] ? user.targetTitles[1] : '').trim();
-const titleCandidates = [primaryTitle, fallbackTitle].filter(Boolean);
-const searchTitle = titleCandidates.length > 0 ? titleCandidates[0] : 'software engineer';
-const normalizedTitleCandidates = titleCandidates.length > 0 ? titleCandidates : [searchTitle];
-const locationCandidates = Array.isArray(user.locations)
-  ? user.locations.map((location) => String(location || '').trim()).filter(Boolean).slice(0, 3)
-  : [];
-const searchLocation = locationCandidates.length > 0 ? locationCandidates[0] : '';
-const remotePreference = String(user.remotePreference || 'any').toLowerCase();
-const runId = String($execution.id || Date.now());
+const FETCH_NORMALIZE_JS = `// Flatten jobs returned by Fetch Jobs via App API
+const payload = $input.first().json || {};
 
-const allJobs = [];
-const helperContext = (typeof this === 'object' && this) ? this : null;
-const httpRequestHelper =
-  (typeof $httpRequest === 'function')
-    ? $httpRequest
-    : (helperContext && helperContext.helpers && typeof helperContext.helpers.httpRequest === 'function')
-    ? helperContext.helpers.httpRequest.bind(helperContext)
-    : null;
-const nativeFetch =
-  (typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function')
-    ? globalThis.fetch.bind(globalThis)
-    : (typeof fetch === 'function' ? fetch : null);
-
-function buildSearchPairs(titles, locations, limit) {
-  const pairs = [];
-  const safeTitles = Array.isArray(titles) && titles.length > 0 ? titles : ['software engineer'];
-  const safeLocations = Array.isArray(locations) && locations.length > 0 ? locations : [''];
-  const max = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 4;
-  for (const title of safeTitles) {
-    for (const location of safeLocations) {
-      pairs.push({ title, location });
-      if (pairs.length >= max) return pairs;
-    }
-  }
-  return pairs;
+if (payload && payload.externalId && payload.userId) {
+  return [{ json: payload }];
 }
 
-function detectAdzunaCountry(location) {
-  const locationLower = (location || '').toLowerCase();
-  if (locationLower.includes('zurich') || locationLower.includes('z\u00fcrich') || locationLower.includes('bern') || locationLower.includes('geneva') || locationLower.includes('basel') || locationLower.includes('switzerland') || locationLower.includes('swiss') || locationLower.includes('lausanne')) return 'ch';
-  if (locationLower.includes('london') || locationLower.includes('manchester') || locationLower.includes('uk') || locationLower.includes('united kingdom') || locationLower.includes('england')) return 'gb';
-  if (locationLower.includes('berlin') || locationLower.includes('munich') || locationLower.includes('hamburg') || locationLower.includes('germany') || locationLower.includes('frankfurt') || locationLower.includes('deutschland')) return 'de';
-  if (locationLower.includes('paris') || locationLower.includes('lyon') || locationLower.includes('france') || locationLower.includes('marseille')) return 'fr';
-  if (locationLower.includes('amsterdam') || locationLower.includes('netherlands') || locationLower.includes('rotterdam')) return 'nl';
-  if (locationLower.includes('vienna') || locationLower.includes('austria') || locationLower.includes('wien')) return 'at';
-  return 'us';
+const jobs = Array.isArray(payload.jobs) ? payload.jobs : [];
+if (jobs.length === 0) {
+  return [];
 }
 
-async function safeFetch(url, options) {
-  const requestOptions = options || {};
-  const method = String(requestOptions.method || 'GET').toUpperCase();
-  const headers = requestOptions.headers || {};
-  const body = requestOptions.body;
-  let helperFailed = false;
+return jobs
+  .filter((job) => job && typeof job === 'object' && job.externalId && job.title && String(job.description || '').length > 50)
+  .map((job) => ({ json: job }));`;
 
-  if (httpRequestHelper) {
-    try {
-      const helperOptions = {
-        method,
-        url,
-        headers,
-        timeout: 15000,
-        json: true
-      };
-      if (method !== 'GET' && method !== 'HEAD' && body !== undefined) {
-        const contentType = String(headers['Content-Type'] || headers['content-type'] || '').toLowerCase();
-        if (typeof body === 'string' && contentType.includes('application/json')) {
-          try {
-            helperOptions.body = JSON.parse(body);
-          } catch {
-            helperOptions.body = body;
-          }
-        } else {
-          helperOptions.body = body;
-        }
-      }
-      return await httpRequestHelper(helperOptions);
-    } catch {
-      helperFailed = true;
-    }
-  }
-
-  if (!nativeFetch) {
-    return null;
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  try {
-    const merged = Object.assign({}, requestOptions, { signal: controller.signal });
-    const resp = await nativeFetch(url, merged);
-    clearTimeout(timeout);
-    if (!resp.ok) return null;
-    return await resp.json();
-  } catch {
-    if (helperFailed) {
-      return null;
-    }
-    clearTimeout(timeout);
-    return null;
-  }
-}
-
-const adzunaCountry = detectAdzunaCountry(searchLocation);
-const searchPairs = buildSearchPairs(normalizedTitleCandidates.slice(0, 3), locationCandidates, 6);
-
-// 1) Adzuna
-if (config.adzunaAppId && config.adzunaAppKey) {
-  try {
-    for (const pair of searchPairs.slice(0, 4)) {
-      const adzunaUrl = 'https://api.adzuna.com/v1/api/jobs/' + adzunaCountry + '/search/1?app_id=' + config.adzunaAppId + '&app_key=' + config.adzunaAppKey + '&what=' + encodeURIComponent(pair.title || searchTitle) + '&where=' + encodeURIComponent(pair.location || searchLocation) + '&results_per_page=15&content-type=application/json';
-      const data = await safeFetch(adzunaUrl);
-      if (data && Array.isArray(data.results)) {
-        for (const j of data.results) {
-          allJobs.push({
-            externalId: 'adzuna-' + j.id,
-            title: j.title || '',
-            company: (j.company && j.company.display_name) || 'Unknown',
-            location: (j.location && j.location.display_name) || '',
-            description: j.description || '',
-            source: 'adzuna',
-            url: j.redirect_url || '',
-            salary: j.salary_is_predicted === '0' ? String(j.salary_min) + '-' + String(j.salary_max) : null,
-            postedAt: j.created ? new Date(j.created).toISOString() : null
-          });
-        }
-      }
-    }
-  } catch { /* continue */ }
-}
-
-// 2) The Muse
-try {
-  const data = await safeFetch('https://www.themuse.com/api/public/jobs?category=Engineering&level=Mid%20Level&page=1');
-  if (data && Array.isArray(data.results)) {
-    for (const j of data.results) {
-      allJobs.push({
-        externalId: 'themuse-' + j.id,
-        title: j.name || '',
-        company: (j.company && j.company.name) || 'Unknown',
-        location: Array.isArray(j.locations) ? j.locations.map((l) => l.name).join(', ') : '',
-        description: (j.contents || '').replace(/<[^>]*>/g, '').substring(0, 3000),
-        source: 'themuse',
-        url: (j.refs && j.refs.landing_page) || '',
-        salary: null,
-        postedAt: j.publication_date || null
-      });
-    }
-  }
-} catch { /* continue */ }
-
-// 3) Remotive
-try {
-  for (const title of normalizedTitleCandidates.slice(0, 3)) {
-    const remotiveUrl = 'https://remotive.com/api/remote-jobs?search=' + encodeURIComponent(title || searchTitle) + '&limit=15';
-    const data = await safeFetch(remotiveUrl);
-    if (data && Array.isArray(data.jobs)) {
-      for (const j of data.jobs) {
-        allJobs.push({
-          externalId: 'remotive-' + j.id,
-          title: j.title || '',
-          company: j.company_name || 'Unknown',
-          location: j.candidate_required_location || 'Remote',
-          description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),
-          source: 'remotive',
-          url: j.url || '',
-          salary: j.salary || null,
-          postedAt: j.publication_date || null
-        });
-      }
-    }
-  }
-} catch { /* continue */ }
-
-// 4) Arbeitnow
-try {
-  for (const title of normalizedTitleCandidates.slice(0, 3)) {
-    const arbeitnowUrl = 'https://www.arbeitnow.com/api/job-board-api?search=' + encodeURIComponent(title || searchTitle) + '&page=1';
-    const data = await safeFetch(arbeitnowUrl);
-    if (data && Array.isArray(data.data)) {
-      for (const j of data.data) {
-        allJobs.push({
-          externalId: 'arbeitnow-' + (j.slug || j.id || Date.now()),
-          title: j.title || '',
-          company: j.company_name || 'Unknown',
-          location: j.location || '',
-          description: (j.description || '').replace(/<[^>]*>/g, '').substring(0, 3000),
-          source: 'arbeitnow',
-          url: j.url || '',
-          salary: null,
-          postedAt: j.created_at || null
-        });
-      }
-    }
-  }
-} catch { /* continue */ }
-
-// 5) JSearch
-if (config.jsearchApiKey) {
-  try {
-    const jsearchPair = searchPairs.length > 0 ? searchPairs[0] : { title: searchTitle, location: searchLocation };
-    const query = String(jsearchPair.title || searchTitle || 'software engineer') + ' ' + String(jsearchPair.location || searchLocation || 'remote');
-    const jsearchUrl = 'https://jsearch.p.rapidapi.com/search?query=' + encodeURIComponent(query) + '&page=1&num_pages=1';
-    const data = await safeFetch(jsearchUrl, {
-      headers: {
-        'X-RapidAPI-Key': config.jsearchApiKey,
-        'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'
-      }
-    });
-    if (data && Array.isArray(data.data)) {
-      for (const j of data.data) {
-        allJobs.push({
-          externalId: 'jsearch-' + j.job_id,
-          title: j.job_title || '',
-          company: j.employer_name || 'Unknown',
-          location: j.job_city ? (j.job_city + ', ' + (j.job_state || j.job_country || '')) : (j.job_country || ''),
-          description: (j.job_description || '').substring(0, 3000),
-          source: 'jsearch',
-          url: j.job_apply_link || j.job_google_link || '',
-          salary: j.job_min_salary ? String(j.job_min_salary) + '-' + String(j.job_max_salary) : null,
-          postedAt: j.job_posted_at_datetime_utc || null
-        });
-      }
-    }
-  } catch { /* continue */ }
-}
-
-// 6) Jooble
-if (config.joobleApiKey) {
-  try {
-    for (const pair of searchPairs.slice(0, 4)) {
-      const data = await safeFetch('https://jooble.org/api/' + config.joobleApiKey, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords: (pair.title || searchTitle), location: (pair.location || searchLocation), page: 1 })
-      });
-      if (data && Array.isArray(data.jobs)) {
-        for (const j of data.jobs) {
-          allJobs.push({
-            externalId: 'jooble-' + (j.id || Date.now()),
-            title: j.title || '',
-            company: j.company || 'Unknown',
-            location: j.location || '',
-            description: (j.snippet || '').substring(0, 3000),
-            source: 'jooble',
-            url: j.link || '',
-            salary: j.salary || null,
-            postedAt: j.updated || null
-          });
-        }
-      }
-    }
-  } catch { /* continue */ }
-}
-
-// 7) Reed
-if (config.reedApiKey) {
-  try {
-    const reedAuth = btoa(config.reedApiKey + ':');
-    for (const pair of searchPairs.slice(0, 4)) {
-      const reedUrl = 'https://www.reed.co.uk/api/1.0/search?keywords=' + encodeURIComponent(pair.title || searchTitle) + '&locationName=' + encodeURIComponent(pair.location || searchLocation) + '&resultsToTake=15';
-      const data = await safeFetch(reedUrl, {
-        headers: { Authorization: 'Basic ' + reedAuth }
-      });
-      if (data && Array.isArray(data.results)) {
-        for (const j of data.results) {
-          allJobs.push({
-            externalId: 'reed-' + j.jobId,
-            title: j.jobTitle || '',
-            company: j.employerName || 'Unknown',
-            location: j.locationName || '',
-            description: (j.jobDescription || '').substring(0, 3000),
-            source: 'reed',
-            url: j.jobUrl || '',
-            salary: j.minimumSalary ? String(j.minimumSalary) + '-' + String(j.maximumSalary) : null,
-            postedAt: j.date || null
-          });
-        }
-      }
-    }
-  } catch { /* continue */ }
-}
-
-const seen = new Set();
-const uniqueJobs = [];
-for (const job of allJobs) {
-  if (!seen.has(job.externalId) && job.title && job.description.length > 50) {
-    seen.add(job.externalId);
-    uniqueJobs.push(job);
-  }
-}
-
-function normalizeForMatch(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\\u0300-\\u036f]/g, '')
-    .toLowerCase();
-}
-
-function matchesPreferredLocation(job, locationNeedles, preference) {
-  if (!Array.isArray(locationNeedles) || locationNeedles.length === 0) return true;
-  const haystack = normalizeForMatch((job.location || '') + ' ' + (job.title || '') + ' ' + (job.description || ''));
-  const matchesLocation = locationNeedles.some((needle) => haystack.includes(needle));
-  const mentionsRemote = /(remote|home office|work from home|hybrid|teletravail|hybride)/.test(haystack);
-
-  if (preference === 'remote') return mentionsRemote;
-  if (preference === 'onsite') return matchesLocation && !mentionsRemote;
-  if (preference === 'hybrid') return matchesLocation;
-  return matchesLocation;
-}
-
-const locationNeedles = locationCandidates.map(normalizeForMatch);
-const filteredJobs = uniqueJobs.filter((job) =>
-  matchesPreferredLocation(job, locationNeedles, remotePreference)
-);
-const finalJobs = filteredJobs.length > 0 ? filteredJobs : uniqueJobs;
-
-if (finalJobs.length === 0) return [];
-
-return finalJobs.map((job) => ({
-  json: {
-    ...job,
-    runId,
-    userId: user.userId,
-    masterCvText: user.masterCvText,
-    subscriptionStatus: user.subscriptionStatus,
-    creditsRemaining: user.creditsRemaining
-  }
-}));`;
+const FETCH_JOBS_VIA_APP_API_NODE = {
+    id: "fetch-jobs-via-app-api",
+    name: "Fetch Jobs via App API",
+    type: "n8n-nodes-base.httpRequest",
+    typeVersion: 4.1,
+    position: [900, 0],
+    parameters: {
+        method: "POST",
+        url: "={{ $('Load Config').first().json.appUrl + '/api/webhooks/n8n' }}",
+        sendHeaders: true,
+        headerParameters: {
+            parameters: [
+                { name: "content-type", value: "application/json" },
+                {
+                    name: "x-webhook-secret",
+                    value: "={{ $('Load Config').first().json.webhookSecret }}",
+                },
+                {
+                    name: "x-run-id",
+                    value: "={{ String($execution.id || Date.now()) }}",
+                },
+            ],
+        },
+        sendBody: true,
+        specifyBody: "json",
+        jsonBody: "={{ JSON.stringify({ type: 'fetch_jobs_for_user', runId: String($execution.id || Date.now()), data: { user: { userId: $json.userId, targetTitles: $json.targetTitles, locations: $json.locations, remotePreference: $json.remotePreference, masterCvText: $json.masterCvText, subscriptionStatus: $json.subscriptionStatus, creditsRemaining: $json.creditsRemaining }, sourceConfig: { adzunaAppId: $('Load Config').first().json.adzunaAppId || '', adzunaAppKey: $('Load Config').first().json.adzunaAppKey || '', jsearchApiKey: $('Load Config').first().json.jsearchApiKey || '', joobleApiKey: $('Load Config').first().json.joobleApiKey || '', reedApiKey: $('Load Config').first().json.reedApiKey || '' } } }) }}",
+        options: { timeout: 30000 },
+    },
+};
 
 const PARSE_SCORING_JS = `// Parse scoring response, carry forward job + user data
 const item = $input.first();
@@ -672,6 +383,7 @@ return users;`;
 
 function patchWorkflowJson(workflow) {
     const copy = JSON.parse(JSON.stringify(workflow));
+    let hasFetchJobsViaAppApiNode = false;
 
     for (const node of copy.nodes || []) {
         if (node.name === "Schedule Trigger") {
@@ -689,6 +401,17 @@ function patchWorkflowJson(workflow) {
                 mode: "runOnceForEachItem",
                 jsCode: FETCH_NORMALIZE_JS,
             };
+        }
+
+        if (node.name === "Fetch Jobs via App API") {
+            hasFetchJobsViaAppApiNode = true;
+            node.parameters = JSON.parse(JSON.stringify(FETCH_JOBS_VIA_APP_API_NODE.parameters));
+            node.type = FETCH_JOBS_VIA_APP_API_NODE.type;
+            node.typeVersion = FETCH_JOBS_VIA_APP_API_NODE.typeVersion;
+            if (!Array.isArray(node.position) || node.position.length !== 2) {
+                node.position = FETCH_JOBS_VIA_APP_API_NODE.position;
+            }
+            delete node.credentials;
         }
 
         if (node.name === "Fetch Active Users with Prefs & CV") {
@@ -754,6 +477,18 @@ function patchWorkflowJson(workflow) {
             node.parameters = { ...(node.parameters || {}), jsCode: ERROR_HANDLER_JS };
         }
     }
+
+    if (!hasFetchJobsViaAppApiNode) {
+        copy.nodes.push(JSON.parse(JSON.stringify(FETCH_JOBS_VIA_APP_API_NODE)));
+    }
+
+    copy.connections = copy.connections || {};
+    copy.connections["Prepare User Data"] = {
+        main: [[{ node: "Fetch Jobs via App API", type: "main", index: 0 }]],
+    };
+    copy.connections["Fetch Jobs via App API"] = {
+        main: [[{ node: "Fetch & Normalize All Job Sources", type: "main", index: 0 }]],
+    };
 
     return copy;
 }
