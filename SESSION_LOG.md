@@ -4671,3 +4671,16 @@ Included in this rollout:
   - `npm run incident:pipeline:recovery -- --email armand.kokabi+auto@gmail.com --max-jobs 2 --base-url https://autoapply.works --real-run` ✅
   - connector status observed: `adzuna/themuse/remotive/arbeitnow/jsearch/jooble/reed` all `ok: true`, `status: 200`
   - callback status observed in real-run: `200`
+
+### Follow-up Hotfix (Same Session)
+
+- New scheduled execution diagnostic surfaced node error:
+  - `Fetch & Normalize All Job Sources` → `Can't use .first() here [line 2, for item 0]`
+  - observed in run `4749` at `2026-03-21T23:12:21Z`
+- Applied fix in workflow patch source + template:
+  - switched flatten node access from `$input.first().json` to `$json`
+  - files: `apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`
+- Validation after fix:
+  - `npm run lint` ✅
+  - `npm test` ✅
+  - `npm run build` ✅

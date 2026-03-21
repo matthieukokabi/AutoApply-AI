@@ -107,7 +107,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// Flatten jobs returned by Fetch Jobs via App API\nconst payload = $input.first().json || {};\n\nif (payload && payload.externalId && payload.userId) {\n  return [{ json: payload }];\n}\n\nconst jobs = Array.isArray(payload.jobs) ? payload.jobs : [];\nif (jobs.length === 0) {\n  return [];\n}\n\nreturn jobs\n  .filter((job) => job && typeof job === 'object' && job.externalId && job.title && String(job.description || '').length > 50)\n  .map((job) => ({ json: job }));",
+                "jsCode": "// Flatten jobs returned by Fetch Jobs via App API\nconst payload = $json || {};\n\nif (payload && payload.externalId && payload.userId) {\n  return [{ json: payload }];\n}\n\nconst jobs = Array.isArray(payload.jobs) ? payload.jobs : [];\nif (jobs.length === 0) {\n  return [];\n}\n\nreturn jobs\n  .filter((job) => job && typeof job === 'object' && job.externalId && job.title && String(job.description || '').length > 50)\n  .map((job) => ({ json: job }));",
                 "mode": "runOnceForEachItem"
             },
             "id": "fetch-and-normalize",

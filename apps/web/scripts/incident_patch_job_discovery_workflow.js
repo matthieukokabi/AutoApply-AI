@@ -64,7 +64,7 @@ function loadEnvIfPresent() {
 }
 
 const FETCH_NORMALIZE_JS = `// Flatten jobs returned by Fetch Jobs via App API
-const payload = $input.first().json || {};
+const payload = $json || {};
 
 if (payload && payload.externalId && payload.userId) {
   return [{ json: payload }];
