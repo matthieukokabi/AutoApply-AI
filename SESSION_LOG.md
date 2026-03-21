@@ -4656,3 +4656,18 @@ Included in this rollout:
 - `npm run lint` (apps/web) ✅
 - `npm run build` (apps/web) ✅
 - `npm test` (apps/web) ✅ (52 files, 309 tests)
+
+### Deploy + Post-Deploy Verification
+
+- Production deployment executed via Vercel CLI:
+  - Inspect: `https://vercel.com/matts-projects-d33e5f04/auto-apply-ai/DxgjPJfH8gFmux7oTGYcfVetDVhF`
+  - Production URL: `https://auto-apply-nvoswyjrz-matts-projects-d33e5f04.vercel.app`
+  - Alias: `https://autoapply.works`
+- Post-deploy uptime smoke:
+  - `npm run smoke:uptime:prod` ✅
+  - artifact: `/tmp/production-uptime-check-20260322_000623.jsonl`
+- Pipeline operational verification after deploy:
+  - `npm run incident:pipeline:recovery -- --email armand.kokabi+auto@gmail.com --max-jobs 5 --base-url https://autoapply.works` (dry-run) ✅
+  - `npm run incident:pipeline:recovery -- --email armand.kokabi+auto@gmail.com --max-jobs 2 --base-url https://autoapply.works --real-run` ✅
+  - connector status observed: `adzuna/themuse/remotive/arbeitnow/jsearch/jooble/reed` all `ok: true`, `status: 200`
+  - callback status observed in real-run: `200`
