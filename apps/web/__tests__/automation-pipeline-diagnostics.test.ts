@@ -95,4 +95,35 @@ describe("automation pipeline diagnostics script helpers", () => {
         expect(codes.has("post_update_run_pending")).toBe(true);
         expect(codes.has("end_to_end_run_failure")).toBe(false);
     });
+
+    it("flags repeated zero-user runs when eligible profiles exist", () => {
+        const alerts = diagnostics.inferAlerts({
+            cadenceMinutes: 240,
+            latestSuccessfulRunAt: new Date().toISOString(),
+            eligibleProfileCount: 2,
+            runSummaries: [
+                {
+                    status: "success",
+                    usersProcessedCount: 0,
+                    failureReason: "batch_save_not_reached",
+                    stageSummaries: [],
+                },
+                {
+                    status: "success",
+                    usersProcessedCount: 0,
+                    failureReason: "batch_save_not_reached",
+                    stageSummaries: [],
+                },
+                {
+                    status: "success",
+                    usersProcessedCount: 1,
+                    failureReason: "ok",
+                    stageSummaries: [],
+                },
+            ],
+        });
+
+        const codes = new Set(alerts.map((alert: { code: string }) => alert.code));
+        expect(codes.has("repeated_zero_users_processed")).toBe(true);
+    });
 });

@@ -287,6 +287,7 @@ function inferAlerts({
     latestSuccessfulRunAt,
     runSummaries,
     workflowUpdatedAt = null,
+    eligibleProfileCount = 0,
 }) {
     const alerts = [];
     const now = Date.now();
@@ -325,6 +326,23 @@ function inferAlerts({
     const recentCompleted = terminalRunsInScope
         .filter((run) => run.status === "success")
         .slice(0, ALERTS.repeatedZeroJobsThreshold);
+
+    const leadingZeroUsers = [];
+    for (const run of recentCompleted) {
+        if (run.usersProcessedCount === 0) {
+            leadingZeroUsers.push(run);
+            continue;
+        }
+        break;
+    }
+
+    if (eligibleProfileCount > 0 && leadingZeroUsers.length >= 2) {
+        alerts.push({
+            code: "repeated_zero_users_processed",
+            severity: "critical",
+            detail: `${leadingZeroUsers.length} consecutive successful runs processed zero users while ${eligibleProfileCount} eligible profiles exist`,
+        });
+    }
 
     if (
         recentCompleted.length >= ALERTS.repeatedZeroJobsThreshold &&
@@ -527,6 +545,7 @@ async function main() {
             latestSuccessfulRunAt: latestSuccessfulRun?.startedAt || null,
             runSummaries,
             workflowUpdatedAt: workflow.updatedAt || null,
+            eligibleProfileCount: perProfile.filter((profile) => profile.eligibleForAutomation).length,
         });
 
         const summary = {
