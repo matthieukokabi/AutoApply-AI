@@ -79,6 +79,10 @@ const remotePreference = String(user.remotePreference || 'any').toLowerCase();
 const runId = String($execution.id || Date.now());
 
 const allJobs = [];
+const httpRequestHelper =
+  (typeof this !== 'undefined' && this.helpers && typeof this.helpers.httpRequest === 'function')
+    ? this.helpers.httpRequest.bind(this.helpers)
+    : null;
 
 function buildSearchPairs(titles, locations, limit) {
   const pairs = [];
@@ -106,10 +110,46 @@ function detectAdzunaCountry(location) {
 }
 
 async function safeFetch(url, options) {
+  const requestOptions = options || {};
+  const method = String(requestOptions.method || 'GET').toUpperCase();
+  const headers = requestOptions.headers || {};
+  const body = requestOptions.body;
+
+  if (httpRequestHelper) {
+    try {
+      const helperOptions = {
+        method,
+        url,
+        headers,
+        timeout: 15000,
+        json: true
+      };
+      if (method !== 'GET' && method !== 'HEAD' && body !== undefined) {
+        const contentType = String(headers['Content-Type'] || headers['content-type'] || '').toLowerCase();
+        if (typeof body === 'string' && contentType.includes('application/json')) {
+          try {
+            helperOptions.body = JSON.parse(body);
+          } catch {
+            helperOptions.body = body;
+          }
+        } else {
+          helperOptions.body = body;
+        }
+      }
+      return await httpRequestHelper(helperOptions);
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof fetch !== 'function') {
+    return null;
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const merged = Object.assign({}, options || {}, { signal: controller.signal });
+    const merged = Object.assign({}, requestOptions, { signal: controller.signal });
     const resp = await fetch(url, merged);
     clearTimeout(timeout);
     if (!resp.ok) return null;
@@ -633,7 +673,11 @@ function patchWorkflowJson(workflow) {
         }
 
         if (node.name === "Fetch & Normalize All Job Sources") {
-            node.parameters = { ...(node.parameters || {}), jsCode: FETCH_NORMALIZE_JS };
+            node.parameters = {
+                ...(node.parameters || {}),
+                mode: "runOnceForEachItem",
+                jsCode: FETCH_NORMALIZE_JS,
+            };
         }
 
         if (node.name === "Fetch Active Users with Prefs & CV") {
@@ -673,11 +717,26 @@ function patchWorkflowJson(workflow) {
         }
 
         if (node.name === "Parse Scoring Response") {
-            node.parameters = { ...(node.parameters || {}), jsCode: PARSE_SCORING_JS };
+            node.parameters = {
+                ...(node.parameters || {}),
+                mode: "runOnceForEachItem",
+                jsCode: PARSE_SCORING_JS,
+            };
         }
 
         if (node.name === "Parse Tailored Response") {
-            node.parameters = { ...(node.parameters || {}), jsCode: PARSE_TAILORED_JS };
+            node.parameters = {
+                ...(node.parameters || {}),
+                mode: "runOnceForEachItem",
+                jsCode: PARSE_TAILORED_JS,
+            };
+        }
+
+        if (node.name === "Mark as Discovered") {
+            node.parameters = {
+                ...(node.parameters || {}),
+                mode: "runOnceForEachItem",
+            };
         }
 
         if (node.name === "Error Handler") {
