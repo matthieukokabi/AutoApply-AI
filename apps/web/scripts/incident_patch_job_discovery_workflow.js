@@ -79,12 +79,17 @@ const remotePreference = String(user.remotePreference || 'any').toLowerCase();
 const runId = String($execution.id || Date.now());
 
 const allJobs = [];
+const helperContext = (typeof this === 'object' && this) ? this : null;
 const httpRequestHelper =
   (typeof $httpRequest === 'function')
     ? $httpRequest
-    : (typeof this !== 'undefined' && this.helpers && typeof this.helpers.httpRequest === 'function')
-    ? ((requestOptions) => this.helpers.httpRequest(requestOptions))
+    : (helperContext && helperContext.helpers && typeof helperContext.helpers.httpRequest === 'function')
+    ? helperContext.helpers.httpRequest.bind(helperContext)
     : null;
+const nativeFetch =
+  (typeof globalThis !== 'undefined' && typeof globalThis.fetch === 'function')
+    ? globalThis.fetch.bind(globalThis)
+    : (typeof fetch === 'function' ? fetch : null);
 
 function buildSearchPairs(titles, locations, limit) {
   const pairs = [];
@@ -145,7 +150,7 @@ async function safeFetch(url, options) {
     }
   }
 
-  if (typeof fetch !== 'function') {
+  if (!nativeFetch) {
     return null;
   }
 
@@ -153,7 +158,7 @@ async function safeFetch(url, options) {
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
     const merged = Object.assign({}, requestOptions, { signal: controller.signal });
-    const resp = await fetch(url, merged);
+    const resp = await nativeFetch(url, merged);
     clearTimeout(timeout);
     if (!resp.ok) return null;
     return await resp.json();
