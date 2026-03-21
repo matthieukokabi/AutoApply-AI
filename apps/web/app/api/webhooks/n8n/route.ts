@@ -504,6 +504,15 @@ export async function POST(req: Request) {
 
                 const connectors: DiscoveryConnectorStatus[] = [];
                 const allJobs: DiscoveryJob[] = [];
+                const minInventoryBeforePaidApis = 25;
+                const countCurrentInventory = () =>
+                    dedupeJobs(
+                        allJobs.filter(
+                            (job) =>
+                                Boolean(job.title) &&
+                                String(job.description || "").length > 50
+                        )
+                    ).length;
 
                 // 1) Adzuna
                 if (sourceConfig.adzunaAppId && sourceConfig.adzunaAppKey) {
@@ -511,7 +520,7 @@ export async function POST(req: Request) {
                     let status: number | null = null;
                     let error: string | null = null;
 
-                    for (const pair of searchPairs.slice(0, 4)) {
+                    for (const pair of searchPairs.slice(0, 2)) {
                         const url = `https://api.adzuna.com/v1/api/jobs/${adzunaCountry}/search/1?app_id=${encodeURIComponent(sourceConfig.adzunaAppId)}&app_key=${encodeURIComponent(sourceConfig.adzunaAppKey)}&what=${encodeURIComponent(pair.title || searchTitle)}&where=${encodeURIComponent(pair.location || searchLocation)}&results_per_page=15&content-type=application/json`;
                         const response = await safeFetchJson(url);
                         status = response.status ?? status;
@@ -689,51 +698,65 @@ export async function POST(req: Request) {
 
                 // 5) JSearch (RapidAPI)
                 if (sourceConfig.jsearchApiKey) {
-                    const searchPair =
-                        searchPairs.length > 0
-                            ? searchPairs[0]
-                            : { title: searchTitle, location: searchLocation };
-                    const query = `${searchPair.title || searchTitle} ${searchPair.location || searchLocation || "remote"}`;
-                    const response = await safeFetchJson(
-                        `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1`,
-                        {
-                            headers: {
-                                "X-RapidAPI-Key": sourceConfig.jsearchApiKey,
-                                "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
-                            },
-                        }
-                    );
-                    let normalizedCount = 0;
+                    const shouldQueryJsearch =
+                        countCurrentInventory() < minInventoryBeforePaidApis;
+                    if (!shouldQueryJsearch) {
+                        connectors.push({
+                            source: "jsearch",
+                            ok: true,
+                            status: null,
+                            error: "skipped_sufficient_inventory",
+                            normalizedCount: 0,
+                        });
+                    } else {
+                        const searchPair =
+                            searchPairs.length > 0
+                                ? searchPairs[0]
+                                : { title: searchTitle, location: searchLocation };
+                        const query = `${searchPair.title || searchTitle} ${searchPair.location || searchLocation || "remote"}`;
+                        const response = await safeFetchJson(
+                            `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1`,
+                            {
+                                headers: {
+                                    "X-RapidAPI-Key": sourceConfig.jsearchApiKey,
+                                    "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
+                                },
+                            }
+                        );
+                        let normalizedCount = 0;
 
-                    if (response.ok) {
-                        const jobs = Array.isArray(response.body?.data) ? response.body.data : [];
-                        for (const entry of jobs) {
-                            allJobs.push({
-                                externalId: `jsearch-${entry.job_id}`,
-                                title: entry.job_title || "",
-                                company: entry.employer_name || "Unknown",
-                                location: entry.job_city
-                                    ? `${entry.job_city}, ${entry.job_state || entry.job_country || ""}`
-                                    : entry.job_country || "",
-                                description: String(entry.job_description || "").slice(0, 3000),
-                                source: "jsearch",
-                                url: entry.job_apply_link || entry.job_google_link || "",
-                                salary: entry.job_min_salary
-                                    ? `${entry.job_min_salary}-${entry.job_max_salary}`
-                                    : null,
-                                postedAt: entry.job_posted_at_datetime_utc || null,
-                            });
-                            normalizedCount += 1;
+                        if (response.ok) {
+                            const jobs = Array.isArray(response.body?.data)
+                                ? response.body.data
+                                : [];
+                            for (const entry of jobs) {
+                                allJobs.push({
+                                    externalId: `jsearch-${entry.job_id}`,
+                                    title: entry.job_title || "",
+                                    company: entry.employer_name || "Unknown",
+                                    location: entry.job_city
+                                        ? `${entry.job_city}, ${entry.job_state || entry.job_country || ""}`
+                                        : entry.job_country || "",
+                                    description: String(entry.job_description || "").slice(0, 3000),
+                                    source: "jsearch",
+                                    url: entry.job_apply_link || entry.job_google_link || "",
+                                    salary: entry.job_min_salary
+                                        ? `${entry.job_min_salary}-${entry.job_max_salary}`
+                                        : null,
+                                    postedAt: entry.job_posted_at_datetime_utc || null,
+                                });
+                                normalizedCount += 1;
+                            }
                         }
+
+                        connectors.push({
+                            source: "jsearch",
+                            ok: response.ok,
+                            status: response.status,
+                            error: response.ok ? null : response.error,
+                            normalizedCount,
+                        });
                     }
-
-                    connectors.push({
-                        source: "jsearch",
-                        ok: response.ok,
-                        status: response.status,
-                        error: response.ok ? null : response.error,
-                        normalizedCount,
-                    });
                 } else {
                     connectors.push({
                         source: "jsearch",
@@ -750,7 +773,7 @@ export async function POST(req: Request) {
                     let status: number | null = null;
                     let error: string | null = null;
 
-                    for (const pair of searchPairs.slice(0, 4)) {
+                    for (const pair of searchPairs.slice(0, 2)) {
                         const response = await safeFetchJson(
                             `https://jooble.org/api/${sourceConfig.joobleApiKey}`,
                             {
@@ -805,50 +828,66 @@ export async function POST(req: Request) {
 
                 // 7) Reed
                 if (sourceConfig.reedApiKey) {
-                    let normalizedCount = 0;
-                    let status: number | null = null;
-                    let error: string | null = null;
+                    const shouldQueryReed =
+                        countCurrentInventory() < minInventoryBeforePaidApis;
+                    if (!shouldQueryReed) {
+                        connectors.push({
+                            source: "reed",
+                            ok: true,
+                            status: null,
+                            error: "skipped_sufficient_inventory",
+                            normalizedCount: 0,
+                        });
+                    } else {
+                        let normalizedCount = 0;
+                        let status: number | null = null;
+                        let error: string | null = null;
 
-                    const auth = Buffer.from(`${sourceConfig.reedApiKey}:`).toString("base64");
-                    for (const pair of searchPairs.slice(0, 4)) {
-                        const response = await safeFetchJson(
-                            `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(pair.title || searchTitle)}&locationName=${encodeURIComponent(pair.location || searchLocation)}&resultsToTake=15`,
-                            {
-                                headers: { Authorization: `Basic ${auth}` },
-                            }
+                        const auth = Buffer.from(`${sourceConfig.reedApiKey}:`).toString(
+                            "base64"
                         );
-                        status = response.status ?? status;
-                        if (!response.ok) {
-                            error = response.error ?? `http_${response.status ?? "error"}`;
-                            continue;
+                        for (const pair of searchPairs.slice(0, 2)) {
+                            const response = await safeFetchJson(
+                                `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(pair.title || searchTitle)}&locationName=${encodeURIComponent(pair.location || searchLocation)}&resultsToTake=15`,
+                                {
+                                    headers: { Authorization: `Basic ${auth}` },
+                                }
+                            );
+                            status = response.status ?? status;
+                            if (!response.ok) {
+                                error = response.error ?? `http_${response.status ?? "error"}`;
+                                continue;
+                            }
+
+                            const jobs = Array.isArray(response.body?.results)
+                                ? response.body.results
+                                : [];
+                            for (const entry of jobs) {
+                                allJobs.push({
+                                    externalId: `reed-${entry.jobId}`,
+                                    title: entry.jobTitle || "",
+                                    company: entry.employerName || "Unknown",
+                                    location: entry.locationName || "",
+                                    description: String(entry.jobDescription || "").slice(0, 3000),
+                                    source: "reed",
+                                    url: entry.jobUrl || "",
+                                    salary: entry.minimumSalary
+                                        ? `${entry.minimumSalary}-${entry.maximumSalary}`
+                                        : null,
+                                    postedAt: entry.date || null,
+                                });
+                                normalizedCount += 1;
+                            }
                         }
 
-                        const jobs = Array.isArray(response.body?.results) ? response.body.results : [];
-                        for (const entry of jobs) {
-                            allJobs.push({
-                                externalId: `reed-${entry.jobId}`,
-                                title: entry.jobTitle || "",
-                                company: entry.employerName || "Unknown",
-                                location: entry.locationName || "",
-                                description: String(entry.jobDescription || "").slice(0, 3000),
-                                source: "reed",
-                                url: entry.jobUrl || "",
-                                salary: entry.minimumSalary
-                                    ? `${entry.minimumSalary}-${entry.maximumSalary}`
-                                    : null,
-                                postedAt: entry.date || null,
-                            });
-                            normalizedCount += 1;
-                        }
+                        connectors.push({
+                            source: "reed",
+                            ok: normalizedCount > 0 || error === null,
+                            status,
+                            error,
+                            normalizedCount,
+                        });
                     }
-
-                    connectors.push({
-                        source: "reed",
-                        ok: normalizedCount > 0 || error === null,
-                        status,
-                        error,
-                        normalizedCount,
-                    });
                 } else {
                     connectors.push({
                         source: "reed",
