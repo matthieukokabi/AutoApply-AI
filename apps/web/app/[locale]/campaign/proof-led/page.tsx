@@ -1,4 +1,5 @@
 import { Link } from "@/i18n/routing";
+import NextLink from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowRight, BarChart3, CheckCircle2, Clock3, ShieldCheck, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -201,12 +202,12 @@ export default async function ProofLedCampaignPage({
                         AutoApply AI
                     </Link>
                     <div className="flex items-center gap-2">
-                        <Link href={signInPath}>
+                        <NextLink href={signInPath}>
                             <Button variant="ghost">{t("nav.signIn")}</Button>
-                        </Link>
-                        <Link href={signUpPath}>
+                        </NextLink>
+                        <NextLink href={signUpPath}>
                             <Button>{t("nav.getStarted")}</Button>
-                        </Link>
+                        </NextLink>
                     </div>
                 </div>
             </header>
@@ -220,11 +221,11 @@ export default async function ProofLedCampaignPage({
                         <h1 className="text-4xl font-bold tracking-tight md:text-6xl">{copy.title}</h1>
                         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">{copy.subtitle}</p>
                         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                            <Link href={signUpPath}>
+                            <NextLink href={signUpPath}>
                                 <Button size="lg" className="gap-2">
                                     {t("hero.startFree")} <ArrowRight className="h-4 w-4" />
                                 </Button>
-                            </Link>
+                            </NextLink>
                             <CheckoutButton
                                 plan="pro_monthly"
                                 variant="outline"
@@ -290,9 +291,9 @@ export default async function ProofLedCampaignPage({
                             <CardDescription>{copy.ctaSubtitle}</CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-                            <Link href={signUpPath}>
+                            <NextLink href={signUpPath}>
                                 <Button className="h-11 px-8">{t("hero.startFree")}</Button>
-                            </Link>
+                            </NextLink>
                             <CheckoutButton
                                 plan="unlimited"
                                 variant="outline"

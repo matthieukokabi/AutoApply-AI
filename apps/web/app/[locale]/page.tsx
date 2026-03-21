@@ -1,4 +1,5 @@
 import { Link } from "@/i18n/routing";
+import NextLink from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -151,12 +152,12 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
-                        <Link href={signInPath} className="hidden sm:inline-flex">
+                        <NextLink href={signInPath} className="hidden sm:inline-flex">
                             <Button variant="ghost">{t("nav.signIn")}</Button>
-                        </Link>
-                        <Link href={signUpPath} className="hidden sm:inline-flex">
+                        </NextLink>
+                        <NextLink href={signUpPath} className="hidden sm:inline-flex">
                             <Button>{t("nav.getStarted")}</Button>
-                        </Link>
+                        </NextLink>
                     </div>
                 </div>
             </header>
@@ -176,11 +177,11 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     {t("hero.description")}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                    <Link href={signUpPath}>
+                    <NextLink href={signUpPath}>
                         <Button size="lg" className="gap-2 px-8">
                             {t("hero.startFree")} <ArrowRight className="h-4 w-4" />
                         </Button>
-                    </Link>
+                    </NextLink>
                     <Link href="#pricing">
                         <Button size="lg" variant="outline" className="px-8">
                             {t("hero.viewPricing")}
@@ -341,11 +342,11 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </ul>
                         </CardContent>
                         <CardFooter>
-                            <Link href={signUpPath} className="w-full">
+                            <NextLink href={signUpPath} className="w-full">
                                 <Button variant="outline" className="h-auto w-full whitespace-normal py-3 text-center">
                                     {t("hero.startFree")}
                                 </Button>
-                            </Link>
+                            </NextLink>
                         </CardFooter>
                     </Card>
 
@@ -486,11 +487,11 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     <p className="text-lg opacity-90 mb-8 max-w-lg mx-auto">
                         {t("cta.subtitle")}
                     </p>
-                    <Link href={signUpPath}>
+                    <NextLink href={signUpPath}>
                         <Button size="lg" variant="secondary" className="gap-2 px-8">
                             {t("cta.getStarted")} <ArrowRight className="h-4 w-4" />
                         </Button>
-                    </Link>
+                    </NextLink>
                 </div>
             </section>
 
