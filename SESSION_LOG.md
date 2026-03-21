@@ -4639,3 +4639,20 @@ Included in this rollout:
 - `docs/referral-campaign-beta.md`
 - `TODO.md`
 - `SESSION_LOG.md`
+
+---
+
+## Session 148 — 2026-03-21
+
+### Pre-Deploy Gate (Batched Production Release)
+
+- Deploy reason: P0/P1 reliability + cost-control batch for discovery pipeline while onboarding paid users.
+- Commit range in batch: `c3c6789..2f37b76`
+- Key change in this batch: inventory-aware gating to reduce paid API usage (`jsearch`/`reed`) and lower per-run paid-source fanout (`adzuna`/`jooble`/`reed` from 4 pairs to 2).
+
+### Verification Before Deploy
+
+- `npm run test -- __tests__/api/webhooks-n8n.test.ts` (apps/web) ✅
+- `npm run lint` (apps/web) ✅
+- `npm run build` (apps/web) ✅
+- `npm test` (apps/web) ✅ (52 files, 309 tests)
