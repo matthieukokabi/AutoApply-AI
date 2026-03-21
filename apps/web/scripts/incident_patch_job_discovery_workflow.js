@@ -80,8 +80,10 @@ const runId = String($execution.id || Date.now());
 
 const allJobs = [];
 const httpRequestHelper =
-  (typeof this !== 'undefined' && this.helpers && typeof this.helpers.httpRequest === 'function')
-    ? this.helpers.httpRequest.bind(this.helpers)
+  (typeof $httpRequest === 'function')
+    ? $httpRequest
+    : (typeof this !== 'undefined' && this.helpers && typeof this.helpers.httpRequest === 'function')
+    ? ((requestOptions) => this.helpers.httpRequest(requestOptions))
     : null;
 
 function buildSearchPairs(titles, locations, limit) {
@@ -114,6 +116,7 @@ async function safeFetch(url, options) {
   const method = String(requestOptions.method || 'GET').toUpperCase();
   const headers = requestOptions.headers || {};
   const body = requestOptions.body;
+  let helperFailed = false;
 
   if (httpRequestHelper) {
     try {
@@ -138,7 +141,7 @@ async function safeFetch(url, options) {
       }
       return await httpRequestHelper(helperOptions);
     } catch {
-      return null;
+      helperFailed = true;
     }
   }
 
@@ -155,6 +158,9 @@ async function safeFetch(url, options) {
     if (!resp.ok) return null;
     return await resp.json();
   } catch {
+    if (helperFailed) {
+      return null;
+    }
     clearTimeout(timeout);
     return null;
   }
