@@ -164,22 +164,16 @@ export async function POST(req: Request) {
         switch (type) {
             case "fetch_active_users": {
                 const cadence = await getDiscoveryCadenceState();
+                const users = await fetchAutomationUsers();
                 if (cadence.throttled) {
-                    logPipelineEvent("info", "fetch_active_users_throttled", {
+                    logPipelineEvent("warn", "fetch_active_users_cadence_window_active", {
                         runId,
-                        latestSuccessAt: cadence.latestSuccessAt?.toISOString() ?? null,
-                        nextAllowedAt: cadence.nextAllowedAt?.toISOString() ?? null,
-                    });
-                    return NextResponse.json({
-                        runId,
-                        users: [],
-                        throttled: true,
+                        usersCount: users.length,
                         latestSuccessAt: cadence.latestSuccessAt?.toISOString() ?? null,
                         nextAllowedAt: cadence.nextAllowedAt?.toISOString() ?? null,
                     });
                 }
 
-                const users = await fetchAutomationUsers();
                 logPipelineEvent("info", "fetch_active_users_success", {
                     runId,
                     usersCount: users.length,
@@ -188,7 +182,9 @@ export async function POST(req: Request) {
                 return NextResponse.json({
                     runId,
                     users,
-                    throttled: false,
+                    throttled: cadence.throttled,
+                    latestSuccessAt: cadence.latestSuccessAt?.toISOString() ?? null,
+                    nextAllowedAt: cadence.nextAllowedAt?.toISOString() ?? null,
                 });
             }
 

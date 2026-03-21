@@ -205,9 +205,26 @@ describe("POST /api/webhooks/n8n", () => {
             });
         });
 
-        it("returns empty users when cadence window is throttled", async () => {
+        it("still returns eligible users when cadence window is throttled", async () => {
             vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
                 { startedAt: new Date() },
+            ] as any);
+            vi.mocked(prisma.user.findMany).mockResolvedValue([
+                {
+                    id: "user_1",
+                    email: "test@example.com",
+                    name: "Test User",
+                    subscriptionStatus: "pro",
+                    creditsRemaining: 10,
+                    masterProfile: { rawText: "CV TEXT" },
+                    preferences: {
+                        targetTitles: ["IT Operations Manager"],
+                        locations: ["Zurich"],
+                        remotePreference: "hybrid",
+                        salaryMin: 100000,
+                        industries: ["SaaS"],
+                    },
+                },
             ] as any);
 
             const request = createWebhookRequest("fetch_active_users", {});
@@ -216,8 +233,9 @@ describe("POST /api/webhooks/n8n", () => {
 
             expect(response.status).toBe(200);
             expect(data.throttled).toBe(true);
-            expect(data.users).toEqual([]);
-            expect(prisma.user.findMany).not.toHaveBeenCalled();
+            expect(Array.isArray(data.users)).toBe(true);
+            expect(data.users).toHaveLength(1);
+            expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
         });
     });
 
