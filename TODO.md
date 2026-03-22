@@ -175,7 +175,7 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [x] Tighten canonical handling for query-param variants — completed on 2026-03-18 (`lib/seo.ts` now strips `?query` and `#hash` before canonical/hreflang generation; covered by `__tests__/seo.test.ts`)
 - [x] Re-validate hreflang reciprocity across all localized indexable pages — completed on 2026-03-18 (`__tests__/hreflang-reciprocity.test.ts` + `buildLocaleAlternates` assertions on all indexable localized routes)
 - [x] Run Wave 2 validation suite (`lint`, `test`, `build`, live squirrel audit) and document score delta vs Wave 1 — completed on 2026-03-18 (`docs/wave2-validation-report-2026-03-18.md` + local/prod squirrel artifacts)
-- [ ] Re-run `npm run smoke:squirrel:prod` after next batched Vercel production deploy and confirm `status: pass`
+- [x] Re-run `npm run smoke:squirrel:prod` after next batched Vercel production deploy and confirm `status: pass` — completed on 2026-03-22 (`/tmp/live-squirrel-audit-20260322_010622.json`, `status: pass`)
 
 ## P1 — Wave 3 SEO + security + perf hardening
 
