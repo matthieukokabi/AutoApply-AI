@@ -35,7 +35,8 @@
         "wave6:ops:live": "npm run telemetry:conversion:weekly -- https://autoapply.works && npm run telemetry:conversion:sentinel && npm run perf:conversion:correlation && npm run ops:summary",
         "incident:pipeline:diagnostics": "node scripts/automation_pipeline_diagnostics.js --json",
         "incident:pipeline:alerts": "node scripts/automation_pipeline_diagnostics.js --json --fail-on-alert --min-severity warning",
-        "incident:pipeline:recovery": "node scripts/automation_pipeline_recovery_run.js"
+        "incident:pipeline:recovery": "node scripts/automation_pipeline_recovery_run.js",
+        "incident:pipeline:await-post-update": "node scripts/automation_pipeline_post_update_gate.js --timeout-seconds 21600 --poll-seconds 60 --json"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"
