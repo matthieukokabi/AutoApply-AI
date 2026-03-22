@@ -1,6 +1,6 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-03-20 (Europe/Zurich)
+Last updated: 2026-03-22 (Europe/Zurich)
 
 ## P0 — Incident: onboarding CV upload returning 500
 
@@ -41,7 +41,8 @@ Last updated: 2026-03-20 (Europe/Zurich)
 - [x] Fix scheduled-run regression in `Fetch & Normalize All Job Sources` (`Can't use .first() here`) by switching flatten logic to item-safe `$json` access, then republish live n8n workflow — completed on 2026-03-21 (`apps/web/scripts/incident_patch_job_discovery_workflow.js`, `n8n/workflows/job-discovery-pipeline.json`; validated with `npm run lint`, `npm test`, `npm run build`)
 - [x] Add post-update run gate command (`incident:pipeline:await-post-update`) to poll diagnostics and fail fast on first terminal post-update run regression (`status!=success` or zero `Fetch Jobs via App API` / normalization output) — completed on 2026-03-22 (`apps/web/scripts/automation_pipeline_post_update_gate.js`, `apps/web/__tests__/automation-pipeline-post-update-gate.test.ts`, `apps/web/package.json`)
 - [x] Deploy `fetch_jobs_for_user` webhook path to production and run signed smoke request with live workflow source config to confirm non-zero response (`jobs=84`, `status=200`) — completed on 2026-03-21 (`vercel deploy --prod`, `/api/webhooks/n8n` smoke run)
-- [ ] Verify first terminal scheduled execution after workflow version `cc7f40bd-3ef9-4dba-85f8-d0128b84128e` and confirm non-zero discovery output path (`Fetch Jobs via App API` + `Fetch & Normalize All Job Sources` itemCount > 0) for active paid users
+- [x] Re-publish live n8n workflow after recurring scheduled-run failure (`Can't use .first() here`) to activate fixed normalization logic and restore manual recovery path for paid users — completed on 2026-03-22 (live workflow version `da1a5087-ae45-4ac8-a35c-3d15da937334`; `npm run incident:pipeline:recovery -- --email armand.kokabi+auto@gmail.com --max-jobs 2 --base-url https://autoapply.works --real-run` => `callbackStatus=200`, `deltaApplications=1`, `payloadTailoredCount=1`)
+- [ ] Verify first terminal scheduled execution after workflow version `da1a5087-ae45-4ac8-a35c-3d15da937334` and confirm non-zero discovery output path (`Fetch Jobs via App API` + `Fetch & Normalize All Job Sources` itemCount > 0) for active paid users
 
 ## P0 — Incident: contact endpoint + canonical social identity + mail routing
 
