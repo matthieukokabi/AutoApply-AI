@@ -63,21 +63,28 @@ function loadEnvIfPresent() {
     }
 }
 
-const FETCH_NORMALIZE_JS = `// Flatten jobs returned by Fetch Jobs via App API
-const payload = $json || {};
+const FETCH_NORMALIZE_JS = `// Flatten jobs returned by Fetch Jobs via App API (all incoming items)
+const inputs = $input.all();
+const out = [];
 
-if (payload && payload.externalId && payload.userId) {
-  return [{ json: payload }];
+for (const item of inputs) {
+  const payload = item && item.json && typeof item.json === 'object' ? item.json : null;
+  if (!payload) continue;
+
+  if (payload.externalId && payload.userId && payload.title && String(payload.description || '').length > 50) {
+    out.push({ json: payload });
+    continue;
+  }
+
+  const jobs = Array.isArray(payload.jobs) ? payload.jobs : [];
+  for (const job of jobs) {
+    if (job && typeof job === 'object' && job.externalId && job.title && String(job.description || '').length > 50) {
+      out.push({ json: job });
+    }
+  }
 }
 
-const jobs = Array.isArray(payload.jobs) ? payload.jobs : [];
-if (jobs.length === 0) {
-  return [];
-}
-
-return jobs
-  .filter((job) => job && typeof job === 'object' && job.externalId && job.title && String(job.description || '').length > 50)
-  .map((job) => ({ json: job }));`;
+return out;`;
 
 const FETCH_JOBS_VIA_APP_API_NODE = {
     id: "fetch-jobs-via-app-api",
@@ -398,7 +405,7 @@ function patchWorkflowJson(workflow) {
         if (node.name === "Fetch & Normalize All Job Sources") {
             node.parameters = {
                 ...(node.parameters || {}),
-                mode: "runOnceForEachItem",
+                mode: "runOnceForAllItems",
                 jsCode: FETCH_NORMALIZE_JS,
             };
         }

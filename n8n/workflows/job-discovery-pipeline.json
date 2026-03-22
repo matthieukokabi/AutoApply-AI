@@ -107,8 +107,8 @@
         },
         {
             "parameters": {
-                "jsCode": "// Flatten jobs returned by Fetch Jobs via App API\nconst payload = $json || {};\n\nif (payload && payload.externalId && payload.userId) {\n  return [{ json: payload }];\n}\n\nconst jobs = Array.isArray(payload.jobs) ? payload.jobs : [];\nif (jobs.length === 0) {\n  return [];\n}\n\nreturn jobs\n  .filter((job) => job && typeof job === 'object' && job.externalId && job.title && String(job.description || '').length > 50)\n  .map((job) => ({ json: job }));",
-                "mode": "runOnceForEachItem"
+                "jsCode": "// Flatten jobs returned by Fetch Jobs via App API (all incoming items)\nconst inputs = $input.all();\nconst out = [];\n\nfor (const item of inputs) {\n  const payload = item && item.json && typeof item.json === 'object' ? item.json : null;\n  if (!payload) continue;\n\n  if (payload.externalId && payload.userId && payload.title && String(payload.description || '').length > 50) {\n    out.push({ json: payload });\n    continue;\n  }\n\n  const jobs = Array.isArray(payload.jobs) ? payload.jobs : [];\n  for (const job of jobs) {\n    if (job && typeof job === 'object' && job.externalId && job.title && String(job.description || '').length > 50) {\n      out.push({ json: job });\n    }\n  }\n}\n\nreturn out;",
+                "mode": "runOnceForAllItems"
             },
             "id": "fetch-and-normalize",
             "name": "Fetch & Normalize All Job Sources",
