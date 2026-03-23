@@ -1,0 +1,161 @@
+{
+  "generatedAt": "2026-03-23T00:17:39.823Z",
+  "workflowIds": [
+    "hL4t2SFOT4IUeBcO",
+    "inuJ5oto7szOIlRN",
+    "eddfsS251UHbmNIj",
+    "3iUzBukfS6TME2yn"
+  ],
+  "overallState": "warning",
+  "workflowCount": 4,
+  "workflows": [
+    {
+      "id": "hL4t2SFOT4IUeBcO",
+      "name": "Job Discovery & Tailoring Pipeline v2",
+      "active": true,
+      "versionId": "699982fd-2c7b-43c0-8949-409c57efc8f6",
+      "activeVersionId": "699982fd-2c7b-43c0-8949-409c57efc8f6",
+      "publishedVersionId": null,
+      "updatedAt": "2026-03-23T00:00:33.922Z",
+      "createdAt": "2026-03-22T20:36:03.737Z",
+      "nodeCount": 15,
+      "nodeDigest": "e132ce0afc54e044",
+      "connectionDigest": "c946f568287a679a",
+      "settingsDigest": "3b1c5701e4da7574",
+      "latestHistory": [
+        {
+          "versionId": "699982fd-2c7b-43c0-8949-409c57efc8f6",
+          "createdAt": "2026-03-23T00:00:33.928Z",
+          "updatedAt": "2026-03-23T00:01:24.020Z",
+          "name": "Version 699982fd",
+          "description": ""
+        },
+        {
+          "versionId": "5cd0a4db-85bc-4617-bb0c-9efb54408258",
+          "createdAt": "2026-03-22T23:59:50.540Z",
+          "updatedAt": "2026-03-22T23:59:50.540Z",
+          "name": null,
+          "description": ""
+        },
+        {
+          "versionId": "cd5afec0-0850-477e-ad89-809031c74c2c",
+          "createdAt": "2026-03-22T20:36:03.737Z",
+          "updatedAt": "2026-03-22T20:41:07.628Z",
+          "name": "v2.0 - Production rebuild",
+          "description": "Safe parallel migration v2. Scheduled 4h. Fixes: $env vars (no hardcoded secrets), runOnceForAllItems on all Code nodes, no .first() in wrong contexts, x-run-id propagation, structured error handler, input validation, dedup, robust job normalization."
+        }
+      ],
+      "rollbackCandidateVersionId": "5cd0a4db-85bc-4617-bb0c-9efb54408258",
+      "alerts": []
+    },
+    {
+      "id": "inuJ5oto7szOIlRN",
+      "name": "User-Initiated Single Job Tailoring v2",
+      "active": true,
+      "versionId": "bd162d21-1511-4a5a-94fc-c02edc794619",
+      "activeVersionId": "bd162d21-1511-4a5a-94fc-c02edc794619",
+      "publishedVersionId": null,
+      "updatedAt": "2026-03-23T00:03:14.272Z",
+      "createdAt": "2026-03-22T20:38:53.386Z",
+      "nodeCount": 8,
+      "nodeDigest": "a19e15c6a0d5958b",
+      "connectionDigest": "c52fd117f487c73d",
+      "settingsDigest": "3b1c5701e4da7574",
+      "latestHistory": [
+        {
+          "versionId": "bd162d21-1511-4a5a-94fc-c02edc794619",
+          "createdAt": "2026-03-23T00:03:14.277Z",
+          "updatedAt": "2026-03-23T00:03:52.539Z",
+          "name": "Version bd162d21",
+          "description": ""
+        },
+        {
+          "versionId": "0681a816-f032-43ac-b13f-9299e2a3e56d",
+          "createdAt": "2026-03-23T00:02:52.314Z",
+          "updatedAt": "2026-03-23T00:02:52.314Z",
+          "name": null,
+          "description": ""
+        },
+        {
+          "versionId": "bb1bb702-6361-4560-8b35-416ed771e4fe",
+          "createdAt": "2026-03-22T20:38:53.386Z",
+          "updatedAt": "2026-03-22T20:40:08.328Z",
+          "name": "v2.0 - Production rebuild",
+          "description": "Safe parallel migration v2. Fixes: $env vars (no hardcoded secrets), runOnceForAllItems on all Code nodes, no .first() in wrong contexts, x-run-id propagation, structured error callbacks, input validation."
+        }
+      ],
+      "rollbackCandidateVersionId": "0681a816-f032-43ac-b13f-9299e2a3e56d",
+      "alerts": []
+    },
+    {
+      "id": "eddfsS251UHbmNIj",
+      "name": "Job Discovery & Tailoring Pipeline",
+      "active": false,
+      "versionId": "0f099e13-8d82-4c36-8425-221b3db4804b",
+      "activeVersionId": null,
+      "publishedVersionId": "0f099e13-8d82-4c36-8425-221b3db4804b",
+      "updatedAt": "2026-03-22T16:46:00.731Z",
+      "createdAt": "2026-03-13T23:39:08.192Z",
+      "nodeCount": 15,
+      "nodeDigest": "04657e77f41e5024",
+      "connectionDigest": "1c9ee2639c3ac1b0",
+      "settingsDigest": "cbde17e4118b0db7",
+      "latestHistory": [
+        {
+          "versionId": "0f099e13-8d82-4c36-8425-221b3db4804b",
+          "createdAt": "2026-03-22T16:46:00.731Z",
+          "updatedAt": "2026-03-22T16:46:00.731Z",
+          "name": "Version a22afe30",
+          "description": "Inject Reed API key to activate Reed job source"
+        },
+        {
+          "versionId": "da1a5087-ae45-4ac8-a35c-3d15da937334",
+          "createdAt": "2026-03-22T10:19:14.961Z",
+          "updatedAt": "2026-03-22T10:19:14.961Z",
+          "name": "Version a22afe30",
+          "description": "Inject Reed API key to activate Reed job source"
+        }
+      ],
+      "rollbackCandidateVersionId": "da1a5087-ae45-4ac8-a35c-3d15da937334",
+      "alerts": []
+    },
+    {
+      "id": "3iUzBukfS6TME2yn",
+      "name": "User-Initiated Single Job Tailoring",
+      "active": false,
+      "versionId": "f6a724dc-789e-469b-883d-6df79533a966",
+      "activeVersionId": null,
+      "publishedVersionId": null,
+      "updatedAt": "2026-03-15T17:58:19.655Z",
+      "createdAt": "2026-03-13T23:39:07.998Z",
+      "nodeCount": 8,
+      "nodeDigest": "04637307207eeef7",
+      "connectionDigest": "c52fd117f487c73d",
+      "settingsDigest": "edaea361f92807fa",
+      "latestHistory": [
+        {
+          "versionId": "f6a724dc-789e-469b-883d-6df79533a966",
+          "createdAt": "2026-03-15T17:58:19.661Z",
+          "updatedAt": "2026-03-15T17:58:19.661Z",
+          "name": null,
+          "description": ""
+        }
+      ],
+      "rollbackCandidateVersionId": null,
+      "alerts": [
+        {
+          "code": "no_rollback_candidate",
+          "severity": "warning",
+          "detail": "No previous workflow_history version available for rollback"
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "code": "no_rollback_candidate",
+      "severity": "warning",
+      "detail": "No previous workflow_history version available for rollback"
+    }
+  ]
+}
