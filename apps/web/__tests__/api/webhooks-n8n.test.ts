@@ -252,6 +252,49 @@ describe("POST /api/webhooks/n8n", () => {
             expect(data.error).toContain("Invalid fetch_jobs_for_user payload");
         });
 
+        it("accepts stringified data payload envelope", async () => {
+            vi.mocked(global.fetch).mockImplementation(async () => {
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        results: [],
+                        jobs: [],
+                        data: [],
+                    }),
+                    text: async () => "",
+                } as Response;
+            });
+
+            const request = createRawWebhookRequest({
+                type: "fetch_jobs_for_user",
+                data: JSON.stringify({
+                    user: {
+                        userId: "user_1",
+                        targetTitles: ["IT Operations Manager"],
+                        locations: ["Zurich"],
+                        remotePreference: "hybrid",
+                        masterCvText: "CV content",
+                        subscriptionStatus: "pro",
+                        creditsRemaining: 12,
+                    },
+                    sourceConfig: {
+                        adzunaAppId: "",
+                        adzunaAppKey: "",
+                        jsearchApiKey: "",
+                        joobleApiKey: "",
+                        reedApiKey: "",
+                    },
+                }),
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(Array.isArray(data.jobs)).toBe(true);
+        });
+
         it("returns normalized jobs and connector health", async () => {
             vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL) => {
                 const url = String(input);

@@ -367,10 +367,20 @@ export async function POST(req: Request) {
             bodyRunId ||
             `webhook-${Date.now()}`;
         const type = typeof body?.type === "string" ? body.type : "";
-        const data =
-            body?.data && typeof body.data === "object" && !Array.isArray(body.data)
-                ? (body.data as Record<string, unknown>)
-                : null;
+        const rawData = body?.data;
+        let data: Record<string, unknown> | null = null;
+        if (rawData && typeof rawData === "object" && !Array.isArray(rawData)) {
+            data = rawData as Record<string, unknown>;
+        } else if (typeof rawData === "string" && rawData.trim()) {
+            try {
+                const parsedData = JSON.parse(rawData);
+                if (parsedData && typeof parsedData === "object" && !Array.isArray(parsedData)) {
+                    data = parsedData as Record<string, unknown>;
+                }
+            } catch {
+                data = null;
+            }
+        }
         const allowsMissingData = type === "fetch_active_users";
         const webhookData = data ?? {};
 

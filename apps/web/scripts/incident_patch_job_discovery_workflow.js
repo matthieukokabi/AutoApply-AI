@@ -90,12 +90,17 @@ const FETCH_JOBS_VIA_APP_API_NODE = {
     id: "fetch-jobs-via-app-api",
     name: "Fetch Jobs via App API",
     type: "n8n-nodes-base.httpRequest",
-    typeVersion: 4.1,
+    typeVersion: 4.2,
     position: [900, 0],
     parameters: {
+        curlImport: "",
         method: "POST",
         url: "={{ $('Load Config').first().json.appUrl + '/api/webhooks/n8n' }}",
+        authentication: "none",
+        provideSslCertificates: false,
+        sendQuery: false,
         sendHeaders: true,
+        specifyHeaders: "keypair",
         headerParameters: {
             parameters: [
                 { name: "content-type", value: "application/json" },
@@ -110,9 +115,23 @@ const FETCH_JOBS_VIA_APP_API_NODE = {
             ],
         },
         sendBody: true,
-        specifyBody: "json",
-        jsonBody: "={{ JSON.stringify({ type: 'fetch_jobs_for_user', runId: String($execution.id || Date.now()), data: { user: { userId: $json.userId, targetTitles: $json.targetTitles, locations: $json.locations, remotePreference: $json.remotePreference, masterCvText: $json.masterCvText, subscriptionStatus: $json.subscriptionStatus, creditsRemaining: $json.creditsRemaining }, sourceConfig: { adzunaAppId: $('Load Config').first().json.adzunaAppId || '', adzunaAppKey: $('Load Config').first().json.adzunaAppKey || '', jsearchApiKey: $('Load Config').first().json.jsearchApiKey || '', joobleApiKey: $('Load Config').first().json.joobleApiKey || '', reedApiKey: $('Load Config').first().json.reedApiKey || '' } } }) }}",
+        contentType: "json",
+        specifyBody: "keypair",
+        bodyParameters: {
+            parameters: [
+                { name: "type", value: "fetch_jobs_for_user" },
+                {
+                    name: "runId",
+                    value: "={{ String($execution.id || Date.now()) }}",
+                },
+                {
+                    name: "data",
+                    value: "={{ JSON.stringify({ user: { userId: $json.userId, targetTitles: $json.targetTitles, locations: $json.locations, remotePreference: $json.remotePreference, masterCvText: $json.masterCvText, subscriptionStatus: $json.subscriptionStatus, creditsRemaining: $json.creditsRemaining }, sourceConfig: { adzunaAppId: $('Load Config').first().json.adzunaAppId || '', adzunaAppKey: $('Load Config').first().json.adzunaAppKey || '', jsearchApiKey: $('Load Config').first().json.jsearchApiKey || '', joobleApiKey: $('Load Config').first().json.joobleApiKey || '', reedApiKey: $('Load Config').first().json.reedApiKey || '' } }) }}",
+                },
+            ],
+        },
         options: { timeout: 30000 },
+        infoMessage: "",
     },
 };
 
