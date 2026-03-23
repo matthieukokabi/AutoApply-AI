@@ -1,0 +1,179 @@
+{
+  "generatedAt": "2026-03-23T16:05:52.956Z",
+  "workflowIds": [
+    "hL4t2SFOT4IUeBcO",
+    "inuJ5oto7szOIlRN",
+    "eddfsS251UHbmNIj",
+    "3iUzBukfS6TME2yn"
+  ],
+  "overallState": "warning",
+  "workflowCount": 4,
+  "workflows": [
+    {
+      "id": "hL4t2SFOT4IUeBcO",
+      "name": "Job Discovery & Tailoring Pipeline v2",
+      "active": true,
+      "versionId": "5fa7d526-1d25-46ff-a99b-b8de9929ae04",
+      "activeVersionId": "5fa7d526-1d25-46ff-a99b-b8de9929ae04",
+      "publishedVersionId": "5fa7d526-1d25-46ff-a99b-b8de9929ae04",
+      "updatedAt": "2026-03-23T15:58:06.282Z",
+      "createdAt": "2026-03-22T20:36:03.737Z",
+      "nodeCount": 15,
+      "nodeDigest": "2621fd762b02655b",
+      "connectionDigest": "1c9ee2639c3ac1b0",
+      "settingsDigest": "cbde17e4118b0db7",
+      "latestHistory": [
+        {
+          "versionId": "5fa7d526-1d25-46ff-a99b-b8de9929ae04",
+          "createdAt": "2026-03-23T15:58:06.282Z",
+          "updatedAt": "2026-03-23T15:58:06.282Z",
+          "name": "Batch-Save-Fix-2025-03-23",
+          "description": "Configured Batch Save via App API node with proper JSON.stringify expression to send job results (type: batch_job_result) with all required fields."
+        },
+        {
+          "versionId": "59d0426f-8eac-4eba-b848-6a6caf2e359c",
+          "createdAt": "2026-03-23T10:21:58.327Z",
+          "updatedAt": "2026-03-23T10:24:36.847Z",
+          "name": "Batch-Save-Fix-2025-03-23",
+          "description": "Configured Batch Save via App API node with proper JSON.stringify expression to send job results (type: batch_job_result) with all required fields."
+        },
+        {
+          "versionId": "2cc8d967-a4b4-42cc-ad7f-ac5d30c0badb",
+          "createdAt": "2026-03-23T10:19:42.011Z",
+          "updatedAt": "2026-03-23T10:19:42.011Z",
+          "name": null,
+          "description": ""
+        },
+        {
+          "versionId": "4421454b-63e7-45f0-ac81-6c0e08432297",
+          "createdAt": "2026-03-23T10:08:59.411Z",
+          "updatedAt": "2026-03-23T10:12:26.222Z",
+          "name": "Fix: Fetch Active Users body payload",
+          "description": "Fixed invalid webhook payload error in Fetch Active Users node. Changed body from JSON.stringify() expression to Using Fields Below with proper type and runId fields."
+        },
+        {
+          "versionId": "1f3c240b-18e0-4c38-9160-4690e2e07c6b",
+          "createdAt": "2026-03-23T10:08:25.699Z",
+          "updatedAt": "2026-03-23T10:08:25.699Z",
+          "name": null,
+          "description": ""
+        }
+      ],
+      "rollbackCandidateVersionId": "59d0426f-8eac-4eba-b848-6a6caf2e359c",
+      "alerts": []
+    },
+    {
+      "id": "inuJ5oto7szOIlRN",
+      "name": "User-Initiated Single Job Tailoring v2",
+      "active": true,
+      "versionId": "bd162d21-1511-4a5a-94fc-c02edc794619",
+      "activeVersionId": "bd162d21-1511-4a5a-94fc-c02edc794619",
+      "publishedVersionId": null,
+      "updatedAt": "2026-03-23T00:03:14.272Z",
+      "createdAt": "2026-03-22T20:38:53.386Z",
+      "nodeCount": 8,
+      "nodeDigest": "a19e15c6a0d5958b",
+      "connectionDigest": "c52fd117f487c73d",
+      "settingsDigest": "3b1c5701e4da7574",
+      "latestHistory": [
+        {
+          "versionId": "bd162d21-1511-4a5a-94fc-c02edc794619",
+          "createdAt": "2026-03-23T00:03:14.277Z",
+          "updatedAt": "2026-03-23T00:03:52.539Z",
+          "name": "Version bd162d21",
+          "description": ""
+        },
+        {
+          "versionId": "0681a816-f032-43ac-b13f-9299e2a3e56d",
+          "createdAt": "2026-03-23T00:02:52.314Z",
+          "updatedAt": "2026-03-23T00:02:52.314Z",
+          "name": null,
+          "description": ""
+        },
+        {
+          "versionId": "bb1bb702-6361-4560-8b35-416ed771e4fe",
+          "createdAt": "2026-03-22T20:38:53.386Z",
+          "updatedAt": "2026-03-22T20:40:08.328Z",
+          "name": "v2.0 - Production rebuild",
+          "description": "Safe parallel migration v2. Fixes: $env vars (no hardcoded secrets), runOnceForAllItems on all Code nodes, no .first() in wrong contexts, x-run-id propagation, structured error callbacks, input validation."
+        }
+      ],
+      "rollbackCandidateVersionId": "0681a816-f032-43ac-b13f-9299e2a3e56d",
+      "alerts": []
+    },
+    {
+      "id": "eddfsS251UHbmNIj",
+      "name": "Job Discovery & Tailoring Pipeline",
+      "active": false,
+      "versionId": "0f099e13-8d82-4c36-8425-221b3db4804b",
+      "activeVersionId": null,
+      "publishedVersionId": "0f099e13-8d82-4c36-8425-221b3db4804b",
+      "updatedAt": "2026-03-22T16:46:00.731Z",
+      "createdAt": "2026-03-13T23:39:08.192Z",
+      "nodeCount": 15,
+      "nodeDigest": "04657e77f41e5024",
+      "connectionDigest": "1c9ee2639c3ac1b0",
+      "settingsDigest": "cbde17e4118b0db7",
+      "latestHistory": [
+        {
+          "versionId": "0f099e13-8d82-4c36-8425-221b3db4804b",
+          "createdAt": "2026-03-22T16:46:00.731Z",
+          "updatedAt": "2026-03-22T16:46:00.731Z",
+          "name": "Version a22afe30",
+          "description": "Inject Reed API key to activate Reed job source"
+        }
+      ],
+      "rollbackCandidateVersionId": null,
+      "alerts": [
+        {
+          "code": "no_rollback_candidate",
+          "severity": "warning",
+          "detail": "No previous workflow_history version available for rollback"
+        }
+      ]
+    },
+    {
+      "id": "3iUzBukfS6TME2yn",
+      "name": "User-Initiated Single Job Tailoring",
+      "active": true,
+      "versionId": "f6a724dc-789e-469b-883d-6df79533a966",
+      "activeVersionId": "f6a724dc-789e-469b-883d-6df79533a966",
+      "publishedVersionId": null,
+      "updatedAt": "2026-03-15T17:58:19.655Z",
+      "createdAt": "2026-03-13T23:39:07.998Z",
+      "nodeCount": 8,
+      "nodeDigest": "04637307207eeef7",
+      "connectionDigest": "c52fd117f487c73d",
+      "settingsDigest": "edaea361f92807fa",
+      "latestHistory": [
+        {
+          "versionId": "f6a724dc-789e-469b-883d-6df79533a966",
+          "createdAt": "2026-03-15T17:58:19.661Z",
+          "updatedAt": "2026-03-23T10:28:25.509Z",
+          "name": "Version f6a724dc",
+          "description": ""
+        }
+      ],
+      "rollbackCandidateVersionId": null,
+      "alerts": [
+        {
+          "code": "no_rollback_candidate",
+          "severity": "warning",
+          "detail": "No previous workflow_history version available for rollback"
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "code": "no_rollback_candidate",
+      "severity": "warning",
+      "detail": "No previous workflow_history version available for rollback"
+    },
+    {
+      "code": "no_rollback_candidate",
+      "severity": "warning",
+      "detail": "No previous workflow_history version available for rollback"
+    }
+  ]
+}
