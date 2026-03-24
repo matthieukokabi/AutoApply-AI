@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } from "@/lib/email";
 
@@ -318,6 +319,188 @@ function dedupeJobs(jobs: DiscoveryJob[]) {
     return deduped;
 }
 
+function isUniqueConstraintError(error: unknown) {
+    if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+    ) {
+        return true;
+    }
+
+    if (error !== null && typeof error === "object" && "code" in error) {
+        return (error as { code?: string }).code === "P2002";
+    }
+
+    return false;
+}
+
+function normalizeIdempotencyKey(value: unknown) {
+    if (typeof value !== "string") {
+        return null;
+    }
+    const key = value.trim();
+    return key ? key.slice(0, 200) : null;
+}
+
+function resolveIdempotencyKey(
+    req: Request,
+    body: Record<string, unknown>,
+    webhookData: Record<string, unknown>
+) {
+    const fromHeader = normalizeIdempotencyKey(req.headers.get("x-idempotency-key"));
+    if (fromHeader) {
+        return fromHeader;
+    }
+
+    const fromBody = normalizeIdempotencyKey(body.idempotencyKey);
+    if (fromBody) {
+        return fromBody;
+    }
+
+    return normalizeIdempotencyKey(webhookData.idempotencyKey);
+}
+
+async function hasProcessedWebhookEvent(idempotencyKey: string) {
+    const existing = await prisma.n8nWebhookEvent.findUnique({
+        where: { idempotencyKey },
+        select: { id: true },
+    });
+    return Boolean(existing);
+}
+
+async function markWebhookEventProcessed(
+    idempotencyKey: string,
+    type: string,
+    runId: string
+) {
+    try {
+        await prisma.n8nWebhookEvent.create({
+            data: {
+                idempotencyKey,
+                type,
+                runId,
+            },
+        });
+        return true;
+    } catch (error) {
+        if (isUniqueConstraintError(error)) {
+            return false;
+        }
+        throw error;
+    }
+}
+
+async function acquireAutomationLock(params: {
+    lockName: string;
+    runId: string;
+    workflow: string;
+    slotId: string;
+    ttlSeconds: number;
+}) {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + params.ttlSeconds * 1000);
+
+    try {
+        const lock = await prisma.automationLock.create({
+            data: {
+                name: params.lockName,
+                runId: params.runId,
+                workflow: params.workflow,
+                slotId: params.slotId,
+                expiresAt,
+            },
+            select: {
+                id: true,
+                expiresAt: true,
+            },
+        });
+
+        return {
+            acquired: true,
+            lockId: lock.id,
+            expiresAt: lock.expiresAt,
+        };
+    } catch (error) {
+        if (!isUniqueConstraintError(error)) {
+            throw error;
+        }
+    }
+
+    const updated = await prisma.automationLock.updateMany({
+        where: {
+            name: params.lockName,
+            expiresAt: { lte: now },
+        },
+        data: {
+            runId: params.runId,
+            workflow: params.workflow,
+            slotId: params.slotId,
+            expiresAt,
+            updatedAt: new Date(),
+        },
+    });
+
+    if (updated.count === 0) {
+        return { acquired: false as const };
+    }
+
+    const lock = await prisma.automationLock.findUnique({
+        where: { name: params.lockName },
+        select: {
+            id: true,
+            expiresAt: true,
+        },
+    });
+
+    if (!lock) {
+        return { acquired: false as const };
+    }
+
+    return {
+        acquired: true as const,
+        lockId: lock.id,
+        expiresAt: lock.expiresAt,
+    };
+}
+
+async function releaseAutomationLockForRun(lockId: string, runId: string) {
+    const existing = await prisma.automationLock.findUnique({
+        where: { id: lockId },
+        select: {
+            id: true,
+            runId: true,
+            expiresAt: true,
+        },
+    });
+
+    if (!existing) {
+        return { released: false as const, reason: "not_found" };
+    }
+
+    if (existing.runId !== runId) {
+        return { released: false as const, reason: "not_owner" };
+    }
+
+    const deleted = await prisma.automationLock.deleteMany({
+        where: {
+            id: lockId,
+            runId,
+        },
+    });
+
+    if (deleted.count === 0) {
+        return { released: false as const, reason: "already_released" };
+    }
+
+    return {
+        released: true as const,
+        reason:
+            existing.expiresAt.getTime() <= Date.now()
+                ? "released_expired_lock"
+                : "released",
+    };
+}
+
 /**
  * POST /api/webhooks/n8n
  * Receives notifications from n8n workflows (new tailored documents, errors, etc.)
@@ -383,6 +566,7 @@ export async function POST(req: Request) {
         }
         const allowsMissingData = type === "fetch_active_users";
         const webhookData = data ?? {};
+        const idempotencyKey = resolveIdempotencyKey(req, body, webhookData);
 
         if (!type || (!allowsMissingData && !data)) {
             logPipelineEvent("warn", "webhook_invalid_envelope", {
@@ -396,6 +580,121 @@ export async function POST(req: Request) {
         }
 
         switch (type) {
+            case "automation_lock_acquire": {
+                const runIdForLock =
+                    typeof webhookData.runId === "string" && webhookData.runId.trim()
+                        ? webhookData.runId.trim()
+                        : runId;
+                const workflow =
+                    typeof webhookData.workflow === "string" ? webhookData.workflow.trim() : "";
+                const slotId =
+                    typeof webhookData.slotId === "string" ? webhookData.slotId.trim() : "";
+                const ttlSecondsRaw =
+                    typeof webhookData.ttlSeconds === "number"
+                        ? webhookData.ttlSeconds
+                        : Number(webhookData.ttlSeconds);
+                const ttlSeconds = Number.isFinite(ttlSecondsRaw)
+                    ? Math.floor(ttlSecondsRaw)
+                    : NaN;
+
+                if (
+                    !workflow ||
+                    !slotId ||
+                    !Number.isFinite(ttlSeconds) ||
+                    ttlSeconds <= 0 ||
+                    ttlSeconds > 86400
+                ) {
+                    logPipelineEvent("warn", "automation_lock_acquire_invalid_payload", {
+                        runId: runIdForLock,
+                        workflow,
+                        hasSlotId: Boolean(slotId),
+                        ttlSecondsRaw:
+                            Number.isFinite(ttlSecondsRaw) && Math.abs(ttlSecondsRaw) < 1_000_000
+                                ? ttlSecondsRaw
+                                : null,
+                    });
+                    return NextResponse.json(
+                        { error: "Invalid automation_lock_acquire payload" },
+                        { status: 400 }
+                    );
+                }
+
+                const lockName = `${workflow}:${slotId}`;
+                const acquired = await acquireAutomationLock({
+                    lockName,
+                    runId: runIdForLock,
+                    workflow,
+                    slotId,
+                    ttlSeconds,
+                });
+
+                if (!acquired.acquired) {
+                    logPipelineEvent("info", "automation_lock_acquire_conflict", {
+                        runId: runIdForLock,
+                        workflow,
+                        slotId,
+                    });
+                    return NextResponse.json({
+                        runId: runIdForLock,
+                        workflow,
+                        slotId,
+                        acquired: false,
+                    });
+                }
+
+                logPipelineEvent("info", "automation_lock_acquired", {
+                    runId: runIdForLock,
+                    workflow,
+                    slotId,
+                    lockId: acquired.lockId,
+                    expiresAt: acquired.expiresAt.toISOString(),
+                });
+
+                return NextResponse.json({
+                    runId: runIdForLock,
+                    workflow,
+                    slotId,
+                    acquired: true,
+                    lockId: acquired.lockId,
+                    expiresAt: acquired.expiresAt.toISOString(),
+                });
+            }
+
+            case "automation_lock_release": {
+                const runIdForLock =
+                    typeof webhookData.runId === "string" && webhookData.runId.trim()
+                        ? webhookData.runId.trim()
+                        : runId;
+                const lockId =
+                    typeof webhookData.lockId === "string" ? webhookData.lockId.trim() : "";
+
+                if (!lockId) {
+                    logPipelineEvent("warn", "automation_lock_release_invalid_payload", {
+                        runId: runIdForLock,
+                    });
+                    return NextResponse.json(
+                        { error: "Invalid automation_lock_release payload" },
+                        { status: 400 }
+                    );
+                }
+
+                const release = await releaseAutomationLockForRun(lockId, runIdForLock);
+                logPipelineEvent("info", "automation_lock_release_result", {
+                    runId: runIdForLock,
+                    lockId,
+                    released: release.released,
+                    reason: release.reason,
+                });
+
+                return NextResponse.json({
+                    ok: true,
+                    runId: runIdForLock,
+                    lockId,
+                    released: release.released,
+                    reason: release.reason,
+                });
+            }
+
             case "fetch_active_users": {
                 const cadence = await getDiscoveryCadenceState();
                 const users = await fetchAutomationUsers();
@@ -960,6 +1259,19 @@ export async function POST(req: Request) {
             }
 
             case "new_applications": {
+                if (idempotencyKey && (await hasProcessedWebhookEvent(idempotencyKey))) {
+                    logPipelineEvent("info", "new_applications_duplicate_skipped", {
+                        runId,
+                        idempotencyKey,
+                    });
+                    return NextResponse.json({
+                        message: "Duplicate event ignored",
+                        runId,
+                        idempotencyKey,
+                        duplicate: true,
+                    });
+                }
+
                 // n8n sends discovered/tailored jobs from automated pipeline
                 const userId =
                     typeof webhookData.userId === "string" ? webhookData.userId.trim() : "";
@@ -1068,6 +1380,26 @@ export async function POST(req: Request) {
                     discoveredCount,
                 });
 
+                if (idempotencyKey) {
+                    const recorded = await markWebhookEventProcessed(
+                        idempotencyKey,
+                        type,
+                        runId
+                    );
+                    if (!recorded) {
+                        logPipelineEvent("info", "new_applications_duplicate_race_skipped", {
+                            runId,
+                            idempotencyKey,
+                        });
+                        return NextResponse.json({
+                            message: "Duplicate event ignored",
+                            runId,
+                            idempotencyKey,
+                            duplicate: true,
+                        });
+                    }
+                }
+
                 // Send email notification for new job matches
                 try {
                     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -1114,6 +1446,19 @@ export async function POST(req: Request) {
             }
 
             case "single_tailoring_complete": {
+                if (idempotencyKey && (await hasProcessedWebhookEvent(idempotencyKey))) {
+                    logPipelineEvent("info", "single_tailoring_duplicate_skipped", {
+                        runId,
+                        idempotencyKey,
+                    });
+                    return NextResponse.json({
+                        message: "Duplicate event ignored",
+                        runId,
+                        idempotencyKey,
+                        duplicate: true,
+                    });
+                }
+
                 // Single job tailoring result — save data + send email
                 const {
                     userId: tailorUserId,
@@ -1179,6 +1524,26 @@ export async function POST(req: Request) {
                     },
                     include: { job: true },
                 });
+
+                if (idempotencyKey) {
+                    const recorded = await markWebhookEventProcessed(
+                        idempotencyKey,
+                        type,
+                        runId
+                    );
+                    if (!recorded) {
+                        logPipelineEvent("info", "single_tailoring_duplicate_race_skipped", {
+                            runId,
+                            idempotencyKey,
+                        });
+                        return NextResponse.json({
+                            message: "Duplicate event ignored",
+                            runId,
+                            idempotencyKey,
+                            duplicate: true,
+                        });
+                    }
+                }
 
                 // Send email notification (non-blocking)
                 try {

@@ -31,18 +31,30 @@ beforeEach(() => {
     process.env.N8N_WEBHOOK_SECRET = "test_webhook_secret";
 });
 
-function createWebhookRequest(type: string, data?: any) {
+function createWebhookRequest(
+    type: string,
+    data?: any,
+    options?: { idempotencyKeyHeader?: string; idempotencyKeyBody?: string }
+) {
+    const payload: Record<string, unknown> =
+        data === undefined
+            ? { type }
+            : { type, data };
+
+    if (options?.idempotencyKeyBody) {
+        payload.idempotencyKey = options.idempotencyKeyBody;
+    }
+
     return new Request("http://localhost/api/webhooks/n8n", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "x-webhook-secret": "test_webhook_secret",
+            ...(options?.idempotencyKeyHeader
+                ? { "x-idempotency-key": options.idempotencyKeyHeader }
+                : {}),
         },
-        body: JSON.stringify(
-            data === undefined
-                ? { type }
-                : { type, data }
-        ),
+        body: JSON.stringify(payload),
     });
 }
 
@@ -136,6 +148,122 @@ describe("POST /api/webhooks/n8n", () => {
 
         expect(response.status).toBe(400);
         expect(data.error).toContain("Invalid webhook payload");
+    });
+
+    describe("automation_lock_*", () => {
+        it("acquires a new lock when none exists", async () => {
+            vi.mocked(prisma.automationLock.create).mockResolvedValue({
+                id: "lock_1",
+                expiresAt: new Date("2026-03-24T12:05:00.000Z"),
+            } as any);
+
+            const request = createWebhookRequest("automation_lock_acquire", {
+                runId: "run_1",
+                workflow: "discovery_v3",
+                slotId: "slot_2026_03_24_1200",
+                ttlSeconds: 300,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.acquired).toBe(true);
+            expect(data.lockId).toBe("lock_1");
+            expect(prisma.automationLock.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        name: "discovery_v3:slot_2026_03_24_1200",
+                        runId: "run_1",
+                    }),
+                })
+            );
+        });
+
+        it("returns acquired=false when an active lock exists", async () => {
+            vi.mocked(prisma.automationLock.create).mockRejectedValue({
+                code: "P2002",
+            } as any);
+            vi.mocked(prisma.automationLock.updateMany).mockResolvedValue({ count: 0 } as any);
+
+            const request = createWebhookRequest("automation_lock_acquire", {
+                runId: "run_2",
+                workflow: "discovery_v3",
+                slotId: "slot_2026_03_24_1600",
+                ttlSeconds: 300,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.acquired).toBe(false);
+            expect(prisma.automationLock.updateMany).toHaveBeenCalledTimes(1);
+        });
+
+        it("reacquires lock when previous lock is expired", async () => {
+            vi.mocked(prisma.automationLock.create).mockRejectedValue({
+                code: "P2002",
+            } as any);
+            vi.mocked(prisma.automationLock.updateMany).mockResolvedValue({ count: 1 } as any);
+            vi.mocked(prisma.automationLock.findUnique).mockResolvedValue({
+                id: "lock_2",
+                expiresAt: new Date("2026-03-24T16:10:00.000Z"),
+            } as any);
+
+            const request = createWebhookRequest("automation_lock_acquire", {
+                runId: "run_3",
+                workflow: "discovery_v3",
+                slotId: "slot_2026_03_24_1600",
+                ttlSeconds: 300,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.acquired).toBe(true);
+            expect(data.lockId).toBe("lock_2");
+        });
+
+        it("releases lock when owned by the same run", async () => {
+            vi.mocked(prisma.automationLock.findUnique).mockResolvedValue({
+                id: "lock_1",
+                runId: "run_release",
+                expiresAt: new Date("2099-03-24T16:20:00.000Z"),
+            } as any);
+            vi.mocked(prisma.automationLock.deleteMany).mockResolvedValue({ count: 1 } as any);
+
+            const request = createWebhookRequest("automation_lock_release", {
+                runId: "run_release",
+                lockId: "lock_1",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.ok).toBe(true);
+            expect(data.released).toBe(true);
+            expect(data.reason).toBe("released");
+        });
+
+        it("returns structured ok=false release info when lock is absent", async () => {
+            vi.mocked(prisma.automationLock.findUnique).mockResolvedValue(null);
+
+            const request = createWebhookRequest("automation_lock_release", {
+                runId: "run_missing",
+                lockId: "lock_missing",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.ok).toBe(true);
+            expect(data.released).toBe(false);
+            expect(data.reason).toBe("not_found");
+        });
     });
 
     describe("fetch_active_users", () => {
@@ -405,6 +533,80 @@ describe("POST /api/webhooks/n8n", () => {
             expect(prisma.job.upsert).not.toHaveBeenCalled();
         });
 
+        it("returns 200 and skips side effects when idempotency key is already processed", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue({ id: "evt_1" } as any);
+
+            const request = createWebhookRequest(
+                "new_applications",
+                {
+                    userId: "user_1",
+                    applications: [{ externalId: "adzuna-123", compatibilityScore: 85 }],
+                },
+                { idempotencyKeyHeader: "disc_v3:slot_1:user_1" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.duplicate).toBe(true);
+            expect(prisma.job.upsert).not.toHaveBeenCalled();
+            expect(sendJobMatchEmail).not.toHaveBeenCalled();
+        });
+
+        it("records processed idempotency key when new_applications succeeds", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_2" } as any);
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "new_applications",
+                {
+                    userId: "user_1",
+                    applications: [{ externalId: "adzuna-123", compatibilityScore: 85 }],
+                },
+                { idempotencyKeyBody: "disc_v3:slot_2:user_1" }
+            );
+
+            const response = await POST(request);
+
+            expect(response.status).toBe(200);
+            expect(prisma.n8nWebhookEvent.create).toHaveBeenCalledWith({
+                data: {
+                    idempotencyKey: "disc_v3:slot_2:user_1",
+                    type: "new_applications",
+                    runId: expect.any(String),
+                },
+            });
+        });
+
+        it("skips notification side effects on idempotency race for new_applications", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockRejectedValue({ code: "P2002" } as any);
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "new_applications",
+                {
+                    userId: "user_1",
+                    applications: [{ externalId: "adzuna-123", compatibilityScore: 85 }],
+                },
+                { idempotencyKeyHeader: "disc_v3:slot_3:user_1" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.duplicate).toBe(true);
+            expect(prisma.job.upsert).toHaveBeenCalled();
+            expect(sendJobMatchEmail).not.toHaveBeenCalled();
+        });
+
         it("creates job and application from n8n payload", async () => {
             vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
@@ -589,7 +791,31 @@ describe("POST /api/webhooks/n8n", () => {
             expect(prisma.application.upsert).not.toHaveBeenCalled();
         });
 
+        it("returns 200 and skips side effects when single-tailor idempotency key already exists", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue({ id: "evt_3" } as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    compatibilityScore: 88,
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.duplicate).toBe(true);
+            expect(prisma.application.upsert).not.toHaveBeenCalled();
+            expect(sendTailoringCompleteEmail).not.toHaveBeenCalled();
+        });
+
         it("saves tailoring results and sends email", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_4" } as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue({
                 ...mockApplication,
                 compatibilityScore: 92,
@@ -598,19 +824,23 @@ describe("POST /api/webhooks/n8n", () => {
             } as any);
             vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 
-            const request = createWebhookRequest("single_tailoring_complete", {
-                userId: "user_1",
-                jobId: "job_1",
-                jobTitle: "Senior Developer",
-                company: "Tech Corp",
-                compatibilityScore: 92,
-                atsKeywords: ["React", "TypeScript"],
-                matchingStrengths: ["Frontend experience"],
-                gaps: [],
-                recommendation: "apply",
-                tailoredCvMarkdown: "# Tailored CV",
-                coverLetterMarkdown: "# Cover Letter",
-            });
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    compatibilityScore: 92,
+                    atsKeywords: ["React", "TypeScript"],
+                    matchingStrengths: ["Frontend experience"],
+                    gaps: [],
+                    recommendation: "apply",
+                    tailoredCvMarkdown: "# Tailored CV",
+                    coverLetterMarkdown: "# Cover Letter",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1:once" }
+            );
 
             const response = await POST(request);
             const data = await response.json();
@@ -618,6 +848,7 @@ describe("POST /api/webhooks/n8n", () => {
             expect(response.status).toBe(200);
             expect(data.message).toBe("Tailoring results saved");
             expect(data.applicationId).toBe("app_1");
+            expect(prisma.n8nWebhookEvent.create).toHaveBeenCalled();
 
             // Should upsert application with tailoring data
             expect(prisma.application.upsert).toHaveBeenCalledWith(
@@ -640,6 +871,30 @@ describe("POST /api/webhooks/n8n", () => {
                 92,
                 "app_1"
             );
+        });
+
+        it("skips single-tailor notification side effects on idempotency race", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockRejectedValue({ code: "P2002" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    compatibilityScore: 88,
+                },
+                { idempotencyKeyBody: "tailor_v3:user_1:job_1" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.duplicate).toBe(true);
+            expect(prisma.application.upsert).toHaveBeenCalled();
+            expect(sendTailoringCompleteEmail).not.toHaveBeenCalled();
         });
     });
 

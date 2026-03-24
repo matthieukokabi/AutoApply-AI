@@ -5,7 +5,7 @@ Last updated: 2026-03-24 (Europe/Zurich)
 ## P0 — v3 automation reliability rebuild (additive, no UX/UI change)
 
 - [x] Add additive Prisma models + migration for `AutomationLock` and `N8nWebhookEvent` (no destructive schema changes, rollback SQL documented) — completed on 2026-03-24 (`apps/web/prisma/schema.prisma`, `apps/web/prisma/migrations/20260324101000_add_v3_automation_lock_and_n8n_webhook_event/migration.sql`)
-- [ ] Extend `/api/webhooks/n8n` with lock acquire/release + idempotency guardrails for `new_applications` and `single_tailoring_complete` (backward compatible)
+- [x] Extend `/api/webhooks/n8n` with lock acquire/release + idempotency guardrails for `new_applications` and `single_tailoring_complete` (backward compatible) — completed on 2026-03-24 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/__tests__/api/webhooks-n8n.test.ts`, `apps/web/__tests__/setup.ts`)
 - [ ] Add server-side canary routing for `/api/tailor` to v3 webhook path (`V3_CANARY_USER_IDS` + deterministic `V3_CANARY_SAMPLE_RATE`)
 - [ ] Add v3 env contract documentation (`APP_URL`, secrets, canary, pacing, retry, per-user caps)
 - [ ] Add additive v3 workflow templates (`n8n/workflows/job-discovery-pipeline-v3.json`, `n8n/workflows/single-job-tailoring-v3.json`) without touching existing v2 files

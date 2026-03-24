@@ -95,6 +95,16 @@ vi.mock("@/lib/prisma", () => ({
         workflowError: {
             create: vi.fn(),
         },
+        automationLock: {
+            findUnique: vi.fn(),
+            create: vi.fn(),
+            updateMany: vi.fn(),
+            deleteMany: vi.fn(),
+        },
+        n8nWebhookEvent: {
+            findUnique: vi.fn(),
+            create: vi.fn(),
+        },
         stripeWebhookEvent: {
             create: vi.fn(),
             delete: vi.fn(),
