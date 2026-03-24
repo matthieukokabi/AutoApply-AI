@@ -29,6 +29,8 @@ const mockJob = {
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.N8N_WEBHOOK_URL = "http://n8n:5678";
+    delete process.env.V3_CANARY_USER_IDS;
+    delete process.env.V3_CANARY_SAMPLE_RATE;
     // Reset fetch mock
     vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
@@ -404,6 +406,62 @@ describe("POST /api/tailor", () => {
         expect(response.status).toBe(200);
         expect(global.fetch).toHaveBeenCalledWith(
             "http://n8n:5678/custom-base/webhook/single-job-tailor",
+            expect.anything()
+        );
+    });
+
+    it("routes allowlisted canary users to v3 webhook path", async () => {
+        process.env.V3_CANARY_USER_IDS = "user_1,other_user";
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+            ...mockUser,
+            creditsRemaining: 9,
+        } as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobDescription: "React developer needed.",
+            }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(global.fetch).toHaveBeenCalledWith(
+            "http://n8n:5678/webhook/single-job-tailor-v3",
+            expect.anything()
+        );
+    });
+
+    it("routes users to v3 webhook when sample rate is 100%", async () => {
+        process.env.V3_CANARY_SAMPLE_RATE = "1";
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+            ...mockUser,
+            creditsRemaining: 9,
+        } as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobDescription: "React developer needed.",
+            }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(global.fetch).toHaveBeenCalledWith(
+            "http://n8n:5678/webhook/single-job-tailor-v3",
             expect.anything()
         );
     });

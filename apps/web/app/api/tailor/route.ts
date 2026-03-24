@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { sendCreditsLowEmail } from "@/lib/email";
@@ -12,6 +13,8 @@ const MAX_JOB_TITLE_LENGTH = 200;
 const MAX_COMPANY_LENGTH = 200;
 const MAX_JOB_ID_LENGTH = 100;
 const tailorRequestLog = new Map<string, number[]>();
+const V2_TAILOR_WEBHOOK_PATH = "single-job-tailor";
+const V3_TAILOR_WEBHOOK_PATH = "single-job-tailor-v3";
 
 function detectJobSourceFromUrl(jobUrl: string) {
     if (!jobUrl) {
@@ -28,6 +31,67 @@ function detectJobSourceFromUrl(jobUrl: string) {
     }
 
     return "manual";
+}
+
+function parseCanaryAllowlist() {
+    const raw = process.env.V3_CANARY_USER_IDS;
+    if (!raw) {
+        return new Set<string>();
+    }
+
+    return new Set(
+        raw
+            .split(",")
+            .map((entry) => entry.trim())
+            .filter((entry) => Boolean(entry))
+    );
+}
+
+function parseCanarySampleRate() {
+    const raw = process.env.V3_CANARY_SAMPLE_RATE?.trim();
+    if (!raw) {
+        return null;
+    }
+
+    const numeric = Number(raw);
+    if (!Number.isFinite(numeric)) {
+        return null;
+    }
+
+    if (numeric >= 0 && numeric <= 1) {
+        return numeric;
+    }
+
+    if (numeric > 1 && numeric <= 100) {
+        return numeric / 100;
+    }
+
+    return null;
+}
+
+function deterministicSampleBucket(userId: string) {
+    const digest = createHash("sha256")
+        .update(`tailor-canary:${userId}`)
+        .digest("hex");
+    const first32Bits = Number.parseInt(digest.slice(0, 8), 16);
+    return first32Bits / 4294967296;
+}
+
+function shouldRouteToV3Canary(userId: string) {
+    const allowlist = parseCanaryAllowlist();
+    if (allowlist.has(userId)) {
+        return true;
+    }
+
+    const sampleRate = parseCanarySampleRate();
+    if (sampleRate === null || sampleRate <= 0) {
+        return false;
+    }
+    if (sampleRate >= 1) {
+        return true;
+    }
+
+    return deterministicSampleBucket(userId) < sampleRate;
 }
 
 /**
@@ -91,6 +155,11 @@ export async function POST(req: Request) {
             );
         }
 
+        const useV3TailorWebhook = shouldRouteToV3Canary(user.id);
+        const tailorWebhookPath = useV3TailorWebhook
+            ? V3_TAILOR_WEBHOOK_PATH
+            : V2_TAILOR_WEBHOOK_PATH;
+
         let webhookEndpoint: string;
         try {
             const parsedN8nWebhookUrl = new URL(n8nWebhookUrl);
@@ -105,7 +174,7 @@ export async function POST(req: Request) {
             }
 
             const normalizedBasePath = parsedN8nWebhookUrl.pathname.replace(/\/$/, "");
-            parsedN8nWebhookUrl.pathname = `${normalizedBasePath}/webhook/single-job-tailor`;
+            parsedN8nWebhookUrl.pathname = `${normalizedBasePath}/webhook/${tailorWebhookPath}`;
             parsedN8nWebhookUrl.search = "";
             parsedN8nWebhookUrl.hash = "";
             webhookEndpoint = parsedN8nWebhookUrl.toString();
