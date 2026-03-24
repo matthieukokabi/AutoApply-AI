@@ -138,3 +138,33 @@ model StripeWebhookEvent {
   @@index([createdAt])
   @@map("stripe_webhook_events")
 }
+
+// ─── Automation Runtime Locks ───────────────────────────────
+
+model AutomationLock {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  runId     String
+  workflow  String
+  slotId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("automation_locks")
+}
+
+// ─── n8n Webhook Idempotency ────────────────────────────────
+
+model N8nWebhookEvent {
+  id             String   @id @default(cuid())
+  idempotencyKey String   @unique
+  type           String
+  runId          String?
+  createdAt      DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+  @@map("n8n_webhook_events")
+}
