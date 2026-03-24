@@ -38,3 +38,16 @@ This contract defines the required server/runtime variables for the additive v3 
 - Never print or commit secret values.
 - Validation failures must report only missing env names.
 - v3 rollout is additive: keep v2 workflows and UX unchanged unless explicitly switched via canary controls.
+
+## Emergency rollback controls
+
+- Fast disable: set `V3_CANARY_USER_IDS` to empty and `V3_CANARY_SAMPLE_RATE=0`, then redeploy `apps/web`.
+- Keep v2 workflows in place; do not delete or mutate legacy/v2 definitions during v3 rollback.
+- Before changing any live n8n workflow version bindings, capture a checkpoint with:
+
+```bash
+cd apps/web
+npm run incident:pipeline:checkpoint -- --workflow-id <workflow_id> --output ../../docs/reports/n8n-workflow-checkpoint-<timestamp>.json
+```
+
+- Follow [4h automation incident response](/Users/magikmad/Documents/New project/AutoApply-AI/docs/automation-4h-incident-response-runbook.md) sections 8-12 for DLQ/error triage, idempotency verification, and no-UI-change validation.

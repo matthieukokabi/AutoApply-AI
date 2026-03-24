@@ -10,7 +10,7 @@ Last updated: 2026-03-24 (Europe/Zurich)
 - [x] Add v3 env contract documentation (`APP_URL`, secrets, canary, pacing, retry, per-user caps) — completed on 2026-03-24 (`docs/automation-v3-env-contract.md`, `README.md`)
 - [x] Add additive v3 workflow templates (`n8n/workflows/job-discovery-pipeline-v3.json`, `n8n/workflows/single-job-tailoring-v3.json`) without touching existing v2 files — completed on 2026-03-24 (`n8n/workflows/job-discovery-pipeline-v3.json`, `n8n/workflows/single-job-tailoring-v3.json`)
 - [x] Add `apps/web/scripts/publish_v3_workflows.js` to create new v3 workflow entities and print created workflow/version IDs — completed on 2026-03-24 (`apps/web/scripts/publish_v3_workflows.js`, `apps/web/package.json`)
-- [ ] Update incident/runbook docs with v3 disable/rollback/idempotency verification and no-UI-change validation guidance
+- [x] Update incident/runbook docs with v3 disable/rollback/idempotency verification and no-UI-change validation guidance — completed on 2026-03-24 (`docs/automation-4h-incident-response-runbook.md`, `docs/automation-v3-env-contract.md`)
 
 ## P0 — Incident: onboarding CV upload returning 500
 

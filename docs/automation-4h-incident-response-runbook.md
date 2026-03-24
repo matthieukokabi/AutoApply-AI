@@ -109,3 +109,104 @@ If DB metadata shows 4h schedule but diagnostics still show minute-level executi
 3. New applications persisted and tailored docs generated when applicable.
 4. Alert guardrail executed and documented.
 5. Incident report updated with timestamps + commit SHAs + remaining risks.
+
+## 8) v3 emergency disable (no UX/UI impact)
+
+Use this when v3 automation behavior is unhealthy and you need immediate fallback to v2 routing.
+
+1. Disable server-side canary routing in `apps/web` env:
+
+```bash
+V3_CANARY_USER_IDS=
+V3_CANARY_SAMPLE_RATE=0
+```
+
+2. Redeploy web app so `/api/tailor` routes all users back to v2 webhook path.
+3. Keep all v2 workflows unchanged and active.
+4. Keep v3 workflows additive (do not delete them); optionally deactivate them in n8n if needed for noise reduction.
+
+## 9) Inspect v3 workflow errors (DLQ-style triage)
+
+`workflow_error` callbacks are stored in `workflow_errors`.
+
+```sql
+SELECT "createdAt", "workflowId", "nodeName", "errorType", message, "userId"
+FROM workflow_errors
+WHERE "workflowId" IN ('job-discovery-pipeline-v3', 'single-job-tailoring-v3')
+ORDER BY "createdAt" DESC
+LIMIT 100;
+```
+
+Filter by run id (when payload includes it):
+
+```sql
+SELECT "createdAt", "workflowId", "nodeName", "errorType", message, payload
+FROM workflow_errors
+WHERE payload ->> 'runId' = '<runId>'
+ORDER BY "createdAt" DESC;
+```
+
+## 10) Verify idempotency behavior
+
+`new_applications` and `single_tailoring_complete` idempotency keys are persisted in `n8n_webhook_events`.
+
+Check recent v3 keys:
+
+```sql
+SELECT type, "idempotencyKey", "runId", "createdAt"
+FROM n8n_webhook_events
+WHERE "idempotencyKey" LIKE 'disc_v3:%'
+   OR "idempotencyKey" LIKE 'tailor_v3:%'
+ORDER BY "createdAt" DESC
+LIMIT 100;
+```
+
+Confirm no duplicate keys exist:
+
+```sql
+SELECT "idempotencyKey", COUNT(*) AS c
+FROM n8n_webhook_events
+GROUP BY "idempotencyKey"
+HAVING COUNT(*) > 1;
+```
+
+Expected: no rows (unique guard holds).  
+Operational check: replay the same webhook idempotency key twice and confirm second response is HTTP 200 with duplicate/ignored semantics and no duplicate notification email.
+
+## 11) Rollback canary routing and workflow versions
+
+1. Disable canary env (`V3_CANARY_USER_IDS`, `V3_CANARY_SAMPLE_RATE`) and redeploy web app.
+2. Capture/confirm rollback checkpoints before any live workflow version change:
+
+```bash
+cd apps/web
+npm run incident:pipeline:checkpoint -- --workflow-id <v3_discovery_workflow_id> --workflow-id <v3_single_tailor_workflow_id> --output ../../docs/reports/n8n-workflow-checkpoint-v3-<timestamp>.json
+```
+
+3. If a live rollback is required, use checkpoint version IDs to restore:
+   - `n8n.workflow_entity.versionId`
+   - `n8n.workflow_entity.activeVersionId`
+   - `n8n.workflow_published_version.publishedVersionId`
+4. Record rollback event + resulting version IDs in incident notes.
+
+## 12) Confirm no UI/design regressions
+
+v3 reliability rollout is backend-only. Validate that no public design or UX changed:
+
+1. File-level guard:
+
+```bash
+git diff --name-only <baseline_sha> HEAD -- apps/web/app apps/web/components apps/web/styles
+```
+
+Expected: no intentional visual/layout/styling changes for v3 rollout.
+
+2. Behavior smoke:
+
+```bash
+cd apps/web
+npm run smoke:onboarding -- https://autoapply.works
+npm run smoke:onboarding:auth-blocked -- https://autoapply.works
+```
+
+3. If any frontend wiring file changed, verify rendered output is visually identical before marking incident closed.
