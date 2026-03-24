@@ -75,6 +75,12 @@ npm run dev
 | PostgreSQL | localhost:5432 | Database |
 | Redis | localhost:6379 | Cache & queues |
 
+## Automation v3 Configuration
+
+For the additive v3 automation rollout (locks, idempotency, canary routing, pacing/retries), use:
+
+- `docs/automation-v3-env-contract.md`
+
 ## Project Structure
 
 ```
