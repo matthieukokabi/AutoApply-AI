@@ -96,7 +96,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'claude-3-5-haiku-20241022', max_tokens: 900, temperature: 0, messages: [{ role: 'user', content: $json.scoringPrompt }] }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 900, temperature: 0, messages: [{ role: 'user', content: $json.scoringPrompt }] }) }}",
         "options": {
           "timeout": 30000
         }
