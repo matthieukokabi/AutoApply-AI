@@ -816,6 +816,7 @@ describe("POST /api/webhooks/n8n", () => {
         it("saves tailoring results and sends email", async () => {
             vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
             vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_4" } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue({
                 ...mockApplication,
                 compatibilityScore: 92,
@@ -849,6 +850,11 @@ describe("POST /api/webhooks/n8n", () => {
             expect(data.message).toBe("Tailoring results saved");
             expect(data.applicationId).toBe("app_1");
             expect(prisma.n8nWebhookEvent.create).toHaveBeenCalled();
+            expect(prisma.job.findUnique).toHaveBeenCalledWith({
+                where: { id: "job_1" },
+                select: { id: true },
+            });
+            expect(prisma.job.upsert).not.toHaveBeenCalled();
 
             // Should upsert application with tailoring data
             expect(prisma.application.upsert).toHaveBeenCalledWith(
@@ -873,9 +879,90 @@ describe("POST /api/webhooks/n8n", () => {
             );
         });
 
+        it("creates a manual job when incoming jobId does not match an existing Job.id", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_5" } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.job.upsert).mockResolvedValue({
+                id: "job_manual_1",
+                title: "Canary Role",
+                company: "Manual Co",
+            } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                id: "app_manual_1",
+                jobId: "job_manual_1",
+                compatibilityScore: 77,
+                job: {
+                    id: "job_manual_1",
+                    title: "Canary Role",
+                    company: "Manual Co",
+                },
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "test-job-canary-007",
+                    jobTitle: "Canary Role",
+                    company: "Manual Co",
+                    compatibilityScore: 77,
+                    tailoredCvMarkdown: "# Tailored CV",
+                    coverLetterMarkdown: "# Cover Letter",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:test-job-canary-007" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.applicationId).toBe("app_manual_1");
+            expect(prisma.job.findUnique).toHaveBeenCalledWith({
+                where: { id: "test-job-canary-007" },
+                select: { id: true },
+            });
+            expect(prisma.job.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { externalId: "manual-user_1-test-job-canary-007" },
+                    create: expect.objectContaining({
+                        title: "Canary Role",
+                        company: "Manual Co",
+                        source: "manual",
+                    }),
+                    update: expect.objectContaining({
+                        title: "Canary Role",
+                        company: "Manual Co",
+                        source: "manual",
+                    }),
+                })
+            );
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: {
+                        userId_jobId: {
+                            userId: "user_1",
+                            jobId: "job_manual_1",
+                        },
+                    },
+                })
+            );
+            expect(sendTailoringCompleteEmail).toHaveBeenCalledWith(
+                "test@example.com",
+                "Test User",
+                "Canary Role",
+                "Manual Co",
+                77,
+                "app_manual_1"
+            );
+        });
+
         it("skips single-tailor notification side effects on idempotency race", async () => {
             vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
             vi.mocked(prisma.n8nWebhookEvent.create).mockRejectedValue({ code: "P2002" } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
 
             const request = createWebhookRequest(

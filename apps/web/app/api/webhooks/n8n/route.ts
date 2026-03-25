@@ -1491,18 +1491,71 @@ export async function POST(req: Request) {
 
                 const normalizedTailorUserId = tailorUserId.trim();
                 const normalizedTailorJobId = tailorJobId.trim();
+                const existingJob = await prisma.job.findUnique({
+                    where: { id: normalizedTailorJobId },
+                    select: { id: true },
+                });
+                let resolvedJobId = existingJob?.id ?? null;
+
+                if (!resolvedJobId) {
+                    const manualExternalId = `manual-${normalizedTailorUserId}-${normalizedTailorJobId}`;
+                    const manualTitle =
+                        typeof jobTitle === "string" && jobTitle.trim()
+                            ? jobTitle.trim()
+                            : "Untitled Position";
+                    const manualCompany =
+                        typeof company === "string" && company.trim()
+                            ? company.trim()
+                            : "Unknown Company";
+                    const manualLocation =
+                        typeof webhookData.location === "string" && webhookData.location.trim()
+                            ? webhookData.location.trim()
+                            : "Not specified";
+                    const manualDescription =
+                        typeof webhookData.description === "string"
+                            ? webhookData.description
+                            : "";
+                    const manualUrl =
+                        typeof webhookData.url === "string" ? webhookData.url : "";
+
+                    const manualJob = await prisma.job.upsert({
+                        where: { externalId: manualExternalId },
+                        create: {
+                            externalId: manualExternalId,
+                            title: manualTitle,
+                            company: manualCompany,
+                            location: manualLocation,
+                            description: manualDescription,
+                            source: "manual",
+                            url: manualUrl,
+                            salary: null,
+                            postedAt: null,
+                        },
+                        update: {
+                            title: manualTitle,
+                            company: manualCompany,
+                            location: manualLocation,
+                            description: manualDescription,
+                            source: "manual",
+                            url: manualUrl,
+                        },
+                        select: { id: true },
+                    });
+
+                    resolvedJobId = manualJob.id;
+                }
 
                 // Save tailoring results to database
                 const application = await prisma.application.upsert({
                     where: {
                         userId_jobId: {
                             userId: normalizedTailorUserId,
-                            jobId: normalizedTailorJobId,
+                            jobId: resolvedJobId,
                         },
                     },
                     create: {
                         userId: normalizedTailorUserId,
-                        jobId: normalizedTailorJobId,
+                        jobId: resolvedJobId,
                         compatibilityScore: compatibilityScore || 0,
                         atsKeywords: atsKeywords || [],
                         matchingStrengths: matchingStrengths || [],
