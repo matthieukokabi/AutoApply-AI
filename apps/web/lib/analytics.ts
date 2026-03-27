@@ -8,7 +8,7 @@ type AnalyticsWindow = Window & {
         name: string | Date,
         params?: AnalyticsParams
     ) => void;
-    dataLayer?: Array<Record<string, unknown>>;
+    dataLayer?: Array<unknown>;
 };
 
 function getAnalyticsWindow() {
@@ -19,19 +19,42 @@ function getAnalyticsWindow() {
     return window as AnalyticsWindow;
 }
 
+function hasAnalyticsConsent(win: AnalyticsWindow) {
+    try {
+        return win.localStorage.getItem("cookie-consent") === "accepted";
+    } catch {
+        return false;
+    }
+}
+
+function ensureDataLayer(win: AnalyticsWindow) {
+    if (!Array.isArray(win.dataLayer)) {
+        win.dataLayer = [];
+    }
+
+    return win.dataLayer;
+}
+
+function ensureGtag(win: AnalyticsWindow) {
+    if (typeof win.gtag === "function") {
+        return win.gtag;
+    }
+
+    win.gtag = ((command, name, params) => {
+        ensureDataLayer(win).push([command, name, params]);
+    }) as AnalyticsWindow["gtag"];
+
+    return win.gtag;
+}
+
 export function trackAnalyticsEvent(name: string, params: AnalyticsParams = {}) {
     const win = getAnalyticsWindow();
-    if (!win) {
+    if (!win || !hasAnalyticsConsent(win)) {
         return;
     }
 
-    if (typeof win.gtag === "function") {
-        win.gtag("event", name, params);
-    }
-
-    if (Array.isArray(win.dataLayer)) {
-        win.dataLayer.push({ event: name, ...params });
-    }
+    const gtag = ensureGtag(win);
+    gtag?.("event", name, params);
 }
 
 export function trackBeginCheckout(plan: CheckoutPlan, source: string) {

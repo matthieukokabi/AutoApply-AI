@@ -52,6 +52,16 @@ function markSignUpCompletedPending(
     }
 }
 
+function appendSignUpCompletedQuery(path: string) {
+    try {
+        const parsed = new URL(path, "https://autoapply.local");
+        parsed.searchParams.set("signup_completed", "1");
+        return parsed.pathname + parsed.search;
+    } catch {
+        return path;
+    }
+}
+
 function normalizeReferralCode(rawValue: string | null) {
     if (!rawValue) {
         return null;
@@ -79,6 +89,7 @@ export default function SignUpPage() {
         requestedPlan,
         fromParam
     );
+    const postSignUpRedirectUrl = appendSignUpCompletedQuery(postAuthRedirectUrl);
     const { isLoaded, userId } = useAuth();
     const [showTimeoutFallback, setShowTimeoutFallback] = useState(false);
     const [showWidgetFallback, setShowWidgetFallback] = useState(false);
@@ -116,8 +127,8 @@ export default function SignUpPage() {
             fromParam,
             referralCode
         );
-        window.location.href = dashboardPath;
-    }, [dashboardPath, fromParam, isLoaded, localeParam, referralCode, requestedPlan, userId]);
+        window.location.href = postSignUpRedirectUrl;
+    }, [fromParam, isLoaded, localeParam, postSignUpRedirectUrl, referralCode, requestedPlan, userId]);
 
     useEffect(() => {
         if (isLoaded) {
@@ -235,8 +246,8 @@ export default function SignUpPage() {
                             path={signUpPath}
                             routing="path"
                             signInUrl={signInUrl}
-                            forceRedirectUrl={postAuthRedirectUrl}
-                            fallbackRedirectUrl={postAuthRedirectUrl}
+                            forceRedirectUrl={postSignUpRedirectUrl}
+                            fallbackRedirectUrl={postSignUpRedirectUrl}
                             appearance={{
                                 elements: {
                                     rootBox: "mx-auto w-full",
