@@ -9,7 +9,11 @@ function getResend() {
     return new Resend(process.env.RESEND_API_KEY);
 }
 
-const FROM_EMAIL = "AutoApply AI <noreply@autoapply.works>";
+const FROM_EMAIL_NOREPLY = process.env.RESEND_FROM_NOREPLY?.trim() || "AutoApply AI <no-reply@send.autoapply.works>";
+const FROM_EMAIL_JOBS = process.env.RESEND_FROM_JOBS?.trim() || "AutoApply AI Jobs <jobs@send.autoapply.works>";
+const FROM_EMAIL_ALERTS = process.env.RESEND_FROM_ALERTS?.trim() || "AutoApply AI Alerts <alerts@send.autoapply.works>";
+const REPLY_TO_SUPPORT = process.env.RESEND_REPLY_TO_SUPPORT?.trim() || "support@autoapply.works";
+const REPLY_TO_JOBS = process.env.RESEND_REPLY_TO_JOBS?.trim() || "jobs@autoapply.works";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://autoapply.works";
 
 // ─── Email Template Wrapper ─────────────────────────────────
@@ -102,7 +106,8 @@ export async function sendWelcomeEmail(to: string, name: string): Promise<void> 
     try {
         const resend = getResend();
         await resend.emails.send({
-            from: FROM_EMAIL,
+            from: FROM_EMAIL_NOREPLY,
+            replyTo: REPLY_TO_SUPPORT,
             to: [to],
             subject: "Welcome to AutoApply AI — Let's land your dream job 🚀",
             html: emailWrapper(content),
@@ -174,7 +179,8 @@ export async function sendJobMatchEmail(
     try {
         const resend = getResend();
         await resend.emails.send({
-            from: FROM_EMAIL,
+            from: FROM_EMAIL_JOBS,
+            replyTo: REPLY_TO_JOBS,
             to: [to],
             subject: `${jobs.length} new job match${jobs.length > 1 ? "es" : ""} found — AutoApply AI`,
             html: emailWrapper(content),
@@ -227,7 +233,8 @@ export async function sendTailoringCompleteEmail(
     try {
         const resend = getResend();
         await resend.emails.send({
-            from: FROM_EMAIL,
+            from: FROM_EMAIL_JOBS,
+            replyTo: REPLY_TO_JOBS,
             to: [to],
             subject: `Tailored CV ready: ${jobTitle} at ${company} — AutoApply AI`,
             html: emailWrapper(content),
@@ -309,7 +316,8 @@ export async function sendWeeklyDigestEmail(
     try {
         const resend = getResend();
         await resend.emails.send({
-            from: FROM_EMAIL,
+            from: FROM_EMAIL_JOBS,
+            replyTo: REPLY_TO_JOBS,
             to: [to],
             subject: `Weekly report: ${stats.newJobsCount} jobs found, ${stats.tailoredCount} CVs tailored — AutoApply AI`,
             html: emailWrapper(content),
@@ -347,7 +355,8 @@ export async function sendCreditsLowEmail(
     try {
         const resend = getResend();
         await resend.emails.send({
-            from: FROM_EMAIL,
+            from: FROM_EMAIL_ALERTS,
+            replyTo: REPLY_TO_SUPPORT,
             to: [to],
             subject: `${creditsRemaining} credit${creditsRemaining !== 1 ? "s" : ""} remaining — AutoApply AI`,
             html: emailWrapper(content),
