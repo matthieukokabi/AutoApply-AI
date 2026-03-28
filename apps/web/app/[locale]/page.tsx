@@ -110,11 +110,6 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                 billingIncrement: "P1M",
             },
         ],
-        aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: "4.8",
-            ratingCount: "127",
-        },
     };
 
     return (
@@ -431,10 +426,6 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
                                     {t("pricing.priorityProcessing")}
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    {t("pricing.apiAccess")}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary flex-shrink-0" />
