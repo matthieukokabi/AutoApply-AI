@@ -140,9 +140,46 @@ describe("POST /api/profile/upload", () => {
             expect(data.error).toContain("too long");
             expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
         });
+
+        it("returns 400 for invalid JSON upload payloads", async () => {
+            vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+            const request = new Request("http://localhost/api/profile/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: "{invalid-json",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Invalid upload payload");
+            expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
+        });
     });
 
     describe("multipart file upload", () => {
+        it("returns 400 when multipart payload cannot be parsed", async () => {
+            vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+            const request = new Request("http://localhost/api/profile/upload", {
+                method: "POST",
+                headers: { "Content-Type": "multipart/form-data; boundary=test-boundary" },
+                body: "--test-boundary--",
+            });
+            Object.defineProperty(request, "formData", {
+                value: vi.fn().mockRejectedValueOnce(new TypeError("Failed to parse body as FormData")),
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Could not process this upload payload");
+            expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
+        });
+
         it("handles TXT file upload", async () => {
             vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
             vi.mocked(prisma.masterProfile.upsert).mockResolvedValue(mockProfile as any);
@@ -314,6 +351,32 @@ describe("POST /api/profile/upload", () => {
 
             const response = await POST(request);
             expect(response.status).toBe(200);
+        });
+
+        it("returns 400 when file bytes cannot be read", async () => {
+            vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+            const unreadableFile = new File([Buffer.from("%PDF-1.7 unreadable-content")], "resume.pdf", {
+                type: "application/pdf",
+            });
+            const formData = new FormData();
+            formData.append("file", unreadableFile);
+
+            const request = new Request("http://localhost/api/profile/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const arrayBufferSpy = vi
+                .spyOn(File.prototype, "arrayBuffer")
+                .mockRejectedValueOnce(new Error("file read failed"));
+            const response = await POST(request);
+            const data = await response.json();
+            arrayBufferSpy.mockRestore();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Could not read this file");
+            expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
         });
     });
 

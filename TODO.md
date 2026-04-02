@@ -16,6 +16,7 @@ Last updated: 2026-03-24 (Europe/Zurich)
 ## P0 — Incident: onboarding CV upload returning 500
 
 - [x] Hotfix CV PDF upload parser compatibility with `pdf-parse` v2 API (`PDFParse#getText`) and return actionable 400 errors (no generic 500) when PDF/DOCX parsing fails — completed on 2026-03-19 (`apps/web/app/api/profile/upload/route.ts`, `apps/web/__tests__/api/profile-upload.test.ts`)
+- [x] Normalize predictable onboarding upload body/file-read failures to explicit 400 responses (multipart parse, invalid JSON payload, unreadable file bytes) with sanitized structured logging and regression tests — completed on 2026-04-02 (`apps/web/app/api/profile/upload/route.ts`, `apps/web/__tests__/api/profile-upload.test.ts`)
 
 ## P0 — Incident: 4h automation pipeline outage (job discovery + tailoring)
 

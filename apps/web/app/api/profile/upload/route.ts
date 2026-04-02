@@ -10,6 +10,30 @@ const MAX_RAW_TEXT_LENGTH = 200000;
 const MAX_FILE_NAME_LENGTH = 255;
 const profileUploadRequestLog = new Map<string, number[]>();
 
+function buildSafeErrorLog(error: unknown) {
+    if (error instanceof Error) {
+        return {
+            name: error.name,
+            message: error.message,
+        };
+    }
+
+    return { message: String(error) };
+}
+
+function inferExtensionFromMimeType(mimeType: string) {
+    switch (mimeType) {
+        case "application/pdf":
+            return "pdf";
+        case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            return "docx";
+        case "text/plain":
+            return "txt";
+        default:
+            return "";
+    }
+}
+
 async function extractTextFromPdf(buffer: Buffer) {
     const pdfParseModule = await import("pdf-parse");
     if (typeof pdfParseModule.PDFParse !== "function") {
@@ -53,19 +77,34 @@ export async function POST(req: Request) {
             );
         }
 
-        const contentType = req.headers.get("content-type") || "";
+        const contentType = (req.headers.get("content-type") || "").toLowerCase();
 
         let rawText = "";
         let fileName = "upload";
 
         if (contentType.includes("multipart/form-data")) {
             // Handle binary file upload
-            const formData = await req.formData();
-            const file = formData.get("file") as File | null;
+            let formData: FormData;
+            try {
+                formData = await req.formData();
+            } catch (formDataError) {
+                console.error("POST /api/profile/upload multipart parse error:", {
+                    stage: "multipart_parse",
+                    ...buildSafeErrorLog(formDataError),
+                });
+                return NextResponse.json(
+                    {
+                        error: "Could not process this upload payload. Please re-select the file and try again.",
+                    },
+                    { status: 400 }
+                );
+            }
 
-            if (!file) {
+            const fileEntry = formData.get("file");
+            if (!(fileEntry instanceof File)) {
                 return NextResponse.json({ error: "No file provided" }, { status: 400 });
             }
+            const file = fileEntry;
 
             if (file.size > MAX_UPLOAD_FILE_BYTES) {
                 return NextResponse.json(
@@ -78,8 +117,24 @@ export async function POST(req: Request) {
             if (fileName.length > MAX_FILE_NAME_LENGTH) {
                 fileName = fileName.slice(0, MAX_FILE_NAME_LENGTH);
             }
-            const ext = fileName.split(".").pop()?.toLowerCase();
-            const buffer = Buffer.from(await file.arrayBuffer());
+            const extFromName = fileName.split(".").pop()?.toLowerCase() || "";
+            const ext = extFromName || inferExtensionFromMimeType((file.type || "").toLowerCase());
+
+            let buffer: Buffer;
+            try {
+                buffer = Buffer.from(await file.arrayBuffer());
+            } catch (fileReadError) {
+                console.error("POST /api/profile/upload file read error:", {
+                    stage: "file_read",
+                    fileType: file.type || "unknown",
+                    fileSize: file.size,
+                    ...buildSafeErrorLog(fileReadError),
+                });
+                return NextResponse.json(
+                    { error: "Could not read this file. Please try another PDF, DOCX, or TXT file." },
+                    { status: 400 }
+                );
+            }
 
             if (ext === "pdf") {
                 // Fast fail for invalid payloads before invoking PDF parser.
@@ -127,7 +182,21 @@ export async function POST(req: Request) {
             }
         } else {
             // Fallback: JSON body with rawText (for paste or client-side extraction)
-            const body = await req.json();
+            let body: Record<string, unknown>;
+            try {
+                body = (await req.json()) as Record<string, unknown>;
+            } catch (jsonParseError) {
+                console.error("POST /api/profile/upload JSON parse error:", {
+                    stage: "json_parse",
+                    ...buildSafeErrorLog(jsonParseError),
+                });
+                return NextResponse.json(
+                    {
+                        error: "Invalid upload payload. Please paste your CV text again or upload a file.",
+                    },
+                    { status: 400 }
+                );
+            }
             rawText = typeof body.rawText === "string" ? body.rawText : "";
             fileName = typeof body.fileName === "string" ? body.fileName : "paste";
             if (fileName.length > MAX_FILE_NAME_LENGTH) {
