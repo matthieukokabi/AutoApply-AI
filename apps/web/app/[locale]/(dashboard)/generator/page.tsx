@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useReactToPrint } from "react-to-print";
 import { Download, Loader2, RotateCcw, Sparkles } from "lucide-react";
 import {
     Card,
@@ -81,6 +80,8 @@ export default function GeneratorPage() {
     const [cvMarkdown, setCvMarkdown] = useState(DEFAULT_CV_TEMPLATE);
     const [letterMarkdown, setLetterMarkdown] = useState(DEFAULT_LETTER_TEMPLATE);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isDownloadingCv, setIsDownloadingCv] = useState(false);
+    const [isDownloadingLetter, setIsDownloadingLetter] = useState(false);
     const [alert, setAlert] = useState<AlertState>(null);
     const [aiForm, setAiForm] = useState({
         jobTitle: "",
@@ -90,18 +91,44 @@ export default function GeneratorPage() {
         jobDescription: "",
     });
 
-    const cvRef = useRef<HTMLDivElement>(null);
-    const letterRef = useRef<HTMLDivElement>(null);
+    async function handleDownload(type: "cv" | "letter", markdown: string) {
+        const setBusy = type === "cv" ? setIsDownloadingCv : setIsDownloadingLetter;
+        setBusy(true);
 
-    const handleDownloadCv = useReactToPrint({
-        contentRef: cvRef,
-        documentTitle: "AutoApply-CV",
-    });
+        try {
+            const response = await fetch("/api/export/pdf", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type,
+                    markdown,
+                    fileName: type === "cv" ? "AutoApply-CV.pdf" : "AutoApply-Motivation-Letter.pdf",
+                }),
+            });
 
-    const handleDownloadLetter = useReactToPrint({
-        contentRef: letterRef,
-        documentTitle: "AutoApply-Motivation-Letter",
-    });
+            if (!response.ok) {
+                throw new Error(`EXPORT_FAILED_${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const objectUrl = window.URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = objectUrl;
+            anchor.download =
+                type === "cv" ? "AutoApply-CV.pdf" : "AutoApply-Motivation-Letter.pdf";
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            window.URL.revokeObjectURL(objectUrl);
+        } catch {
+            setAlert({
+                type: "error",
+                text: t("messages.exportFailed"),
+            });
+        } finally {
+            setBusy(false);
+        }
+    }
 
     async function waitForGeneratedDocument(jobId: string) {
         for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
@@ -294,8 +321,16 @@ export default function GeneratorPage() {
                             <RotateCcw className="h-4 w-4 mr-2" />
                             {t("actions.resetCv")}
                         </Button>
-                        <Button type="button" onClick={() => handleDownloadCv()}>
-                            <Download className="h-4 w-4 mr-2" />
+                        <Button
+                            type="button"
+                            onClick={() => handleDownload("cv", cvMarkdown)}
+                            disabled={isDownloadingCv}
+                        >
+                            {isDownloadingCv ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <Download className="h-4 w-4 mr-2" />
+                            )}
                             {t("actions.downloadCv")}
                         </Button>
                     </div>
@@ -312,7 +347,7 @@ export default function GeneratorPage() {
                         </div>
                         <div className="space-y-2">
                             <p className="text-sm font-medium">{t("cv.previewLabel")}</p>
-                            <CVDisplay ref={cvRef} markdown={cvMarkdown} />
+                            <CVDisplay markdown={cvMarkdown} />
                         </div>
                     </div>
                 </CardContent>
@@ -333,8 +368,16 @@ export default function GeneratorPage() {
                             <RotateCcw className="h-4 w-4 mr-2" />
                             {t("actions.resetLetter")}
                         </Button>
-                        <Button type="button" onClick={() => handleDownloadLetter()}>
-                            <Download className="h-4 w-4 mr-2" />
+                        <Button
+                            type="button"
+                            onClick={() => handleDownload("letter", letterMarkdown)}
+                            disabled={isDownloadingLetter}
+                        >
+                            {isDownloadingLetter ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <Download className="h-4 w-4 mr-2" />
+                            )}
                             {t("actions.downloadLetter")}
                         </Button>
                     </div>
@@ -351,10 +394,7 @@ export default function GeneratorPage() {
                         </div>
                         <div className="space-y-2">
                             <p className="text-sm font-medium">{t("letter.previewLabel")}</p>
-                            <CoverLetterDisplay
-                                ref={letterRef}
-                                markdown={letterMarkdown}
-                            />
+                            <CoverLetterDisplay markdown={letterMarkdown} />
                         </div>
                     </div>
                 </CardContent>

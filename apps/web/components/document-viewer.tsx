@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import { useState } from "react";
 import { CVDisplay } from "@/components/cv-display";
 import { CoverLetterDisplay } from "@/components/cover-letter-display";
 import { Button } from "@/components/ui/button";
@@ -58,8 +57,8 @@ export function DocumentViewer({
 }: DocumentViewerProps) {
     const t = useTranslations("documentViewer");
     const [activeTab, setActiveTab] = useState<Tab>("cv");
-    const cvRef = useRef<HTMLDivElement>(null);
-    const letterRef = useRef<HTMLDivElement>(null);
+    const [downloadingCv, setDownloadingCv] = useState(false);
+    const [downloadingLetter, setDownloadingLetter] = useState(false);
 
     // Gap-filling state
     const [gapResponses, setGapResponses] = useState<Record<number, string>>(
@@ -72,35 +71,44 @@ export function DocumentViewer({
         text: string;
     } | null>(null);
 
-    const handlePrintCV = useReactToPrint({
-        contentRef: cvRef,
-        documentTitle: t("print.cvTitle", {
-            jobTitle: job.title,
-            company: job.company,
-        }),
-        pageStyle: `
-            @page { size: A4; margin: 12mm; }
-            @media print {
-                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                .cv-print-target { box-shadow: none !important; border-radius: 0 !important; background: white !important; color: #1e293b !important; }
-            }
-        `,
-    });
+    async function downloadPdf(
+        type: "cv" | "letter",
+        markdown: string,
+        fileName: string
+    ) {
+        const setBusy = type === "cv" ? setDownloadingCv : setDownloadingLetter;
+        setBusy(true);
 
-    const handlePrintLetter = useReactToPrint({
-        contentRef: letterRef,
-        documentTitle: t("print.letterTitle", {
-            jobTitle: job.title,
-            company: job.company,
-        }),
-        pageStyle: `
-            @page { size: A4; margin: 15mm; }
-            @media print {
-                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                .cover-letter-print-target { box-shadow: none !important; border-radius: 0 !important; background: white !important; color: #1e293b !important; }
+        try {
+            const response = await fetch("/api/export/pdf", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type,
+                    markdown,
+                    fileName,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`EXPORT_FAILED_${response.status}`);
             }
-        `,
-    });
+
+            const blob = await response.blob();
+            const objectUrl = window.URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = objectUrl;
+            anchor.download = fileName;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            window.URL.revokeObjectURL(objectUrl);
+        } catch (error) {
+            console.error("PDF export failed:", error);
+        } finally {
+            setBusy(false);
+        }
+    }
 
     const handleRetailor = async () => {
         // Build additional context from gap responses
@@ -220,22 +228,50 @@ export function DocumentViewer({
                     </Badge>
                     {activeTab === "cv" && application.tailoredCvMarkdown && (
                         <Button
-                            onClick={() => handlePrintCV()}
+                            onClick={() =>
+                                downloadPdf(
+                                    "cv",
+                                    application.tailoredCvMarkdown || "",
+                                    t("print.cvTitle", {
+                                        jobTitle: job.title,
+                                        company: job.company,
+                                    }) + ".pdf"
+                                )
+                            }
                             variant="default"
                             className="gap-2"
+                            disabled={downloadingCv}
                         >
-                            <FileDown className="w-4 h-4" />
+                            {downloadingCv ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <FileDown className="w-4 h-4" />
+                            )}
                             {t("actions.downloadCv")}
                         </Button>
                     )}
                     {activeTab === "letter" &&
                         application.coverLetterMarkdown && (
                             <Button
-                                onClick={() => handlePrintLetter()}
+                                onClick={() =>
+                                    downloadPdf(
+                                        "letter",
+                                        application.coverLetterMarkdown || "",
+                                        t("print.letterTitle", {
+                                            jobTitle: job.title,
+                                            company: job.company,
+                                        }) + ".pdf"
+                                    )
+                                }
                                 variant="default"
                                 className="gap-2"
+                                disabled={downloadingLetter}
                             >
-                                <FileDown className="w-4 h-4" />
+                                {downloadingLetter ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <FileDown className="w-4 h-4" />
+                                )}
                                 {t("actions.downloadLetter")}
                             </Button>
                         )}
@@ -268,7 +304,6 @@ export function DocumentViewer({
                         <>
                             {application.tailoredCvMarkdown ? (
                                 <CVDisplay
-                                    ref={cvRef}
                                     markdown={application.tailoredCvMarkdown}
                                     photoBase64={photoBase64}
                                 />
@@ -282,7 +317,6 @@ export function DocumentViewer({
                         <>
                             {application.coverLetterMarkdown ? (
                                 <CoverLetterDisplay
-                                    ref={letterRef}
                                     markdown={application.coverLetterMarkdown}
                                 />
                             ) : (
