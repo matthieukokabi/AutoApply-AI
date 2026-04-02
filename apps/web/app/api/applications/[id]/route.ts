@@ -4,6 +4,8 @@ import { getAuthUser } from "@/lib/auth";
 import { APPLICATION_STATUSES } from "@/lib/utils";
 
 const MAX_APPLICATION_NOTES_LENGTH = 5000;
+const MAX_TAILORED_CV_MARKDOWN_LENGTH = 200000;
+const MAX_COVER_LETTER_MARKDOWN_LENGTH = 80000;
 type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
 function isApplicationStatus(value: string): value is ApplicationStatus {
@@ -41,8 +43,8 @@ export async function GET(
 }
 
 /**
- * PATCH /api/applications/[id] — update application status (and optionally notes)
- * Body: { status: string, notes?: string }
+ * PATCH /api/applications/[id] — update status, notes, and/or generated docs
+ * Body: { status?: string, notes?: string | null, tailoredCvMarkdown?: string | null, coverLetterMarkdown?: string | null }
  */
 export async function PATCH(
     req: Request,
@@ -65,11 +67,19 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { status, notes } = body;
+        const { status, notes, tailoredCvMarkdown, coverLetterMarkdown } = body;
 
-        if (status === undefined && notes === undefined) {
+        if (
+            status === undefined &&
+            notes === undefined &&
+            tailoredCvMarkdown === undefined &&
+            coverLetterMarkdown === undefined
+        ) {
             return NextResponse.json(
-                { error: "At least one of status or notes must be provided" },
+                {
+                    error:
+                        "At least one of status, notes, tailoredCvMarkdown, or coverLetterMarkdown must be provided",
+                },
                 { status: 400 }
             );
         }
@@ -102,6 +112,52 @@ export async function PATCH(
             );
         }
 
+        if (
+            tailoredCvMarkdown !== undefined &&
+            tailoredCvMarkdown !== null &&
+            typeof tailoredCvMarkdown !== "string"
+        ) {
+            return NextResponse.json(
+                { error: "tailoredCvMarkdown must be a string or null" },
+                { status: 400 }
+            );
+        }
+
+        if (
+            coverLetterMarkdown !== undefined &&
+            coverLetterMarkdown !== null &&
+            typeof coverLetterMarkdown !== "string"
+        ) {
+            return NextResponse.json(
+                { error: "coverLetterMarkdown must be a string or null" },
+                { status: 400 }
+            );
+        }
+
+        if (
+            typeof tailoredCvMarkdown === "string" &&
+            tailoredCvMarkdown.length > MAX_TAILORED_CV_MARKDOWN_LENGTH
+        ) {
+            return NextResponse.json(
+                {
+                    error: `tailoredCvMarkdown exceeds maximum length of ${MAX_TAILORED_CV_MARKDOWN_LENGTH} characters`,
+                },
+                { status: 400 }
+            );
+        }
+
+        if (
+            typeof coverLetterMarkdown === "string" &&
+            coverLetterMarkdown.length > MAX_COVER_LETTER_MARKDOWN_LENGTH
+        ) {
+            return NextResponse.json(
+                {
+                    error: `coverLetterMarkdown exceeds maximum length of ${MAX_COVER_LETTER_MARKDOWN_LENGTH} characters`,
+                },
+                { status: 400 }
+            );
+        }
+
         const updateData: any = {};
         if (status !== undefined) {
             updateData.status = status;
@@ -111,6 +167,12 @@ export async function PATCH(
         }
         if (notes !== undefined) {
             updateData.notes = notes;
+        }
+        if (tailoredCvMarkdown !== undefined) {
+            updateData.tailoredCvMarkdown = tailoredCvMarkdown;
+        }
+        if (coverLetterMarkdown !== undefined) {
+            updateData.coverLetterMarkdown = coverLetterMarkdown;
         }
 
         const application = await prisma.application.update({

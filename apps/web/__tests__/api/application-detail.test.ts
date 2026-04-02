@@ -22,6 +22,8 @@ const mockApplication = {
     status: "tailored",
     appliedAt: null,
     notes: null,
+    tailoredCvMarkdown: "# CV",
+    coverLetterMarkdown: "# Cover Letter",
     job: {
         id: "job_1",
         title: "Senior React Developer",
@@ -113,7 +115,7 @@ describe("PATCH /api/applications/[id]", () => {
         expect(response.status).toBe(400);
     });
 
-    it("rejects payloads without status or notes", async () => {
+    it("rejects payloads without update fields", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
 
@@ -171,6 +173,58 @@ describe("PATCH /api/applications/[id]", () => {
 
         expect(response.status).toBe(200);
         expect(data.application.notes).toBe("Great opportunity");
+    });
+
+    it("updates tailored document markdown fields", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
+        vi.mocked(prisma.application.update).mockResolvedValue({
+            ...mockApplication,
+            tailoredCvMarkdown: "# Updated CV",
+            coverLetterMarkdown: "# Updated Cover Letter",
+        } as any);
+
+        const request = new Request("http://localhost/api/applications/app_1", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                tailoredCvMarkdown: "# Updated CV",
+                coverLetterMarkdown: "# Updated Cover Letter",
+            }),
+        });
+
+        const params = { id: "app_1" };
+        const response = await PATCH(request, { params });
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.application.tailoredCvMarkdown).toBe("# Updated CV");
+        expect(data.application.coverLetterMarkdown).toBe("# Updated Cover Letter");
+        expect(prisma.application.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    tailoredCvMarkdown: "# Updated CV",
+                    coverLetterMarkdown: "# Updated Cover Letter",
+                }),
+            })
+        );
+    });
+
+    it("rejects invalid tailoredCvMarkdown payload type", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
+
+        const request = new Request("http://localhost/api/applications/app_1", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                tailoredCvMarkdown: { value: "invalid" },
+            }),
+        });
+
+        const params = { id: "app_1" };
+        const response = await PATCH(request, { params });
+        expect(response.status).toBe(400);
     });
 
     it("returns 404 when application not found", async () => {

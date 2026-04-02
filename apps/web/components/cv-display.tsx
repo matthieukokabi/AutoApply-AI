@@ -8,10 +8,26 @@ import { Link2, Mail, MapPin, Phone } from "lucide-react";
 interface CVDisplayProps {
     markdown: string;
     photoBase64?: string;
+    showPhoto?: boolean;
+    contactVisibility?: {
+        email?: boolean;
+        phone?: boolean;
+        location?: boolean;
+        linkedin?: boolean;
+        website?: boolean;
+    };
 }
 
 export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
-    function CVDisplay({ markdown, photoBase64 }, ref) {
+    function CVDisplay(
+        {
+            markdown,
+            photoBase64,
+            showPhoto = true,
+            contactVisibility,
+        },
+        ref
+    ) {
         const cv = buildCanonicalCvDocument(markdown);
 
         return (
@@ -24,7 +40,7 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
                 <div className="px-8 pt-8 pb-6 border-b border-slate-200 dark:border-slate-700 print:border-slate-300">
                     <div className="flex items-start gap-6">
                         {/* Photo */}
-                        {photoBase64 && (
+                        {photoBase64 && showPhoto && (
                             <div className="flex-shrink-0">
                                 <NextImage
                                     src={photoBase64}
@@ -48,31 +64,36 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
                                 </p>
                             )}
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[13px] text-slate-600 dark:text-slate-400 print:text-slate-600">
-                                {cv.contact.location && (
+                                {contactVisibility?.location !== false &&
+                                    cv.contact.location && (
                                     <span className="flex items-center gap-1">
                                         <MapPin className="w-3.5 h-3.5" />
                                         {cv.contact.location}
                                     </span>
                                 )}
-                                {cv.contact.email && (
+                                {contactVisibility?.email !== false &&
+                                    cv.contact.email && (
                                     <span className="flex items-center gap-1">
                                         <Mail className="w-3.5 h-3.5" />
                                         {cv.contact.email}
                                     </span>
                                 )}
-                                {cv.contact.phone && (
+                                {contactVisibility?.phone !== false &&
+                                    cv.contact.phone && (
                                     <span className="flex items-center gap-1">
                                         <Phone className="w-3.5 h-3.5" />
                                         {cv.contact.phone}
                                     </span>
                                 )}
-                                {cv.contact.linkedin && (
+                                {contactVisibility?.linkedin !== false &&
+                                    cv.contact.linkedin && (
                                     <span className="flex items-center gap-1">
                                         <Link2 className="w-3.5 h-3.5" />
                                         {cv.contact.linkedin}
                                     </span>
                                 )}
-                                {cv.contact.website && (
+                                {contactVisibility?.website !== false &&
+                                    cv.contact.website && (
                                     <span className="flex items-center gap-1">
                                         <Link2 className="w-3.5 h-3.5" />
                                         {cv.contact.website}

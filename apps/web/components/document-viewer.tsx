@@ -59,6 +59,31 @@ export function DocumentViewer({
     const [activeTab, setActiveTab] = useState<Tab>("cv");
     const [downloadingCv, setDownloadingCv] = useState(false);
     const [downloadingLetter, setDownloadingLetter] = useState(false);
+    const [savingDraft, setSavingDraft] = useState(false);
+    const [editorMessage, setEditorMessage] = useState<{
+        type: "success" | "error";
+        text: string;
+    } | null>(null);
+    const [cvMarkdown, setCvMarkdown] = useState(
+        application.tailoredCvMarkdown || ""
+    );
+    const [coverLetterMarkdown, setCoverLetterMarkdown] = useState(
+        application.coverLetterMarkdown || ""
+    );
+    const [savedCvMarkdown, setSavedCvMarkdown] = useState(
+        application.tailoredCvMarkdown || ""
+    );
+    const [savedCoverLetterMarkdown, setSavedCoverLetterMarkdown] = useState(
+        application.coverLetterMarkdown || ""
+    );
+    const [cvDisplayOptions, setCvDisplayOptions] = useState({
+        showPhoto: true,
+        showEmail: true,
+        showPhone: true,
+        showLocation: true,
+        showLinkedin: true,
+        showWebsite: true,
+    });
 
     // Gap-filling state
     const [gapResponses, setGapResponses] = useState<Record<number, string>>(
@@ -172,9 +197,61 @@ export function DocumentViewer({
         }
     };
 
+    async function handleSaveEdits() {
+        const payload: Record<string, string | null> = {};
+        if (activeTab === "cv") {
+            payload.tailoredCvMarkdown = cvMarkdown;
+        }
+        if (activeTab === "letter") {
+            payload.coverLetterMarkdown = coverLetterMarkdown;
+        }
+        if (!Object.keys(payload).length) {
+            return;
+        }
+
+        setSavingDraft(true);
+        setEditorMessage(null);
+        try {
+            const response = await fetch(`/api/applications/${application.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                setEditorMessage({
+                    type: "error",
+                    text: data.error || "Failed to save document edits.",
+                });
+                return;
+            }
+
+            if (activeTab === "cv") {
+                setSavedCvMarkdown(cvMarkdown);
+            } else if (activeTab === "letter") {
+                setSavedCoverLetterMarkdown(coverLetterMarkdown);
+            }
+
+            setEditorMessage({
+                type: "success",
+                text: "Document edits saved.",
+            });
+        } catch {
+            setEditorMessage({
+                type: "error",
+                text: "Network error while saving edits.",
+            });
+        } finally {
+            setSavingDraft(false);
+        }
+    }
+
     const filledCount = Object.values(gapResponses).filter(
         (r) => r.trim()
     ).length;
+    const hasCvChanges = cvMarkdown !== savedCvMarkdown;
+    const hasCoverLetterChanges = coverLetterMarkdown !== savedCoverLetterMarkdown;
 
     const scoreColor =
         application.compatibilityScore >= 80
@@ -226,12 +303,12 @@ export function DocumentViewer({
                         <Sparkles className="w-4 h-4 mr-1" />
                         {application.compatibilityScore}% {t("match")}
                     </Badge>
-                    {activeTab === "cv" && application.tailoredCvMarkdown && (
+                    {activeTab === "cv" && cvMarkdown && (
                         <Button
                             onClick={() =>
                                 downloadPdf(
                                     "cv",
-                                    application.tailoredCvMarkdown || "",
+                                    cvMarkdown,
                                     t("print.cvTitle", {
                                         jobTitle: job.title,
                                         company: job.company,
@@ -251,12 +328,12 @@ export function DocumentViewer({
                         </Button>
                     )}
                     {activeTab === "letter" &&
-                        application.coverLetterMarkdown && (
+                        coverLetterMarkdown && (
                             <Button
                                 onClick={() =>
                                     downloadPdf(
                                         "letter",
-                                        application.coverLetterMarkdown || "",
+                                        coverLetterMarkdown,
                                         t("print.letterTitle", {
                                             jobTitle: job.title,
                                             company: job.company,
@@ -300,12 +377,170 @@ export function DocumentViewer({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Document display - 2/3 width */}
                 <div className="lg:col-span-2">
+                    {(activeTab === "cv" || activeTab === "letter") && (
+                        <Card className="mb-4">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm font-semibold">
+                                    {activeTab === "cv"
+                                        ? "Edit Tailored CV"
+                                        : "Edit Cover Letter"}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {activeTab === "cv" ? (
+                                    <>
+                                        <textarea
+                                            className="w-full min-h-[220px] rounded-md border p-3 text-xs font-mono"
+                                            value={cvMarkdown}
+                                            onChange={(event) => {
+                                                setCvMarkdown(event.target.value);
+                                                setEditorMessage(null);
+                                            }}
+                                            spellCheck={false}
+                                        />
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                            <label className="text-xs flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={cvDisplayOptions.showPhoto}
+                                                    onChange={(event) =>
+                                                        setCvDisplayOptions((prev) => ({
+                                                            ...prev,
+                                                            showPhoto: event.target.checked,
+                                                        }))
+                                                    }
+                                                />
+                                                Show photo
+                                            </label>
+                                            <label className="text-xs flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={cvDisplayOptions.showLocation}
+                                                    onChange={(event) =>
+                                                        setCvDisplayOptions((prev) => ({
+                                                            ...prev,
+                                                            showLocation: event.target.checked,
+                                                        }))
+                                                    }
+                                                />
+                                                Show location
+                                            </label>
+                                            <label className="text-xs flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={cvDisplayOptions.showEmail}
+                                                    onChange={(event) =>
+                                                        setCvDisplayOptions((prev) => ({
+                                                            ...prev,
+                                                            showEmail: event.target.checked,
+                                                        }))
+                                                    }
+                                                />
+                                                Show email
+                                            </label>
+                                            <label className="text-xs flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={cvDisplayOptions.showPhone}
+                                                    onChange={(event) =>
+                                                        setCvDisplayOptions((prev) => ({
+                                                            ...prev,
+                                                            showPhone: event.target.checked,
+                                                        }))
+                                                    }
+                                                />
+                                                Show phone
+                                            </label>
+                                            <label className="text-xs flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={cvDisplayOptions.showLinkedin}
+                                                    onChange={(event) =>
+                                                        setCvDisplayOptions((prev) => ({
+                                                            ...prev,
+                                                            showLinkedin: event.target.checked,
+                                                        }))
+                                                    }
+                                                />
+                                                Show LinkedIn
+                                            </label>
+                                            <label className="text-xs flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={cvDisplayOptions.showWebsite}
+                                                    onChange={(event) =>
+                                                        setCvDisplayOptions((prev) => ({
+                                                            ...prev,
+                                                            showWebsite: event.target.checked,
+                                                        }))
+                                                    }
+                                                />
+                                                Show website
+                                            </label>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <textarea
+                                        className="w-full min-h-[220px] rounded-md border p-3 text-xs font-mono"
+                                        value={coverLetterMarkdown}
+                                        onChange={(event) => {
+                                            setCoverLetterMarkdown(event.target.value);
+                                            setEditorMessage(null);
+                                        }}
+                                        spellCheck={false}
+                                    />
+                                )}
+                                <div className="flex items-center justify-between">
+                                    <p className="text-[11px] text-muted-foreground">
+                                        {activeTab === "cv"
+                                            ? "Edit headline, summary, experience, education, and skills directly before export."
+                                            : "Edit salutation, body paragraphs, and closing before export."}
+                                    </p>
+                                    <Button
+                                        size="sm"
+                                        onClick={handleSaveEdits}
+                                        disabled={
+                                            savingDraft ||
+                                            (activeTab === "cv"
+                                                ? !hasCvChanges
+                                                : !hasCoverLetterChanges)
+                                        }
+                                    >
+                                        {savingDraft ? (
+                                            <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                        ) : null}
+                                        Save edits
+                                    </Button>
+                                </div>
+                                {editorMessage && (
+                                    <div
+                                        className={`text-xs rounded border px-2 py-1.5 ${
+                                            editorMessage.type === "success"
+                                                ? "border-green-300 bg-green-50 text-green-700"
+                                                : "border-red-300 bg-red-50 text-red-700"
+                                        }`}
+                                    >
+                                        {editorMessage.text}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {activeTab === "cv" && (
                         <>
-                            {application.tailoredCvMarkdown ? (
+                            {cvMarkdown ? (
                                 <CVDisplay
-                                    markdown={application.tailoredCvMarkdown}
+                                    markdown={cvMarkdown}
                                     photoBase64={photoBase64}
+                                    showPhoto={cvDisplayOptions.showPhoto}
+                                    contactVisibility={{
+                                        location: cvDisplayOptions.showLocation,
+                                        email: cvDisplayOptions.showEmail,
+                                        phone: cvDisplayOptions.showPhone,
+                                        linkedin: cvDisplayOptions.showLinkedin,
+                                        website: cvDisplayOptions.showWebsite,
+                                    }}
                                 />
                             ) : (
                                 <EmptyState message={t("empty.noTailoredCv")} />
@@ -315,10 +550,8 @@ export function DocumentViewer({
 
                     {activeTab === "letter" && (
                         <>
-                            {application.coverLetterMarkdown ? (
-                                <CoverLetterDisplay
-                                    markdown={application.coverLetterMarkdown}
-                                />
+                            {coverLetterMarkdown ? (
+                                <CoverLetterDisplay markdown={coverLetterMarkdown} />
                             ) : (
                                 <EmptyState message={t("empty.noCoverLetter")} />
                             )}
