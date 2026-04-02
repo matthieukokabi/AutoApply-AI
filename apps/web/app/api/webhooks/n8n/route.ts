@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } from "@/lib/email";
+import { normalizeCoverLetterMarkdown, normalizeCvMarkdown } from "@/lib/document-model";
 
 const DISCOVERY_WORKFLOW_ID = "eddfsS251UHbmNIj";
 const DISCOVERY_CADENCE_MINUTES = 240;
@@ -20,6 +21,38 @@ function logPipelineEvent(
             ...fields,
         })
     );
+}
+
+function safeNormalizeTailoredCv(markdown: unknown) {
+    if (typeof markdown !== "string") {
+        return null;
+    }
+    const trimmed = markdown.trim();
+    if (!trimmed) {
+        return null;
+    }
+
+    try {
+        return normalizeCvMarkdown(trimmed);
+    } catch {
+        return trimmed;
+    }
+}
+
+function safeNormalizeCoverLetter(markdown: unknown) {
+    if (typeof markdown !== "string") {
+        return null;
+    }
+    const trimmed = markdown.trim();
+    if (!trimmed) {
+        return null;
+    }
+
+    try {
+        return normalizeCoverLetterMarkdown(trimmed);
+    } catch {
+        return trimmed;
+    }
 }
 
 async function getDiscoveryCadenceState() {
@@ -1307,6 +1340,15 @@ export async function POST(req: Request) {
                         app && typeof app === "object" && !Array.isArray(app)
                             ? (app as Record<string, any>)
                             : {};
+                    const normalizedTailoredCvMarkdown = safeNormalizeTailoredCv(
+                        appData.tailoredCvMarkdown
+                    );
+                    const normalizedCoverLetterMarkdown = safeNormalizeCoverLetter(
+                        appData.coverLetterMarkdown
+                    );
+                    const resolvedStatus =
+                        appData.status ||
+                        (normalizedTailoredCvMarkdown ? "tailored" : "discovered");
                     const externalId =
                         appData.externalId ||
                         appData.url ||
@@ -1348,9 +1390,9 @@ export async function POST(req: Request) {
                             matchingStrengths: appData.matchingStrengths || [],
                             gaps: appData.gaps || [],
                             recommendation: appData.recommendation || "skip",
-                            tailoredCvMarkdown: appData.tailoredCvMarkdown || null,
-                            coverLetterMarkdown: appData.coverLetterMarkdown || null,
-                            status: appData.status || (appData.tailoredCvMarkdown ? "tailored" : "discovered"),
+                            tailoredCvMarkdown: normalizedTailoredCvMarkdown,
+                            coverLetterMarkdown: normalizedCoverLetterMarkdown,
+                            status: resolvedStatus,
                         },
                         update: {
                             compatibilityScore: appData.compatibilityScore || 0,
@@ -1358,9 +1400,9 @@ export async function POST(req: Request) {
                             matchingStrengths: appData.matchingStrengths || [],
                             gaps: appData.gaps || [],
                             recommendation: appData.recommendation || "skip",
-                            tailoredCvMarkdown: appData.tailoredCvMarkdown || null,
-                            coverLetterMarkdown: appData.coverLetterMarkdown || null,
-                            status: appData.status || (appData.tailoredCvMarkdown ? "tailored" : "discovered"),
+                            tailoredCvMarkdown: normalizedTailoredCvMarkdown,
+                            coverLetterMarkdown: normalizedCoverLetterMarkdown,
+                            status: resolvedStatus,
                         },
                         include: { job: true },
                     });
@@ -1491,6 +1533,15 @@ export async function POST(req: Request) {
 
                 const normalizedTailorUserId = tailorUserId.trim();
                 const normalizedTailorJobId = tailorJobId.trim();
+                const normalizedTailoredCvMarkdown = safeNormalizeTailoredCv(
+                    tailoredCvMarkdown
+                );
+                const normalizedCoverLetterMarkdown = safeNormalizeCoverLetter(
+                    coverLetterMarkdown
+                );
+                const resolvedApplicationStatus = normalizedTailoredCvMarkdown
+                    ? "tailored"
+                    : "discovered";
                 const existingJob = await prisma.job.findUnique({
                     where: { id: normalizedTailorJobId },
                     select: { id: true },
@@ -1561,9 +1612,9 @@ export async function POST(req: Request) {
                         matchingStrengths: matchingStrengths || [],
                         gaps: gaps || [],
                         recommendation: recommendation || "stretch",
-                        tailoredCvMarkdown: tailoredCvMarkdown || null,
-                        coverLetterMarkdown: coverLetterMarkdown || null,
-                        status: tailoredCvMarkdown ? "tailored" : "discovered",
+                        tailoredCvMarkdown: normalizedTailoredCvMarkdown,
+                        coverLetterMarkdown: normalizedCoverLetterMarkdown,
+                        status: resolvedApplicationStatus,
                     },
                     update: {
                         compatibilityScore: compatibilityScore || 0,
@@ -1571,9 +1622,9 @@ export async function POST(req: Request) {
                         matchingStrengths: matchingStrengths || [],
                         gaps: gaps || [],
                         recommendation: recommendation || "stretch",
-                        tailoredCvMarkdown: tailoredCvMarkdown || null,
-                        coverLetterMarkdown: coverLetterMarkdown || null,
-                        status: tailoredCvMarkdown ? "tailored" : "discovered",
+                        tailoredCvMarkdown: normalizedTailoredCvMarkdown,
+                        coverLetterMarkdown: normalizedCoverLetterMarkdown,
+                        status: resolvedApplicationStatus,
                     },
                     include: { job: true },
                 });

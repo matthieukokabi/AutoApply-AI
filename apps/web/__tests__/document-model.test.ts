@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     buildCanonicalCvDocument,
+    normalizeCvMarkdown,
     normalizeCoverLetterMarkdown,
 } from "@/lib/document-model";
 
@@ -41,6 +42,24 @@ Experienced leader building B2B SaaS products.
             "Led roadmap",
             "Improved NPS",
         ]);
+    });
+});
+
+describe("normalizeCvMarkdown", () => {
+    it("rebuilds markdown with deduplicated contact and bullet data", () => {
+        const markdown = `# Jane Doe
+**Senior Product Manager**
+Zurich | jane@example.com | +41 79 123 45 67 | +41 79 123 45 67
+
+## Skills
+- Strategy
+- Strategy
+`;
+
+        const normalized = normalizeCvMarkdown(markdown);
+        expect(normalized).toContain("Zurich | jane@example.com | +41 79 123 45 67");
+        expect(normalized.match(/\+41 79 123 45 67/g)?.length).toBe(1);
+        expect(normalized.match(/Strategy/g)?.length).toBe(1);
     });
 });
 

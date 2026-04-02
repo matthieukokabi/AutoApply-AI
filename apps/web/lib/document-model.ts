@@ -292,3 +292,55 @@ export function buildCanonicalCvDocument(markdown: string): CanonicalCvDocument 
         sections,
     };
 }
+
+export function normalizeCvMarkdown(markdown: string) {
+    const model = buildCanonicalCvDocument(markdown);
+    const lines: string[] = [];
+
+    lines.push(`# ${model.fullName}`);
+    if (model.headline) {
+        lines.push(`**${model.headline}**`);
+    }
+
+    const contactTokens = [
+        model.contact.location,
+        model.contact.email,
+        model.contact.phone,
+        model.contact.linkedin,
+        model.contact.website,
+        ...model.contact.extras,
+    ].filter(Boolean) as string[];
+
+    if (contactTokens.length > 0) {
+        lines.push(contactTokens.join(" | "));
+    }
+
+    for (const section of model.sections) {
+        lines.push("", `## ${section.title}`);
+
+        if (section.subsections.length > 0) {
+            for (const subsection of section.subsections) {
+                lines.push(`### ${subsection.heading}`);
+                if (subsection.meta) {
+                    lines.push(`**${subsection.meta}**`);
+                }
+                for (const paragraph of subsection.paragraphs) {
+                    lines.push(paragraph);
+                }
+                for (const bullet of subsection.bullets) {
+                    lines.push(`- ${bullet}`);
+                }
+                lines.push("");
+            }
+        } else {
+            for (const paragraph of section.paragraphs) {
+                lines.push(paragraph);
+            }
+        }
+    }
+
+    return lines
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+}
