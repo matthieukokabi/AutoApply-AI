@@ -214,6 +214,16 @@ function getStage(stageSummaries, stageName) {
     return stageSummaries.find((stage) => stage.stage === stageName) || null;
 }
 
+function getStageAny(stageSummaries, stageNames) {
+    for (const stageName of stageNames) {
+        const stage = getStage(stageSummaries, stageName);
+        if (stage) {
+            return stage;
+        }
+    }
+    return null;
+}
+
 function inferFailureReason(execution, stageSummaries) {
     if (!execution) {
         return "execution_missing";
@@ -223,13 +233,27 @@ function inferFailureReason(execution, stageSummaries) {
         return `execution_${execution.status}`;
     }
 
-    const fetchUsers = getStage(stageSummaries, "Fetch Active Users with Prefs & CV");
-    const normalized =
-        getStage(stageSummaries, "Normalize & Deduplicate") ||
-        getStage(stageSummaries, "Fetch & Normalize All Job Sources");
-    const scoring = getStage(stageSummaries, "LLM Relevance Scoring");
-    const tailoring = getStage(stageSummaries, "LLM CV Tailoring");
-    const batchSave = getStage(stageSummaries, "Batch Save via App API");
+    const fetchUsers = getStageAny(stageSummaries, [
+        "Fetch Active Users with Prefs & CV",
+        "Fetch Active Users v3",
+    ]);
+    const normalized = getStageAny(stageSummaries, [
+        "Normalize & Deduplicate",
+        "Fetch & Normalize All Job Sources",
+        "Normalize/Dedupe Jobs v3",
+    ]);
+    const scoring = getStageAny(stageSummaries, [
+        "LLM Relevance Scoring",
+        "HTTP Score Batch v3",
+    ]);
+    const tailoring = getStageAny(stageSummaries, [
+        "LLM CV Tailoring",
+        "HTTP Tailor Batch v3",
+    ]);
+    const batchSave = getStageAny(stageSummaries, [
+        "Batch Save via App API",
+        "Persist New Applications v3",
+    ]);
 
     if (fetchUsers && fetchUsers.itemCount === 0) {
         return "no_eligible_profiles";
@@ -359,7 +383,12 @@ function inferAlerts({
         (run) =>
             run.stageSummaries.some(
                 (stage) =>
-                    (stage.stage === "LLM CV Tailoring" || stage.stage === "Parse Tailored Response") &&
+                    (
+                        stage.stage === "LLM CV Tailoring" ||
+                        stage.stage === "Parse Tailored Response" ||
+                        stage.stage === "HTTP Tailor Batch v3" ||
+                        stage.stage === "Parse Tailor Batch v3"
+                    ) &&
                     stage.hasError
             )
     );
@@ -472,11 +501,19 @@ async function main() {
         const runData = decoded?.resultData?.runData || {};
         const stageSummaries = stageSummaryFromRunData(runData);
 
-        const usersStage = getStage(stageSummaries, "Prepare User Data");
-        const normalized =
-            getStage(stageSummaries, "Normalize & Deduplicate") ||
-            getStage(stageSummaries, "Fetch & Normalize All Job Sources");
-        const tailored = getStage(stageSummaries, "Parse Tailored Response");
+        const usersStage = getStageAny(stageSummaries, [
+            "Prepare User Data",
+            "Finalize User Result v3",
+        ]);
+        const normalized = getStageAny(stageSummaries, [
+            "Normalize & Deduplicate",
+            "Fetch & Normalize All Job Sources",
+            "Normalize/Dedupe Jobs v3",
+        ]);
+        const tailored = getStageAny(stageSummaries, [
+            "Parse Tailored Response",
+            "Parse Tailor Batch v3",
+        ]);
 
         return {
             executionId: execution.id,
