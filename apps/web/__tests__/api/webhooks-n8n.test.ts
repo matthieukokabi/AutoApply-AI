@@ -29,6 +29,7 @@ const mockApplication = {
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.N8N_WEBHOOK_SECRET = "test_webhook_secret";
+    vi.mocked(prisma.application.findUnique).mockResolvedValue(null as any);
 });
 
 function createWebhookRequest(
@@ -731,6 +732,29 @@ describe("POST /api/webhooks/n8n", () => {
                     }),
                 ])
             );
+        });
+
+        it("does not send match email when payload only updates existing applications", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+            vi.mocked(prisma.application.findUnique).mockResolvedValue({ id: "app_existing" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [
+                    {
+                        externalId: "adzuna-123",
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                        compatibilityScore: 85,
+                    },
+                ],
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+            expect(sendJobMatchEmail).not.toHaveBeenCalled();
         });
 
         it("sends credits-low email when credits are low", async () => {

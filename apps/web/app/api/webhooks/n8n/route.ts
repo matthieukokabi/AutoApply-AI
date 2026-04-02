@@ -1330,7 +1330,8 @@ export async function POST(req: Request) {
                     applicationsCount: applications.length,
                 });
 
-                const createdApps = [];
+                const persistedApps = [];
+                const newlyCreatedApps = [];
                 let discoveredCount = 0;
                 let tailoredCount = 0;
 
@@ -1375,6 +1376,16 @@ export async function POST(req: Request) {
                     });
 
                     // Then, create/upsert the Application record
+                    const existingApplication = await prisma.application.findUnique({
+                        where: {
+                            userId_jobId: {
+                                userId,
+                                jobId: job.id,
+                            },
+                        },
+                        select: { id: true },
+                    });
+
                     const result = await prisma.application.upsert({
                         where: {
                             userId_jobId: {
@@ -1411,13 +1422,17 @@ export async function POST(req: Request) {
                     } else {
                         discoveredCount += 1;
                     }
-                    createdApps.push(result);
+                    persistedApps.push(result);
+                    if (!existingApplication) {
+                        newlyCreatedApps.push(result);
+                    }
                 }
 
                 logPipelineEvent("info", "new_applications_persisted", {
                     runId,
                     userId,
-                    createdCount: createdApps.length,
+                    createdCount: newlyCreatedApps.length,
+                    persistedCount: persistedApps.length,
                     tailoredCount,
                     discoveredCount,
                 });
@@ -1445,8 +1460,8 @@ export async function POST(req: Request) {
                 // Send email notification for new job matches
                 try {
                     const user = await prisma.user.findUnique({ where: { id: userId } });
-                    if (user && createdApps.length > 0) {
-                        const matchedJobs = createdApps.map((a) => ({
+                    if (user && newlyCreatedApps.length > 0) {
+                        const matchedJobs = newlyCreatedApps.map((a) => ({
                             title: a.job.title,
                             company: a.job.company,
                             score: a.compatibilityScore,

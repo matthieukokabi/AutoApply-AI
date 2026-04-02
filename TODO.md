@@ -13,6 +13,11 @@ Last updated: 2026-03-24 (Europe/Zurich)
 - [x] Add `apps/web/scripts/publish_v3_workflows.js` to create new v3 workflow entities and print created workflow/version IDs — completed on 2026-03-24 (`apps/web/scripts/publish_v3_workflows.js`, `apps/web/package.json`)
 - [x] Update incident/runbook docs with v3 disable/rollback/idempotency verification and no-UI-change validation guidance — completed on 2026-03-24 (`docs/automation-4h-incident-response-runbook.md`, `docs/automation-v3-env-contract.md`)
 
+## P0/P1 — jobs delivery anti-spam + account-level reliability audit
+
+- [x] Stop duplicate `new_applications` notification side effects by sending match emails only for newly created `Application` rows (not update-path upserts), with regression coverage for update-only payloads — completed on 2026-04-02 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/__tests__/api/webhooks-n8n.test.ts`)
+- [ ] Expand discovery v3 canary gating so eligible active users are not silently starved when only one user is allowlisted (keep rollout controls intact)
+
 ## P0 — Incident: onboarding CV upload returning 500
 
 - [x] Hotfix CV PDF upload parser compatibility with `pdf-parse` v2 API (`PDFParse#getText`) and return actionable 400 errors (no generic 500) when PDF/DOCX parsing fails — completed on 2026-03-19 (`apps/web/app/api/profile/upload/route.ts`, `apps/web/__tests__/api/profile-upload.test.ts`)
