@@ -2,8 +2,8 @@
 
 import React from "react";
 import NextImage from "next/image";
-import { parseCV } from "@/lib/cv-parser";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { buildCanonicalCvDocument } from "@/lib/document-model";
+import { Link2, Mail, MapPin, Phone } from "lucide-react";
 
 interface CVDisplayProps {
     markdown: string;
@@ -12,29 +12,16 @@ interface CVDisplayProps {
 
 export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
     function CVDisplay({ markdown, photoBase64 }, ref) {
-        const cv = parseCV(markdown);
-
-        // Parse contact line into parts
-        const contactParts = cv.contactLine
-            .split("|")
-            .map((p) => p.trim())
-            .filter(Boolean);
-
-        // Try to identify email, phone, location from contact parts
-        const email = contactParts.find((p) => p.includes("@")) || "";
-        const phone =
-            contactParts.find((p) => /[+\d]/.test(p) && p.includes(" ")) || "";
-        const location =
-            contactParts.find((p) => !p.includes("@") && !/^\+/.test(p)) || "";
+        const cv = buildCanonicalCvDocument(markdown);
 
         return (
             <div
                 ref={ref}
                 className="cv-print-target bg-white dark:bg-slate-900 shadow-lg rounded-lg max-w-[210mm] mx-auto print:shadow-none print:rounded-none print:max-w-none"
-                style={{ fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif" }}
+                style={{ fontFamily: "'Aptos', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" }}
             >
                 {/* Header */}
-                <div className="px-8 pt-8 pb-6 border-b-2 border-slate-200 dark:border-slate-700 print:border-slate-300">
+                <div className="px-8 pt-8 pb-6 border-b border-slate-200 dark:border-slate-700 print:border-slate-300">
                     <div className="flex items-start gap-6">
                         {/* Photo */}
                         {photoBase64 && (
@@ -52,31 +39,43 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
 
                         {/* Name & Contact */}
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 print:text-slate-900 tracking-tight">
-                                {cv.name}
+                            <h1 className="text-[30px] font-bold leading-tight text-slate-900 dark:text-slate-50 print:text-slate-900 tracking-tight">
+                                {cv.fullName}
                             </h1>
-                            {cv.subtitle && (
-                                <p className="text-base text-blue-700 dark:text-blue-400 print:text-blue-700 font-medium mt-0.5">
-                                    {cv.subtitle}
+                            {cv.headline && (
+                                <p className="text-[15px] text-slate-700 dark:text-slate-300 print:text-slate-700 font-medium mt-1">
+                                    {cv.headline}
                                 </p>
                             )}
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-600 dark:text-slate-400 print:text-slate-600">
-                                {location && (
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[13px] text-slate-600 dark:text-slate-400 print:text-slate-600">
+                                {cv.contact.location && (
                                     <span className="flex items-center gap-1">
                                         <MapPin className="w-3.5 h-3.5" />
-                                        {location}
+                                        {cv.contact.location}
                                     </span>
                                 )}
-                                {email && (
+                                {cv.contact.email && (
                                     <span className="flex items-center gap-1">
                                         <Mail className="w-3.5 h-3.5" />
-                                        {email}
+                                        {cv.contact.email}
                                     </span>
                                 )}
-                                {phone && (
+                                {cv.contact.phone && (
                                     <span className="flex items-center gap-1">
                                         <Phone className="w-3.5 h-3.5" />
-                                        {phone}
+                                        {cv.contact.phone}
+                                    </span>
+                                )}
+                                {cv.contact.linkedin && (
+                                    <span className="flex items-center gap-1">
+                                        <Link2 className="w-3.5 h-3.5" />
+                                        {cv.contact.linkedin}
+                                    </span>
+                                )}
+                                {cv.contact.website && (
+                                    <span className="flex items-center gap-1">
+                                        <Link2 className="w-3.5 h-3.5" />
+                                        {cv.contact.website}
                                     </span>
                                 )}
                             </div>
@@ -85,26 +84,26 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
                 </div>
 
                 {/* Sections */}
-                <div className="px-8 py-6 space-y-5">
+                <div className="px-8 py-6 space-y-6">
                     {cv.sections.map((section, idx) => (
                         <div key={idx}>
                             {/* Section Header */}
-                            <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-700 dark:text-slate-300 print:text-slate-700 pb-1.5 mb-3 border-b-[1.5px] border-slate-300 dark:border-slate-600 print:border-slate-300">
+                            <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 dark:text-slate-300 print:text-slate-700 pb-1.5 mb-3 border-b border-slate-300 dark:border-slate-600 print:border-slate-300">
                                 {section.title}
                             </h2>
 
                             {/* Subsections (Experience, Education entries) */}
                             {section.subsections.length > 0 && (
-                                <div className="space-y-4">
+                                <div className="space-y-5">
                                     {section.subsections.map((sub, subIdx) => (
                                         <div key={subIdx}>
                                             {/* Subsection heading + dates */}
                                             <div className="flex justify-between items-baseline gap-4">
-                                                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 print:text-slate-900">
+                                                <h3 className="text-[14px] font-semibold text-slate-900 dark:text-slate-100 print:text-slate-900">
                                                     {sub.heading}
                                                 </h3>
                                                 {sub.meta && (
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400 print:text-slate-500 whitespace-nowrap flex-shrink-0">
+                                                    <span className="text-[12px] text-slate-500 dark:text-slate-400 print:text-slate-500 whitespace-nowrap flex-shrink-0">
                                                         {sub.meta}
                                                     </span>
                                                 )}
@@ -114,7 +113,7 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
                                             {sub.paragraphs.map((p, pIdx) => (
                                                 <p
                                                     key={pIdx}
-                                                    className="text-xs text-slate-500 dark:text-slate-400 print:text-slate-500 italic"
+                                                    className="text-[13px] text-slate-600 dark:text-slate-400 print:text-slate-600 italic leading-relaxed"
                                                 >
                                                     {p}
                                                 </p>
@@ -122,12 +121,12 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
 
                                             {/* Bullets */}
                                             {sub.bullets.length > 0 && (
-                                                <ul className="mt-1.5 space-y-0.5">
+                                                <ul className="mt-2 space-y-1">
                                                     {sub.bullets.map(
                                                         (bullet, bIdx) => (
                                                             <li
                                                                 key={bIdx}
-                                                                className="text-xs text-slate-700 dark:text-slate-300 print:text-slate-700 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-slate-400"
+                                                                className="text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 print:text-slate-700 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-slate-400"
                                                             >
                                                                 {bullet}
                                                             </li>
@@ -146,12 +145,12 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
                                     <div>
                                         {/* Check if it looks like a skills section (short items) */}
                                         {isSkillsSection(section) ? (
-                                            <div className="flex flex-wrap gap-1.5">
+                                            <div className="flex flex-wrap gap-2">
                                                 {section.paragraphs.map(
                                                     (skill, sIdx) => (
                                                         <span
                                                             key={sIdx}
-                                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800 print:bg-blue-50 print:text-blue-700 print:border-blue-200"
+                                                            className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800 print:bg-blue-50 print:text-blue-700 print:border-blue-200"
                                                         >
                                                             {skill}
                                                         </span>
@@ -164,11 +163,9 @@ export const CVDisplay = React.forwardRef<HTMLDivElement, CVDisplayProps>(
                                                     (p, pIdx) => (
                                                         <p
                                                             key={pIdx}
-                                                            className="text-xs text-slate-700 dark:text-slate-300 print:text-slate-700 leading-relaxed"
+                                                            className="text-[13px] text-slate-700 dark:text-slate-300 print:text-slate-700 leading-relaxed"
                                                         >
-                                                            {cleanMarkdownBold(
-                                                                p
-                                                            )}
+                                                            {p}
                                                         </p>
                                                     )
                                                 )}
@@ -198,9 +195,4 @@ function isSkillsSection(section: { title: string; paragraphs: string[] }): bool
         section.paragraphs.reduce((sum, p) => sum + p.length, 0) /
         (section.paragraphs.length || 1);
     return avgLen < 50 && section.paragraphs.length > 3;
-}
-
-/** Remove markdown bold markers for plain text rendering */
-function cleanMarkdownBold(text: string): string {
-    return text.replace(/\*\*(.*?)\*\*/g, "$1");
 }
