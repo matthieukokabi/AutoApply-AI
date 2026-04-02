@@ -16,7 +16,7 @@ Last updated: 2026-03-24 (Europe/Zurich)
 ## P0/P1 — jobs delivery anti-spam + account-level reliability audit
 
 - [x] Stop duplicate `new_applications` notification side effects by sending match emails only for newly created `Application` rows (not update-path upserts), with regression coverage for update-only payloads — completed on 2026-04-02 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/__tests__/api/webhooks-n8n.test.ts`)
-- [ ] Expand discovery v3 canary gating so eligible active users are not silently starved when only one user is allowlisted (keep rollout controls intact)
+- [x] Expand discovery v3 canary gating so an empty allowlist no longer drops all eligible users (fall back to deterministic sample when configured, otherwise process all users) while preserving allowlist-first rollout controls — completed on 2026-04-02 (`n8n/workflows/job-discovery-pipeline-v3.json`)
 
 ## P0 — Incident: onboarding CV upload returning 500
 
