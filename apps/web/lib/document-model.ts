@@ -30,18 +30,23 @@ export interface CanonicalCvDocument {
 }
 
 const EMAIL_REGEX = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
+const EMAIL_GLOBAL_REGEX = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const URL_REGEX = /\bhttps?:\/\/[^\s)]+/i;
+const URL_GLOBAL_REGEX = /\bhttps?:\/\/[^\s)]+/gi;
 const PHONE_REGEX = /(?:\+\d[\d\s().-]{5,}\d|\b\d[\d\s().-]{7,}\d\b)/;
-const INTERNAL_DOC_URL_REGEX = /\bhttps?:\/\/(?:www\.)?autoapply\.works\/documents\/[A-Za-z0-9_-]+\b/gi;
-const TIMESTAMP_REGEX =
-    /\b(?:\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z|\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?)\b/g;
+const PHONE_GLOBAL_REGEX = /(?:\+\d[\d\s().-]{5,}\d|\b\d[\d\s().-]{7,}\d\b)/g;
+const INTERNAL_AUTOAPPLY_URL_REGEX =
+    /\bhttps?:\/\/(?:[\w-]+\.)?autoapply(?:\.works|\.ai)?[^\s)]*\b/gi;
+const METADATA_LINE_REGEX =
+    /^(?:document\s*(?:url|link)|source\s*(?:url|link)|generated(?:\s*(?:at|on))?|timestamp|created\s*at|updated\s*at|exported\s*at|autoapply\s*document)\b/i;
+const TIMESTAMP_ONLY_REGEX =
+    /^(?:\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z|\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?)$/;
+const CONTACT_LABEL_PREFIX_REGEX =
+    /^(?:email|e-mail|mail|phone|mobile|tel|telephone|linkedin|website|portfolio|location|address)\s*:\s*/i;
 
 const SECTION_ORDER = [
     "summary",
-    "professional summary",
-    "profile",
     "experience",
-    "work experience",
     "education",
     "skills",
     "languages",
@@ -49,8 +54,34 @@ const SECTION_ORDER = [
     "certifications",
 ];
 
+function stripMarkdownInline(value: string) {
+    return value
+        .replace(/\[(.*?)\]\((.*?)\)/g, "$1 $2")
+        .replace(/`(.*?)`/g, "$1")
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .trim();
+}
+
 function normalizeText(value: string) {
     return value.replace(/\s+/g, " ").trim();
+}
+
+function comparableKey(value: string) {
+    const normalized = normalizeText(stripMarkdownInline(value))
+        .replace(/^[-•]\s*/, "")
+        .replace(/\bmailto:/gi, "")
+        .replace(CONTACT_LABEL_PREFIX_REGEX, "")
+        .replace(/\s*[|·•]\s*/g, " ")
+        .replace(/[“”"']/g, "")
+        .replace(/[.,;:!?]+$/g, "")
+        .toLowerCase();
+
+    if (!normalized) {
+        return "";
+    }
+
+    return normalized.replace(/\/$/, "");
 }
 
 function dedupeStrings(values: string[]) {
@@ -58,29 +89,128 @@ function dedupeStrings(values: string[]) {
     const deduped: string[] = [];
 
     for (const value of values) {
-        const normalized = normalizeText(value).toLowerCase();
-        if (!normalized || seen.has(normalized)) {
+        const normalizedDisplay = normalizeText(stripMarkdownInline(value));
+        const normalizedKey = comparableKey(normalizedDisplay);
+        if (!normalizedDisplay || !normalizedKey || seen.has(normalizedKey)) {
             continue;
         }
-        seen.add(normalized);
-        deduped.push(normalizeText(value));
+        seen.add(normalizedKey);
+        deduped.push(normalizedDisplay);
     }
 
     return deduped;
 }
 
+function isMetadataLine(line: string) {
+    const cleaned = normalizeText(stripMarkdownInline(line));
+    if (!cleaned) {
+        return false;
+    }
+
+    if (METADATA_LINE_REGEX.test(cleaned)) {
+        return true;
+    }
+
+    if (TIMESTAMP_ONLY_REGEX.test(cleaned)) {
+        return true;
+    }
+
+    if (/^(?:https?:\/\/)?(?:[\w-]+\.)?autoapply(?:\.works|\.ai)\b/i.test(cleaned)) {
+        return true;
+    }
+
+    return false;
+}
+
+function sanitizeGeneratedText(text: string) {
+    const stripped = text.replace(INTERNAL_AUTOAPPLY_URL_REGEX, "");
+    const lines = stripped.split("\n");
+    const cleanedLines: string[] = [];
+
+    for (const rawLine of lines) {
+        const line = rawLine.replace(/[ \t]+$/g, "");
+        const trimmed = normalizeText(line);
+
+        if (!trimmed) {
+            if (
+                cleanedLines.length > 0 &&
+                cleanedLines[cleanedLines.length - 1] !== ""
+            ) {
+                cleanedLines.push("");
+            }
+            continue;
+        }
+
+        if (isMetadataLine(trimmed)) {
+            continue;
+        }
+
+        cleanedLines.push(trimmed);
+    }
+
+    return cleanedLines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 function splitContactTokens(line: string) {
-    return line
-        .split(/[|·]/g)
+    const lineWithoutLabels = normalizeText(
+        stripMarkdownInline(line).replace(CONTACT_LABEL_PREFIX_REGEX, "")
+    );
+
+    return lineWithoutLabels
+        .split(/[|·•]/g)
         .map((token) => normalizeText(token))
         .filter(Boolean);
 }
 
-function classifyContactToken(
-    token: string,
-    contact: CanonicalCvContact
-) {
-    const cleaned = token.replace(/\*\*/g, "");
+function extractHeaderLines(markdown: string) {
+    const lines = markdown.split("\n");
+    const headerLines: string[] = [];
+    let seenName = false;
+
+    for (const raw of lines) {
+        const line = raw.trim();
+        if (!line) {
+            continue;
+        }
+
+        if (!seenName && line.startsWith("# ")) {
+            seenName = true;
+            continue;
+        }
+
+        if (line.startsWith("## ")) {
+            break;
+        }
+
+        headerLines.push(line);
+    }
+
+    return headerLines;
+}
+
+function looksLikeContactLine(line: string) {
+    const cleaned = stripMarkdownInline(line);
+    return (
+        cleaned.includes("@") ||
+        cleaned.includes("linkedin.com") ||
+        cleaned.includes("http://") ||
+        cleaned.includes("https://") ||
+        cleaned.includes("|") ||
+        cleaned.includes("·") ||
+        PHONE_REGEX.test(cleaned)
+    );
+}
+
+function classifyContactToken(token: string, contact: CanonicalCvContact) {
+    const cleaned = normalizeText(
+        stripMarkdownInline(token)
+            .replace(CONTACT_LABEL_PREFIX_REGEX, "")
+            .replace(/\bmailto:/gi, "")
+    );
+
+    if (!cleaned) {
+        return;
+    }
 
     if (!contact.email) {
         const emailMatch = cleaned.match(EMAIL_REGEX);
@@ -94,7 +224,7 @@ function classifyContactToken(
     if (lower.includes("linkedin.com")) {
         if (!contact.linkedin) {
             contact.linkedin = cleaned;
-        } else {
+        } else if (comparableKey(contact.linkedin) !== comparableKey(cleaned)) {
             contact.extras.push(cleaned);
         }
         return;
@@ -103,7 +233,7 @@ function classifyContactToken(
     if (URL_REGEX.test(cleaned)) {
         if (!contact.website) {
             contact.website = cleaned;
-        } else {
+        } else if (comparableKey(contact.website) !== comparableKey(cleaned)) {
             contact.extras.push(cleaned);
         }
         return;
@@ -112,7 +242,7 @@ function classifyContactToken(
     if (PHONE_REGEX.test(cleaned)) {
         if (!contact.phone) {
             contact.phone = cleaned;
-        } else if (normalizeText(contact.phone).toLowerCase() !== cleaned.toLowerCase()) {
+        } else if (comparableKey(contact.phone) !== comparableKey(cleaned)) {
             contact.extras.push(cleaned);
         }
         return;
@@ -126,10 +256,131 @@ function classifyContactToken(
     contact.extras.push(cleaned);
 }
 
+function parseContactFromLine(line: string, contact: CanonicalCvContact) {
+    const cleanedLine = normalizeText(stripMarkdownInline(line));
+    if (!cleanedLine) {
+        return;
+    }
+
+    const directTokens = splitContactTokens(cleanedLine);
+    if (directTokens.length > 1) {
+        for (const token of directTokens) {
+            classifyContactToken(token, contact);
+        }
+        return;
+    }
+
+    const emails = cleanedLine.match(EMAIL_GLOBAL_REGEX) || [];
+    const phones = cleanedLine.match(PHONE_GLOBAL_REGEX) || [];
+    const urls = cleanedLine.match(URL_GLOBAL_REGEX) || [];
+
+    for (const email of emails) {
+        classifyContactToken(email, contact);
+    }
+    for (const phone of phones) {
+        classifyContactToken(phone, contact);
+    }
+    for (const url of urls) {
+        classifyContactToken(url, contact);
+    }
+
+    let residual = cleanedLine;
+    for (const token of [...emails, ...phones, ...urls]) {
+        residual = residual.replace(token, " ");
+    }
+
+    const residualTokens = residual
+        .split(/[|·•]/g)
+        .map((token) => normalizeText(token))
+        .filter(Boolean);
+    for (const token of residualTokens) {
+        classifyContactToken(token, contact);
+    }
+}
+
+function canonicalSectionTitle(title: string) {
+    const normalized = normalizeText(title).toLowerCase();
+
+    if (
+        normalized.includes("summary") ||
+        normalized.includes("profile") ||
+        normalized.includes("about")
+    ) {
+        return "Summary";
+    }
+    if (normalized.includes("experience") || normalized.includes("employment")) {
+        return "Experience";
+    }
+    if (normalized.includes("education") || normalized.includes("formation")) {
+        return "Education";
+    }
+    if (
+        normalized.includes("skill") ||
+        normalized.includes("competen") ||
+        normalized.includes("technology")
+    ) {
+        return "Skills";
+    }
+    if (normalized.includes("language") || normalized.includes("langue")) {
+        return "Languages";
+    }
+    if (normalized.includes("project")) {
+        return "Projects";
+    }
+    if (
+        normalized.includes("certification") ||
+        normalized.includes("certificate") ||
+        normalized.includes("licen")
+    ) {
+        return "Certifications";
+    }
+
+    return normalizeText(title) || "Additional Information";
+}
+
 function sectionOrderWeight(title: string) {
     const normalized = normalizeText(title).toLowerCase();
     const idx = SECTION_ORDER.findIndex((item) => normalized === item || normalized.includes(item));
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+}
+
+function buildContactComparableSet(contact: CanonicalCvContact) {
+    const set = new Set<string>();
+    for (const token of [
+        contact.location,
+        contact.email,
+        contact.phone,
+        contact.linkedin,
+        contact.website,
+        ...contact.extras,
+    ]) {
+        if (!token) {
+            continue;
+        }
+        const key = comparableKey(token);
+        if (key) {
+            set.add(key);
+        }
+    }
+    return set;
+}
+
+function shouldDropContentLine(value: string, contactComparableSet: Set<string>) {
+    const cleaned = normalizeText(stripMarkdownInline(value));
+    if (!cleaned) {
+        return true;
+    }
+
+    if (isMetadataLine(cleaned)) {
+        return true;
+    }
+
+    const key = comparableKey(cleaned);
+    if (key && contactComparableSet.has(key)) {
+        return true;
+    }
+
+    return false;
 }
 
 function mergeSections(sections: CanonicalCvSection[]) {
@@ -137,14 +388,15 @@ function mergeSections(sections: CanonicalCvSection[]) {
     const order: string[] = [];
 
     for (const section of sections) {
-        const key = normalizeText(section.title).toLowerCase();
+        const title = canonicalSectionTitle(section.title);
+        const key = normalizeText(title).toLowerCase();
         if (!key) {
             continue;
         }
 
         if (!mergedMap.has(key)) {
             mergedMap.set(key, {
-                title: normalizeText(section.title),
+                title,
                 paragraphs: [],
                 subsections: [],
             });
@@ -163,22 +415,24 @@ function mergeSections(sections: CanonicalCvSection[]) {
 
         for (const subsection of section.subsections) {
             const heading = normalizeText(subsection.heading);
-            const normalizedHeading = heading.toLowerCase();
-            if (!normalizedHeading) {
+            const normalizedHeading = comparableKey(heading);
+            const normalizedMeta = subsection.meta ? comparableKey(subsection.meta) : "";
+            const subsectionKey = `${normalizedHeading}::${normalizedMeta}`;
+            if (!subsectionKey || subsectionKey === "::") {
                 continue;
             }
 
-            if (!subsectionMap.has(normalizedHeading)) {
-                subsectionMap.set(normalizedHeading, {
+            if (!subsectionMap.has(subsectionKey)) {
+                subsectionMap.set(subsectionKey, {
                     heading,
                     meta: subsection.meta ? normalizeText(subsection.meta) : undefined,
                     paragraphs: [],
                     bullets: [],
                 });
-                subsectionOrder.push(normalizedHeading);
+                subsectionOrder.push(subsectionKey);
             }
 
-            const targetSubsection = subsectionMap.get(normalizedHeading)!;
+            const targetSubsection = subsectionMap.get(subsectionKey)!;
             if (!targetSubsection.meta && subsection.meta) {
                 targetSubsection.meta = normalizeText(subsection.meta);
             }
@@ -217,42 +471,60 @@ function mergeSections(sections: CanonicalCvSection[]) {
     );
 }
 
-function sanitizeGeneratedText(text: string) {
-    return text
-        .replace(INTERNAL_DOC_URL_REGEX, "")
-        .replace(TIMESTAMP_REGEX, "")
-        .replace(/[ \t]+\n/g, "\n")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
-}
-
 export function normalizeCoverLetterMarkdown(markdown: string) {
     const sanitized = sanitizeGeneratedText(markdown);
-    const lines = sanitized.split("\n");
-    const dedupedLines: string[] = [];
-    let previousNormalized = "";
-
-    for (const rawLine of lines) {
-        const line = rawLine.replace(/\s+$/, "");
-        const normalized = normalizeText(line).toLowerCase();
-
-        if (!normalized) {
-            if (dedupedLines.length > 0 && dedupedLines[dedupedLines.length - 1] !== "") {
-                dedupedLines.push("");
-            }
-            previousNormalized = "";
-            continue;
-        }
-
-        if (normalized === previousNormalized) {
-            continue;
-        }
-
-        dedupedLines.push(line);
-        previousNormalized = normalized;
+    if (!sanitized) {
+        return "";
     }
 
-    return dedupedLines.join("\n").trim();
+    const rawBlocks = sanitized
+        .split(/\n{2,}/)
+        .map((block) => block.trim())
+        .filter(Boolean);
+
+    const seenBlocks = new Set<string>();
+    const dedupedBlocks: string[] = [];
+
+    for (const rawBlock of rawBlocks) {
+        const lines = rawBlock
+            .split("\n")
+            .map((line) => normalizeText(line))
+            .filter(Boolean);
+
+        if (lines.length === 0) {
+            continue;
+        }
+
+        const dedupedLines: string[] = [];
+        let previousLineKey = "";
+
+        for (const line of lines) {
+            if (isMetadataLine(line)) {
+                continue;
+            }
+            const lineKey = comparableKey(line);
+            if (!lineKey || lineKey === previousLineKey) {
+                continue;
+            }
+            dedupedLines.push(line);
+            previousLineKey = lineKey;
+        }
+
+        if (dedupedLines.length === 0) {
+            continue;
+        }
+
+        const blockText = dedupedLines.join("\n");
+        const blockKey = comparableKey(blockText);
+        if (!blockKey || seenBlocks.has(blockKey)) {
+            continue;
+        }
+
+        seenBlocks.add(blockKey);
+        dedupedBlocks.push(blockText);
+    }
+
+    return dedupedBlocks.join("\n\n").trim();
 }
 
 export function buildCanonicalCvDocument(markdown: string): CanonicalCvDocument {
@@ -260,34 +532,50 @@ export function buildCanonicalCvDocument(markdown: string): CanonicalCvDocument 
     const parsed = parseCV(sanitizedMarkdown);
     const contact: CanonicalCvContact = { extras: [] };
 
+    const headerLines = extractHeaderLines(sanitizedMarkdown);
+    for (const line of headerLines) {
+        if (looksLikeContactLine(line)) {
+            parseContactFromLine(line, contact);
+        }
+    }
+
     for (const token of splitContactTokens(parsed.contactLine || "")) {
         classifyContactToken(token, contact);
     }
 
     contact.extras = dedupeStrings(contact.extras);
+    const contactComparableSet = buildContactComparableSet(contact);
 
     const sections = mergeSections(
         parsed.sections.map((section) => ({
-            title: section.title,
-            paragraphs: section.paragraphs.map((paragraph) =>
-                normalizeText(paragraph.replace(/\*\*(.*?)\*\*/g, "$1"))
-            ),
+            title: canonicalSectionTitle(section.title),
+            paragraphs: section.paragraphs
+                .map((paragraph) =>
+                    normalizeText(stripMarkdownInline(paragraph))
+                )
+                .filter((paragraph) => !shouldDropContentLine(paragraph, contactComparableSet)),
             subsections: section.subsections.map((subsection) => ({
-                heading: normalizeText(subsection.heading),
-                meta: subsection.meta ? normalizeText(subsection.meta) : undefined,
-                paragraphs: subsection.paragraphs.map((paragraph) =>
-                    normalizeText(paragraph.replace(/\*\*(.*?)\*\*/g, "$1"))
-                ),
-                bullets: subsection.bullets.map((bullet) =>
-                    normalizeText(bullet.replace(/\*\*(.*?)\*\*/g, "$1"))
-                ),
+                heading: normalizeText(stripMarkdownInline(subsection.heading)),
+                meta: subsection.meta
+                    ? normalizeText(stripMarkdownInline(subsection.meta))
+                    : undefined,
+                paragraphs: subsection.paragraphs
+                    .map((paragraph) =>
+                        normalizeText(stripMarkdownInline(paragraph))
+                    )
+                    .filter((paragraph) => !shouldDropContentLine(paragraph, contactComparableSet)),
+                bullets: subsection.bullets
+                    .map((bullet) =>
+                        normalizeText(stripMarkdownInline(bullet))
+                    )
+                    .filter((bullet) => !shouldDropContentLine(bullet, contactComparableSet)),
             })),
         }))
     );
 
     return {
         fullName: normalizeText(parsed.name || "Candidate"),
-        headline: normalizeText(parsed.subtitle || ""),
+        headline: normalizeText(stripMarkdownInline(parsed.subtitle || "")),
         contact,
         sections,
     };
@@ -312,7 +600,7 @@ export function normalizeCvMarkdown(markdown: string) {
     ].filter(Boolean) as string[];
 
     if (contactTokens.length > 0) {
-        lines.push(contactTokens.join(" | "));
+        lines.push(dedupeStrings(contactTokens).join(" | "));
     }
 
     for (const section of model.sections) {
