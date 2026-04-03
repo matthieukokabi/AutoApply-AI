@@ -231,12 +231,15 @@ function classifyContactToken(token: string, contact: CanonicalCvContact) {
         return;
     }
 
-    if (!contact.email) {
-        const emailMatch = cleaned.match(EMAIL_REGEX);
-        if (emailMatch) {
-            contact.email = emailMatch[0];
-            return;
+    const emailMatch = cleaned.match(EMAIL_REGEX);
+    if (emailMatch) {
+        const normalizedEmail = emailMatch[0];
+        if (!contact.email) {
+            contact.email = normalizedEmail;
+        } else if (comparableKey(contact.email) !== comparableKey(normalizedEmail)) {
+            contact.extras.push(normalizedEmail);
         }
+        return;
     }
 
     const lower = cleaned.toLowerCase();

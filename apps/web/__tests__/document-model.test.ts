@@ -106,6 +106,11 @@ Generated at: 2026-04-03T12:22:00Z
         expect(normalized).not.toContain("## Work Experience");
         expect(normalized.match(/## Experience/g)?.length).toBe(1);
         expect((normalized.match(/Improved activation by 24\./g) || []).length).toBeLessThanOrEqual(1);
+        expect((normalized.match(/alex\.martin@example\.com/g) || []).length).toBe(1);
+
+        const model = buildCanonicalCvDocument(markdown);
+        expect(model.contact.email).toBe("alex.martin@example.com");
+        expect(model.contact.location).toBeUndefined();
     });
 });
 
