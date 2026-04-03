@@ -43,6 +43,16 @@ const TIMESTAMP_ONLY_REGEX =
     /^(?:\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z|\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?)$/;
 const CONTACT_LABEL_PREFIX_REGEX =
     /^(?:email|e-mail|mail|phone|mobile|tel|telephone|linkedin|website|portfolio|location|address)\s*:\s*/i;
+const METADATA_FRAGMENT_REGEXES = [
+    /\bdocument\s*(?:url|link)\s*:\s*/gi,
+    /\bsource\s*(?:url|link)\s*:\s*/gi,
+    /\bgenerated(?:\s*(?:at|on))?\s*:\s*/gi,
+    /\btimestamp\s*:\s*/gi,
+    /\bcreated\s*at\s*:\s*/gi,
+    /\bupdated\s*at\s*:\s*/gi,
+    /\bexported\s*at\s*:\s*/gi,
+    /\bautoapply\s*document\s*:\s*/gi,
+];
 
 const SECTION_ORDER = [
     "summary",
@@ -122,6 +132,14 @@ function isMetadataLine(line: string) {
     return false;
 }
 
+function stripMetadataFragments(line: string) {
+    let next = line;
+    for (const regex of METADATA_FRAGMENT_REGEXES) {
+        next = next.replace(regex, "");
+    }
+    return normalizeText(next);
+}
+
 function sanitizeGeneratedText(text: string) {
     const stripped = text.replace(INTERNAL_AUTOAPPLY_URL_REGEX, "");
     const lines = stripped.split("\n");
@@ -129,7 +147,8 @@ function sanitizeGeneratedText(text: string) {
 
     for (const rawLine of lines) {
         const line = rawLine.replace(/[ \t]+$/g, "");
-        const trimmed = normalizeText(line);
+        const withoutMetadataFragments = stripMetadataFragments(line);
+        const trimmed = normalizeText(withoutMetadataFragments);
 
         if (!trimmed) {
             if (
@@ -299,39 +318,34 @@ function parseContactFromLine(line: string, contact: CanonicalCvContact) {
 }
 
 function canonicalSectionTitle(title: string) {
-    const normalized = normalizeText(title).toLowerCase();
+    const normalizedKey = comparableKey(title);
 
     if (
-        normalized.includes("summary") ||
-        normalized.includes("profile") ||
-        normalized.includes("about")
+        /\bsummary\b|\bprofile\b|\babout\b/.test(normalizedKey)
     ) {
         return "Summary";
     }
-    if (normalized.includes("experience") || normalized.includes("employment")) {
+    if (
+        /\bexperience\b/.test(normalizedKey) ||
+        /\bemployment\b/.test(normalizedKey) ||
+        /\bwork history\b/.test(normalizedKey) ||
+        /\bcareer\b/.test(normalizedKey)
+    ) {
         return "Experience";
     }
-    if (normalized.includes("education") || normalized.includes("formation")) {
+    if (/\beducation\b|\bformation\b/.test(normalizedKey)) {
         return "Education";
     }
-    if (
-        normalized.includes("skill") ||
-        normalized.includes("competen") ||
-        normalized.includes("technology")
-    ) {
+    if (/\bskill\b|\bcompeten\b|\btechnology\b/.test(normalizedKey)) {
         return "Skills";
     }
-    if (normalized.includes("language") || normalized.includes("langue")) {
+    if (/\blanguage\b|\blangue\b/.test(normalizedKey)) {
         return "Languages";
     }
-    if (normalized.includes("project")) {
+    if (/\bproject\b/.test(normalizedKey)) {
         return "Projects";
     }
-    if (
-        normalized.includes("certification") ||
-        normalized.includes("certificate") ||
-        normalized.includes("licen")
-    ) {
+    if (/\bcertification\b|\bcertificate\b|\blicen\b/.test(normalizedKey)) {
         return "Certifications";
     }
 
@@ -416,9 +430,8 @@ function mergeSections(sections: CanonicalCvSection[]) {
         for (const subsection of section.subsections) {
             const heading = normalizeText(subsection.heading);
             const normalizedHeading = comparableKey(heading);
-            const normalizedMeta = subsection.meta ? comparableKey(subsection.meta) : "";
-            const subsectionKey = `${normalizedHeading}::${normalizedMeta}`;
-            if (!subsectionKey || subsectionKey === "::") {
+            const subsectionKey = normalizedHeading || comparableKey(subsection.meta || "");
+            if (!subsectionKey) {
                 continue;
             }
 
@@ -483,6 +496,7 @@ export function normalizeCoverLetterMarkdown(markdown: string) {
         .filter(Boolean);
 
     const seenBlocks = new Set<string>();
+    const seenLineKeys = new Set<string>();
     const dedupedBlocks: string[] = [];
 
     for (const rawBlock of rawBlocks) {
@@ -496,18 +510,17 @@ export function normalizeCoverLetterMarkdown(markdown: string) {
         }
 
         const dedupedLines: string[] = [];
-        let previousLineKey = "";
 
         for (const line of lines) {
             if (isMetadataLine(line)) {
                 continue;
             }
             const lineKey = comparableKey(line);
-            if (!lineKey || lineKey === previousLineKey) {
+            if (!lineKey || seenLineKeys.has(lineKey)) {
                 continue;
             }
             dedupedLines.push(line);
-            previousLineKey = lineKey;
+            seenLineKeys.add(lineKey);
         }
 
         if (dedupedLines.length === 0) {

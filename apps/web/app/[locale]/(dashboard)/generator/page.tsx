@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Download, Loader2, RotateCcw, Sparkles } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import {
     Card,
     CardContent,
@@ -77,6 +78,7 @@ function sleep(ms: number) {
 export default function GeneratorPage() {
     const t = useTranslations("dashboard.generatorPage");
     const router = useRouter();
+    const { getToken } = useAuth();
     const [cvMarkdown, setCvMarkdown] = useState(DEFAULT_CV_TEMPLATE);
     const [letterMarkdown, setLetterMarkdown] = useState(DEFAULT_LETTER_TEMPLATE);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -96,9 +98,18 @@ export default function GeneratorPage() {
         setBusy(true);
 
         try {
+            const token = await getToken().catch(() => null);
+            const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+            };
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
             const response = await fetch("/api/export/pdf", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers,
+                credentials: "include",
                 body: JSON.stringify({
                     type,
                     markdown,

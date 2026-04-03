@@ -78,6 +78,35 @@ Generated at: 2026-04-03T10:22:11Z
         expect(normalized).not.toContain("autoapply.works");
         expect(normalized).not.toContain("Generated at");
     });
+
+    it("collapses WORK EXPERIENCE aliases and duplicate bullets from messy pasted CV text", () => {
+        const markdown = `# Alex Martin
+**Senior Product Designer**
+Email: alex.martin@example.com
+Phone: +41 79 555 44 33
+alex.martin@example.com | +41 79 555 44 33 | https://www.linkedin.com/in/alexmartin
+Document URL: https://autoapply.works/documents/app_test_123
+Generated at: 2026-04-03T12:22:00Z
+
+## WORK EXPERIENCE
+### Senior Product Designer — Northlight Systems
+**2021 - Present**
+- Improved activation by 24%.
+- Improved activation by 24%.
+
+## Experience
+### Senior Product Designer — Northlight Systems
+**2021 - Present**
+- Improved activation by 24%.
+- Built a scalable design system.
+`;
+
+        const normalized = normalizeCvMarkdown(markdown);
+        expect(normalized).not.toContain("## WORK EXPERIENCE");
+        expect(normalized).not.toContain("## Work Experience");
+        expect(normalized.match(/## Experience/g)?.length).toBe(1);
+        expect((normalized.match(/Improved activation by 24\./g) || []).length).toBeLessThanOrEqual(1);
+    });
 });
 
 describe("normalizeCvMarkdown", () => {
@@ -122,5 +151,30 @@ Jane Doe
         expect(normalized).not.toContain("autoapply.works");
         expect(normalized).not.toContain("Generated at");
         expect(normalized.match(/I am excited to apply for this role\./g)?.length).toBe(1);
+    });
+
+    it("removes stacked metadata labels and repeated body phrases", () => {
+        const markdown = `# Motivation Letter
+
+Document URL: Generated at: 2026-04-03T14:01:00Z
+Source Link: https://autoapply.works/documents/demo_999
+
+Dear Hiring Manager,
+
+I can bring structured discovery, pragmatic execution, and a clear focus on measurable outcomes.
+
+I can bring structured discovery, pragmatic execution, and a clear focus on measurable outcomes.
+
+Sincerely,
+Alex Martin`;
+
+        const normalized = normalizeCoverLetterMarkdown(markdown);
+        expect(normalized).toContain("Dear Hiring Manager,");
+        expect(normalized).not.toMatch(/Document URL|Generated at|Source Link/i);
+        expect(
+            normalized.match(
+                /I can bring structured discovery, pragmatic execution, and a clear focus on measurable outcomes\./g
+            )?.length
+        ).toBe(1);
     });
 });

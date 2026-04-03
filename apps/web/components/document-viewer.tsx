@@ -22,6 +22,7 @@ import {
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { normalizeCoverLetterMarkdown, normalizeCvMarkdown } from "@/lib/document-model";
+import { useAuth } from "@clerk/nextjs";
 
 interface DocumentViewerProps {
     application: {
@@ -81,6 +82,7 @@ export function DocumentViewer({
     originalCvText,
 }: DocumentViewerProps) {
     const t = useTranslations("documentViewer");
+    const { getToken } = useAuth();
     const initialCvMarkdown = safeNormalizeCvForEditor(application.tailoredCvMarkdown);
     const initialCoverLetterMarkdown = safeNormalizeLetterForEditor(
         application.coverLetterMarkdown
@@ -130,9 +132,18 @@ export function DocumentViewer({
         setBusy(true);
 
         try {
+            const token = await getToken().catch(() => null);
+            const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+            };
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
             const response = await fetch("/api/export/pdf", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers,
+                credentials: "include",
                 body: JSON.stringify({
                     type,
                     markdown,
@@ -141,6 +152,10 @@ export function DocumentViewer({
             });
 
             if (!response.ok) {
+                setEditorMessage({
+                    type: "error",
+                    text: "Unable to export PDF. Please try again.",
+                });
                 throw new Error(`EXPORT_FAILED_${response.status}`);
             }
 
@@ -237,9 +252,18 @@ export function DocumentViewer({
         setSavingDraft(true);
         setEditorMessage(null);
         try {
+            const token = await getToken().catch(() => null);
+            const headers: Record<string, string> = {
+                "Content-Type": "application/json",
+            };
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
             const response = await fetch(`/api/applications/${application.id}`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+                headers,
+                credentials: "include",
                 body: JSON.stringify(payload),
             });
 
@@ -253,9 +277,21 @@ export function DocumentViewer({
             }
 
             if (activeTab === "cv") {
-                setSavedCvMarkdown(cvMarkdown);
+                const persistedCv = safeNormalizeCvForEditor(
+                    typeof data.application?.tailoredCvMarkdown === "string"
+                        ? data.application.tailoredCvMarkdown
+                        : cvMarkdown
+                );
+                setCvMarkdown(persistedCv);
+                setSavedCvMarkdown(persistedCv);
             } else if (activeTab === "letter") {
-                setSavedCoverLetterMarkdown(coverLetterMarkdown);
+                const persistedLetter = safeNormalizeLetterForEditor(
+                    typeof data.application?.coverLetterMarkdown === "string"
+                        ? data.application.coverLetterMarkdown
+                        : coverLetterMarkdown
+                );
+                setCoverLetterMarkdown(persistedLetter);
+                setSavedCoverLetterMarkdown(persistedLetter);
             }
 
             setEditorMessage({

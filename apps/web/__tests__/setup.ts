@@ -19,7 +19,12 @@ vi.mock("@clerk/nextjs", () => ({
     ClerkProvider: ({ children }: any) => children,
     SignIn: () => null,
     SignUp: () => null,
-    useAuth: vi.fn(() => ({ isLoaded: true, isSignedIn: true, userId: "clerk_test_user_123" })),
+    useAuth: vi.fn(() => ({
+        isLoaded: true,
+        isSignedIn: true,
+        userId: "clerk_test_user_123",
+        getToken: vi.fn().mockResolvedValue("clerk_session_token_mock"),
+    })),
     useClerk: vi.fn(() => ({ signOut: vi.fn() })),
 }));
 
@@ -53,6 +58,13 @@ vi.mock("@clerk/nextjs/server", () => ({
             const pathname = req?.nextUrl?.pathname || "";
             return routeMatchers.some((matcher: any) => matcher(pathname, req));
         };
+    }),
+}));
+
+vi.mock("@clerk/backend", () => ({
+    verifyToken: vi.fn().mockResolvedValue({
+        sub: "clerk_test_user_123",
+        email: "test@example.com",
     }),
 }));
 

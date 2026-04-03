@@ -1,4 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { verifyToken } from "@clerk/backend";
 import { prisma } from "@/lib/prisma";
 import { verifyMobileToken } from "@/lib/mobile-auth";
 import { sendWelcomeEmail } from "@/lib/email";
@@ -22,6 +23,55 @@ function shouldShortCircuitAnonymousRequest(req?: Request) {
     return !hasPotentialAuthCookie;
 }
 
+function extractBearerToken(req?: Request) {
+    if (!req) {
+        return null;
+    }
+
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+        return null;
+    }
+
+    const token = authHeader.slice(7).trim();
+    return token || null;
+}
+
+async function resolveBearerIdentity(token: string) {
+    const mobileResult = await verifyMobileToken(token);
+    if (mobileResult) {
+        return {
+            clerkId: mobileResult.userId,
+            email: mobileResult.email,
+        };
+    }
+
+    if (!process.env.CLERK_SECRET_KEY) {
+        return null;
+    }
+
+    try {
+        const payload = await verifyToken(token, {
+            secretKey: process.env.CLERK_SECRET_KEY,
+        });
+        const clerkId = typeof payload?.sub === "string" ? payload.sub : null;
+        if (!clerkId) {
+            return null;
+        }
+
+        const payloadRecord = payload as Record<string, unknown>;
+        const payloadEmail =
+            typeof payloadRecord.email === "string" ? payloadRecord.email : null;
+
+        return {
+            clerkId,
+            email: payloadEmail,
+        };
+    } catch {
+        return null;
+    }
+}
+
 /**
  * Get the authenticated user from Clerk + Prisma.
  * Auto-creates user on first login.
@@ -37,6 +87,7 @@ export async function getAuthUser(req?: Request) {
 
     let clerkId: string | null = null;
     let mobileEmail: string | null = null;
+    const bearerToken = extractBearerToken(req);
 
     // 1. Try Clerk session auth (web)
     try {
@@ -48,16 +99,14 @@ export async function getAuthUser(req?: Request) {
         // Clerk auth not available
     }
 
-    // 2. Try mobile JWT from Authorization header
-    if (!clerkId && req) {
-        const authHeader = req.headers.get("authorization");
-        if (authHeader?.startsWith("Bearer ")) {
-            const token = authHeader.substring(7);
-            const mobileResult = await verifyMobileToken(token);
-            if (mobileResult) {
-                clerkId = mobileResult.userId;
-                mobileEmail = mobileResult.email;
-            }
+    // 2. Try Authorization bearer token:
+    //    - custom mobile JWT
+    //    - Clerk session token (for browser fetches that do not include cookies)
+    if (!clerkId && bearerToken) {
+        const bearerIdentity = await resolveBearerIdentity(bearerToken);
+        if (bearerIdentity) {
+            clerkId = bearerIdentity.clerkId;
+            mobileEmail = bearerIdentity.email;
         }
     }
 
