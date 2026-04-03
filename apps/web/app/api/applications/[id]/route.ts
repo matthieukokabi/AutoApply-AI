@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { APPLICATION_STATUSES } from "@/lib/utils";
+import { normalizeCoverLetterMarkdown, normalizeCvMarkdown } from "@/lib/document-model";
 
 const MAX_APPLICATION_NOTES_LENGTH = 5000;
 const MAX_TAILORED_CV_MARKDOWN_LENGTH = 200000;
@@ -10,6 +11,32 @@ type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
 function isApplicationStatus(value: string): value is ApplicationStatus {
     return APPLICATION_STATUSES.includes(value as ApplicationStatus);
+}
+
+function safeNormalizeTailoredCv(markdown: string) {
+    const trimmed = markdown.trim();
+    if (!trimmed) {
+        return "";
+    }
+
+    try {
+        return normalizeCvMarkdown(trimmed);
+    } catch {
+        return trimmed;
+    }
+}
+
+function safeNormalizeCoverLetter(markdown: string) {
+    const trimmed = markdown.trim();
+    if (!trimmed) {
+        return "";
+    }
+
+    try {
+        return normalizeCoverLetterMarkdown(trimmed);
+    } catch {
+        return trimmed;
+    }
 }
 
 /**
@@ -169,10 +196,16 @@ export async function PATCH(
             updateData.notes = notes;
         }
         if (tailoredCvMarkdown !== undefined) {
-            updateData.tailoredCvMarkdown = tailoredCvMarkdown;
+            updateData.tailoredCvMarkdown =
+                typeof tailoredCvMarkdown === "string"
+                    ? safeNormalizeTailoredCv(tailoredCvMarkdown)
+                    : tailoredCvMarkdown;
         }
         if (coverLetterMarkdown !== undefined) {
-            updateData.coverLetterMarkdown = coverLetterMarkdown;
+            updateData.coverLetterMarkdown =
+                typeof coverLetterMarkdown === "string"
+                    ? safeNormalizeCoverLetter(coverLetterMarkdown)
+                    : coverLetterMarkdown;
         }
 
         const application = await prisma.application.update({

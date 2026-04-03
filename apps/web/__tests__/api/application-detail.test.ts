@@ -210,6 +210,61 @@ describe("PATCH /api/applications/[id]", () => {
         );
     });
 
+    it("normalizes edited markdown before persistence", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
+        vi.mocked(prisma.application.update).mockResolvedValue({
+            ...mockApplication,
+            tailoredCvMarkdown: "# Jane Doe",
+            coverLetterMarkdown: "# Motivation Letter\n\nDear Hiring Manager,\n\nSincerely,\nJane Doe",
+        } as any);
+
+        const request = new Request("http://localhost/api/applications/app_1", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                tailoredCvMarkdown: `# Jane Doe
+**Engineer**
+Zurich | jane@example.com | +41 79 123 45 67 | +41 79 123 45 67
+
+## Skills
+- TypeScript
+- TypeScript`,
+                coverLetterMarkdown: `# Motivation Letter
+
+Document URL: https://autoapply.works/documents/doc_123
+Generated at: 2026-04-03T09:11:22Z
+
+Dear Hiring Manager,
+
+Dear Hiring Manager,
+
+Sincerely,
+Jane Doe`,
+            }),
+        });
+
+        const params = { id: "app_1" };
+        const response = await PATCH(request, { params });
+
+        expect(response.status).toBe(200);
+        expect(prisma.application.update).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    tailoredCvMarkdown: expect.stringContaining(
+                        "Zurich | jane@example.com | +41 79 123 45 67"
+                    ),
+                    coverLetterMarkdown: expect.not.stringContaining("autoapply.works"),
+                }),
+            })
+        );
+
+        const updateArgs = vi.mocked(prisma.application.update).mock.calls[0]?.[0] as any;
+        expect(updateArgs.data.tailoredCvMarkdown.match(/\+41 79 123 45 67/g)?.length).toBe(1);
+        expect(updateArgs.data.coverLetterMarkdown).not.toContain("Generated at");
+        expect(updateArgs.data.coverLetterMarkdown.match(/Dear Hiring Manager,/g)?.length).toBe(1);
+    });
+
     it("rejects invalid tailoredCvMarkdown payload type", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findFirst).mockResolvedValue(mockApplication as any);
