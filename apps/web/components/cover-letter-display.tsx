@@ -17,29 +17,29 @@ export const CoverLetterDisplay = React.forwardRef<
     return (
         <div
             ref={ref}
-            className="cover-letter-print-target bg-white dark:bg-slate-900 shadow-lg rounded-lg max-w-[210mm] mx-auto print:shadow-none print:rounded-none print:max-w-none"
+            className="cover-letter-print-target bg-white shadow-sm rounded-xl max-w-[210mm] mx-auto border border-slate-200/70 print:shadow-none print:rounded-none print:max-w-none print:border-none"
             style={{ fontFamily: "'Aptos', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" }}
         >
-            <div className="px-10 py-10">
+            <div className="px-10 py-10 max-w-none">
                 <ReactMarkdown
                     components={{
                         h1: ({ children }) => (
-                            <h1 className="text-[19px] font-bold tracking-tight text-slate-900 dark:text-slate-50 print:text-slate-900 mb-6 pb-3 border-b border-slate-200 dark:border-slate-700 print:border-slate-200">
+                            <h1 className="text-[21px] font-bold tracking-tight text-slate-900 print:text-slate-900 mb-8 pb-3 border-b border-slate-200 print:border-slate-200">
                                 {children}
                             </h1>
                         ),
                         h2: ({ children }) => (
-                            <h2 className="text-[15px] font-semibold text-slate-800 dark:text-slate-100 print:text-slate-800 mt-6 mb-2">
+                            <h2 className="text-[15px] font-semibold text-slate-800 print:text-slate-800 mt-7 mb-2.5">
                                 {children}
                             </h2>
                         ),
                         p: ({ children }) => (
-                            <p className="text-[14px] text-slate-700 dark:text-slate-300 print:text-slate-700 leading-7 mb-4">
+                            <p className="text-[14px] text-slate-700 print:text-slate-700 leading-[1.85] mb-5">
                                 {children}
                             </p>
                         ),
                         strong: ({ children }) => (
-                            <strong className="font-semibold text-slate-900 dark:text-slate-100 print:text-slate-900">
+                            <strong className="font-semibold text-slate-900 print:text-slate-900">
                                 {children}
                             </strong>
                         ),
@@ -47,14 +47,17 @@ export const CoverLetterDisplay = React.forwardRef<
                             <em className="italic">{children}</em>
                         ),
                         ul: ({ children }) => (
-                            <ul className="list-disc list-outside ml-5 mb-4 space-y-2">
+                            <ul className="list-disc list-outside ml-5 mb-5 space-y-2.5">
                                 {children}
                             </ul>
                         ),
                         li: ({ children }) => (
-                            <li className="text-[14px] leading-7 text-slate-700 dark:text-slate-300 print:text-slate-700">
+                            <li className="text-[14px] leading-[1.8] text-slate-700 print:text-slate-700">
                                 {children}
                             </li>
+                        ),
+                        hr: () => (
+                            <hr className="my-6 border-slate-200 print:border-slate-200" />
                         ),
                     }}
                 >

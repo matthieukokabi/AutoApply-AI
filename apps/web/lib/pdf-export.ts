@@ -8,6 +8,7 @@ const A4_WIDTH = 595.28;
 const A4_HEIGHT = 841.89;
 const PAGE_MARGIN = 48;
 const CONTENT_WIDTH = A4_WIDTH - PAGE_MARGIN * 2;
+const COVER_LETTER_TITLE_PATTERNS = [/cover letter/i, /motivation letter/i, /lettre/i];
 
 type PdfContext = {
     pdfDoc: PDFDocument;
@@ -28,6 +29,26 @@ function markdownToPlainText(value: string) {
         .replace(/^\s*[-•]\s+/gm, "• ")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
+}
+
+function normalizePlain(value: string) {
+    return value.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function dedupePlainStrings(values: string[]) {
+    const seen = new Set<string>();
+    const deduped: string[] = [];
+
+    for (const value of values) {
+        const normalized = normalizePlain(value);
+        if (!normalized || seen.has(normalized)) {
+            continue;
+        }
+        seen.add(normalized);
+        deduped.push(value.trim());
+    }
+
+    return deduped;
 }
 
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number) {
@@ -95,6 +116,10 @@ function drawParagraph(
         spacingAfter?: number;
     } = {}
 ) {
+    if (!normalizeTextForPdf(text)) {
+        return;
+    }
+
     const font = options.font || ctx.regularFont;
     const size = options.size || 11;
     const lineHeight = options.lineHeight || size * 1.4;
@@ -117,12 +142,16 @@ function drawParagraph(
     ctx.y -= spacingAfter;
 }
 
-function drawSectionHeader(ctx: PdfContext, title: string) {
-    ensureSpace(ctx, 30);
+function normalizeTextForPdf(value: string) {
+    return value.replace(/\s+/g, " ").trim();
+}
+
+function drawSectionHeader(ctx: PdfContext, title: string, minBodyHeight = 22) {
+    ensureSpace(ctx, 26 + minBodyHeight);
     ctx.page.drawText(title.toUpperCase(), {
         x: PAGE_MARGIN,
         y: ctx.y,
-        size: 10,
+        size: 10.5,
         font: ctx.boldFont,
         color: rgb(0.18, 0.22, 0.28),
     });
@@ -146,50 +175,53 @@ export async function renderCvPdf(markdown: string) {
 
     drawParagraph(ctx, model.fullName, {
         font: boldFont,
-        size: 24,
-        lineHeight: 28,
-        spacingAfter: 4,
+        size: 25,
+        lineHeight: 30,
+        spacingAfter: 5,
     });
 
     if (model.headline) {
         drawParagraph(ctx, model.headline, {
             font: regularFont,
-            size: 12,
-            lineHeight: 16,
+            size: 12.5,
+            lineHeight: 17,
             color: rgb(0.24, 0.31, 0.42),
-            spacingAfter: 6,
+            spacingAfter: 8,
         });
     }
 
-    const contactTokens = [
+    const contactTokens = dedupePlainStrings([
         model.contact.location,
         model.contact.email,
         model.contact.phone,
         model.contact.linkedin,
         model.contact.website,
-    ].filter(Boolean) as string[];
+    ].filter(Boolean) as string[]);
 
     if (contactTokens.length > 0) {
         drawParagraph(ctx, contactTokens.join("  |  "), {
             font: regularFont,
-            size: 10,
+            size: 10.25,
             lineHeight: 14,
             color: rgb(0.34, 0.41, 0.5),
-            spacingAfter: 12,
+            spacingAfter: 14,
         });
     }
 
     for (const section of model.sections) {
-        drawSectionHeader(ctx, section.title);
+        const subsection = section.subsections[0];
+        const estimatedBodyHeight =
+            subsection && subsection.bullets.length > 0 ? 42 : 28;
+        drawSectionHeader(ctx, section.title, estimatedBodyHeight);
 
         if (section.subsections.length > 0) {
             for (const subsection of section.subsections) {
-                ensureSpace(ctx, 24);
+                ensureSpace(ctx, 30);
                 drawParagraph(ctx, subsection.heading, {
                     font: boldFont,
-                    size: 11,
-                    lineHeight: 14,
-                    spacingAfter: 2,
+                    size: 11.2,
+                    lineHeight: 14.5,
+                    spacingAfter: 2.5,
                 });
 
                 if (subsection.meta) {
@@ -198,35 +230,35 @@ export async function renderCvPdf(markdown: string) {
                         size: 10,
                         lineHeight: 13,
                         color: rgb(0.45, 0.5, 0.58),
-                        spacingAfter: 4,
+                        spacingAfter: 4.5,
                     });
                 }
 
                 for (const paragraph of subsection.paragraphs) {
                     drawParagraph(ctx, paragraph, {
-                        size: 10.5,
-                        lineHeight: 14,
-                        spacingAfter: 3,
+                        size: 10.6,
+                        lineHeight: 14.3,
+                        spacingAfter: 3.5,
                     });
                 }
 
                 for (const bullet of subsection.bullets) {
                     drawParagraph(ctx, `• ${bullet}`, {
-                        size: 10.5,
-                        lineHeight: 14,
-                        indent: 8,
-                        spacingAfter: 2,
+                        size: 10.6,
+                        lineHeight: 14.3,
+                        indent: 9,
+                        spacingAfter: 2.5,
                     });
                 }
 
-                ctx.y -= 4;
+                ctx.y -= 4.5;
             }
         } else {
             for (const paragraph of section.paragraphs) {
                 drawParagraph(ctx, paragraph, {
-                    size: 10.5,
-                    lineHeight: 14,
-                    spacingAfter: 4,
+                    size: 10.6,
+                    lineHeight: 14.4,
+                    spacingAfter: 4.5,
                 });
             }
         }
@@ -238,10 +270,11 @@ export async function renderCvPdf(markdown: string) {
 export async function renderCoverLetterPdf(markdown: string) {
     const normalized = normalizeCoverLetterMarkdown(markdown);
     const plain = markdownToPlainText(normalized);
-    const paragraphs = plain
+    const blocks = plain
         .split(/\n{2,}/)
-        .map((paragraph) => paragraph.trim())
+        .map((paragraph) => normalizeTextForPdf(paragraph))
         .filter(Boolean);
+    const paragraphs = dedupePlainStrings(blocks);
 
     const pdfDoc = await PDFDocument.create();
     const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -249,20 +282,29 @@ export async function renderCoverLetterPdf(markdown: string) {
     const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
     const ctx = createPdfContext(pdfDoc, regularFont, boldFont, italicFont);
 
-    if (paragraphs.length > 0) {
-        drawParagraph(ctx, paragraphs[0], {
-            font: boldFont,
-            size: 17,
-            lineHeight: 22,
-            spacingAfter: 12,
-        });
-    }
+    const firstParagraph = paragraphs[0];
+    const hasExplicitTitle =
+        typeof firstParagraph === "string" &&
+        COVER_LETTER_TITLE_PATTERNS.some((pattern) => pattern.test(firstParagraph));
+    const title = hasExplicitTitle ? firstParagraph : "Motivation Letter";
+    const bodyParagraphs = hasExplicitTitle ? paragraphs.slice(1) : paragraphs;
 
-    for (const paragraph of paragraphs.slice(1)) {
+    drawParagraph(ctx, title, {
+        font: boldFont,
+        size: 18,
+        lineHeight: 24,
+        spacingAfter: 14,
+    });
+
+    for (const paragraph of bodyParagraphs) {
+        const isClosingBlock = /^(sincerely|kind regards|best regards|cordially|salutations|yours truly)/i.test(
+            paragraph
+        );
         drawParagraph(ctx, paragraph, {
-            size: 11,
-            lineHeight: 17,
-            spacingAfter: 8,
+            font: isClosingBlock ? italicFont : regularFont,
+            size: 11.1,
+            lineHeight: 17.4,
+            spacingAfter: isClosingBlock ? 10 : 8.5,
         });
     }
 

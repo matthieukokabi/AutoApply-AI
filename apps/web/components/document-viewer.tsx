@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
+import { normalizeCoverLetterMarkdown, normalizeCvMarkdown } from "@/lib/document-model";
 
 interface DocumentViewerProps {
     application: {
@@ -47,6 +48,30 @@ interface DocumentViewerProps {
 
 type Tab = "cv" | "letter" | "original";
 
+function safeNormalizeCvForEditor(markdown: string | null) {
+    if (!markdown) return "";
+    const trimmed = markdown.trim();
+    if (!trimmed) return "";
+
+    try {
+        return normalizeCvMarkdown(trimmed);
+    } catch {
+        return trimmed;
+    }
+}
+
+function safeNormalizeLetterForEditor(markdown: string | null) {
+    if (!markdown) return "";
+    const trimmed = markdown.trim();
+    if (!trimmed) return "";
+
+    try {
+        return normalizeCoverLetterMarkdown(trimmed);
+    } catch {
+        return trimmed;
+    }
+}
+
 export function DocumentViewer({
     application,
     jobId,
@@ -56,6 +81,10 @@ export function DocumentViewer({
     originalCvText,
 }: DocumentViewerProps) {
     const t = useTranslations("documentViewer");
+    const initialCvMarkdown = safeNormalizeCvForEditor(application.tailoredCvMarkdown);
+    const initialCoverLetterMarkdown = safeNormalizeLetterForEditor(
+        application.coverLetterMarkdown
+    );
     const [activeTab, setActiveTab] = useState<Tab>("cv");
     const [downloadingCv, setDownloadingCv] = useState(false);
     const [downloadingLetter, setDownloadingLetter] = useState(false);
@@ -64,17 +93,13 @@ export function DocumentViewer({
         type: "success" | "error";
         text: string;
     } | null>(null);
-    const [cvMarkdown, setCvMarkdown] = useState(
-        application.tailoredCvMarkdown || ""
-    );
+    const [cvMarkdown, setCvMarkdown] = useState(initialCvMarkdown);
     const [coverLetterMarkdown, setCoverLetterMarkdown] = useState(
-        application.coverLetterMarkdown || ""
+        initialCoverLetterMarkdown
     );
-    const [savedCvMarkdown, setSavedCvMarkdown] = useState(
-        application.tailoredCvMarkdown || ""
-    );
+    const [savedCvMarkdown, setSavedCvMarkdown] = useState(initialCvMarkdown);
     const [savedCoverLetterMarkdown, setSavedCoverLetterMarkdown] = useState(
-        application.coverLetterMarkdown || ""
+        initialCoverLetterMarkdown
     );
     const [cvDisplayOptions, setCvDisplayOptions] = useState({
         showPhoto: true,
