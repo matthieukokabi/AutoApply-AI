@@ -35,24 +35,43 @@ function inferExtensionFromMimeType(mimeType: string) {
 }
 
 async function extractTextFromPdf(buffer: Buffer) {
-    const pdfParseModule = await import("pdf-parse");
-    if (typeof pdfParseModule.PDFParse !== "function") {
-        throw new Error("PDF_PARSE_MODULE_INVALID");
-    }
+    const pdfjsModule = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const loadingTask = pdfjsModule.getDocument({
+        data: new Uint8Array(buffer),
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true,
+        disableFontFace: true,
+    });
 
-    const parser = new pdfParseModule.PDFParse({ data: new Uint8Array(buffer) });
+    const pdfDocument = await loadingTask.promise;
     try {
-        const result = await parser.getText();
-        return typeof result?.text === "string" ? result.text : "";
+        const pageTexts: string[] = [];
+
+        for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
+            const page = await pdfDocument.getPage(pageNumber);
+            try {
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items
+                    .map((item) => ("str" in item ? item.str : ""))
+                    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+                    .join(" ");
+                pageTexts.push(pageText);
+            } finally {
+                await Promise.resolve(page.cleanup()).catch(() => undefined);
+            }
+        }
+
+        return pageTexts.join("\n\n").trim();
     } finally {
-        await parser.destroy().catch(() => undefined);
+        await Promise.resolve(pdfDocument.destroy()).catch(() => undefined);
     }
 }
 
 /**
  * POST /api/profile/upload — handle CV file upload
  * Accepts PDF, DOCX, or TXT files as multipart/form-data.
- * Extracts text server-side using pdf-parse (PDF) or mammoth (DOCX).
+ * Extracts text server-side using pdfjs-dist (PDF) or mammoth (DOCX).
  */
 export async function POST(req: Request) {
     try {
@@ -150,7 +169,12 @@ export async function POST(req: Request) {
                 try {
                     rawText = await extractTextFromPdf(buffer);
                 } catch (parseError) {
-                    console.error("POST /api/profile/upload PDF parse error:", parseError);
+                    console.error("POST /api/profile/upload PDF parse error:", {
+                        stage: "pdf_parse",
+                        fileType: file.type || "unknown",
+                        fileSize: file.size,
+                        ...buildSafeErrorLog(parseError),
+                    });
                     return NextResponse.json(
                         {
                             error: "Unable to read this PDF. Please upload a standard PDF, DOCX, or paste your CV text.",
@@ -164,7 +188,12 @@ export async function POST(req: Request) {
                     const result = await mammoth.extractRawText({ buffer });
                     rawText = result.value;
                 } catch (parseError) {
-                    console.error("POST /api/profile/upload DOCX parse error:", parseError);
+                    console.error("POST /api/profile/upload DOCX parse error:", {
+                        stage: "docx_parse",
+                        fileType: file.type || "unknown",
+                        fileSize: file.size,
+                        ...buildSafeErrorLog(parseError),
+                    });
                     return NextResponse.json(
                         {
                             error: "Unable to read this DOCX file. Please upload another DOCX, TXT, or paste your CV text.",

@@ -3,15 +3,24 @@ import { POST } from "@/app/api/profile/upload/route";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
-const { mockPdfGetText, mockPdfDestroy, mockPdfParseConstructor } = vi.hoisted(() => ({
-    mockPdfGetText: vi.fn(),
-    mockPdfDestroy: vi.fn(),
-    mockPdfParseConstructor: vi.fn(),
-}));
+const { mockPdfGetDocument, mockPdfGetPage, mockPdfGetTextContent, mockPdfCleanup, mockPdfDestroy } =
+    vi.hoisted(() => ({
+        mockPdfGetDocument: vi.fn(),
+        mockPdfGetPage: vi.fn(),
+        mockPdfGetTextContent: vi.fn(),
+        mockPdfCleanup: vi.fn(),
+        mockPdfDestroy: vi.fn(),
+    }));
 
-// Mock pdf-parse v2 API (ESM dynamic import in route)
-vi.mock("pdf-parse", () => ({
-    PDFParse: mockPdfParseConstructor,
+const buildPdfDocument = (numPages = 1) => ({
+    numPages,
+    getPage: mockPdfGetPage,
+    destroy: mockPdfDestroy,
+});
+
+// Mock pdfjs-dist API (ESM dynamic import in route)
+vi.mock("pdfjs-dist/legacy/build/pdf.mjs", () => ({
+    getDocument: mockPdfGetDocument,
 }));
 
 // Mock mammoth (ESM dynamic import in route)
@@ -41,14 +50,22 @@ const mockProfile = {
 
 beforeEach(() => {
     vi.clearAllMocks();
-    mockPdfGetText.mockResolvedValue({
-        text: "Experienced software engineer with 10 years of delivering enterprise applications and cloud migrations.",
+    mockPdfGetTextContent.mockResolvedValue({
+        items: [
+            {
+                str: "Experienced software engineer with 10 years of delivering enterprise applications and cloud migrations.",
+            },
+        ],
     });
+    mockPdfCleanup.mockResolvedValue(undefined);
     mockPdfDestroy.mockResolvedValue(undefined);
-    mockPdfParseConstructor.mockImplementation(() => ({
-        getText: mockPdfGetText,
-        destroy: mockPdfDestroy,
-    }));
+    mockPdfGetPage.mockResolvedValue({
+        getTextContent: mockPdfGetTextContent,
+        cleanup: mockPdfCleanup,
+    });
+    mockPdfGetDocument.mockReturnValue({
+        promise: Promise.resolve(buildPdfDocument()),
+    });
 });
 
 describe("POST /api/profile/upload", () => {
@@ -280,7 +297,7 @@ describe("POST /api/profile/upload", () => {
             expect(data.error).toContain("Invalid PDF");
         });
 
-        it("handles PDF file upload via pdf-parse v2 API", async () => {
+        it("handles PDF file upload via pdfjs-dist text extraction", async () => {
             vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
             vi.mocked(prisma.masterProfile.upsert).mockResolvedValue(mockProfile as any);
 
@@ -300,14 +317,18 @@ describe("POST /api/profile/upload", () => {
 
             expect(response.status).toBe(200);
             expect(data.fileName).toBe("resume.pdf");
-            expect(mockPdfParseConstructor).toHaveBeenCalledOnce();
-            expect(mockPdfGetText).toHaveBeenCalledOnce();
+            expect(mockPdfGetDocument).toHaveBeenCalledOnce();
+            expect(mockPdfGetPage).toHaveBeenCalledOnce();
+            expect(mockPdfGetTextContent).toHaveBeenCalledOnce();
+            expect(mockPdfCleanup).toHaveBeenCalledOnce();
             expect(mockPdfDestroy).toHaveBeenCalledOnce();
         });
 
         it("returns 400 when PDF parser cannot extract text", async () => {
             vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
-            mockPdfGetText.mockRejectedValueOnce(new Error("bad pdf"));
+            mockPdfGetDocument.mockImplementationOnce(() => ({
+                promise: Promise.reject(new Error("bad pdf")),
+            }));
 
             const file = new File([Buffer.from("%PDF-1.7 broken-content")], "resume.pdf", {
                 type: "application/pdf",
@@ -321,6 +342,31 @@ describe("POST /api/profile/upload", () => {
             });
 
             const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(400);
+            expect(data.error).toContain("Unable to read this PDF");
+            expect(prisma.masterProfile.upsert).not.toHaveBeenCalled();
+        });
+
+        it("returns 400 when PDF runtime lacks DOM/canvas support", async () => {
+            vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+            mockPdfGetDocument.mockImplementationOnce(() => ({
+                promise: Promise.reject(new ReferenceError("DOMMatrix is not defined")),
+            }));
+
+            const file = new File([Buffer.from("%PDF-1.7 no-dommatrix")], "resume.pdf", {
+                type: "application/pdf",
+            });
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await POST(
+                new Request("http://localhost/api/profile/upload", {
+                    method: "POST",
+                    body: formData,
+                })
+            );
             const data = await response.json();
 
             expect(response.status).toBe(400);
