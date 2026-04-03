@@ -35,43 +35,20 @@ function inferExtensionFromMimeType(mimeType: string) {
 }
 
 async function extractTextFromPdf(buffer: Buffer) {
-    const pdfjsModule = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    const loadingTask = pdfjsModule.getDocument({
-        data: new Uint8Array(buffer),
-        useWorkerFetch: false,
-        isEvalSupported: false,
-        useSystemFonts: true,
-        disableFontFace: true,
-    });
+    const pdfParseModule = await import("pdf-parse/lib/pdf-parse.js");
+    const parsePdf =
+        typeof pdfParseModule.default === "function"
+            ? pdfParseModule.default
+            : (pdfParseModule as unknown as (data: Buffer) => Promise<{ text?: string }>); // CJS/ESM interop-safe
 
-    const pdfDocument = await loadingTask.promise;
-    try {
-        const pageTexts: string[] = [];
-
-        for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
-            const page = await pdfDocument.getPage(pageNumber);
-            try {
-                const textContent = await page.getTextContent();
-                const pageText = textContent.items
-                    .map((item) => ("str" in item ? item.str : ""))
-                    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
-                    .join(" ");
-                pageTexts.push(pageText);
-            } finally {
-                await Promise.resolve(page.cleanup()).catch(() => undefined);
-            }
-        }
-
-        return pageTexts.join("\n\n").trim();
-    } finally {
-        await Promise.resolve(pdfDocument.destroy()).catch(() => undefined);
-    }
+    const result = await parsePdf(buffer);
+    return typeof result?.text === "string" ? result.text : "";
 }
 
 /**
  * POST /api/profile/upload — handle CV file upload
  * Accepts PDF, DOCX, or TXT files as multipart/form-data.
- * Extracts text server-side using pdfjs-dist (PDF) or mammoth (DOCX).
+ * Extracts text server-side using pdf-parse (PDF) or mammoth (DOCX).
  */
 export async function POST(req: Request) {
     try {
