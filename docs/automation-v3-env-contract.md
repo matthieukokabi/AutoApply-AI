@@ -33,15 +33,32 @@ This contract defines the required server/runtime variables for the additive v3 
 | `V3_RETRY_BASE_MS` | Base delay for exponential retry backoff. |
 | `V3_RETRY_CAP_MS` | Maximum delay cap for retry backoff. |
 
+## External scheduler variables (Option A)
+
+| Variable | Purpose |
+| --- | --- |
+| `CRON_SECRET` | Bearer secret for `/api/cron/discovery-v3` and `/api/cron/discovery-v3/health`. |
+| `DISCOVERY_MANUAL_TRIGGER_SECRET` | Optional dedicated secret for `/api/cron/discovery-v3/manual` (falls back to `CRON_SECRET`). |
+| `N8N_DISCOVERY_V3_WEBHOOK_URL` | Optional explicit n8n webhook URL override for discovery v3 trigger dispatch (defaults to `${N8N_WEBHOOK_URL}/webhook/discovery-pipeline-v3`). |
+| `AUTOMATION_ALERT_EMAIL_TO` | Optional CSV recipients for scheduler health alerts (`missed slot`, `stuck run`, `consecutive failures`, `stale locks`). |
+
+## Schedule source of truth
+
+- Single schedule authority: external cron only.
+- Discovery slots are fixed Zurich-local windows: `07:20`, `12:20`, `18:20`.
+- n8n discovery v3 trigger must run via webhook path `discovery-pipeline-v3` (no internal schedule trigger/jitter path).
+
 ## Safety rules
 
 - Never print or commit secret values.
 - Validation failures must report only missing env names.
 - v3 rollout is additive: keep v2 workflows and UX unchanged unless explicitly switched via canary controls.
+- Keep exactly one active scheduler authority for discovery v3 (external cron).
 
 ## Emergency rollback controls
 
 - Fast disable: set `V3_CANARY_USER_IDS` to empty and `V3_CANARY_SAMPLE_RATE=0`, then redeploy `apps/web`.
+- External scheduler disable: pause cron entries that call `/api/cron/discovery-v3` and `/api/cron/discovery-v3/health` (or rotate `CRON_SECRET`) before changing workflow versions.
 - Keep v2 workflows in place; do not delete or mutate legacy/v2 definitions during v3 rollback.
 - Before changing any live n8n workflow version bindings, capture a checkpoint with:
 

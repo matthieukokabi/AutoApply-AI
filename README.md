@@ -80,6 +80,9 @@ npm run dev
 For the additive v3 automation rollout (locks, idempotency, canary routing, pacing/retries), use:
 
 - `docs/automation-v3-env-contract.md`
+- Discovery v3 scheduling authority is external cron via:
+  - `POST /api/cron/discovery-v3`
+  - `POST /api/cron/discovery-v3/health`
 
 ## Project Structure
 

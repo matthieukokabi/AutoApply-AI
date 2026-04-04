@@ -16,6 +16,15 @@ Use this runbook when users report no new job opportunities and/or no tailored C
 `DATABASE_URL`, `N8N_WEBHOOK_SECRET`, source/API credentials, model credentials.
 - Never print secret values in logs or reports.
 
+## External scheduler baseline (discovery v3)
+
+- One scheduler authority only: external cron calls app endpoints.
+- Expected discovery slots (Europe/Zurich): `07:20`, `12:20`, `18:20`.
+- Scheduler endpoints:
+  - `POST /api/cron/discovery-v3` (slot dispatch)
+  - `POST /api/cron/discovery-v3/health` (dead-man health check)
+  - `POST /api/cron/discovery-v3/manual` (operator-only replay path)
+
 ## 1) Confirm scheduler health and 4h cadence
 
 ```bash
@@ -25,12 +34,19 @@ jq '.latest | {latestRunAt,latestRunStatus,latestSuccessAt,latestFailureReason}'
 jq '.alerts' /tmp/autoapply-pipeline-diagnostics.json
 ```
 
+```bash
+curl -sS -X POST \
+  -H "Authorization: Bearer ${CRON_SECRET}" \
+  "${APP_URL}/api/cron/discovery-v3/health" | jq .
+```
+
 Expected:
 
 - `workflow.active=true`
-- `cadenceHours=4`
+- `cadenceHours=4` (fixed slots now externally dispatched at `:20` in Zurich windows)
 - latest run timestamps are fresh
 - no `scheduler_missed_threshold` alert
+- health endpoint returns `healthy=true`
 
 ## 2) Drill down one affected profile
 
@@ -63,6 +79,16 @@ Real run only after dry-run looks correct:
 
 ```bash
 npm run incident:pipeline:recovery -- --email <user@email> --max-jobs 2 --real-run
+```
+
+Operator slot replay path (external scheduler architecture):
+
+```bash
+curl -sS -X POST \
+  -H "Authorization: Bearer ${DISCOVERY_MANUAL_TRIGGER_SECRET:-$CRON_SECRET}" \
+  -H "Content-Type: application/json" \
+  "${APP_URL}/api/cron/discovery-v3/manual" \
+  -d '{"slotKey":"2026-04-04T12:20","reason":"incident_manual_replay"}' | jq .
 ```
 
 Success signals in output:
@@ -121,9 +147,10 @@ V3_CANARY_USER_IDS=
 V3_CANARY_SAMPLE_RATE=0
 ```
 
-2. Redeploy web app so `/api/tailor` routes all users back to v2 webhook path.
-3. Keep all v2 workflows unchanged and active.
-4. Keep v3 workflows additive (do not delete them); optionally deactivate them in n8n if needed for noise reduction.
+2. Pause external cron jobs for `/api/cron/discovery-v3` and `/api/cron/discovery-v3/health` (or rotate `CRON_SECRET`).
+3. Redeploy web app so `/api/tailor` routes all users back to v2 webhook path.
+4. Keep all v2 workflows unchanged and active.
+5. Keep v3 workflows additive (do not delete them); optionally deactivate them in n8n if needed for noise reduction.
 
 ## 9) Inspect v3 workflow errors (DLQ-style triage)
 
