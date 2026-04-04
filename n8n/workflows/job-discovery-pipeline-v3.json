@@ -4,23 +4,18 @@
   "nodes": [
     {
       "id": "schedule-trigger-v3",
-      "name": "Schedule Trigger v3",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
+      "name": "Discovery Webhook Trigger v3",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
       "position": [
         0,
         0
       ],
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "hours",
-              "hoursInterval": 4,
-              "triggerAtMinute": 0
-            }
-          ]
-        }
+        "httpMethod": "POST",
+        "path": "discovery-pipeline-v3",
+        "responseMode": "onReceived",
+        "options": {}
       }
     },
     {
@@ -37,20 +32,6 @@
       }
     },
     {
-      "id": "jitter-v3",
-      "name": "Random Jitter Wait v3",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1,
-      "position": [
-        440,
-        0
-      ],
-      "parameters": {
-        "amount": "={{ Math.floor(Math.random() * 21) }}",
-        "unit": "minutes"
-      }
-    },
-    {
       "id": "init-context-v3",
       "name": "Initialize Discovery Context v3",
       "type": "n8n-nodes-base.code",
@@ -60,7 +41,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "const input = $input.first().json || {};\nconst config = input.config || {};\nconst runId = 'disc_v3_' + String($execution.id || Date.now());\n\nfunction slotIdForNow() {\n  const now = new Date();\n  const slotHour = Math.floor(now.getUTCHours() / 4) * 4;\n  const slot = new Date(Date.UTC(\n    now.getUTCFullYear(),\n    now.getUTCMonth(),\n    now.getUTCDate(),\n    slotHour,\n    0,\n    0,\n    0\n  ));\n  return slot.toISOString();\n}\n\nfunction parseCsv(raw) {\n  return String(raw || '').split(',').map((v) => v.trim()).filter(Boolean);\n}\n\nreturn [{\n  json: {\n    config,\n    runId,\n    slotId: slotIdForNow(),\n    workflowId: 'job-discovery-pipeline-v3',\n    appWebhookUrl: String(config.appUrl || '').replace(/\\/$/, '') + '/api/webhooks/n8n',\n    canaryAllowlist: parseCsv(config.v3CanaryUserIds),\n    summary: {\n      status: 'ok',\n      runId,\n      usersSeen: 0,\n      usersCanary: 0,\n      usersProcessed: 0,\n      usersFailed: 0,\n      persistedApplications: 0\n    }\n  }\n}];"
+        "jsCode": "const input = $input.first().json || {};\nconst config = input.config || {};\nconst body = (input.body && typeof input.body === 'object' && !Array.isArray(input.body)) ? input.body : input;\nconst headers = (input.headers && typeof input.headers === 'object' && !Array.isArray(input.headers)) ? input.headers : {};\n\nconst incomingSecret = String(headers['x-webhook-secret'] || headers['X-Webhook-Secret'] || body.webhookSecret || '').trim();\nif (!incomingSecret || incomingSecret !== String(config.webhookSecret || '').trim()) {\n  throw new Error('UNAUTHORIZED_EXTERNAL_TRIGGER');\n}\n\nconst runId = String(\n  body.runId ||\n  headers['x-run-id'] ||\n  headers['X-Run-Id'] ||\n  ('disc_v3_' + String($execution.id || Date.now()))\n).trim();\n\nfunction slotIdForNow() {\n  const now = new Date();\n  const slotHour = Math.floor(now.getUTCHours() / 4) * 4;\n  const slot = new Date(Date.UTC(\n    now.getUTCFullYear(),\n    now.getUTCMonth(),\n    now.getUTCDate(),\n    slotHour,\n    0,\n    0,\n    0\n  ));\n  return slot.toISOString();\n}\n\nfunction parseCsv(raw) {\n  return String(raw || '').split(',').map((v) => v.trim()).filter(Boolean);\n}\n\nconst slotId = String(body.slotKey || body.slotId || slotIdForNow()).trim();\nconst schedulerSource = String(body.schedulerSource || 'external_cron').trim();\nconst triggerKind = String(body.triggerKind || 'scheduled').trim();\n\nreturn [{\n  json: {\n    config,\n    runId,\n    slotId,\n    schedulerSource,\n    triggerKind,\n    workflowId: 'job-discovery-pipeline-v3',\n    appWebhookUrl: String(config.appUrl || '').replace(/\\/$/, '') + '/api/webhooks/n8n',\n    webhookSecret: String(config.webhookSecret || '').trim(),\n    canaryAllowlist: parseCsv(config.v3CanaryUserIds),\n    summary: {\n      status: 'ok',\n      runId,\n      slotId,\n      schedulerSource,\n      triggerKind,\n      usersSeen: 0,\n      usersCanary: 0,\n      usersProcessed: 0,\n      usersFailed: 0,\n      persistedApplications: 0\n    }\n  }\n}];"
       }
     },
     {
@@ -144,7 +125,7 @@
         220
       ],
       "parameters": {
-        "jsCode": "const base = $input.first().json || {};\nreturn [{\n  json: {\n    ...(base.summary || {}),\n    slotId: base.slotId,\n    runId: base.runId,\n    lockAcquired: false,\n    lockReleased: false,\n    reason: 'lock_not_acquired'\n  }\n}];"
+        "jsCode": "const base = $input.first().json || {};\nreturn [{\n  json: {\n    ...(base.summary || {}),\n    slotId: base.slotId,\n    runId: base.runId,\n    schedulerSource: base.schedulerSource || 'external_cron',\n    triggerKind: base.triggerKind || 'scheduled',\n    lockAcquired: false,\n    lockReleased: false,\n    reason: 'lock_not_acquired'\n  }\n}];"
       }
     },
     {
@@ -229,7 +210,7 @@
         140
       ],
       "parameters": {
-        "jsCode": "const item = $input.first().json || {};\nreturn [{\n  json: {\n    runId: item.runId,\n    slotId: item.slotId,\n    lockId: item.lockId,\n    lockAcquired: true,\n    usersSeen: Number(item.usersSeen || 0),\n    usersCanary: 0,\n    usersProcessed: 0,\n    usersFailed: 0,\n    persistedApplications: 0,\n    status: 'no_canary_users'\n  }\n}];"
+        "jsCode": "const item = $input.first().json || {};\nreturn [{\n  json: {\n    runId: item.runId,\n    slotId: item.slotId,\n    schedulerSource: item.schedulerSource || 'external_cron',\n    triggerKind: item.triggerKind || 'scheduled',\n    lockId: item.lockId,\n    lockAcquired: true,\n    usersSeen: Number(item.usersSeen || 0),\n    usersCanary: 0,\n    usersProcessed: 0,\n    usersFailed: 0,\n    persistedApplications: 0,\n    status: 'no_canary_users'\n  }\n}];"
       }
     },
     {
@@ -724,7 +705,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const items = $input.all();\nconst lock = $('Parse Lock Result v3').first().json || {};\n\nlet usersProcessed = 0;\nlet usersFailed = 0;\nlet persistedApplications = 0;\nlet usersSeen = 0;\nlet usersCanary = 0;\n\nfor (const item of items) {\n  const row = item.json || {};\n  usersSeen = Math.max(usersSeen, Number(row.usersSeen || 0));\n  usersCanary = Math.max(usersCanary, Number(row.usersCanary || 0));\n  if (row.processed) usersProcessed += 1;\n  if (row.failed) usersFailed += 1;\n  persistedApplications += Number(row.persistedCount || 0);\n}\n\nreturn [{\n  json: {\n    runId: lock.runId,\n    slotId: lock.slotId,\n    lockId: lock.lockId,\n    lockAcquired: true,\n    usersSeen,\n    usersCanary,\n    usersProcessed,\n    usersFailed,\n    persistedApplications,\n    status: usersFailed > 0 ? 'completed_with_user_errors' : 'ok'\n  }\n}];"
+        "jsCode": "const items = $input.all();\nconst lock = $('Parse Lock Result v3').first().json || {};\n\nlet usersProcessed = 0;\nlet usersFailed = 0;\nlet persistedApplications = 0;\nlet usersSeen = 0;\nlet usersCanary = 0;\n\nfor (const item of items) {\n  const row = item.json || {};\n  usersSeen = Math.max(usersSeen, Number(row.usersSeen || 0));\n  usersCanary = Math.max(usersCanary, Number(row.usersCanary || 0));\n  if (row.processed) usersProcessed += 1;\n  if (row.failed) usersFailed += 1;\n  persistedApplications += Number(row.persistedCount || 0);\n}\n\nreturn [{\n  json: {\n    runId: lock.runId,\n    slotId: lock.slotId,\n    schedulerSource: lock.schedulerSource || 'external_cron',\n    triggerKind: lock.triggerKind || 'scheduled',\n    lockId: lock.lockId,\n    lockAcquired: true,\n    usersSeen,\n    usersCanary,\n    usersProcessed,\n    usersFailed,\n    persistedApplications,\n    status: usersFailed > 0 ? 'completed_with_user_errors' : 'ok'\n  }\n}];"
       }
     },
     {
@@ -774,34 +755,49 @@
         -740
       ],
       "parameters": {
-        "jsCode": "const summary = $input.first().json || {};\nreturn [{\n  json: {\n    ...summary,\n    completedAt: new Date().toISOString()\n  }\n}];"
+        "jsCode": "const summary = $input.first().json || {};\nconst base = $('Initialize Discovery Context v3').first().json || {};\n\nreturn [{\n  json: {\n    ...summary,\n    runId: summary.runId || base.runId || null,\n    slotId: summary.slotId || base.slotId || null,\n    schedulerSource: summary.schedulerSource || base.schedulerSource || 'external_cron',\n    triggerKind: summary.triggerKind || base.triggerKind || 'scheduled',\n    appWebhookUrl: base.appWebhookUrl || null,\n    webhookSecret: base.webhookSecret || null,\n    workflowId: 'job-discovery-pipeline-v3',\n    completedAt: new Date().toISOString()\n  }\n}];"
+      }
+    },
+    {
+      "id": "discovery-run-status-callback-v3",
+      "name": "Discovery Run Status Callback v3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        6400,
+        -740
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.appWebhookUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-webhook-secret",
+              "value": "={{ $json.webhookSecret }}"
+            },
+            {
+              "name": "x-run-id",
+              "value": "={{ $json.runId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: 'discovery_run_status', runId: $json.runId, data: { runId: $json.runId, slotId: $json.slotId, slotKey: $json.slotId, schedulerSource: $json.schedulerSource, triggerKind: $json.triggerKind, status: $json.status || 'completed', reason: $json.reason || null, reasonCode: $json.reasonCode || null, usersSeen: Number($json.usersSeen || 0), usersCanary: Number($json.usersCanary || 0), usersProcessed: Number($json.usersProcessed || 0), usersFailed: Number($json.usersFailed || 0), persistedApplications: Number($json.persistedApplications || 0), lockAcquired: $json.lockAcquired === true, lockReleased: $json.lockReleased === true, completedAt: $json.completedAt || null, workflowId: $json.workflowId || 'job-discovery-pipeline-v3' } }) }}",
+        "options": {
+          "timeout": 15000
+        }
       }
     }
   ],
   "connections": {
-    "Schedule Trigger v3": {
-      "main": [
-        [
-          {
-            "node": "Load Config v3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Load Config v3": {
-      "main": [
-        [
-          {
-            "node": "Random Jitter Wait v3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Random Jitter Wait v3": {
       "main": [
         [
           {
@@ -1217,6 +1213,28 @@
           },
           {
             "node": "Build Final Summary v3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discovery Webhook Trigger v3": {
+      "main": [
+        [
+          {
+            "node": "Load Config v3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final Summary v3": {
+      "main": [
+        [
+          {
+            "node": "Discovery Run Status Callback v3",
             "type": "main",
             "index": 0
           }
