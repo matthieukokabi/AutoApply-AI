@@ -126,7 +126,7 @@ export function buildDiscoveryRunId(slotKey: string, triggerKind: string) {
 export function resolveDiscoveryWebhookUrl() {
     const explicit = process.env.N8N_DISCOVERY_V3_WEBHOOK_URL?.trim();
     if (explicit) {
-        return explicit.replace(/%20/g, "%2520");
+        return explicit.replace(/ /g, "%2520").replace(/%20/g, "%2520");
     }
 
     const base = process.env.N8N_WEBHOOK_URL?.trim();
