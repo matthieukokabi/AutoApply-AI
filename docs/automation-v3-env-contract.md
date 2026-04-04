@@ -46,6 +46,7 @@ This contract defines the required server/runtime variables for the additive v3 
 
 - Single schedule authority: external cron only.
 - Discovery slots are fixed Zurich-local windows: `07:20`, `12:20`, `18:20`.
+- Vercel cron definition uses UTC schedules `20 5,10,16 * * *` and `20 6,11,17 * * *` so Zurich-local slots stay covered across DST changes; out-of-window calls are safely skipped by slot gating.
 - n8n discovery v3 trigger must run via webhook path `discovery-pipeline-v3` (no internal schedule trigger/jitter path).
 
 ## Safety rules
