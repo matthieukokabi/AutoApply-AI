@@ -109,6 +109,7 @@ vi.mock("@/lib/prisma", () => ({
         },
         automationLock: {
             findUnique: vi.fn(),
+            findMany: vi.fn(),
             create: vi.fn(),
             updateMany: vi.fn(),
             deleteMany: vi.fn(),
@@ -116,6 +117,14 @@ vi.mock("@/lib/prisma", () => ({
         n8nWebhookEvent: {
             findUnique: vi.fn(),
             create: vi.fn(),
+        },
+        discoveryScheduleRun: {
+            create: vi.fn(),
+            findFirst: vi.fn(),
+            findMany: vi.fn(),
+            findUnique: vi.fn(),
+            update: vi.fn(),
+            upsert: vi.fn(),
         },
         stripeWebhookEvent: {
             create: vi.fn(),
@@ -146,6 +155,7 @@ vi.mock("@/lib/email", () => ({
     sendTailoringCompleteEmail: vi.fn().mockResolvedValue(undefined),
     sendWeeklyDigestEmail: vi.fn().mockResolvedValue(undefined),
     sendCreditsLowEmail: vi.fn().mockResolvedValue(undefined),
+    sendAutomationHealthAlert: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock mobile auth

@@ -366,6 +366,48 @@ export async function sendCreditsLowEmail(
     }
 }
 
+// ─── Automation Health Alert ────────────────────────────────
+
+export async function sendAutomationHealthAlert(
+    recipients: string[],
+    subject: string,
+    lines: string[]
+): Promise<void> {
+    const to = recipients.map((value) => String(value || "").trim()).filter(Boolean);
+    if (to.length === 0) {
+        return;
+    }
+
+    const details = lines
+        .map((line) => `<li style="margin: 0 0 6px; color: #374151;">${escapeHtml(line)}</li>`)
+        .join("");
+    const content = `
+        <h2 style="margin: 0 0 8px; font-size: 22px; color: #111827;">Automation Discovery Alert</h2>
+        <p style="margin: 0 0 16px; font-size: 14px; color: #374151; line-height: 1.6;">
+            The discovery scheduler health check detected one or more reliability issues.
+        </p>
+        <ul style="margin: 0 0 16px; padding-left: 18px;">
+            ${details}
+        </ul>
+        <p style="margin: 0; font-size: 13px; color: #6b7280;">
+            Check incident runbooks and scheduler ledger for full triage context.
+        </p>
+    `;
+
+    try {
+        const resend = getResend();
+        await resend.emails.send({
+            from: FROM_EMAIL_ALERTS,
+            replyTo: REPLY_TO_SUPPORT,
+            to,
+            subject,
+            html: emailWrapper(content),
+        });
+    } catch (error) {
+        console.error("Failed to send automation health alert email:", error);
+    }
+}
+
 // ─── Utility ────────────────────────────────────────────────
 
 function escapeHtml(text: string): string {

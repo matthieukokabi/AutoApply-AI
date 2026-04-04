@@ -6,6 +6,14 @@
     },
     "crons": [
         {
+            "path": "/api/cron/discovery-v3",
+            "schedule": "20 * * * *"
+        },
+        {
+            "path": "/api/cron/discovery-v3/health",
+            "schedule": "*/30 * * * *"
+        },
+        {
             "path": "/api/cron/weekly-digest",
             "schedule": "0 9 * * 1"
         }

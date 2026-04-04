@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } from "@/lib/email";
 import { normalizeCoverLetterMarkdown, normalizeCvMarkdown } from "@/lib/document-model";
+import { markDiscoveryRunFailed, updateDiscoveryRunSummary } from "@/lib/discovery-trigger";
 
 const DISCOVERY_WORKFLOW_ID = "eddfsS251UHbmNIj";
 const DISCOVERY_CADENCE_MINUTES = 240;
@@ -1741,6 +1742,41 @@ export async function POST(req: Request) {
                     },
                 });
 
+                if (webhookData.workflowId.trim() === "job-discovery-pipeline-v3") {
+                    const payload =
+                        webhookData.payload &&
+                        typeof webhookData.payload === "object" &&
+                        !Array.isArray(webhookData.payload)
+                            ? (webhookData.payload as Record<string, unknown>)
+                            : {};
+
+                    const payloadRunId =
+                        typeof payload.runId === "string" ? payload.runId : null;
+                    const payloadSlotKey =
+                        typeof payload.slotKey === "string"
+                            ? payload.slotKey
+                            : typeof payload.slotId === "string"
+                              ? payload.slotId
+                              : null;
+                    const payloadTriggerKind =
+                        typeof payload.triggerKind === "string"
+                            ? payload.triggerKind
+                            : "scheduled";
+                    const payloadSource =
+                        typeof payload.schedulerSource === "string"
+                            ? payload.schedulerSource
+                            : "n8n_callback";
+
+                    await markDiscoveryRunFailed({
+                        runId: payloadRunId || runId,
+                        slotKey: payloadSlotKey,
+                        triggerKind: payloadTriggerKind,
+                        schedulerSource: payloadSource,
+                        errorCode: webhookData.errorType.trim(),
+                        errorMessage: webhookData.message.trim(),
+                    });
+                }
+
                 logPipelineEvent("error", "workflow_error_logged", {
                     runId,
                     workflowId: webhookData.workflowId.trim(),
@@ -1749,6 +1785,71 @@ export async function POST(req: Request) {
                 });
 
                 return NextResponse.json({ message: "Error logged", runId });
+            }
+
+            case "discovery_run_status": {
+                const summaryData: Record<string, unknown> =
+                    webhookData.summary &&
+                    typeof webhookData.summary === "object" &&
+                    !Array.isArray(webhookData.summary)
+                        ? {
+                              ...(webhookData.summary as Record<string, unknown>),
+                              runId:
+                                  (webhookData.summary as Record<string, unknown>).runId ||
+                                  webhookData.runId ||
+                                  runId,
+                              slotKey:
+                                  (webhookData.summary as Record<string, unknown>).slotKey ||
+                                  webhookData.slotKey ||
+                                  webhookData.slotId,
+                              schedulerSource:
+                                  (webhookData.summary as Record<string, unknown>)
+                                      .schedulerSource || webhookData.schedulerSource,
+                              triggerKind:
+                                  (webhookData.summary as Record<string, unknown>)
+                                      .triggerKind || webhookData.triggerKind,
+                          }
+                        : {
+                              ...webhookData,
+                              runId:
+                                  (typeof webhookData.runId === "string" &&
+                                      webhookData.runId.trim()) ||
+                                  runId,
+                              slotKey:
+                                  (typeof webhookData.slotKey === "string" &&
+                                      webhookData.slotKey.trim()) ||
+                                  (typeof webhookData.slotId === "string" &&
+                                      webhookData.slotId.trim()) ||
+                                  null,
+                          };
+
+                const summaryResult = await updateDiscoveryRunSummary(summaryData);
+                logPipelineEvent("info", "discovery_run_status_recorded", {
+                    runId:
+                        typeof summaryData.runId === "string"
+                            ? summaryData.runId
+                            : runId,
+                    slotKey:
+                        typeof summaryData.slotKey === "string"
+                            ? summaryData.slotKey
+                            : null,
+                    status:
+                        typeof summaryData.status === "string"
+                            ? summaryData.status
+                            : "completed",
+                    updated: summaryResult.updated,
+                    created: summaryResult.created,
+                });
+
+                return NextResponse.json({
+                    ok: true,
+                    runId:
+                        typeof summaryData.runId === "string"
+                            ? summaryData.runId
+                            : runId,
+                    updated: summaryResult.updated,
+                    created: summaryResult.created,
+                });
             }
 
             default:

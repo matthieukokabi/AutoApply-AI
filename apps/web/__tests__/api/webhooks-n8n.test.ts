@@ -1053,5 +1053,81 @@ describe("POST /api/webhooks/n8n", () => {
                 },
             });
         });
+
+        it("marks discovery ledger run as failed for job-discovery workflow errors", async () => {
+            vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
+            vi.mocked(prisma.discoveryScheduleRun.findUnique).mockResolvedValue({
+                id: "ledger_discovery_1",
+            } as any);
+            vi.mocked(prisma.discoveryScheduleRun.update).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("workflow_error", {
+                workflowId: "job-discovery-pipeline-v3",
+                nodeName: "Parse Scores v3",
+                errorType: "SCORING_PARSE_FAILURE",
+                message: "Could not parse scoring payload",
+                payload: {
+                    runId: "disc_v3_slot_2026_04_04T07_20_scheduled",
+                    slotKey: "2026-04-04T07:20",
+                    triggerKind: "scheduled",
+                    schedulerSource: "vercel_cron",
+                },
+            });
+
+            const response = await POST(request);
+
+            expect(response.status).toBe(200);
+            expect(prisma.discoveryScheduleRun.update).toHaveBeenCalledWith({
+                where: { id: "ledger_discovery_1" },
+                data: expect.objectContaining({
+                    status: "failed",
+                    errorCode: "SCORING_PARSE_FAILURE",
+                    errorMessage: "Could not parse scoring payload",
+                }),
+            });
+        });
+    });
+
+    describe("discovery_run_status", () => {
+        it("records discovery run completion summary in scheduler ledger", async () => {
+            vi.mocked(prisma.discoveryScheduleRun.findUnique).mockResolvedValue({
+                id: "ledger_discovery_2",
+            } as any);
+            vi.mocked(prisma.discoveryScheduleRun.update).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("discovery_run_status", {
+                runId: "disc_v3_slot_2026_04_04T12_20_scheduled",
+                slotKey: "2026-04-04T12:20",
+                triggerKind: "scheduled",
+                schedulerSource: "vercel_cron",
+                status: "completed",
+                usersSeen: 3,
+                usersCanary: 3,
+                usersProcessed: 3,
+                usersFailed: 0,
+                persistedApplications: 4,
+                lockAcquired: true,
+                lockReleased: true,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.ok).toBe(true);
+            expect(prisma.discoveryScheduleRun.update).toHaveBeenCalledWith({
+                where: { id: "ledger_discovery_2" },
+                data: expect.objectContaining({
+                    status: "completed",
+                    usersSeen: 3,
+                    usersCanary: 3,
+                    usersProcessed: 3,
+                    usersFailed: 0,
+                    persistedApplications: 4,
+                    lockAcquired: true,
+                    lockReleased: true,
+                }),
+            });
+        });
     });
 });
