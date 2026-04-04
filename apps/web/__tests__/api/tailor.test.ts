@@ -29,8 +29,7 @@ const mockJob = {
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.N8N_WEBHOOK_URL = "http://n8n:5678";
-    delete process.env.V3_CANARY_USER_IDS;
-    delete process.env.V3_CANARY_SAMPLE_RATE;
+    process.env.N8N_WEBHOOK_SECRET = "test-webhook-secret";
     // Reset fetch mock
     vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
@@ -111,6 +110,28 @@ describe("POST /api/tailor", () => {
 
         expect(response.status).toBe(503);
         expect(data.error).toContain("unavailable");
+        expect(prisma.job.upsert).not.toHaveBeenCalled();
+        expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("returns 503 when tailoring webhook secret is not configured", async () => {
+        delete process.env.N8N_WEBHOOK_SECRET;
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jobDescription: "test" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(data.error).toContain("unavailable");
+        expect(global.fetch).not.toHaveBeenCalled();
         expect(prisma.job.upsert).not.toHaveBeenCalled();
         expect(prisma.user.update).not.toHaveBeenCalled();
     });
@@ -366,10 +387,13 @@ describe("POST /api/tailor", () => {
         await POST(request);
 
         expect(global.fetch).toHaveBeenCalledWith(
-            "http://n8n:5678/webhook/single-job-tailor",
+            "http://n8n:5678/webhook/single-job-tailor-v3",
             expect.objectContaining({
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-webhook-secret": "test-webhook-secret",
+                },
             })
         );
 
@@ -405,63 +429,7 @@ describe("POST /api/tailor", () => {
 
         expect(response.status).toBe(200);
         expect(global.fetch).toHaveBeenCalledWith(
-            "http://n8n:5678/custom-base/webhook/single-job-tailor",
-            expect.anything()
-        );
-    });
-
-    it("routes allowlisted canary users to v3 webhook path", async () => {
-        process.env.V3_CANARY_USER_IDS = "user_1,other_user";
-
-        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
-        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
-        vi.mocked(prisma.user.update).mockResolvedValue({
-            ...mockUser,
-            creditsRemaining: 9,
-        } as any);
-
-        const request = new Request("http://localhost/api/tailor", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                jobDescription: "React developer needed.",
-            }),
-        });
-
-        const response = await POST(request);
-
-        expect(response.status).toBe(200);
-        expect(global.fetch).toHaveBeenCalledWith(
-            "http://n8n:5678/webhook/single-job-tailor-v3",
-            expect.anything()
-        );
-    });
-
-    it("routes users to v3 webhook when sample rate is 100%", async () => {
-        process.env.V3_CANARY_SAMPLE_RATE = "1";
-
-        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
-        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
-        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
-        vi.mocked(prisma.user.update).mockResolvedValue({
-            ...mockUser,
-            creditsRemaining: 9,
-        } as any);
-
-        const request = new Request("http://localhost/api/tailor", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                jobDescription: "React developer needed.",
-            }),
-        });
-
-        const response = await POST(request);
-
-        expect(response.status).toBe(200);
-        expect(global.fetch).toHaveBeenCalledWith(
-            "http://n8n:5678/webhook/single-job-tailor-v3",
+            "http://n8n:5678/custom-base/webhook/single-job-tailor-v3",
             expect.anything()
         );
     });
