@@ -168,3 +168,37 @@ model N8nWebhookEvent {
   @@index([createdAt])
   @@map("n8n_webhook_events")
 }
+
+// ─── External Discovery Scheduler Run Ledger ───────────────
+
+model DiscoveryScheduleRun {
+  id                   String   @id @default(cuid())
+  slotKey              String
+  schedulerSource      String
+  triggerKind          String   @default("scheduled")
+  workflowId           String   @default("job-discovery-pipeline-v3")
+  status               String   @default("accepted")
+  runId                String?  @unique
+  n8nExecutionId       Int?
+  requestedAt          DateTime @default(now())
+  startedAt            DateTime?
+  finishedAt           DateTime?
+  usersSeen            Int      @default(0)
+  usersCanary          Int      @default(0)
+  usersProcessed       Int      @default(0)
+  usersFailed          Int      @default(0)
+  persistedApplications Int     @default(0)
+  lockAcquired         Boolean?
+  lockReleased         Boolean?
+  errorCode            String?
+  errorMessage         String?
+  metadata             Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([slotKey, triggerKind])
+  @@index([requestedAt])
+  @@index([status])
+  @@index([workflowId, requestedAt])
+  @@map("discovery_schedule_runs")
+}
