@@ -56,6 +56,7 @@ export default function JobsPage() {
         company: "",
         jobUrl: "",
     });
+    const [tailorError, setTailorError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [tailoringJobId, setTailoringJobId] = useState<string | null>(null);
 
@@ -97,19 +98,31 @@ export default function JobsPage() {
     async function handlePasteSubmit() {
         if (!pasteForm.jobDescription.trim()) return;
         setSubmitting(true);
+        setTailorError(null);
         try {
             const res = await fetch("/api/tailor", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(pasteForm),
             });
+
+            const payload = await res.json().catch(() => ({}));
             if (res.ok) {
                 setShowPasteDialog(false);
+                setTailorError(null);
                 setPasteForm({ jobDescription: "", jobTitle: "", company: "", jobUrl: "" });
                 setTimeout(fetchJobs, 2000);
+                return;
             }
+
+            setTailorError(
+                typeof payload?.error === "string" && payload.error.trim()
+                    ? payload.error.trim()
+                    : "Tailoring dispatch failed. Please try again."
+            );
         } catch (err) {
             console.error("Failed to submit tailoring:", err);
+            setTailorError("Network error while sending tailoring request. Please try again.");
         } finally {
             setSubmitting(false);
         }
@@ -227,6 +240,9 @@ export default function JobsPage() {
                                 t("pasteDialog.tailorMyCv")
                             )}
                         </Button>
+                        {tailorError && (
+                            <p className="text-sm text-red-600">{tailorError}</p>
+                        )}
                     </CardContent>
                 </Card>
             )}
