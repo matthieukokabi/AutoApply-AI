@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getExpectedSlotKeys, getZurichNowLabel } from "@/lib/discovery-scheduler";
+import {
+    getExpectedSlotKeys,
+    getZurichNowLabel,
+    getZurichParts,
+} from "@/lib/discovery-scheduler";
 import { sendAutomationHealthAlert } from "@/lib/email";
 
 type HealthAlert = {
@@ -19,8 +23,33 @@ function nowMinusMinutes(minutes: number) {
     return new Date(Date.now() - minutes * 60_000);
 }
 
+const HEALTH_LOOKBACK_DAYS = 7;
+const HEALTH_ACTIVE_WINDOW_HOURS = 12;
+const STALE_LOCK_WARNING_MINUTES = 10;
+const STALE_LOCK_PURGE_HOURS = 24;
+
 function isFailureStatus(status: string) {
     return status === "failed" || status === "trigger_failed";
+}
+
+function slotKeyToNaiveMs(slotKey: string) {
+    const match = slotKey.match(
+        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/
+    );
+    if (!match) {
+        return null;
+    }
+
+    const [, year, month, day, hour, minute] = match;
+    return Date.UTC(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hour),
+        Number(minute),
+        0,
+        0
+    );
 }
 
 async function emitAlertOnce(alert: HealthAlert, context: Record<string, unknown>) {
@@ -92,7 +121,36 @@ export async function POST(req: Request) {
             return unauthorized();
         }
 
-        const expectedSlotKeys = getExpectedSlotKeys(new Date(), 2, 45);
+        const now = new Date();
+        const nowZurichParts = getZurichParts(now);
+        const nowZurichNaiveMs = Date.UTC(
+            nowZurichParts.year,
+            nowZurichParts.month - 1,
+            nowZurichParts.day,
+            nowZurichParts.hour,
+            nowZurichParts.minute,
+            0,
+            0
+        );
+        const activeWindowMs = HEALTH_ACTIVE_WINDOW_HOURS * 60 * 60 * 1000;
+
+        const expectedSlotKeys = getExpectedSlotKeys(now, HEALTH_LOOKBACK_DAYS, 45);
+        const activeExpectedSlotKeys: string[] = [];
+        const historicalExpectedSlotKeys: string[] = [];
+        for (const slotKey of expectedSlotKeys) {
+            const slotMs = slotKeyToNaiveMs(slotKey);
+            if (slotMs === null) {
+                activeExpectedSlotKeys.push(slotKey);
+                continue;
+            }
+
+            if (nowZurichNaiveMs - slotMs <= activeWindowMs) {
+                activeExpectedSlotKeys.push(slotKey);
+            } else {
+                historicalExpectedSlotKeys.push(slotKey);
+            }
+        }
+
         const rows = expectedSlotKeys.length
             ? await prisma.discoveryScheduleRun.findMany({
                   where: {
@@ -104,14 +162,28 @@ export async function POST(req: Request) {
             : [];
 
         const rowBySlot = new Map(rows.map((row) => [row.slotKey, row]));
-        const missingSlots = expectedSlotKeys.filter((slotKey) => !rowBySlot.has(slotKey));
+        const missingSlots = activeExpectedSlotKeys.filter(
+            (slotKey) => !rowBySlot.has(slotKey)
+        );
+        const historicalMissingSlots = historicalExpectedSlotKeys.filter(
+            (slotKey) => !rowBySlot.has(slotKey)
+        );
 
         const stalePending = rows.filter(
             (row) =>
                 (row.status === "accepted" || row.status === "triggered") &&
                 row.requestedAt < nowMinusMinutes(90)
         );
-        const failedRows = rows.filter((row) => isFailureStatus(row.status));
+        const failedRows = rows.filter(
+            (row) =>
+                isFailureStatus(row.status) &&
+                activeExpectedSlotKeys.includes(row.slotKey)
+        );
+        const historicalFailedRows = rows.filter(
+            (row) =>
+                isFailureStatus(row.status) &&
+                historicalExpectedSlotKeys.includes(row.slotKey)
+        );
 
         const recentScheduled = await prisma.discoveryScheduleRun.findMany({
             where: { triggerKind: "scheduled" },
@@ -137,10 +209,31 @@ export async function POST(req: Request) {
                     row.usersProcessed === 0
             );
 
+        const staleLockPurgeCandidates = await prisma.automationLock.findMany({
+            where: {
+                workflow: "discovery_v3",
+                expiresAt: { lt: nowMinusMinutes(STALE_LOCK_PURGE_HOURS * 60) },
+            },
+            select: { id: true },
+            take: 200,
+        });
+
+        let staleLocksPurged = 0;
+        if (staleLockPurgeCandidates.length > 0) {
+            const deleted = await prisma.automationLock.deleteMany({
+                where: {
+                    id: {
+                        in: staleLockPurgeCandidates.map((lock) => lock.id),
+                    },
+                },
+            });
+            staleLocksPurged = deleted.count;
+        }
+
         const staleLocks = await prisma.automationLock.findMany({
             where: {
                 workflow: "discovery_v3",
-                expiresAt: { lt: nowMinusMinutes(10) },
+                expiresAt: { lt: nowMinusMinutes(STALE_LOCK_WARNING_MINUTES) },
             },
             select: { id: true, runId: true, slotId: true, expiresAt: true },
             take: 20,
@@ -205,8 +298,10 @@ export async function POST(req: Request) {
             const emission = await emitAlertOnce(alert, {
                 generatedAt: new Date().toISOString(),
                 expectedSlotKeys,
+                activeExpectedSlotKeys,
                 rowCount: rows.length,
                 staleLocks,
+                staleLocksPurged,
                 recentScheduled,
                 alert,
             });
@@ -223,6 +318,18 @@ export async function POST(req: Request) {
                     healthy: false,
                     nowZurich: getZurichNowLabel(),
                     expectedSlotKeys,
+                    activeExpectedSlotKeys,
+                    historicalIncidents: {
+                        missingSlots: historicalMissingSlots,
+                        failedSlots: historicalFailedRows.map((row) => ({
+                            slotKey: row.slotKey,
+                            status: row.status,
+                        })),
+                    },
+                    staleLockCleanup: {
+                        purgedCount: staleLocksPurged,
+                        staleCount: staleLocks.length,
+                    },
                     alerts: emittedAlerts,
                 },
                 { status: 500 }
@@ -233,6 +340,18 @@ export async function POST(req: Request) {
             healthy: true,
             nowZurich: getZurichNowLabel(),
             expectedSlotKeys,
+            activeExpectedSlotKeys,
+            historicalIncidents: {
+                missingSlots: historicalMissingSlots,
+                failedSlots: historicalFailedRows.map((row) => ({
+                    slotKey: row.slotKey,
+                    status: row.status,
+                })),
+            },
+            staleLockCleanup: {
+                purgedCount: staleLocksPurged,
+                staleCount: staleLocks.length,
+            },
             observedSlots: rows.map((row) => ({
                 slotKey: row.slotKey,
                 status: row.status,

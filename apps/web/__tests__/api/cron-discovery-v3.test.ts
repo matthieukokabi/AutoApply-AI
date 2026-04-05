@@ -8,6 +8,7 @@ import { triggerDiscoveryRun } from "@/lib/discovery-trigger";
 import {
     getCurrentZurichSlotKey,
     getExpectedSlotKeys,
+    getZurichParts,
     getZurichNowLabel,
     normalizeSlotKey,
 } from "@/lib/discovery-scheduler";
@@ -22,6 +23,13 @@ vi.mock("@/lib/discovery-scheduler", () => ({
     normalizeSlotKey: vi.fn((value: unknown) =>
         typeof value === "string" ? value.trim() : null
     ),
+    getZurichParts: vi.fn(() => ({
+        year: 2026,
+        month: 4,
+        day: 4,
+        hour: 12,
+        minute: 20,
+    })),
     getExpectedSlotKeys: vi.fn(() => []),
 }));
 
@@ -186,7 +194,12 @@ describe("discovery v3 cron routes", () => {
             vi.mocked(prisma.discoveryScheduleRun.findMany)
                 .mockResolvedValueOnce([] as any)
                 .mockResolvedValueOnce([] as any);
-            vi.mocked(prisma.automationLock.findMany).mockResolvedValue([] as any);
+            vi.mocked(prisma.automationLock.findMany)
+                .mockResolvedValueOnce([] as any)
+                .mockResolvedValueOnce([] as any);
+            vi.mocked(prisma.automationLock.deleteMany).mockResolvedValue({
+                count: 0,
+            } as any);
 
             const request = new Request("http://localhost/api/cron/discovery-v3/health", {
                 method: "POST",
@@ -197,6 +210,7 @@ describe("discovery v3 cron routes", () => {
             const data = await response.json();
             expect(response.status).toBe(200);
             expect(data.healthy).toBe(true);
+            expect(data.activeExpectedSlotKeys).toEqual([]);
             expect(sendAutomationHealthAlert).not.toHaveBeenCalled();
         });
 
@@ -205,7 +219,12 @@ describe("discovery v3 cron routes", () => {
             vi.mocked(prisma.discoveryScheduleRun.findMany)
                 .mockResolvedValueOnce([] as any)
                 .mockResolvedValueOnce([] as any);
-            vi.mocked(prisma.automationLock.findMany).mockResolvedValue([] as any);
+            vi.mocked(prisma.automationLock.findMany)
+                .mockResolvedValueOnce([] as any)
+                .mockResolvedValueOnce([] as any);
+            vi.mocked(prisma.automationLock.deleteMany).mockResolvedValue({
+                count: 0,
+            } as any);
             vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null as any);
             vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({} as any);
             vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
@@ -231,6 +250,68 @@ describe("discovery v3 cron routes", () => {
                 })
             );
             expect(sendAutomationHealthAlert).toHaveBeenCalled();
+        });
+
+        it("keeps historical misses visible without failing current health", async () => {
+            vi.mocked(getZurichParts).mockReturnValue({
+                year: 2026,
+                month: 4,
+                day: 5,
+                hour: 13,
+                minute: 30,
+            });
+            vi.mocked(getExpectedSlotKeys).mockReturnValue([
+                "2026-04-04T07:20",
+                "2026-04-05T07:20",
+                "2026-04-05T12:20",
+            ]);
+            vi.mocked(prisma.discoveryScheduleRun.findMany).mockReset();
+            vi.mocked(prisma.discoveryScheduleRun.findMany)
+                .mockResolvedValueOnce([
+                    {
+                        slotKey: "2026-04-05T07:20",
+                        status: "completed",
+                        requestedAt: new Date("2026-04-05T05:20:00.000Z"),
+                        finishedAt: new Date("2026-04-05T05:21:00.000Z"),
+                        usersProcessed: 1,
+                        persistedApplications: 1,
+                    },
+                    {
+                        slotKey: "2026-04-05T12:20",
+                        status: "completed",
+                        requestedAt: new Date("2026-04-05T10:20:00.000Z"),
+                        finishedAt: new Date("2026-04-05T10:21:00.000Z"),
+                        usersProcessed: 1,
+                        persistedApplications: 1,
+                    },
+                ] as any)
+                .mockResolvedValueOnce([
+                    { slotKey: "2026-04-05T12:20", status: "completed", usersProcessed: 1, lockAcquired: true },
+                    { slotKey: "2026-04-05T07:20", status: "completed", usersProcessed: 1, lockAcquired: true },
+                ] as any);
+            vi.mocked(prisma.automationLock.findMany).mockReset();
+            vi.mocked(prisma.automationLock.findMany)
+                .mockResolvedValueOnce([] as any)
+                .mockResolvedValueOnce([] as any);
+            vi.mocked(prisma.automationLock.deleteMany).mockReset();
+            vi.mocked(prisma.automationLock.deleteMany).mockResolvedValue({
+                count: 0,
+            } as any);
+
+            const request = new Request("http://localhost/api/cron/discovery-v3/health", {
+                method: "POST",
+                headers: { authorization: "Bearer test_cron_secret" },
+            });
+
+            const response = await HEALTH_POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.healthy).toBe(true);
+            expect(data.historicalIncidents.missingSlots).toEqual([
+                "2026-04-04T07:20",
+            ]);
+            expect(sendAutomationHealthAlert).not.toHaveBeenCalled();
         });
     });
 });
