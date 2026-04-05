@@ -312,6 +312,9 @@ export async function POST(req: Request) {
             });
         }
 
+        const hasCriticalAlerts = alerts.some(
+            (alert) => alert.severity === "critical"
+        );
         if (alerts.length > 0) {
             return NextResponse.json(
                 {
@@ -332,7 +335,7 @@ export async function POST(req: Request) {
                     },
                     alerts: emittedAlerts,
                 },
-                { status: 500 }
+                { status: hasCriticalAlerts ? 500 : 200 }
             );
         }
 

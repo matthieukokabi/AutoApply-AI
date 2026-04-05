@@ -1129,5 +1129,51 @@ describe("POST /api/webhooks/n8n", () => {
                 }),
             });
         });
+
+        it("preserves existing summary metrics when callback omits them", async () => {
+            vi.mocked(prisma.discoveryScheduleRun.findUnique)
+                .mockResolvedValueOnce({
+                    usersSeen: 3,
+                    usersCanary: 3,
+                    usersProcessed: 3,
+                    usersFailed: 0,
+                    persistedApplications: 4,
+                    lockAcquired: true,
+                    lockReleased: true,
+                    status: "completed",
+                    errorCode: null,
+                    errorMessage: null,
+                } as any)
+                .mockResolvedValueOnce({
+                    id: "ledger_discovery_3",
+                } as any);
+            vi.mocked(prisma.discoveryScheduleRun.update).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("discovery_run_status", {
+                runId: "disc_v3_slot_2026_04_04T18_20_scheduled",
+                slotKey: "2026-04-04T18:20",
+                triggerKind: "scheduled",
+                schedulerSource: "vercel_cron",
+                status: "completed",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.ok).toBe(true);
+            expect(prisma.discoveryScheduleRun.update).toHaveBeenCalledWith({
+                where: { id: "ledger_discovery_3" },
+                data: expect.objectContaining({
+                    usersSeen: 3,
+                    usersCanary: 3,
+                    usersProcessed: 3,
+                    usersFailed: 0,
+                    persistedApplications: 4,
+                    lockAcquired: true,
+                    lockReleased: true,
+                }),
+            });
+        });
     });
 });

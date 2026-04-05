@@ -252,6 +252,76 @@ describe("discovery v3 cron routes", () => {
             expect(sendAutomationHealthAlert).toHaveBeenCalled();
         });
 
+        it("returns 200 when only warning alerts are present", async () => {
+            vi.mocked(getExpectedSlotKeys).mockReturnValue(["2026-04-04T07:20"]);
+            vi.mocked(prisma.discoveryScheduleRun.findMany).mockReset();
+            vi.mocked(prisma.discoveryScheduleRun.findMany)
+                .mockResolvedValueOnce([
+                    {
+                        slotKey: "2026-04-04T07:20",
+                        status: "completed",
+                        requestedAt: new Date("2026-04-04T05:20:00.000Z"),
+                        finishedAt: new Date("2026-04-04T05:21:00.000Z"),
+                        usersProcessed: 0,
+                        persistedApplications: 0,
+                    },
+                ] as any)
+                .mockResolvedValueOnce([
+                    {
+                        slotKey: "2026-04-05T18:20",
+                        status: "completed",
+                        usersProcessed: 0,
+                        lockAcquired: true,
+                    },
+                    {
+                        slotKey: "2026-04-05T12:20",
+                        status: "completed",
+                        usersProcessed: 0,
+                        lockAcquired: true,
+                    },
+                    {
+                        slotKey: "2026-04-05T07:20",
+                        status: "completed",
+                        usersProcessed: 0,
+                        lockAcquired: true,
+                    },
+                ] as any);
+            vi.mocked(prisma.automationLock.findMany).mockReset();
+            vi.mocked(prisma.automationLock.findMany)
+                .mockResolvedValueOnce([] as any)
+                .mockResolvedValueOnce([] as any);
+            vi.mocked(prisma.automationLock.deleteMany).mockReset();
+            vi.mocked(prisma.automationLock.deleteMany).mockResolvedValue({
+                count: 0,
+            } as any);
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockReset();
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null as any);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockReset();
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({} as any);
+            vi.mocked(prisma.workflowError.create).mockReset();
+            vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
+
+            const request = new Request("http://localhost/api/cron/discovery-v3/health", {
+                method: "POST",
+                headers: { authorization: "Bearer test_cron_secret" },
+            });
+
+            const response = await HEALTH_POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.healthy).toBe(false);
+            expect(data.alerts).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        code: "ZERO_USERS_PROCESSED_SUSPICIOUS",
+                        severity: "warning",
+                    }),
+                ])
+            );
+            expect(sendAutomationHealthAlert).toHaveBeenCalled();
+        });
+
         it("keeps historical misses visible without failing current health", async () => {
             vi.mocked(getZurichParts).mockReturnValue({
                 year: 2026,

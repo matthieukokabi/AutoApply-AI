@@ -1818,10 +1818,129 @@ export async function POST(req: Request) {
                               slotKey:
                                   (typeof webhookData.slotKey === "string" &&
                                       webhookData.slotKey.trim()) ||
-                                  (typeof webhookData.slotId === "string" &&
+                              (typeof webhookData.slotId === "string" &&
                                       webhookData.slotId.trim()) ||
                                   null,
                           };
+
+                const summaryRunId =
+                    typeof summaryData.runId === "string" && summaryData.runId.trim()
+                        ? summaryData.runId.trim()
+                        : null;
+                const summarySlotKey =
+                    typeof summaryData.slotKey === "string" && summaryData.slotKey.trim()
+                        ? summaryData.slotKey.trim()
+                        : null;
+                const summaryTriggerKind =
+                    typeof summaryData.triggerKind === "string" &&
+                    summaryData.triggerKind.trim()
+                        ? summaryData.triggerKind.trim()
+                        : "scheduled";
+
+                const existingSummary = summaryRunId
+                    ? await prisma.discoveryScheduleRun.findUnique({
+                          where: { runId: summaryRunId },
+                          select: {
+                              usersSeen: true,
+                              usersCanary: true,
+                              usersProcessed: true,
+                              usersFailed: true,
+                              persistedApplications: true,
+                              lockAcquired: true,
+                              lockReleased: true,
+                              status: true,
+                              errorCode: true,
+                              errorMessage: true,
+                          },
+                      })
+                    : summarySlotKey
+                      ? await prisma.discoveryScheduleRun.findFirst({
+                            where: {
+                                slotKey: summarySlotKey,
+                                triggerKind: summaryTriggerKind,
+                            },
+                            orderBy: { requestedAt: "desc" },
+                            select: {
+                                usersSeen: true,
+                                usersCanary: true,
+                                usersProcessed: true,
+                                usersFailed: true,
+                                persistedApplications: true,
+                                lockAcquired: true,
+                                lockReleased: true,
+                                status: true,
+                                errorCode: true,
+                                errorMessage: true,
+                            },
+                        })
+                      : null;
+
+                const numericFields = [
+                    "usersSeen",
+                    "usersCanary",
+                    "usersProcessed",
+                    "usersFailed",
+                    "persistedApplications",
+                ] as const;
+                for (const field of numericFields) {
+                    const rawValue = summaryData[field];
+                    const parsedValue =
+                        typeof rawValue === "number" ? rawValue : Number(rawValue);
+
+                    if (Number.isFinite(parsedValue)) {
+                        const normalizedValue = Math.max(0, Math.floor(parsedValue));
+                        const existingValue = existingSummary?.[field];
+                        summaryData[field] =
+                            typeof existingValue === "number"
+                                ? Math.max(normalizedValue, existingValue)
+                                : normalizedValue;
+                        continue;
+                    }
+
+                    const existingValue = existingSummary?.[field];
+                    if (typeof existingValue === "number") {
+                        summaryData[field] = existingValue;
+                    }
+                }
+
+                const booleanFields = ["lockAcquired", "lockReleased"] as const;
+                for (const field of booleanFields) {
+                    const rawValue = summaryData[field];
+                    const existingValue = existingSummary?.[field];
+                    if (typeof rawValue === "boolean") {
+                        summaryData[field] =
+                            typeof existingValue === "boolean"
+                                ? rawValue || existingValue
+                                : rawValue;
+                        continue;
+                    }
+
+                    if (typeof existingValue === "boolean") {
+                        summaryData[field] = existingValue;
+                    }
+                }
+
+                if (
+                    (typeof summaryData.status !== "string" ||
+                        !summaryData.status.trim()) &&
+                    existingSummary?.status
+                ) {
+                    summaryData.status = existingSummary.status;
+                }
+                if (
+                    (typeof summaryData.reasonCode !== "string" ||
+                        !summaryData.reasonCode.trim()) &&
+                    existingSummary?.errorCode
+                ) {
+                    summaryData.reasonCode = existingSummary.errorCode;
+                }
+                if (
+                    (typeof summaryData.reason !== "string" ||
+                        !summaryData.reason.trim()) &&
+                    existingSummary?.errorMessage
+                ) {
+                    summaryData.reason = existingSummary.errorMessage;
+                }
 
                 const summaryResult = await updateDiscoveryRunSummary(summaryData);
                 logPipelineEvent("info", "discovery_run_status_recorded", {
