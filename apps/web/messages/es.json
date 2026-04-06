@@ -397,10 +397,11 @@
         },
         "jobsPage": {
             "title": "Feed de empleo",
-            "description": "Explora empleos descubiertos ordenados por puntuación de compatibilidad.",
+            "description": "Explora empleos descubiertos. Por defecto, los más recientes aparecen primero.",
             "actions": {
                 "pasteJob": "Pegar oferta",
                 "view": "Ver",
+                "viewOriginalJobPost": "Ver publicación original",
                 "viewDocs": "Ver docs",
                 "tailorCv": "Personalizar CV"
             },
@@ -422,7 +423,10 @@
                 "allSources": "Todas las fuentes",
                 "linkedinManualImport": "LinkedIn (importación manual)",
                 "manual": "Manual",
-                "minScoreAny": "Puntuación mín.: cualquiera"
+                "sortBy": "Ordenar por",
+                "sortNewest": "Más recientes",
+                "sortHighestMatch": "Mejor match",
+                "minScoreAny": "Match mínimo: cualquiera"
             },
             "empty": {
                 "title": "Aún no se descubrieron empleos",

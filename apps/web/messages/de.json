@@ -397,10 +397,11 @@
         },
         "jobsPage": {
             "title": "Job-Feed",
-            "description": "Durchsuchen Sie gefundene Jobs, sortiert nach Kompatibilitäts-Score.",
+            "description": "Durchsuchen Sie gefundene Jobs. Standardmäßig werden die neuesten zuerst angezeigt.",
             "actions": {
                 "pasteJob": "Job einfügen",
                 "view": "Ansehen",
+                "viewOriginalJobPost": "Originale Stellenanzeige öffnen",
                 "viewDocs": "Dokumente ansehen",
                 "tailorCv": "CV anpassen"
             },
@@ -422,7 +423,10 @@
                 "allSources": "Alle Quellen",
                 "linkedinManualImport": "LinkedIn (manueller Import)",
                 "manual": "Manuell",
-                "minScoreAny": "Mindest-Score: Beliebig"
+                "sortBy": "Sortieren nach",
+                "sortNewest": "Neueste",
+                "sortHighestMatch": "Höchster Match",
+                "minScoreAny": "Mindest-Match: Beliebig"
             },
             "empty": {
                 "title": "Noch keine Jobs gefunden",

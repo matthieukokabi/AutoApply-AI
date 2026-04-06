@@ -396,10 +396,11 @@
         },
         "jobsPage": {
             "title": "Job Feed",
-            "description": "Browse discovered jobs sorted by compatibility score.",
+            "description": "Browse discovered jobs. By default, newest jobs appear first.",
             "actions": {
                 "pasteJob": "Paste Job",
                 "view": "View",
+                "viewOriginalJobPost": "View original job post",
                 "viewDocs": "View Docs",
                 "tailorCv": "Tailor CV"
             },
@@ -421,7 +422,10 @@
                 "allSources": "All Sources",
                 "linkedinManualImport": "LinkedIn (manual import)",
                 "manual": "Manual",
-                "minScoreAny": "Min Score: Any"
+                "sortBy": "Sort by",
+                "sortNewest": "Newest",
+                "sortHighestMatch": "Highest match",
+                "minScoreAny": "Minimum match: Any"
             },
             "empty": {
                 "title": "No jobs discovered yet",

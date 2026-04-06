@@ -397,10 +397,11 @@
         },
         "jobsPage": {
             "title": "Feed offerte",
-            "description": "Sfoglia le offerte trovate ordinate per punteggio di compatibilità.",
+            "description": "Sfoglia le offerte trovate. Per default, le più recenti sono mostrate per prime.",
             "actions": {
                 "pasteJob": "Incolla offerta",
                 "view": "Vedi",
+                "viewOriginalJobPost": "Vedi annuncio originale",
                 "viewDocs": "Vedi documenti",
                 "tailorCv": "Personalizza CV"
             },
@@ -422,7 +423,10 @@
                 "allSources": "Tutte le fonti",
                 "linkedinManualImport": "LinkedIn (import manuale)",
                 "manual": "Manuale",
-                "minScoreAny": "Punteggio min: qualsiasi"
+                "sortBy": "Ordina per",
+                "sortNewest": "Più recenti",
+                "sortHighestMatch": "Match più alto",
+                "minScoreAny": "Match minimo: qualsiasi"
             },
             "empty": {
                 "title": "Nessuna offerta trovata al momento",

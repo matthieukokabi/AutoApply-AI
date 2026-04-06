@@ -49,6 +49,7 @@ export default function JobsPage() {
     const [search, setSearch] = useState("");
     const [source, setSource] = useState("");
     const [minScore, setMinScore] = useState("");
+    const [sort, setSort] = useState("newest");
     const [showPasteDialog, setShowPasteDialog] = useState(false);
     const [pasteForm, setPasteForm] = useState({
         jobDescription: "",
@@ -64,9 +65,11 @@ export default function JobsPage() {
     const searchRef = useRef(search);
     const sourceRef = useRef(source);
     const minScoreRef = useRef(minScore);
+    const sortRef = useRef(sort);
     searchRef.current = search;
     sourceRef.current = source;
     minScoreRef.current = minScore;
+    sortRef.current = sort;
 
     const fetchJobs = useCallback(async () => {
         setLoading(true);
@@ -75,6 +78,7 @@ export default function JobsPage() {
             if (searchRef.current) params.set("search", searchRef.current);
             if (sourceRef.current) params.set("source", sourceRef.current);
             if (minScoreRef.current) params.set("minScore", minScoreRef.current);
+            if (sortRef.current) params.set("sort", sortRef.current);
 
             const res = await fetch(`/api/jobs?${params.toString()}`);
             if (res.ok) {
@@ -93,7 +97,7 @@ export default function JobsPage() {
     useEffect(() => {
         const timeout = setTimeout(fetchJobs, 300);
         return () => clearTimeout(timeout);
-    }, [search, source, minScore, fetchJobs]);
+    }, [search, source, minScore, sort, fetchJobs]);
 
     async function handlePasteSubmit() {
         if (!pasteForm.jobDescription.trim()) return;
@@ -273,13 +277,22 @@ export default function JobsPage() {
                 </select>
                 <select
                     className="px-3 py-2 border rounded-md text-sm"
+                    aria-label={t("filters.sortBy")}
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                >
+                    <option value="newest">{t("filters.sortNewest")}</option>
+                    <option value="highest_match">{t("filters.sortHighestMatch")}</option>
+                </select>
+                <select
+                    className="px-3 py-2 border rounded-md text-sm"
                     value={minScore}
                     onChange={(e) => setMinScore(e.target.value)}
                 >
                     <option value="">{t("filters.minScoreAny")}</option>
-                    <option value="60">60+</option>
-                    <option value="75">75+</option>
-                    <option value="90">90+</option>
+                    <option value="60">60%+</option>
+                    <option value="75">75%+</option>
+                    <option value="90">90%+</option>
                 </select>
             </div>
 
@@ -388,15 +401,15 @@ export default function JobsPage() {
                                             )}
                                     </div>
                                     <div className="flex gap-2 ml-4">
-                                        {job.url && (
+                                        {job.url && job.url.trim().length > 0 && (
                                             <a
-                                                href={job.url}
+                                                href={job.url.trim()}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
                                                 <Button variant="outline" size="sm">
                                                     <ExternalLink className="h-3 w-3 mr-1" />{" "}
-                                                    {t("actions.view")}
+                                                    {t("actions.viewOriginalJobPost")}
                                                 </Button>
                                             </a>
                                         )}

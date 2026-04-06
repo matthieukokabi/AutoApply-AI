@@ -397,10 +397,11 @@
         },
         "jobsPage": {
             "title": "Flux d'offres",
-            "description": "Parcourez les offres découvertes triées par score de compatibilité.",
+            "description": "Parcourez les offres découvertes. Par défaut, les plus récentes s'affichent d'abord.",
             "actions": {
                 "pasteJob": "Coller une offre",
                 "view": "Voir",
+                "viewOriginalJobPost": "Voir l'offre d'origine",
                 "viewDocs": "Voir les docs",
                 "tailorCv": "Personnaliser le CV"
             },
@@ -422,7 +423,10 @@
                 "allSources": "Toutes les sources",
                 "linkedinManualImport": "LinkedIn (import manuel)",
                 "manual": "Manuel",
-                "minScoreAny": "Score min: aucun"
+                "sortBy": "Trier par",
+                "sortNewest": "Plus récentes",
+                "sortHighestMatch": "Meilleur match",
+                "minScoreAny": "Match min : aucun"
             },
             "empty": {
                 "title": "Aucune offre découverte pour le moment",

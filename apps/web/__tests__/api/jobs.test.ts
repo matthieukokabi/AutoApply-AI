@@ -55,6 +55,51 @@ const mockJobs = [
     },
 ];
 
+const mockApplicationsSortedByMatch = [
+    {
+        id: "app_1",
+        compatibilityScore: 91,
+        atsKeywords: ["React", "TypeScript"],
+        status: "tailored",
+        recommendation: "apply",
+        createdAt: new Date("2026-04-01T10:00:00.000Z"),
+        job: {
+            id: "job_1",
+            externalId: "ext_1",
+            title: "Senior React Developer",
+            company: "TechCorp",
+            location: "Remote",
+            description: "Build awesome apps",
+            source: "adzuna",
+            url: "https://example.com/job/1",
+            salary: "$120k",
+            fetchedAt: new Date("2026-04-02T08:00:00.000Z"),
+            postedAt: new Date("2026-04-01T08:00:00.000Z"),
+        },
+    },
+    {
+        id: "app_2",
+        compatibilityScore: 76,
+        atsKeywords: ["Node.js", "PostgreSQL"],
+        status: "discovered",
+        recommendation: "stretch",
+        createdAt: new Date("2026-04-01T09:00:00.000Z"),
+        job: {
+            id: "job_2",
+            externalId: "ext_2",
+            title: "Backend Engineer",
+            company: "DataInc",
+            location: "Berlin",
+            description: "API development",
+            source: "remotive",
+            url: "",
+            salary: null,
+            fetchedAt: new Date("2026-04-01T08:00:00.000Z"),
+            postedAt: null,
+        },
+    },
+];
+
 beforeEach(() => {
     vi.clearAllMocks();
 });
@@ -102,6 +147,67 @@ describe("GET /api/jobs", () => {
         expect(response.status).toBe(400);
         expect(data.error).toContain("Invalid minScore");
         expect(prisma.job.findMany).not.toHaveBeenCalled();
+    });
+
+    it("sorts server-side by highest match when sort=highest_match", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue(
+            mockApplicationsSortedByMatch as any
+        );
+
+        const request = new Request("http://localhost/api/jobs?sort=highest_match");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(prisma.application.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                orderBy: [{ compatibilityScore: "desc" }, { createdAt: "desc" }],
+            })
+        );
+        expect(prisma.job.findMany).not.toHaveBeenCalled();
+        expect(data.jobs).toHaveLength(2);
+        expect(data.jobs[0].application.compatibilityScore).toBe(91);
+        expect(data.jobs[1].application.compatibilityScore).toBe(76);
+    });
+
+    it("keeps source/search/minScore filters when sort=highest_match", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue(
+            mockApplicationsSortedByMatch as any
+        );
+
+        const request = new Request(
+            "http://localhost/api/jobs?sort=highest_match&source=adzuna&search=react&minScore=75"
+        );
+        const response = await GET(request);
+
+        expect(response.status).toBe(200);
+        expect(prisma.application.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    userId: "user_1",
+                    compatibilityScore: { gte: 75 },
+                    job: expect.objectContaining({
+                        source: "adzuna",
+                        OR: expect.any(Array),
+                    }),
+                }),
+            })
+        );
+    });
+
+    it("rejects invalid sort query values", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+
+        const request = new Request("http://localhost/api/jobs?sort=top");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(data.error).toContain("Invalid sort");
+        expect(prisma.job.findMany).not.toHaveBeenCalled();
+        expect(prisma.application.findMany).not.toHaveBeenCalled();
     });
 
     it("falls back to default limit when limit query is invalid", async () => {
