@@ -87,6 +87,7 @@ describe("GET /api/applications", () => {
         vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
         vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
             {
+                id: "err_external_fallback",
                 createdAt: new Date("2026-04-11T12:00:00.000Z"),
                 message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
                 payload: {
@@ -127,6 +128,15 @@ describe("GET /api/applications", () => {
                 }),
             })
         );
+        const workflowLookupCall = vi.mocked(prisma.workflowError.findMany).mock.calls[0]?.[0] as any;
+        expect(workflowLookupCall.take).toBeUndefined();
+        expect(workflowLookupCall.where.OR).toEqual(
+            expect.arrayContaining([
+                { payload: { path: ["applicationId"], equals: "app_1" } },
+                { payload: { path: ["jobId"], equals: "job_1" } },
+                { payload: { path: ["externalId"], equals: "external_job_1" } },
+            ])
+        );
     });
 
     it("prefers direct applicationId linkage over fallback correlation", async () => {
@@ -134,6 +144,7 @@ describe("GET /api/applications", () => {
         vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
         vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
             {
+                id: "err_external_newer",
                 createdAt: new Date("2026-04-11T12:05:00.000Z"),
                 message: "FACTUAL_GUARD_UNSUPPORTED_YEAR",
                 payload: {
@@ -142,6 +153,7 @@ describe("GET /api/applications", () => {
                 },
             },
             {
+                id: "err_application_linked",
                 createdAt: new Date("2026-04-11T12:00:00.000Z"),
                 message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
                 payload: {
@@ -167,6 +179,55 @@ describe("GET /api/applications", () => {
                 plainDiscoveredCount: 0,
                 guardBlockedCount: 1,
             })
+        );
+    });
+
+    it("surfaces older relevant fallback rows and ignores unrelated guard rows", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
+        vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
+            {
+                id: "err_unrelated_newer",
+                createdAt: new Date("2026-04-11T12:10:00.000Z"),
+                message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+                payload: {
+                    externalId: "external_job_unrelated",
+                    reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+                },
+            },
+            {
+                id: "err_relevant_older",
+                createdAt: new Date("2025-01-15T10:00:00.000Z"),
+                message: "FACTUAL_GUARD_UNSUPPORTED_CERTIFICATION",
+                payload: {
+                    jobId: "job_1",
+                    reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_CERTIFICATION"],
+                },
+            },
+        ] as any);
+
+        const request = new Request("http://localhost/api/applications");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.applications[0].factualGuard).toEqual({
+            blocked: true,
+            reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_CERTIFICATION"],
+            blockedAt: "2025-01-15T10:00:00.000Z",
+        });
+        expect(data.applications[1].factualGuard).toBeNull();
+        expect(data.summary).toEqual(
+            expect.objectContaining({
+                totalCount: 2,
+                tailoredCount: 1,
+                discoveredCount: 1,
+                plainDiscoveredCount: 0,
+                guardBlockedCount: 1,
+            })
+        );
+        expect(data.summary.plainDiscoveredCount + data.summary.guardBlockedCount).toBe(
+            data.summary.discoveredCount
         );
     });
 

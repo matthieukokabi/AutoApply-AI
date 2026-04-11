@@ -51,6 +51,16 @@ describe("GET /api/stats", () => {
         ] as any);
         vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
             {
+                id: "err_unrelated",
+                createdAt: new Date("2026-04-11T13:00:00.000Z"),
+                message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+                payload: {
+                    applicationId: "app_unrelated",
+                    reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+                },
+            },
+            {
+                id: "err_relevant",
                 createdAt: new Date("2026-04-11T12:00:00.000Z"),
                 message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
                 payload: {
@@ -75,6 +85,19 @@ describe("GET /api/stats", () => {
         expect(data.avgScore).toBe(79); // rounded
         expect(data.subscriptionStatus).toBe("pro");
         expect(data.creditsRemaining).toBe(42);
+
+        const workflowLookupCall = vi.mocked(prisma.workflowError.findMany).mock.calls[0]?.[0] as any;
+        expect(workflowLookupCall.take).toBeUndefined();
+        expect(workflowLookupCall.where.OR).toEqual(
+            expect.arrayContaining([
+                { payload: { path: ["applicationId"], equals: "app_discovered_1" } },
+                { payload: { path: ["applicationId"], equals: "app_discovered_2" } },
+                { payload: { path: ["jobId"], equals: "job_discovered_1" } },
+                { payload: { path: ["jobId"], equals: "job_discovered_2" } },
+                { payload: { path: ["externalId"], equals: "external_discovered_1" } },
+                { payload: { path: ["externalId"], equals: "external_discovered_2" } },
+            ])
+        );
     });
 
     it("returns 401 when not authenticated", async () => {

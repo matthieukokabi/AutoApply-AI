@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const FACTUAL_GUARD_BLOCKED_ERROR_TYPE = "FACTUAL_GUARD_BLOCKED";
@@ -8,6 +9,12 @@ const FACTUAL_GUARD_RELEVANT_WORKFLOW_IDS = [
 ];
 
 type WorkflowErrorPayload = Record<string, unknown>;
+type WorkflowErrorReadRow = {
+    id: string;
+    createdAt: Date;
+    message: string;
+    payload: unknown;
+};
 
 type ApplicationGuardReadInput = {
     id: string;
@@ -39,6 +46,8 @@ export type ApplicationStateSummary = {
     guardBlockedCount: number;
     byStatus: Record<string, number>;
 };
+
+const WORKFLOW_ERROR_LOOKUP_OR_BATCH_SIZE = 150;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -77,6 +86,113 @@ function getReasonCodes(payload: WorkflowErrorPayload, message: string): string[
     return dedupeReasonCodes(fallbackMessageReasonCodes);
 }
 
+function dedupeNonEmptyStrings(values: string[]): string[] {
+    const unique = new Set<string>();
+    for (const value of values) {
+        const normalized = value.trim();
+        if (normalized) {
+            unique.add(normalized);
+        }
+    }
+    return Array.from(unique);
+}
+
+function chunkArray<T>(values: T[], chunkSize: number): T[][] {
+    if (values.length === 0) return [];
+    const chunks: T[][] = [];
+    for (let index = 0; index < values.length; index += chunkSize) {
+        chunks.push(values.slice(index, index + chunkSize));
+    }
+    return chunks;
+}
+
+function buildWorkflowErrorPayloadMatchClauses(params: {
+    applicationIds: string[];
+    jobIds: string[];
+    externalIds: string[];
+}): Prisma.WorkflowErrorWhereInput[] {
+    const { applicationIds, jobIds, externalIds } = params;
+    const clauses: Prisma.WorkflowErrorWhereInput[] = [];
+
+    for (const applicationId of applicationIds) {
+        clauses.push({
+            payload: {
+                path: ["applicationId"],
+                equals: applicationId,
+            },
+        });
+    }
+    for (const jobId of jobIds) {
+        clauses.push({
+            payload: {
+                path: ["jobId"],
+                equals: jobId,
+            },
+        });
+    }
+    for (const externalId of externalIds) {
+        clauses.push({
+            payload: {
+                path: ["externalId"],
+                equals: externalId,
+            },
+        });
+    }
+
+    return clauses;
+}
+
+async function getTargetedWorkflowErrors(params: {
+    userId: string;
+    applicationIds: string[];
+    jobIds: string[];
+    externalIds: string[];
+}): Promise<WorkflowErrorReadRow[]> {
+    const { userId, applicationIds, jobIds, externalIds } = params;
+    const payloadMatchClauses = buildWorkflowErrorPayloadMatchClauses({
+        applicationIds,
+        jobIds,
+        externalIds,
+    });
+    if (payloadMatchClauses.length === 0) {
+        return [];
+    }
+
+    const clauseBatches = chunkArray(payloadMatchClauses, WORKFLOW_ERROR_LOOKUP_OR_BATCH_SIZE);
+    const workflowErrorBatches = await Promise.all(
+        clauseBatches.map((batchClauses) =>
+            prisma.workflowError.findMany({
+                where: {
+                    userId,
+                    errorType: FACTUAL_GUARD_BLOCKED_ERROR_TYPE,
+                    workflowId: { in: FACTUAL_GUARD_RELEVANT_WORKFLOW_IDS },
+                    OR: batchClauses,
+                },
+                orderBy: { createdAt: "desc" },
+                select: {
+                    id: true,
+                    createdAt: true,
+                    message: true,
+                    payload: true,
+                },
+            })
+        )
+    );
+
+    const latestByWorkflowErrorId = new Map<string, WorkflowErrorReadRow>();
+    for (const batch of workflowErrorBatches) {
+        for (const workflowError of batch) {
+            if (!latestByWorkflowErrorId.has(workflowError.id)) {
+                latestByWorkflowErrorId.set(workflowError.id, workflowError);
+            }
+        }
+    }
+
+    return Array.from(latestByWorkflowErrorId.values()).sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
+}
+
 function hasPersistedTailoredContent(application: ApplicationGuardReadInput): boolean {
     const tailoredCv = typeof application.tailoredCvMarkdown === "string"
         ? application.tailoredCvMarkdown.trim()
@@ -96,19 +212,34 @@ export async function getFactualGuardByApplicationId(params: {
         return new Map();
     }
 
-    const workflowErrors = await prisma.workflowError.findMany({
-        where: {
-            userId,
-            errorType: FACTUAL_GUARD_BLOCKED_ERROR_TYPE,
-            workflowId: { in: FACTUAL_GUARD_RELEVANT_WORKFLOW_IDS },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 500,
-        select: {
-            createdAt: true,
-            message: true,
-            payload: true,
-        },
+    const guardCandidateApplications = applications.filter((application) => {
+        if (application.status !== "discovered") {
+            return false;
+        }
+        if (hasPersistedTailoredContent(application)) {
+            return false;
+        }
+        return true;
+    });
+    if (guardCandidateApplications.length === 0) {
+        return new Map();
+    }
+
+    const targetedApplicationIds = dedupeNonEmptyStrings(
+        guardCandidateApplications.map((application) => application.id)
+    );
+    const targetedJobIds = dedupeNonEmptyStrings(
+        guardCandidateApplications.map((application) => application.jobId)
+    );
+    const targetedExternalIds = dedupeNonEmptyStrings(
+        guardCandidateApplications.map((application) => application.job?.externalId || "")
+    );
+
+    const workflowErrors = await getTargetedWorkflowErrors({
+        userId,
+        applicationIds: targetedApplicationIds,
+        jobIds: targetedJobIds,
+        externalIds: targetedExternalIds,
     });
 
     const latestByJobId = new Map<string, ApplicationFactualGuardInfo>();
@@ -149,14 +280,7 @@ export async function getFactualGuardByApplicationId(params: {
 
     const factualGuardByApplicationId = new Map<string, ApplicationFactualGuardInfo>();
 
-    for (const application of applications) {
-        if (application.status !== "discovered") {
-            continue;
-        }
-        if (hasPersistedTailoredContent(application)) {
-            continue;
-        }
-
+    for (const application of guardCandidateApplications) {
         const signalFromApplicationId = latestByApplicationId.get(application.id);
         const signalFromJobId = latestByJobId.get(application.jobId);
         const externalId = application.job?.externalId?.trim() || "";
