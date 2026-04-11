@@ -15,6 +15,25 @@ This test verifies in one real-DB run that:
 - one `WorkflowError` row is persisted with `errorType=FACTUAL_GUARD_BLOCKED`
 - aggregate persisted counters remain coherent (`tailored=1`, `discovered=1`, `quarantined=1`)
 
+## Release-sensitive scope (mandatory gate)
+
+This gate is mandatory before merge/deploy when a change affects any of:
+
+- `/api/webhooks/n8n` handling for `new_applications` or `single_tailoring_complete`
+- `/api/tailor` dispatch behavior
+- factual-guard logic or reason-code handling for tailored document persistence
+- n8n tailoring callback payload mapping that affects tailored markdown persistence
+
+For those changes, do not merge or deploy without a green run of:
+
+`Webhooks n8n Real-DB Release Gate`
+
+## Required evidence link
+
+The PR/release notes must include the successful workflow run URL:
+
+`https://github.com/<org>/<repo>/actions/runs/<id>`
+
 ## Workflow
 
 GitHub Actions workflow name:
@@ -45,7 +64,9 @@ No database URL is hardcoded in the workflow.
 2. Select workflow `Webhooks n8n Real-DB Release Gate`.
 3. Click `Run workflow` on the target branch/commit.
 4. Wait for job `Real-DB factual-guard mixed-batch gate` to complete.
-5. Confirm pass/fail and check step summary for expected proof points.
+5. Copy the successful run URL.
+6. Add the run URL to the PR (and release notes if applicable) before merge/deploy.
+7. Confirm pass/fail and check step summary for expected proof points.
 
 ## Command executed by the gate
 

@@ -26,7 +26,8 @@ Before any `--prod` deploy:
    - `npm test`
    - `npm run build`
 3. Confirm no unresolved P0 blocker was introduced by the batch.
-4. Record deploy reason + commit range in `SESSION_LOG.md`.
+4. If the batch is release-sensitive for Tailor/webhook persistence or factual-guard behavior, run `Webhooks n8n Real-DB Release Gate` and capture the green run URL in the PR/release notes.
+5. Record deploy reason + commit range in `SESSION_LOG.md`.
 
 ## Production deploy command
 
