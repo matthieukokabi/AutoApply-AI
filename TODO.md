@@ -24,6 +24,7 @@ Last updated: 2026-04-11 (Europe/Zurich)
 
 ## P0/P1 — jobs delivery anti-spam + account-level reliability audit
 
+- [x] Tighten PR real-DB gate evidence validator to require linked workflow run `head_sha` to match current `pull_request.head.sha` (reject stale successful runs from older commits with explicit diagnostics) — completed on 2026-04-11 (`.github/workflows/pr-real-db-gate-evidence.yml`, `docs/release-gate-webhooks-n8n-real-db.md`)
 - [x] Add PR CI validator enforcing real-DB gate evidence for release-sensitive Tailor/webhook persistence changes (path-sensitive trigger + PR body run-URL parsing + successful workflow-name/run-status verification for `Webhooks n8n Real-DB Release Gate`) — completed on 2026-04-11 (`.github/workflows/pr-real-db-gate-evidence.yml`, `docs/release-gate-webhooks-n8n-real-db.md`)
 - [x] Codify manual real-DB factual-guard release-gate requirement in merge/deploy process (PR template checklist + mandatory run-URL evidence + release-sensitive scope definition in gate/deploy docs) — completed on 2026-04-11 (`.github/pull_request_template.md`, `docs/release-gate-webhooks-n8n-real-db.md`, `docs/vercel-deploy-batching-rule.md`)
 - [x] Add manual GitHub Actions release gate for real-DB `new_applications` factual-guard integration regression (manual dispatch only, dedicated `AUTOAPPLY_TEST_DATABASE_URL` secret, narrow test target only, documented operator run steps) — completed on 2026-04-11 (`.github/workflows/webhooks-n8n-real-db-release-gate.yml`, `docs/release-gate-webhooks-n8n-real-db.md`)

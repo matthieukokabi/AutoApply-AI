@@ -37,6 +37,7 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const pullNumber = pr.number;
+            const prHeadSha = pr.head?.sha || "";
             const expectedWorkflowName = "Webhooks n8n Real-DB Release Gate";
 
             const isReleaseSensitivePath = (filename) => {
@@ -80,6 +81,7 @@ jobs:
 
             const runIds = [...new Set(runUrlMatches.map((match) => Number(match[1])).filter(Number.isFinite))];
             let validEvidenceFound = false;
+            let staleRunDetected = false;
             const checkedRuns = [];
 
             for (const runId of runIds) {
@@ -91,17 +93,26 @@ jobs:
                 });
 
                 checkedRuns.push(
-                  `run_id=${runId}, name=${run.name}, status=${run.status}, conclusion=${run.conclusion}`
+                  `run_id=${runId}, name=${run.name}, status=${run.status}, conclusion=${run.conclusion}, head_sha=${run.head_sha}`
                 );
 
+                const isExpectedWorkflow = run.name === expectedWorkflowName;
+                const isSuccessfulRun =
+                  run.status === "completed" && run.conclusion === "success";
+                const headShaMatches = run.head_sha === prHeadSha;
+
                 if (
-                  run.name === expectedWorkflowName &&
-                  run.status === "completed" &&
-                  run.conclusion === "success"
+                  isExpectedWorkflow &&
+                  isSuccessfulRun &&
+                  headShaMatches
                 ) {
                   validEvidenceFound = true;
-                  core.notice(`Validated gate evidence with run ${runId}.`);
+                  core.notice(`Validated gate evidence with run ${runId} for PR head SHA ${prHeadSha}.`);
                   break;
+                }
+
+                if (isExpectedWorkflow && isSuccessfulRun && !headShaMatches) {
+                  staleRunDetected = true;
                 }
               } catch (error) {
                 checkedRuns.push(
@@ -113,8 +124,11 @@ jobs:
             if (!validEvidenceFound) {
               core.setFailed(
                 [
-                  "Release-sensitive changes detected, but no linked run proved a successful gate execution.",
+                  staleRunDetected
+                    ? "Release-sensitive changes detected, but linked gate run evidence is stale (head SHA mismatch)."
+                    : "Release-sensitive changes detected, but no linked run proved a successful gate execution.",
                   `Required workflow: ${expectedWorkflowName}`,
+                  `Required head SHA: ${prHeadSha}`,
                   "Linked run diagnostics:",
                   ...checkedRuns.map((line) => `- ${line}`),
                 ].join("\n")

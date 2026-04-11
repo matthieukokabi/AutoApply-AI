@@ -39,7 +39,8 @@ Behavior:
 - if no release-sensitive paths are changed, the check exits without requiring evidence
 - if release-sensitive paths are changed, the PR body must include at least one run URL in format:
   `https://github.com/<org>/<repo>/actions/runs/<id>`
-- at least one linked run must resolve to workflow `Webhooks n8n Real-DB Release Gate` with `status=completed` and `conclusion=success`
+- at least one linked run must resolve to workflow `Webhooks n8n Real-DB Release Gate` with `status=completed`, `conclusion=success`, and `head_sha` exactly matching `pull_request.head.sha`
+- stale run URLs from older commits are rejected
 - otherwise the PR check fails
 
 ## Required evidence link
