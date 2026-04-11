@@ -1655,10 +1655,28 @@ export async function POST(req: Request) {
                     applicationsCount: applications.length,
                 });
 
+                const trustedBatchUser = await prisma.user.findUnique({
+                    where: { id: userId },
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        subscriptionStatus: true,
+                        creditsRemaining: true,
+                        masterProfile: {
+                            select: {
+                                rawText: true,
+                                structuredJson: true,
+                            },
+                        },
+                    },
+                });
+
                 const persistedApps = [];
                 const newlyCreatedApps = [];
                 let discoveredCount = 0;
                 let tailoredCount = 0;
+                let quarantinedCount = 0;
 
                 for (let index = 0; index < applications.length; index += 1) {
                     const app = applications[index];
@@ -1666,19 +1684,80 @@ export async function POST(req: Request) {
                         app && typeof app === "object" && !Array.isArray(app)
                             ? (app as Record<string, any>)
                             : {};
-                    const normalizedTailoredCvMarkdown = safeNormalizeTailoredCv(
-                        appData.tailoredCvMarkdown
-                    );
-                    const normalizedCoverLetterMarkdown = safeNormalizeCoverLetter(
-                        appData.coverLetterMarkdown
-                    );
-                    const resolvedStatus =
-                        appData.status ||
-                        (normalizedTailoredCvMarkdown ? "tailored" : "discovered");
                     const externalId =
                         appData.externalId ||
                         appData.url ||
                         `manual-${userId}-${Date.now()}-${index}`;
+                    const factualGuardAssessment = assessTailoredOutputFactualGuard({
+                        tailoredCvMarkdown:
+                            typeof appData.tailoredCvMarkdown === "string"
+                                ? appData.tailoredCvMarkdown
+                                : "",
+                        coverLetterMarkdown:
+                            typeof appData.coverLetterMarkdown === "string"
+                                ? appData.coverLetterMarkdown
+                                : "",
+                        sourceCvText:
+                            trustedBatchUser?.masterProfile?.rawText ||
+                            (typeof appData.masterCvText === "string" ? appData.masterCvText : ""),
+                        structuredProfile: trustedBatchUser?.masterProfile?.structuredJson,
+                        additionalContext:
+                            typeof appData.additionalContext === "string"
+                                ? appData.additionalContext.trim()
+                                : "",
+                        targetJobTitle: typeof appData.title === "string" ? appData.title : "",
+                        targetCompany: typeof appData.company === "string" ? appData.company : "",
+                    });
+                    const quarantinedByFactualGuard = factualGuardAssessment.blocked;
+                    if (quarantinedByFactualGuard) {
+                        quarantinedCount += 1;
+                        logPipelineEvent("warn", "new_applications_factual_guard_blocked", {
+                            runId,
+                            userId,
+                            externalId,
+                            applicationIndex: index,
+                            reasonCodes: factualGuardAssessment.reasonCodes,
+                            detail: factualGuardAssessment.detail,
+                        });
+                        try {
+                            await prisma.workflowError.create({
+                                data: {
+                                    workflowId: "job-discovery-pipeline-v3",
+                                    nodeName: "Factual Guard",
+                                    errorType: "FACTUAL_GUARD_BLOCKED",
+                                    message: factualGuardAssessment.reasonCodes.join(","),
+                                    payload: {
+                                        runId,
+                                        userId,
+                                        externalId,
+                                        applicationIndex: index,
+                                        reasonCodes: factualGuardAssessment.reasonCodes,
+                                        detail: factualGuardAssessment.detail as Prisma.JsonObject,
+                                    } as Prisma.InputJsonValue,
+                                    userId,
+                                },
+                            });
+                        } catch (workflowError) {
+                            logPipelineEvent("warn", "new_applications_factual_guard_log_failed", {
+                                runId,
+                                userId,
+                                externalId,
+                                error:
+                                    workflowError instanceof Error
+                                        ? workflowError.message
+                                        : String(workflowError),
+                            });
+                        }
+                    }
+                    const normalizedTailoredCvMarkdown = quarantinedByFactualGuard
+                        ? null
+                        : safeNormalizeTailoredCv(appData.tailoredCvMarkdown);
+                    const normalizedCoverLetterMarkdown = quarantinedByFactualGuard
+                        ? null
+                        : safeNormalizeCoverLetter(appData.coverLetterMarkdown);
+                    const resolvedStatus = quarantinedByFactualGuard
+                        ? "discovered"
+                        : appData.status || (normalizedTailoredCvMarkdown ? "tailored" : "discovered");
 
                     // First, create/upsert the Job record (discovery pipeline finds NEW jobs)
                     const job = await prisma.job.upsert({
@@ -1760,6 +1839,7 @@ export async function POST(req: Request) {
                     persistedCount: persistedApps.length,
                     tailoredCount,
                     discoveredCount,
+                    quarantinedCount,
                 });
 
                 if (idempotencyKey) {
@@ -1784,7 +1864,7 @@ export async function POST(req: Request) {
 
                 // Send email notification for new job matches
                 try {
-                    const user = await prisma.user.findUnique({ where: { id: userId } });
+                    const user = trustedBatchUser;
                     if (user && newlyCreatedApps.length > 0) {
                         const matchedJobs = newlyCreatedApps.map((a) => ({
                             title: a.job.title,

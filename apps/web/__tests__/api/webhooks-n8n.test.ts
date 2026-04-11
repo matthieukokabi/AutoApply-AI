@@ -678,6 +678,110 @@ describe("POST /api/webhooks/n8n", () => {
             );
         });
 
+        it("quarantines unsupported factual claims in batch payload before persistence", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "discovered",
+                tailoredCvMarkdown: null,
+                coverLetterMarkdown: null,
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [
+                    {
+                        externalId: "adzuna-guard-1",
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                        compatibilityScore: 90,
+                        tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Principal Engineer at Moonshot Labs
+**2030 - Present**
+- Led enterprise platform delivery with Kubernetes and Rust.`,
+                        coverLetterMarkdown:
+                            "I recently completed an Executive MBA and led Moonshot Labs cloud migration programs.",
+                    },
+                ],
+            });
+
+            const response = await POST(request);
+
+            expect(response.status).toBe(200);
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    create: expect.objectContaining({
+                        status: "discovered",
+                        tailoredCvMarkdown: null,
+                        coverLetterMarkdown: null,
+                    }),
+                    update: expect.objectContaining({
+                        status: "discovered",
+                        tailoredCvMarkdown: null,
+                        coverLetterMarkdown: null,
+                    }),
+                })
+            );
+            expect(prisma.workflowError.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        workflowId: "job-discovery-pipeline-v3",
+                        errorType: "FACTUAL_GUARD_BLOCKED",
+                        message: expect.stringContaining("FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"),
+                    }),
+                })
+            );
+        });
+
+        it("preserves tailored batch persistence when claims are supported by trusted context", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "tailored",
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: "# Tailored Cover",
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [
+                    {
+                        externalId: "adzuna-guard-pass-1",
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                        compatibilityScore: 90,
+                        additionalContext:
+                            "Verified candidate context: Kubernetes operations and Rust services ownership since 2024.",
+                        tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Operated Kubernetes workloads and shipped Rust backend services.`,
+                        coverLetterMarkdown:
+                            "My Kubernetes and Rust experience directly matches your platform team needs.",
+                    },
+                ],
+            });
+
+            const response = await POST(request);
+
+            expect(response.status).toBe(200);
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    create: expect.objectContaining({
+                        status: "tailored",
+                    }),
+                    update: expect.objectContaining({
+                        status: "tailored",
+                    }),
+                })
+            );
+            expect(prisma.workflowError.create).not.toHaveBeenCalled();
+        });
+
         it("uses a stable fallback externalId when n8n payload omits externalId", async () => {
             vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
