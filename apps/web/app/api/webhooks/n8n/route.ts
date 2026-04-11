@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendJobMatchEmail, sendTailoringCompleteEmail, sendCreditsLowEmail } from "@/lib/email";
 import { normalizeCoverLetterMarkdown, normalizeCvMarkdown } from "@/lib/document-model";
+import { parseCV } from "@/lib/cv-parser";
 import { markDiscoveryRunFailed, updateDiscoveryRunSummary } from "@/lib/discovery-trigger";
 
 const DISCOVERY_WORKFLOW_ID = "eddfsS251UHbmNIj";
@@ -54,6 +55,329 @@ function safeNormalizeCoverLetter(markdown: unknown) {
     } catch {
         return trimmed;
     }
+}
+
+const FACTUAL_GUARD_REASON_CODES = {
+    missingTrustedSource: "FACTUAL_GUARD_MISSING_TRUSTED_SOURCE",
+    unsupportedEmployer: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+    unsupportedJobTitle: "FACTUAL_GUARD_UNSUPPORTED_JOB_TITLE",
+    unsupportedYear: "FACTUAL_GUARD_UNSUPPORTED_YEAR",
+    unsupportedCredential: "FACTUAL_GUARD_UNSUPPORTED_CREDENTIAL",
+    unsupportedTechnology: "FACTUAL_GUARD_UNSUPPORTED_TECHNOLOGY",
+} as const;
+
+const EXPERIENCE_SECTION_REGEX =
+    /\b(experience|employment|work history|professional experience|expérience|experiencia|erfahrung|esperienza)\b/i;
+const CREDENTIAL_LINE_REGEX =
+    /\b(certified|certification|certificate|certificat|zertifikat|certificazione|degree|diploma|diplôme|bachelor|master|phd|doctorate|mba|licence|license|licenciatura|maestr[ií]a)\b/i;
+const YEAR_REGEX = /\b(?:19|20)\d{2}\b/g;
+const CLAIM_STOPWORDS = new Set([
+    "the",
+    "and",
+    "for",
+    "with",
+    "from",
+    "into",
+    "that",
+    "this",
+    "have",
+    "has",
+    "were",
+    "was",
+    "are",
+    "is",
+    "des",
+    "les",
+    "pour",
+    "avec",
+    "dans",
+    "und",
+    "der",
+    "die",
+    "das",
+    "mit",
+    "für",
+    "con",
+    "per",
+    "del",
+    "della",
+]);
+
+const TECHNOLOGY_PATTERNS: ReadonlyArray<{ key: string; regex: RegExp }> = [
+    { key: "react", regex: /\breact(?:\.js)?\b/i },
+    { key: "nextjs", regex: /\bnext(?:\.js)?\b/i },
+    { key: "nodejs", regex: /\bnode(?:\.js)?\b/i },
+    { key: "typescript", regex: /\btypescript\b/i },
+    { key: "javascript", regex: /\bjavascript\b/i },
+    { key: "python", regex: /\bpython\b/i },
+    { key: "java", regex: /\bjava\b/i },
+    { key: "csharp", regex: /\bc#\b|\bcsharp\b/i },
+    { key: "dotnet", regex: /\b\.net\b|\bdotnet\b/i },
+    { key: "go", regex: /\bgolang\b|\bgo\b/i },
+    { key: "rust", regex: /\brust\b/i },
+    { key: "php", regex: /\bphp\b/i },
+    { key: "ruby", regex: /\bruby\b/i },
+    { key: "sql", regex: /\bsql\b/i },
+    { key: "postgresql", regex: /\bpostgres(?:ql)?\b/i },
+    { key: "mysql", regex: /\bmysql\b/i },
+    { key: "mongodb", regex: /\bmongodb\b/i },
+    { key: "redis", regex: /\bredis\b/i },
+    { key: "aws", regex: /\baws\b|amazon web services/i },
+    { key: "azure", regex: /\bazure\b/i },
+    { key: "gcp", regex: /\bgcp\b|google cloud/i },
+    { key: "docker", regex: /\bdocker\b/i },
+    { key: "kubernetes", regex: /\bkubernetes\b|\bk8s\b/i },
+    { key: "terraform", regex: /\bterraform\b/i },
+    { key: "ansible", regex: /\bansible\b/i },
+    { key: "jenkins", regex: /\bjenkins\b/i },
+    { key: "gitlab", regex: /\bgitlab\b/i },
+    { key: "github", regex: /\bgithub\b/i },
+    { key: "graphql", regex: /\bgraphql\b/i },
+    { key: "tailwind", regex: /\btailwind\b/i },
+];
+
+type FactualGuardAssessment = {
+    blocked: boolean;
+    reasonCodes: string[];
+    detail: Record<string, unknown>;
+};
+
+function normalizeClaimText(value: string) {
+    return String(value || "")
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9+.#/\-\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function tokenizeClaim(value: string) {
+    const normalized = normalizeClaimText(value);
+    return normalized.match(/[a-z0-9+.#/\-]{2,}/g) || [];
+}
+
+function flattenStructuredStrings(value: unknown, acc: string[] = [], depth = 0): string[] {
+    if (depth > 8 || value == null) {
+        return acc;
+    }
+
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed) {
+            acc.push(trimmed);
+        }
+        return acc;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+        acc.push(String(value));
+        return acc;
+    }
+
+    if (Array.isArray(value)) {
+        for (const entry of value) {
+            flattenStructuredStrings(entry, acc, depth + 1);
+        }
+        return acc;
+    }
+
+    if (typeof value === "object") {
+        for (const entry of Object.values(value as Record<string, unknown>)) {
+            flattenStructuredStrings(entry, acc, depth + 1);
+        }
+    }
+
+    return acc;
+}
+
+function collectYears(text: string) {
+    return new Set(text.match(YEAR_REGEX) || []);
+}
+
+function collectTechnologyKeys(text: string) {
+    const found = new Set<string>();
+    for (const pattern of TECHNOLOGY_PATTERNS) {
+        if (pattern.regex.test(text)) {
+            found.add(pattern.key);
+        }
+    }
+    return found;
+}
+
+function tokenOverlapRatio(tokens: string[], trustedTokens: Set<string>) {
+    if (tokens.length === 0) {
+        return 1;
+    }
+    let overlap = 0;
+    for (const token of tokens) {
+        if (trustedTokens.has(token)) {
+            overlap += 1;
+        }
+    }
+    return overlap / tokens.length;
+}
+
+function extractExperienceClaims(cvMarkdown: string) {
+    const parsed = parseCV(cvMarkdown);
+    const employerClaims: string[] = [];
+    const roleClaims: string[] = [];
+
+    for (const section of parsed.sections) {
+        if (!EXPERIENCE_SECTION_REGEX.test(section.title || "")) {
+            continue;
+        }
+
+        for (const subsection of section.subsections) {
+            const heading = String(subsection.heading || "").trim();
+            if (!heading) {
+                continue;
+            }
+
+            const atMatch = heading.match(/\b(?:at|chez|bei|presso|en)\b\s+(.+)$/i);
+            if (atMatch && atMatch[1]) {
+                const employer = atMatch[1].trim();
+                if (employer) {
+                    employerClaims.push(employer);
+                }
+
+                const role = heading
+                    .slice(0, atMatch.index)
+                    .trim()
+                    .replace(/[|\-–—]+$/g, "")
+                    .trim();
+                if (role) {
+                    roleClaims.push(role);
+                }
+            }
+        }
+    }
+
+    return {
+        employerClaims: Array.from(new Set(employerClaims)),
+        roleClaims: Array.from(new Set(roleClaims)),
+    };
+}
+
+function assessTailoredOutputFactualGuard(params: {
+    tailoredCvMarkdown: string;
+    coverLetterMarkdown: string;
+    sourceCvText: string;
+    structuredProfile: unknown;
+    additionalContext: string;
+    targetJobTitle: string;
+    targetCompany: string;
+}) {
+    const generatedCv = String(params.tailoredCvMarkdown || "").trim();
+    const generatedCoverLetter = String(params.coverLetterMarkdown || "").trim();
+    const combinedGenerated = [generatedCv, generatedCoverLetter].filter(Boolean).join("\n");
+
+    if (!combinedGenerated) {
+        return { blocked: false, reasonCodes: [], detail: {} } as FactualGuardAssessment;
+    }
+
+    const sourceCvText = String(params.sourceCvText || "").trim();
+    const structuredProfileParts = flattenStructuredStrings(params.structuredProfile);
+    const additionalContext = String(params.additionalContext || "").trim();
+    const targetJobTitle = String(params.targetJobTitle || "").trim();
+    const targetCompany = String(params.targetCompany || "").trim();
+
+    if (!sourceCvText) {
+        return {
+            blocked: true,
+            reasonCodes: [FACTUAL_GUARD_REASON_CODES.missingTrustedSource],
+            detail: {},
+        } as FactualGuardAssessment;
+    }
+
+    const trustedParts = [
+        sourceCvText,
+        ...structuredProfileParts,
+        additionalContext,
+        targetJobTitle,
+        targetCompany,
+    ].filter(Boolean);
+
+    const trustedText = trustedParts.join("\n");
+    const trustedTokens = new Set(tokenizeClaim(trustedText));
+    const trustedYears = collectYears(trustedText);
+    const trustedTechnologies = collectTechnologyKeys(trustedText);
+
+    const unsupportedYears = Array.from(collectYears(combinedGenerated)).filter((year) => {
+        if (trustedYears.has(year)) {
+            return false;
+        }
+        const numericYear = Number(year);
+        const currentYear = new Date().getUTCFullYear();
+        return numericYear < currentYear - 1 || numericYear > currentYear + 1;
+    });
+
+    const unsupportedTechnologies = Array.from(collectTechnologyKeys(combinedGenerated)).filter(
+        (tech) => !trustedTechnologies.has(tech)
+    );
+
+    const credentialLines = combinedGenerated
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && CREDENTIAL_LINE_REGEX.test(line));
+    const unsupportedCredentialLines = credentialLines.filter((line) => {
+        const significantTokens = tokenizeClaim(line).filter(
+            (token) => token.length >= 4 && !CLAIM_STOPWORDS.has(token)
+        );
+        if (significantTokens.length < 2) {
+            return false;
+        }
+        return tokenOverlapRatio(significantTokens, trustedTokens) < 0.5;
+    });
+
+    const { employerClaims, roleClaims } = extractExperienceClaims(generatedCv);
+    const unsupportedEmployerClaims = employerClaims.filter((claim) => {
+        const significantTokens = tokenizeClaim(claim).filter(
+            (token) => token.length >= 3 && !CLAIM_STOPWORDS.has(token)
+        );
+        if (significantTokens.length === 0) {
+            return false;
+        }
+        return tokenOverlapRatio(significantTokens, trustedTokens) < 0.6;
+    });
+    const unsupportedRoleClaims = roleClaims.filter((claim) => {
+        const significantTokens = tokenizeClaim(claim).filter(
+            (token) => token.length >= 3 && !CLAIM_STOPWORDS.has(token)
+        );
+        if (significantTokens.length === 0) {
+            return false;
+        }
+        return tokenOverlapRatio(significantTokens, trustedTokens) < 0.25;
+    });
+
+    const reasonCodes: string[] = [];
+    if (unsupportedEmployerClaims.length > 0) {
+        reasonCodes.push(FACTUAL_GUARD_REASON_CODES.unsupportedEmployer);
+    }
+    if (unsupportedRoleClaims.length > 0) {
+        reasonCodes.push(FACTUAL_GUARD_REASON_CODES.unsupportedJobTitle);
+    }
+    if (unsupportedYears.length > 0) {
+        reasonCodes.push(FACTUAL_GUARD_REASON_CODES.unsupportedYear);
+    }
+    if (unsupportedCredentialLines.length > 0) {
+        reasonCodes.push(FACTUAL_GUARD_REASON_CODES.unsupportedCredential);
+    }
+    if (unsupportedTechnologies.length > 0) {
+        reasonCodes.push(FACTUAL_GUARD_REASON_CODES.unsupportedTechnology);
+    }
+
+    return {
+        blocked: reasonCodes.length > 0,
+        reasonCodes,
+        detail: {
+            unsupportedEmployerClaims: unsupportedEmployerClaims.slice(0, 6),
+            unsupportedRoleClaims: unsupportedRoleClaims.slice(0, 6),
+            unsupportedYears: unsupportedYears.slice(0, 8),
+            unsupportedCredentialLines: unsupportedCredentialLines.slice(0, 6),
+            unsupportedTechnologies: unsupportedTechnologies.slice(0, 10),
+        },
+    } as FactualGuardAssessment;
 }
 
 async function getDiscoveryCadenceState() {
@@ -1523,6 +1847,7 @@ export async function POST(req: Request) {
                     jobId: tailorJobId,
                     jobTitle,
                     company,
+                    additionalContext,
                     compatibilityScore,
                     atsKeywords,
                     matchingStrengths,
@@ -1549,12 +1874,78 @@ export async function POST(req: Request) {
 
                 const normalizedTailorUserId = tailorUserId.trim();
                 const normalizedTailorJobId = tailorJobId.trim();
-                const normalizedTailoredCvMarkdown = safeNormalizeTailoredCv(
-                    tailoredCvMarkdown
-                );
-                const normalizedCoverLetterMarkdown = safeNormalizeCoverLetter(
-                    coverLetterMarkdown
-                );
+                const trustedUser = await prisma.user.findUnique({
+                    where: { id: normalizedTailorUserId },
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        masterProfile: {
+                            select: {
+                                rawText: true,
+                                structuredJson: true,
+                            },
+                        },
+                    },
+                });
+
+                const factualGuardAssessment = assessTailoredOutputFactualGuard({
+                    tailoredCvMarkdown:
+                        typeof tailoredCvMarkdown === "string" ? tailoredCvMarkdown : "",
+                    coverLetterMarkdown:
+                        typeof coverLetterMarkdown === "string" ? coverLetterMarkdown : "",
+                    sourceCvText: trustedUser?.masterProfile?.rawText || "",
+                    structuredProfile: trustedUser?.masterProfile?.structuredJson,
+                    additionalContext:
+                        typeof additionalContext === "string" ? additionalContext.trim() : "",
+                    targetJobTitle: typeof jobTitle === "string" ? jobTitle : "",
+                    targetCompany: typeof company === "string" ? company : "",
+                });
+
+                const quarantinedByFactualGuard = factualGuardAssessment.blocked;
+                if (quarantinedByFactualGuard) {
+                    logPipelineEvent("warn", "single_tailoring_factual_guard_blocked", {
+                        runId,
+                        userId: normalizedTailorUserId,
+                        jobId: normalizedTailorJobId,
+                        reasonCodes: factualGuardAssessment.reasonCodes,
+                        detail: factualGuardAssessment.detail,
+                    });
+                    try {
+                        await prisma.workflowError.create({
+                            data: {
+                                workflowId: "single-job-tailoring-v3",
+                                nodeName: "Factual Guard",
+                                errorType: "FACTUAL_GUARD_BLOCKED",
+                                message: factualGuardAssessment.reasonCodes.join(","),
+                                payload: {
+                                    runId,
+                                    userId: normalizedTailorUserId,
+                                    jobId: normalizedTailorJobId,
+                                    reasonCodes: factualGuardAssessment.reasonCodes,
+                                    detail: factualGuardAssessment.detail as Prisma.JsonObject,
+                                } as Prisma.InputJsonValue,
+                                userId: normalizedTailorUserId,
+                            },
+                        });
+                    } catch (workflowError) {
+                        logPipelineEvent("warn", "single_tailoring_factual_guard_log_failed", {
+                            runId,
+                            userId: normalizedTailorUserId,
+                            error:
+                                workflowError instanceof Error
+                                    ? workflowError.message
+                                    : String(workflowError),
+                        });
+                    }
+                }
+
+                const normalizedTailoredCvMarkdown = quarantinedByFactualGuard
+                    ? null
+                    : safeNormalizeTailoredCv(tailoredCvMarkdown);
+                const normalizedCoverLetterMarkdown = quarantinedByFactualGuard
+                    ? null
+                    : safeNormalizeCoverLetter(coverLetterMarkdown);
                 const resolvedApplicationStatus = normalizedTailoredCvMarkdown
                     ? "tailored"
                     : "discovered";
@@ -1665,16 +2056,29 @@ export async function POST(req: Request) {
                     }
                 }
 
+                if (quarantinedByFactualGuard) {
+                    logPipelineEvent("warn", "single_tailoring_quarantined", {
+                        runId,
+                        userId: normalizedTailorUserId,
+                        jobId: normalizedTailorJobId,
+                        applicationId: application.id,
+                        reasonCodes: factualGuardAssessment.reasonCodes,
+                    });
+                    return NextResponse.json({
+                        message: "Tailoring output quarantined",
+                        applicationId: application.id,
+                        runId,
+                        quarantined: true,
+                        reasonCodes: factualGuardAssessment.reasonCodes,
+                    });
+                }
+
                 // Send email notification (non-blocking)
                 try {
-                    const user = await prisma.user.findUnique({
-                        where: { id: normalizedTailorUserId },
-                    });
-
-                    if (user && application) {
+                    if (trustedUser && application) {
                         await sendTailoringCompleteEmail(
-                            user.email,
-                            user.name,
+                            trustedUser.email,
+                            trustedUser.name,
                             application.job.title,
                             application.job.company,
                             application.compatibilityScore,

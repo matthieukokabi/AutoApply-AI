@@ -242,7 +242,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ type: 'single_tailoring_complete', runId: $json.runId, data: { userId: $json.userId, jobId: $json.jobId, jobTitle: $json.jobTitle, company: $json.company, compatibilityScore: $json.compatibilityScore, atsKeywords: $json.atsKeywords, matchingStrengths: $json.matchingStrengths, gaps: $json.gaps, recommendation: $json.recommendation, tailoredCvMarkdown: $json.tailoredCvMarkdown, coverLetterMarkdown: $json.coverLetterMarkdown } }) }}",
+        "jsonBody": "={{ JSON.stringify({ type: 'single_tailoring_complete', runId: $json.runId, data: { userId: $json.userId, jobId: $json.jobId, jobTitle: $json.jobTitle, company: $json.company, additionalContext: $json.additionalContext, compatibilityScore: $json.compatibilityScore, atsKeywords: $json.atsKeywords, matchingStrengths: $json.matchingStrengths, gaps: $json.gaps, recommendation: $json.recommendation, tailoredCvMarkdown: $json.tailoredCvMarkdown, coverLetterMarkdown: $json.coverLetterMarkdown } }) }}",
         "options": {
           "timeout": 15000
         }

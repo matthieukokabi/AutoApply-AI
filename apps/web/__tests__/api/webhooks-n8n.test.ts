@@ -9,6 +9,18 @@ const mockUser = {
     name: "Test User",
     subscriptionStatus: "pro",
     creditsRemaining: 10,
+    masterProfile: {
+        rawText: `Jane Doe
+Senior Developer
+Experience at Tech Corp (2021-2024)
+Skills: React, TypeScript, Node.js, AWS
+Education: Bachelor of Computer Science`,
+        structuredJson: {
+            skills: ["React", "TypeScript", "Node.js", "AWS"],
+            certifications: ["AWS Certified Cloud Practitioner"],
+            experience: ["Senior Developer at Tech Corp"],
+        },
+    },
 };
 
 const mockJob = {
@@ -901,6 +913,128 @@ describe("POST /api/webhooks/n8n", () => {
                 92,
                 "app_1"
             );
+        });
+
+        it("quarantines unsupported factual claims instead of persisting tailored markdown", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_guard_1" } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "discovered",
+                tailoredCvMarkdown: null,
+                coverLetterMarkdown: null,
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    compatibilityScore: 91,
+                    tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Principal Engineer at Moonshot Labs
+**2030 - Present**
+- Led enterprise platform delivery with Kubernetes and Rust.
+
+## Education
+### Executive MBA
+**2031**`,
+                    coverLetterMarkdown:
+                        "I have recently completed an Executive MBA and led Moonshot Labs cloud programs.",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1:guard-block" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toBe("Tailoring output quarantined");
+            expect(data.quarantined).toBe(true);
+            expect(Array.isArray(data.reasonCodes)).toBe(true);
+            expect(data.reasonCodes).toEqual(
+                expect.arrayContaining([
+                    "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+                    "FACTUAL_GUARD_UNSUPPORTED_YEAR",
+                    "FACTUAL_GUARD_UNSUPPORTED_TECHNOLOGY",
+                ])
+            );
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    create: expect.objectContaining({
+                        status: "discovered",
+                        tailoredCvMarkdown: null,
+                        coverLetterMarkdown: null,
+                    }),
+                    update: expect.objectContaining({
+                        status: "discovered",
+                        tailoredCvMarkdown: null,
+                        coverLetterMarkdown: null,
+                    }),
+                })
+            );
+            expect(prisma.workflowError.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        errorType: "FACTUAL_GUARD_BLOCKED",
+                    }),
+                })
+            );
+            expect(sendTailoringCompleteEmail).not.toHaveBeenCalled();
+        });
+
+        it("allows claims present in trusted additional context", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_guard_2" } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "tailored",
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: "# Tailored Cover",
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    additionalContext:
+                        "Verified candidate context: Kubernetes production operations and Rust service ownership since 2024.",
+                    compatibilityScore: 90,
+                    tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Operated Kubernetes workloads and shipped Rust backend services.`,
+                    coverLetterMarkdown:
+                        "My Kubernetes and Rust experience directly matches your production platform needs.",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1:guard-pass" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toBe("Tailoring results saved");
+            expect(data.quarantined).toBeUndefined();
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    create: expect.objectContaining({
+                        status: "tailored",
+                    }),
+                })
+            );
+            expect(sendTailoringCompleteEmail).toHaveBeenCalledTimes(1);
         });
 
         it("creates a manual job when incoming jobId does not match an existing Job.id", async () => {

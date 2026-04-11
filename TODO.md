@@ -24,6 +24,7 @@ Last updated: 2026-04-11 (Europe/Zurich)
 
 ## P0/P1 — jobs delivery anti-spam + account-level reliability audit
 
+- [x] Add deterministic factual guard in `single_tailoring_complete` persistence path to quarantine unsupported tailored CV/cover-letter outputs (reason-coded + operator logging) before they can be saved as `tailored`, while preserving clean-output persistence — completed on 2026-04-11 (`apps/web/app/api/webhooks/n8n/route.ts`, `n8n/workflows/single-job-tailoring-v3.json`, `apps/web/__tests__/api/webhooks-n8n.test.ts`)
 - [x] Stabilize `/api/tailor` webhook dispatch for valid requests when configured webhook paths drift (explicit full-webhook URL support + bounded v3→v2→v1 fallback on 404/405) to prevent hard 502s from path mismatch, with focused regression coverage — completed on 2026-04-11 (`apps/web/app/api/tailor/route.ts`, `apps/web/__tests__/api/tailor.test.ts`, `apps/web/__tests__/integration/credit-flow.test.ts`)
 - [x] Migrate app-side single-job tailoring dispatch to v3-only webhook (`/webhook/single-job-tailor-v3`) with required `x-webhook-secret`, removing legacy v2 routing branch from `/api/tailor` while preserving payload/error semantics — completed on 2026-04-04 (`apps/web/app/api/tailor/route.ts`, `apps/web/__tests__/api/tailor.test.ts`)
 - [x] Surface `/api/tailor` dispatch failures in Jobs paste modal (non-OK API responses + network failures) to avoid silent user-facing submission failures while preserving existing flow — completed on 2026-04-04 (`apps/web/app/[locale]/(dashboard)/jobs/page.tsx`)
