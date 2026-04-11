@@ -431,7 +431,10 @@
             "empty": {
                 "title": "Aún no se descubrieron empleos",
                 "description": "Configura tus preferencias en Ajustes o pega una oferta para empezar.",
-                "configurePreferences": "Configurar preferencias"
+                "configurePreferences": "Configurar preferencias",
+                "filteredTitle": "Ningún empleo coincide con tu búsqueda",
+                "filteredDescription": "Prueba con otra palabra clave, baja el match mínimo o limpia uno de los filtros.",
+                "clearFilters": "Limpiar filtros"
             }
         }
     },

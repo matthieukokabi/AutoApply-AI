@@ -431,7 +431,10 @@
             "empty": {
                 "title": "Noch keine Jobs gefunden",
                 "description": "Richten Sie Ihre Präferenzen in den Einstellungen ein oder fügen Sie einen Job ein, um zu starten.",
-                "configurePreferences": "Präferenzen konfigurieren"
+                "configurePreferences": "Präferenzen konfigurieren",
+                "filteredTitle": "Keine Jobs entsprechen Ihrer Suche",
+                "filteredDescription": "Versuchen Sie ein anderes Stichwort, senken Sie den Mindest-Match oder entfernen Sie einen Filter.",
+                "clearFilters": "Filter zurücksetzen"
             }
         }
     },

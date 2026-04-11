@@ -1,6 +1,6 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-04-11 (Europe/Zurich)
+Last updated: 2026-04-12 (Europe/Zurich)
 
 ## P0 — v3 automation reliability rebuild (additive, no UX/UI change)
 
@@ -300,6 +300,7 @@ Last updated: 2026-04-11 (Europe/Zurich)
 ## P1 — Jobs feed results usability (Wave 1, app/API/UI only)
 
 - [x] Add bounded `/jobs` Wave 1 usability improvements: server-side sort (`newest`, `highest_match`) in `/api/jobs`, visible sort control in jobs feed UI, explicit original-post CTA label gated on non-empty `job.url`, and copy alignment with actual default newest ordering (no schema/n8n changes) — completed on 2026-04-06 (`apps/web/app/api/jobs/route.ts`, `apps/web/app/[locale]/(dashboard)/jobs/page.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`, `apps/web/__tests__/api/jobs.test.ts`)
+- [x] Fix `/jobs` empty-state correctness by distinguishing true onboarding-empty (`hasAnyJobs=false`) from filtered/search zero-results (`hasAnyJobs=true` with filtered-empty copy + clear-filters CTA), while preserving existing sort/filter/query behavior and onboarding CTAs only for true-empty — completed on 2026-04-12 (`apps/web/app/api/jobs/route.ts`, `apps/web/app/[locale]/(dashboard)/jobs/page.tsx`, `apps/web/messages/{en,fr,de,es,it}.json`, `apps/web/__tests__/api/jobs.test.ts`)
 - [x] Surface factual-guard quarantined applications in operator read paths with machine-readable `factualGuard` metadata and dashboard Kanban visibility badge/reason count (grounded in persisted `WorkflowError` `FACTUAL_GUARD_BLOCKED`) — completed on 2026-04-11 (`apps/web/lib/factual-guard-visibility.ts`, `apps/web/app/api/applications/route.ts`, `apps/web/app/[locale]/(dashboard)/dashboard/page.tsx`, `apps/web/components/kanban-board.tsx`, `apps/web/__tests__/api/applications.test.ts`)
 - [x] Hard-link factual-guard `WorkflowError` events to applications by emitting `payload.applicationId` at both block write points and updating read mapping to prefer direct `applicationId` linkage with legacy `jobId`/`externalId` fallback — completed on 2026-04-11 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/lib/factual-guard-visibility.ts`, `apps/web/__tests__/api/webhooks-n8n.test.ts`, `apps/web/__tests__/api/applications.test.ts`)
 - [x] Add bounded recent-window factual-guard legacy backfill tool (`--dry-run` default) to populate missing `payload.applicationId` only for unambiguous matches and skip ambiguous/unresolved rows — completed on 2026-04-11 (`apps/web/scripts/backfill_factual_guard_application_id.js`, `apps/web/package.json`, `docs/factual-guard-application-id-backfill.md`)

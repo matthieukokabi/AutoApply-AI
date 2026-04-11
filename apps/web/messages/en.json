@@ -430,7 +430,10 @@
             "empty": {
                 "title": "No jobs discovered yet",
                 "description": "Set up your preferences in Settings, or paste a job to get started.",
-                "configurePreferences": "Configure Preferences"
+                "configurePreferences": "Configure Preferences",
+                "filteredTitle": "No jobs match your search",
+                "filteredDescription": "Try a different keyword, lower the minimum match, or clear one of the filters.",
+                "clearFilters": "Clear filters"
             }
         }
     },

@@ -431,7 +431,10 @@
             "empty": {
                 "title": "Aucune offre découverte pour le moment",
                 "description": "Configurez vos préférences dans Paramètres, ou collez une offre pour commencer.",
-                "configurePreferences": "Configurer les préférences"
+                "configurePreferences": "Configurer les préférences",
+                "filteredTitle": "Aucune offre ne correspond à votre recherche",
+                "filteredDescription": "Essayez un autre mot-clé, baissez le match minimum ou supprimez un des filtres.",
+                "clearFilters": "Effacer les filtres"
             }
         }
     },

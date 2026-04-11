@@ -63,6 +63,10 @@ export async function GET(req: Request) {
             };
         }
 
+        const hasAnyJobs = (await prisma.application.count({
+            where: { userId: user.id },
+        })) > 0;
+
         let result: any[] = [];
 
         if (sort === "highest_match") {
@@ -123,7 +127,7 @@ export async function GET(req: Request) {
             }));
         }
 
-        const response = NextResponse.json({ jobs: result });
+        const response = NextResponse.json({ jobs: result, hasAnyJobs });
         // Cache: browser may reuse for 30s, revalidate in background
         response.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
         return response;

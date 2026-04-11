@@ -107,6 +107,7 @@ beforeEach(() => {
 describe("GET /api/jobs", () => {
     it("returns jobs for the authenticated user", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.count).mockResolvedValue(2 as any);
         vi.mocked(prisma.job.findMany).mockResolvedValue(mockJobs as any);
 
         const request = new Request("http://localhost/api/jobs");
@@ -115,8 +116,23 @@ describe("GET /api/jobs", () => {
 
         expect(response.status).toBe(200);
         expect(data.jobs).toHaveLength(2);
+        expect(data.hasAnyJobs).toBe(true);
         expect(data.jobs[0].application).toBeDefined();
         expect(data.jobs[0].application.compatibilityScore).toBe(85);
+    });
+
+    it("returns hasAnyJobs=false when user has no discovered jobs", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.count).mockResolvedValue(0 as any);
+        vi.mocked(prisma.job.findMany).mockResolvedValue([] as any);
+
+        const request = new Request("http://localhost/api/jobs");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.jobs).toEqual([]);
+        expect(data.hasAnyJobs).toBe(false);
     });
 
     it("filters by source query param", async () => {

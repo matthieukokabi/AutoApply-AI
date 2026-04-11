@@ -45,6 +45,7 @@ interface JobWithApplication {
 export default function JobsPage() {
     const t = useTranslations("dashboard.jobsPage");
     const [jobs, setJobs] = useState<JobWithApplication[]>([]);
+    const [hasAnyJobs, setHasAnyJobs] = useState(false);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [source, setSource] = useState("");
@@ -83,7 +84,8 @@ export default function JobsPage() {
             const res = await fetch(`/api/jobs?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
-                setJobs(data.jobs);
+                setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+                setHasAnyJobs(Boolean(data.hasAnyJobs));
             }
         } catch (err) {
             console.error("Failed to fetch jobs:", err);
@@ -157,6 +159,12 @@ export default function JobsPage() {
         if (score >= 80) return "default";
         if (score >= 60) return "secondary";
         return "outline";
+    }
+
+    function clearFilters() {
+        setSearch("");
+        setSource("");
+        setMinScore("");
     }
 
     return (
@@ -327,19 +335,29 @@ export default function JobsPage() {
                         <CardContent className="py-12 text-center">
                             <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                             <h3 className="text-lg font-semibold mb-2">
-                                {t("empty.title")}
+                                {hasAnyJobs ? t("empty.filteredTitle") : t("empty.title")}
                             </h3>
                             <p className="text-muted-foreground mb-4">
-                                {t("empty.description")}
+                                {hasAnyJobs
+                                    ? t("empty.filteredDescription")
+                                    : t("empty.description")}
                             </p>
-                            <div className="flex gap-3 justify-center">
-                                <Link href="/settings">
-                                    <Button variant="outline">{t("empty.configurePreferences")}</Button>
-                                </Link>
-                                <Button onClick={() => setShowPasteDialog(true)}>
-                                    {t("actions.pasteJob")}
+                            {hasAnyJobs ? (
+                                <Button variant="outline" onClick={clearFilters}>
+                                    {t("empty.clearFilters")}
                                 </Button>
-                            </div>
+                            ) : (
+                                <div className="flex gap-3 justify-center">
+                                    <Link href="/settings">
+                                        <Button variant="outline">
+                                            {t("empty.configurePreferences")}
+                                        </Button>
+                                    </Link>
+                                    <Button onClick={() => setShowPasteDialog(true)}>
+                                        {t("actions.pasteJob")}
+                                    </Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 ) : (
