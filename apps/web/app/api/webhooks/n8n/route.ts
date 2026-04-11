@@ -1719,35 +1719,6 @@ export async function POST(req: Request) {
                             reasonCodes: factualGuardAssessment.reasonCodes,
                             detail: factualGuardAssessment.detail,
                         });
-                        try {
-                            await prisma.workflowError.create({
-                                data: {
-                                    workflowId: "job-discovery-pipeline-v3",
-                                    nodeName: "Factual Guard",
-                                    errorType: "FACTUAL_GUARD_BLOCKED",
-                                    message: factualGuardAssessment.reasonCodes.join(","),
-                                    payload: {
-                                        runId,
-                                        userId,
-                                        externalId,
-                                        applicationIndex: index,
-                                        reasonCodes: factualGuardAssessment.reasonCodes,
-                                        detail: factualGuardAssessment.detail as Prisma.JsonObject,
-                                    } as Prisma.InputJsonValue,
-                                    userId,
-                                },
-                            });
-                        } catch (workflowError) {
-                            logPipelineEvent("warn", "new_applications_factual_guard_log_failed", {
-                                runId,
-                                userId,
-                                externalId,
-                                error:
-                                    workflowError instanceof Error
-                                        ? workflowError.message
-                                        : String(workflowError),
-                            });
-                        }
                     }
                     const normalizedTailoredCvMarkdown = quarantinedByFactualGuard
                         ? null
@@ -1829,6 +1800,41 @@ export async function POST(req: Request) {
                     persistedApps.push(result);
                     if (!existingApplication) {
                         newlyCreatedApps.push(result);
+                    }
+
+                    if (quarantinedByFactualGuard) {
+                        try {
+                            await prisma.workflowError.create({
+                                data: {
+                                    workflowId: "job-discovery-pipeline-v3",
+                                    nodeName: "Factual Guard",
+                                    errorType: "FACTUAL_GUARD_BLOCKED",
+                                    message: factualGuardAssessment.reasonCodes.join(","),
+                                    payload: {
+                                        runId,
+                                        userId,
+                                        jobId: job.id,
+                                        applicationId: result.id,
+                                        externalId,
+                                        applicationIndex: index,
+                                        reasonCodes: factualGuardAssessment.reasonCodes,
+                                        detail: factualGuardAssessment.detail as Prisma.JsonObject,
+                                    } as Prisma.InputJsonValue,
+                                    userId,
+                                },
+                            });
+                        } catch (workflowError) {
+                            logPipelineEvent("warn", "new_applications_factual_guard_log_failed", {
+                                runId,
+                                userId,
+                                externalId,
+                                applicationId: result.id,
+                                error:
+                                    workflowError instanceof Error
+                                        ? workflowError.message
+                                        : String(workflowError),
+                            });
+                        }
                     }
                 }
 
@@ -1991,33 +1997,6 @@ export async function POST(req: Request) {
                         reasonCodes: factualGuardAssessment.reasonCodes,
                         detail: factualGuardAssessment.detail,
                     });
-                    try {
-                        await prisma.workflowError.create({
-                            data: {
-                                workflowId: "single-job-tailoring-v3",
-                                nodeName: "Factual Guard",
-                                errorType: "FACTUAL_GUARD_BLOCKED",
-                                message: factualGuardAssessment.reasonCodes.join(","),
-                                payload: {
-                                    runId,
-                                    userId: normalizedTailorUserId,
-                                    jobId: normalizedTailorJobId,
-                                    reasonCodes: factualGuardAssessment.reasonCodes,
-                                    detail: factualGuardAssessment.detail as Prisma.JsonObject,
-                                } as Prisma.InputJsonValue,
-                                userId: normalizedTailorUserId,
-                            },
-                        });
-                    } catch (workflowError) {
-                        logPipelineEvent("warn", "single_tailoring_factual_guard_log_failed", {
-                            runId,
-                            userId: normalizedTailorUserId,
-                            error:
-                                workflowError instanceof Error
-                                    ? workflowError.message
-                                    : String(workflowError),
-                        });
-                    }
                 }
 
                 const normalizedTailoredCvMarkdown = quarantinedByFactualGuard
@@ -2115,6 +2094,39 @@ export async function POST(req: Request) {
                     },
                     include: { job: true },
                 });
+
+                if (quarantinedByFactualGuard) {
+                    try {
+                        await prisma.workflowError.create({
+                            data: {
+                                workflowId: "single-job-tailoring-v3",
+                                nodeName: "Factual Guard",
+                                errorType: "FACTUAL_GUARD_BLOCKED",
+                                message: factualGuardAssessment.reasonCodes.join(","),
+                                payload: {
+                                    runId,
+                                    userId: normalizedTailorUserId,
+                                    jobId: normalizedTailorJobId,
+                                    resolvedJobId,
+                                    applicationId: application.id,
+                                    reasonCodes: factualGuardAssessment.reasonCodes,
+                                    detail: factualGuardAssessment.detail as Prisma.JsonObject,
+                                } as Prisma.InputJsonValue,
+                                userId: normalizedTailorUserId,
+                            },
+                        });
+                    } catch (workflowError) {
+                        logPipelineEvent("warn", "single_tailoring_factual_guard_log_failed", {
+                            runId,
+                            userId: normalizedTailorUserId,
+                            applicationId: application.id,
+                            error:
+                                workflowError instanceof Error
+                                    ? workflowError.message
+                                    : String(workflowError),
+                        });
+                    }
+                }
 
                 if (idempotencyKey) {
                     const recorded = await markWebhookEventProcessed(

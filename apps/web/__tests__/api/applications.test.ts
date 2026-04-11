@@ -73,7 +73,7 @@ describe("GET /api/applications", () => {
         expect(data.applications[0].job.title).toBe("Frontend Engineer");
     });
 
-    it("surfaces factual guard quarantine metadata for blocked discovered applications", async () => {
+    it("keeps legacy fallback linkage via externalId when applicationId is absent", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
         vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
@@ -106,6 +106,40 @@ describe("GET /api/applications", () => {
                 }),
             })
         );
+    });
+
+    it("prefers direct applicationId linkage over fallback correlation", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
+        vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
+            {
+                createdAt: new Date("2026-04-11T12:05:00.000Z"),
+                message: "FACTUAL_GUARD_UNSUPPORTED_YEAR",
+                payload: {
+                    externalId: "external_job_1",
+                    reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_YEAR"],
+                },
+            },
+            {
+                createdAt: new Date("2026-04-11T12:00:00.000Z"),
+                message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+                payload: {
+                    applicationId: "app_1",
+                    reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+                },
+            },
+        ] as any);
+
+        const request = new Request("http://localhost/api/applications");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.applications[0].factualGuard).toEqual({
+            blocked: true,
+            reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+            blockedAt: "2026-04-11T12:00:00.000Z",
+        });
     });
 
     it("filters by status when query param provided", async () => {

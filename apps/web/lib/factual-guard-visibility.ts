@@ -99,6 +99,7 @@ export async function getFactualGuardByApplicationId(params: {
 
     const latestByJobId = new Map<string, ApplicationFactualGuardInfo>();
     const latestByExternalId = new Map<string, ApplicationFactualGuardInfo>();
+    const latestByApplicationId = new Map<string, ApplicationFactualGuardInfo>();
 
     for (const workflowError of workflowErrors) {
         if (!isRecord(workflowError.payload)) {
@@ -115,6 +116,11 @@ export async function getFactualGuardByApplicationId(params: {
             reasonCodes,
             blockedAt: workflowError.createdAt.toISOString(),
         };
+
+        const applicationId = getPayloadString(payload, "applicationId");
+        if (applicationId && !latestByApplicationId.has(applicationId)) {
+            latestByApplicationId.set(applicationId, guardInfo);
+        }
 
         const jobId = getPayloadString(payload, "jobId");
         if (jobId && !latestByJobId.has(jobId)) {
@@ -137,12 +143,14 @@ export async function getFactualGuardByApplicationId(params: {
             continue;
         }
 
+        const signalFromApplicationId = latestByApplicationId.get(application.id);
         const signalFromJobId = latestByJobId.get(application.jobId);
         const externalId = application.job?.externalId?.trim() || "";
         const signalFromExternalId = externalId
             ? latestByExternalId.get(externalId)
             : undefined;
-        const factualGuardSignal = signalFromJobId || signalFromExternalId;
+        const factualGuardSignal =
+            signalFromApplicationId || signalFromJobId || signalFromExternalId;
 
         if (factualGuardSignal) {
             factualGuardByApplicationId.set(application.id, factualGuardSignal);

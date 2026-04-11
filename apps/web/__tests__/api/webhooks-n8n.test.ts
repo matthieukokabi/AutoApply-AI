@@ -730,6 +730,11 @@ describe("POST /api/webhooks/n8n", () => {
                         workflowId: "job-discovery-pipeline-v3",
                         errorType: "FACTUAL_GUARD_BLOCKED",
                         message: expect.stringContaining("FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"),
+                        payload: expect.objectContaining({
+                            applicationId: "app_1",
+                            jobId: "job_1",
+                            externalId: "adzuna-guard-1",
+                        }),
                     }),
                 })
             );
@@ -895,6 +900,8 @@ describe("POST /api/webhooks/n8n", () => {
                         data: expect.objectContaining({
                             errorType: "FACTUAL_GUARD_BLOCKED",
                             payload: expect.objectContaining({
+                                applicationId: "app_blocked_1",
+                                jobId: "job_blocked_1",
                                 reasonCodes: expect.arrayContaining([
                                     "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
                                 ]),
@@ -1235,6 +1242,10 @@ describe("POST /api/webhooks/n8n", () => {
                 expect.objectContaining({
                     data: expect.objectContaining({
                         errorType: "FACTUAL_GUARD_BLOCKED",
+                        payload: expect.objectContaining({
+                            applicationId: "app_1",
+                            jobId: "job_1",
+                        }),
                     }),
                 })
             );
