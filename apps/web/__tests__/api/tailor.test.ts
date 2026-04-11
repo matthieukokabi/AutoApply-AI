@@ -346,6 +346,7 @@ describe("POST /api/tailor", () => {
     it("returns 502 and does not deduct credits when webhook dispatch fails", async () => {
         vi.mocked(global.fetch).mockResolvedValueOnce({
             ok: false,
+            status: 500,
             text: async () => "upstream error",
         } as any);
         vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
@@ -430,6 +431,79 @@ describe("POST /api/tailor", () => {
         expect(response.status).toBe(200);
         expect(global.fetch).toHaveBeenCalledWith(
             "http://n8n:5678/custom-base/webhook/single-job-tailor-v3",
+            expect.anything()
+        );
+    });
+
+    it("falls back to legacy webhook path when v3 endpoint is unavailable", async () => {
+        vi.mocked(global.fetch)
+            .mockResolvedValueOnce({
+                ok: false,
+                status: 404,
+                text: async () => "not found",
+            } as any)
+            .mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({}),
+                text: async () => "",
+            } as any);
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+            ...mockUser,
+            creditsRemaining: 9,
+        } as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobDescription: "React developer needed.",
+            }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(global.fetch).toHaveBeenNthCalledWith(
+            1,
+            "http://n8n:5678/webhook/single-job-tailor-v3",
+            expect.anything()
+        );
+        expect(global.fetch).toHaveBeenNthCalledWith(
+            2,
+            "http://n8n:5678/webhook/single-job-tailor-v2",
+            expect.anything()
+        );
+    });
+
+    it("uses explicit webhook URLs without appending another webhook path", async () => {
+        process.env.N8N_WEBHOOK_URL = "http://n8n:5678/webhook/single-job-tailor";
+
+        vi.mocked(getAuthUser).mockResolvedValue({ id: "user_1" } as any);
+        vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+        vi.mocked(prisma.user.update).mockResolvedValue({
+            ...mockUser,
+            creditsRemaining: 9,
+        } as any);
+
+        const request = new Request("http://localhost/api/tailor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jobDescription: "React developer needed.",
+            }),
+        });
+
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+        expect(global.fetch).toHaveBeenCalledWith(
+            "http://n8n:5678/webhook/single-job-tailor",
             expect.anything()
         );
     });

@@ -1,6 +1,6 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-03-24 (Europe/Zurich)
+Last updated: 2026-04-11 (Europe/Zurich)
 
 ## P0 — v3 automation reliability rebuild (additive, no UX/UI change)
 
@@ -24,6 +24,7 @@ Last updated: 2026-03-24 (Europe/Zurich)
 
 ## P0/P1 — jobs delivery anti-spam + account-level reliability audit
 
+- [x] Stabilize `/api/tailor` webhook dispatch for valid requests when configured webhook paths drift (explicit full-webhook URL support + bounded v3→v2→v1 fallback on 404/405) to prevent hard 502s from path mismatch, with focused regression coverage — completed on 2026-04-11 (`apps/web/app/api/tailor/route.ts`, `apps/web/__tests__/api/tailor.test.ts`, `apps/web/__tests__/integration/credit-flow.test.ts`)
 - [x] Migrate app-side single-job tailoring dispatch to v3-only webhook (`/webhook/single-job-tailor-v3`) with required `x-webhook-secret`, removing legacy v2 routing branch from `/api/tailor` while preserving payload/error semantics — completed on 2026-04-04 (`apps/web/app/api/tailor/route.ts`, `apps/web/__tests__/api/tailor.test.ts`)
 - [x] Surface `/api/tailor` dispatch failures in Jobs paste modal (non-OK API responses + network failures) to avoid silent user-facing submission failures while preserving existing flow — completed on 2026-04-04 (`apps/web/app/[locale]/(dashboard)/jobs/page.tsx`)
 - [x] Stop duplicate `new_applications` notification side effects by sending match emails only for newly created `Application` rows (not update-path upserts), with regression coverage for update-only payloads — completed on 2026-04-02 (`apps/web/app/api/webhooks/n8n/route.ts`, `apps/web/__tests__/api/webhooks-n8n.test.ts`)

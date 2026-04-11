@@ -46,8 +46,10 @@ function createTailorRequest() {
 beforeEach(() => {
     vi.clearAllMocks();
     process.env.N8N_WEBHOOK_URL = "http://n8n:5678";
+    process.env.N8N_WEBHOOK_SECRET = "test-webhook-secret";
     vi.mocked(global.fetch).mockResolvedValue({
         ok: true,
+        status: 200,
         json: async () => ({}),
         text: async () => "",
     } as any);

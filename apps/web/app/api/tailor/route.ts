@@ -12,7 +12,12 @@ const MAX_JOB_TITLE_LENGTH = 200;
 const MAX_COMPANY_LENGTH = 200;
 const MAX_JOB_ID_LENGTH = 100;
 const tailorRequestLog = new Map<string, number[]>();
-const V3_TAILOR_WEBHOOK_PATH = "single-job-tailor-v3";
+const TAILOR_WEBHOOK_PATH_CANDIDATES = [
+    "single-job-tailor-v3",
+    "single-job-tailor-v2",
+    "single-job-tailor",
+] as const;
+const WEBHOOK_PATH_SEGMENT = "/webhook/";
 
 function detectJobSourceFromUrl(jobUrl: string) {
     if (!jobUrl) {
@@ -29,6 +34,66 @@ function detectJobSourceFromUrl(jobUrl: string) {
     }
 
     return "manual";
+}
+
+function normalizePathname(pathname: string) {
+    const withLeadingSlash = pathname.startsWith("/") ? pathname : `/${pathname}`;
+    const collapsed = withLeadingSlash.replace(/\/{2,}/g, "/");
+    if (collapsed === "/") {
+        return "";
+    }
+    return collapsed.replace(/\/$/, "");
+}
+
+function toAbsolutePathname(pathname: string) {
+    const normalized = normalizePathname(pathname);
+    return normalized || "/";
+}
+
+function buildTailorWebhookEndpoints(n8nWebhookUrl: string) {
+    const parsedN8nWebhookUrl = new URL(n8nWebhookUrl);
+    if (
+        parsedN8nWebhookUrl.protocol !== "http:" &&
+        parsedN8nWebhookUrl.protocol !== "https:"
+    ) {
+        throw new Error("invalid_webhook_protocol");
+    }
+
+    parsedN8nWebhookUrl.search = "";
+    parsedN8nWebhookUrl.hash = "";
+
+    const configuredPath = normalizePathname(parsedN8nWebhookUrl.pathname);
+    const configuredPathLower = configuredPath.toLowerCase();
+    const webhookIndex = configuredPathLower.indexOf(WEBHOOK_PATH_SEGMENT);
+
+    const endpoints: string[] = [];
+    const seen = new Set<string>();
+    const pushEndpoint = (pathname: string) => {
+        const endpoint = new URL(parsedN8nWebhookUrl.toString());
+        endpoint.pathname = toAbsolutePathname(pathname);
+        endpoint.search = "";
+        endpoint.hash = "";
+
+        const value = endpoint.toString();
+        if (!seen.has(value)) {
+            seen.add(value);
+            endpoints.push(value);
+        }
+    };
+
+    if (webhookIndex >= 0) {
+        pushEndpoint(configuredPath);
+        const basePath = configuredPath.slice(0, webhookIndex);
+        for (const webhookPath of TAILOR_WEBHOOK_PATH_CANDIDATES) {
+            pushEndpoint(`${basePath}/webhook/${webhookPath}`);
+        }
+    } else {
+        for (const webhookPath of TAILOR_WEBHOOK_PATH_CANDIDATES) {
+            pushEndpoint(`${configuredPath}/webhook/${webhookPath}`);
+        }
+    }
+
+    return endpoints;
 }
 
 /**
@@ -100,24 +165,9 @@ export async function POST(req: Request) {
             );
         }
 
-        let webhookEndpoint: string;
+        let webhookEndpoints: string[];
         try {
-            const parsedN8nWebhookUrl = new URL(n8nWebhookUrl);
-            if (
-                parsedN8nWebhookUrl.protocol !== "http:" &&
-                parsedN8nWebhookUrl.protocol !== "https:"
-            ) {
-                return NextResponse.json(
-                    { error: "Tailoring service unavailable. Please try again later." },
-                    { status: 503 }
-                );
-            }
-
-            const normalizedBasePath = parsedN8nWebhookUrl.pathname.replace(/\/$/, "");
-            parsedN8nWebhookUrl.pathname = `${normalizedBasePath}/webhook/${V3_TAILOR_WEBHOOK_PATH}`;
-            parsedN8nWebhookUrl.search = "";
-            parsedN8nWebhookUrl.hash = "";
-            webhookEndpoint = parsedN8nWebhookUrl.toString();
+            webhookEndpoints = buildTailorWebhookEndpoints(n8nWebhookUrl);
         } catch {
             return NextResponse.json(
                 { error: "Tailoring service unavailable. Please try again later." },
@@ -226,27 +276,70 @@ export async function POST(req: Request) {
 
         // Trigger n8n single-job tailoring webhook.
         // Credits are deducted only after webhook dispatch succeeds.
-        const webhookResponse = await fetch(webhookEndpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-webhook-secret": n8nWebhookSecret,
-            },
-            body: JSON.stringify({
-                userId: user.id,
-                jobId: job.id,
-                jobTitle: sanitizedJobTitle || job.title || "Untitled Position",
-                company: sanitizedCompany || job.company || "Unknown Company",
-                jobDescription: effectiveJobDescription,
-                masterCvText: user.masterProfile.rawText,
-                additionalContext: sanitizedAdditionalContext || "",
-            }),
-        }).catch((err) => {
-            console.error("n8n webhook trigger failed:", err.message);
-            return null;
+        const webhookPayload = JSON.stringify({
+            userId: user.id,
+            jobId: job.id,
+            jobTitle: sanitizedJobTitle || job.title || "Untitled Position",
+            company: sanitizedCompany || job.company || "Unknown Company",
+            jobDescription: effectiveJobDescription,
+            masterCvText: user.masterProfile.rawText,
+            additionalContext: sanitizedAdditionalContext || "",
         });
 
+        let webhookResponse: Response | null = null;
+        let lastDispatchError:
+            | {
+                  endpoint: string;
+                  status: number | null;
+                  bodySnippet?: string;
+                  error?: string;
+              }
+            | null = null;
+
+        for (const webhookEndpoint of webhookEndpoints) {
+            try {
+                const response = await fetch(webhookEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-webhook-secret": n8nWebhookSecret,
+                    },
+                    body: webhookPayload,
+                });
+
+                if (response.ok) {
+                    webhookResponse = response;
+                    break;
+                }
+
+                const bodySnippet = await response
+                    .text()
+                    .then((value) => String(value || "").slice(0, 300))
+                    .catch(() => "");
+
+                lastDispatchError = {
+                    endpoint: webhookEndpoint,
+                    status: response.status,
+                    bodySnippet: bodySnippet || undefined,
+                };
+
+                if (response.status !== 404 && response.status !== 405) {
+                    break;
+                }
+            } catch (err) {
+                lastDispatchError = {
+                    endpoint: webhookEndpoint,
+                    status: null,
+                    error: err instanceof Error ? err.message : String(err),
+                };
+            }
+        }
+
         if (!webhookResponse || !webhookResponse.ok) {
+            console.error("n8n webhook trigger failed", {
+                attempts: webhookEndpoints.length,
+                lastDispatchError,
+            });
             return NextResponse.json(
                 { error: "Tailoring dispatch failed. Please try again." },
                 { status: 502 }
