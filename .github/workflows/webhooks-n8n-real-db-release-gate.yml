@@ -1,0 +1,60 @@
+name: Webhooks n8n Real-DB Release Gate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webhooks-n8n-real-db-release-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  factual-guard-real-db-gate:
+    name: Real-DB factual-guard mixed-batch gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+    env:
+      RUN_REAL_DB_INTEGRATION: "1"
+      DATABASE_URL: ${{ secrets.AUTOAPPLY_TEST_DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Validate dedicated test DB secret
+        run: |
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "Missing required GitHub secret: AUTOAPPLY_TEST_DATABASE_URL"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run real-DB webhook factual-guard integration test
+        run: npm run test -- __tests__/integration/webhooks-n8n.real-db.test.ts
+
+      - name: Gate summary
+        if: always()
+        run: |
+          {
+            echo "## Webhooks n8n Real-DB Release Gate"
+            echo ""
+            echo "- Test target: \`__tests__/integration/webhooks-n8n.real-db.test.ts\`"
+            echo "- Expected proof:"
+            echo "  - clean item persists as tailored"
+            echo "  - hallucinated item downgraded to discovered with null tailored markdown"
+            echo "  - exactly one \`WorkflowError\` with \`FACTUAL_GUARD_BLOCKED\`"
+            echo "  - aggregate persisted counters reflect 1 tailored / 1 discovered / 1 quarantined"
+          } >> "$GITHUB_STEP_SUMMARY"
