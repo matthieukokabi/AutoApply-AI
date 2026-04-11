@@ -1,0 +1,127 @@
+name: PR Real-DB Gate Evidence Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+
+concurrency:
+  group: pr-real-db-gate-evidence-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-real-db-gate-evidence:
+    name: Validate real-DB gate evidence for release-sensitive PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body evidence for release-sensitive changes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setFailed("This workflow only supports pull_request events.");
+              return;
+            }
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pullNumber = pr.number;
+            const expectedWorkflowName = "Webhooks n8n Real-DB Release Gate";
+
+            const isReleaseSensitivePath = (filename) => {
+              if (filename === "apps/web/app/api/webhooks/n8n/route.ts") return true;
+              if (filename === "apps/web/app/api/tailor/route.ts") return true;
+              if (/^apps\/web\/lib\/.*factual.*guard.*\.(ts|tsx|js|mjs|cjs)$/i.test(filename)) return true;
+              if (/^n8n\/workflows\/single-job-tailoring.*\.json$/i.test(filename)) return true;
+              if (/^n8n\/workflows\/job-discovery-pipeline.*\.json$/i.test(filename)) return true;
+              return false;
+            };
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number: pullNumber,
+              per_page: 100,
+            });
+            const changedPaths = files.map((file) => file.filename);
+            const releaseSensitivePaths = changedPaths.filter(isReleaseSensitivePath);
+
+            if (releaseSensitivePaths.length === 0) {
+              core.notice("No release-sensitive paths changed; real-DB gate evidence is not required.");
+              return;
+            }
+
+            const prBody = pr.body || "";
+            const runUrlRegex = new RegExp(`https://github\\.com/${owner}/${repo}/actions/runs/(\\d+)`, "g");
+            const runUrlMatches = [...prBody.matchAll(runUrlRegex)];
+
+            if (runUrlMatches.length === 0) {
+              core.setFailed(
+                [
+                  "Release-sensitive changes detected, but no GitHub Actions run URL was found in the PR body.",
+                  `Required workflow: ${expectedWorkflowName}`,
+                  "Required URL format: https://github.com/<org>/<repo>/actions/runs/<id>",
+                  `Matched release-sensitive paths: ${releaseSensitivePaths.join(", ")}`,
+                ].join("\n")
+              );
+              return;
+            }
+
+            const runIds = [...new Set(runUrlMatches.map((match) => Number(match[1])).filter(Number.isFinite))];
+            let validEvidenceFound = false;
+            const checkedRuns = [];
+
+            for (const runId of runIds) {
+              try {
+                const { data: run } = await github.rest.actions.getWorkflowRun({
+                  owner,
+                  repo,
+                  run_id: runId,
+                });
+
+                checkedRuns.push(
+                  `run_id=${runId}, name=${run.name}, status=${run.status}, conclusion=${run.conclusion}`
+                );
+
+                if (
+                  run.name === expectedWorkflowName &&
+                  run.status === "completed" &&
+                  run.conclusion === "success"
+                ) {
+                  validEvidenceFound = true;
+                  core.notice(`Validated gate evidence with run ${runId}.`);
+                  break;
+                }
+              } catch (error) {
+                checkedRuns.push(
+                  `run_id=${runId}, error=${error instanceof Error ? error.message : String(error)}`
+                );
+              }
+            }
+
+            if (!validEvidenceFound) {
+              core.setFailed(
+                [
+                  "Release-sensitive changes detected, but no linked run proved a successful gate execution.",
+                  `Required workflow: ${expectedWorkflowName}`,
+                  "Linked run diagnostics:",
+                  ...checkedRuns.map((line) => `- ${line}`),
+                ].join("\n")
+              );
+              return;
+            }
+
+            core.notice(
+              `Release-sensitive paths verified with valid ${expectedWorkflowName} evidence.`
+            );

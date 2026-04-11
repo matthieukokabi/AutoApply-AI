@@ -28,6 +28,20 @@ For those changes, do not merge or deploy without a green run of:
 
 `Webhooks n8n Real-DB Release Gate`
 
+## Automated PR enforcement
+
+PRs to `main` are machine-validated by workflow:
+
+`PR Real-DB Gate Evidence Check`
+
+Behavior:
+
+- if no release-sensitive paths are changed, the check exits without requiring evidence
+- if release-sensitive paths are changed, the PR body must include at least one run URL in format:
+  `https://github.com/<org>/<repo>/actions/runs/<id>`
+- at least one linked run must resolve to workflow `Webhooks n8n Real-DB Release Gate` with `status=completed` and `conclusion=success`
+- otherwise the PR check fails
+
 ## Required evidence link
 
 The PR/release notes must include the successful workflow run URL:
