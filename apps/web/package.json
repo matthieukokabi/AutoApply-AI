@@ -38,7 +38,8 @@
         "incident:pipeline:recovery": "node scripts/automation_pipeline_recovery_run.js",
         "incident:pipeline:await-post-update": "node scripts/automation_pipeline_post_update_gate.js --timeout-seconds 21600 --poll-seconds 60 --json",
         "incident:pipeline:checkpoint": "node scripts/n8n_workflow_checkpoint.js",
-        "incident:pipeline:publish-v3": "node scripts/publish_v3_workflows.js"
+        "incident:pipeline:publish-v3": "node scripts/publish_v3_workflows.js",
+        "maintenance:factual-guard:backfill-application-id": "node scripts/backfill_factual_guard_application_id.js"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"
