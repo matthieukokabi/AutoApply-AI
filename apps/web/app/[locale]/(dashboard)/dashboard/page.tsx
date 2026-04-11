@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, FileText, TrendingUp, Clock } from "lucide-react";
 import { KanbanBoard } from "@/components/kanban-board";
 import { getTranslations } from "next-intl/server";
-import { getFactualGuardByApplicationId } from "@/lib/factual-guard-visibility";
+import {
+    getFactualGuardByApplicationId,
+    summarizeApplicationStates,
+} from "@/lib/factual-guard-visibility";
 
 export const metadata: Metadata = {
     title: "Dashboard — AutoApply AI",
@@ -20,36 +23,26 @@ async function getDashboardData(clerkId: string) {
 
     if (!user) return null;
 
-    const [applications, totalApplications, tailoredDocs, avgResult, statusCounts] =
+    const [applications, avgResult] =
         await Promise.all([
             prisma.application.findMany({
                 where: { userId: user.id },
                 include: { job: true },
                 orderBy: { createdAt: "desc" },
             }),
-            prisma.application.count({ where: { userId: user.id } }),
-            prisma.application.count({
-                where: { userId: user.id, tailoredCvUrl: { not: null } },
-            }),
             prisma.application.aggregate({
                 where: { userId: user.id },
                 _avg: { compatibilityScore: true },
             }),
-            prisma.application.groupBy({
-                by: ["status"],
-                where: { userId: user.id },
-                _count: { id: true },
-            }),
         ]);
-
-    const byStatus: Record<string, number> = {};
-    statusCounts.forEach((s) => {
-        byStatus[s.status] = s._count.id;
-    });
 
     const factualGuardByApplicationId = await getFactualGuardByApplicationId({
         userId: user.id,
         applications,
+    });
+    const stateSummary = summarizeApplicationStates({
+        applications,
+        factualGuardByApplicationId,
     });
 
     return {
@@ -69,10 +62,13 @@ async function getDashboardData(clerkId: string) {
             },
         })),
         stats: {
-            totalApplications,
-            tailoredDocs,
+            totalApplications: stateSummary.totalCount,
+            tailoredDocs: stateSummary.tailoredCount,
             avgScore: Math.round(avgResult._avg.compatibilityScore || 0),
-            pendingReview: byStatus["tailored"] || 0,
+            pendingReview: stateSummary.tailoredCount,
+            discoveredCount: stateSummary.discoveredCount,
+            plainDiscoveredCount: stateSummary.plainDiscoveredCount,
+            guardBlockedCount: stateSummary.guardBlockedCount,
         },
     };
 }
@@ -89,6 +85,9 @@ export default async function DashboardPage() {
         tailoredDocs: 0,
         avgScore: 0,
         pendingReview: 0,
+        discoveredCount: 0,
+        plainDiscoveredCount: 0,
+        guardBlockedCount: 0,
     };
 
     return (
@@ -144,6 +143,11 @@ export default async function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.pendingReview}</div>
+                        {stats.guardBlockedCount > 0 && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Guard blocked: {stats.guardBlockedCount}
+                            </p>
+                        )}
                     </CardContent>
                 </Card>
             </div>

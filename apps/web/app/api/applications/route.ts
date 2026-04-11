@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { APPLICATION_STATUSES } from "@/lib/utils";
-import { getFactualGuardByApplicationId } from "@/lib/factual-guard-visibility";
+import {
+    getFactualGuardByApplicationId,
+    summarizeApplicationStates,
+} from "@/lib/factual-guard-visibility";
 
 type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
@@ -75,7 +78,12 @@ export async function GET(req: Request) {
             factualGuard: factualGuardByApplicationId.get(application.id) || null,
         }));
 
-        return NextResponse.json({ applications: applicationsWithFactualGuard });
+        const summary = summarizeApplicationStates({
+            applications: applicationsWithFactualGuard,
+            factualGuardByApplicationId,
+        });
+
+        return NextResponse.json({ applications: applicationsWithFactualGuard, summary });
     } catch (error) {
         console.error("GET /api/applications error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

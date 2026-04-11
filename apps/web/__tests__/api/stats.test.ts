@@ -20,7 +20,6 @@ describe("GET /api/stats", () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.application.count)
             .mockResolvedValueOnce(15 as any) // totalApplications
-            .mockResolvedValueOnce(10 as any) // tailoredDocs
             .mockResolvedValueOnce(3 as any); // monthlyUsage
         vi.mocked(prisma.application.aggregate).mockResolvedValue({
             _avg: { compatibilityScore: 78.5 },
@@ -32,6 +31,34 @@ describe("GET /api/stats", () => {
             { status: "interview", _count: { id: 2 } },
             { status: "offer", _count: { id: 1 } },
         ] as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue([
+            {
+                id: "app_discovered_1",
+                status: "discovered",
+                jobId: "job_discovered_1",
+                tailoredCvMarkdown: null,
+                coverLetterMarkdown: null,
+                job: { externalId: "external_discovered_1" },
+            },
+            {
+                id: "app_discovered_2",
+                status: "discovered",
+                jobId: "job_discovered_2",
+                tailoredCvMarkdown: null,
+                coverLetterMarkdown: null,
+                job: { externalId: "external_discovered_2" },
+            },
+        ] as any);
+        vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
+            {
+                createdAt: new Date("2026-04-11T12:00:00.000Z"),
+                message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+                payload: {
+                    applicationId: "app_discovered_1",
+                    reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+                },
+            },
+        ] as any);
 
         const request = new Request("http://localhost/api/stats");
         const response = await GET(request);
@@ -39,7 +66,12 @@ describe("GET /api/stats", () => {
 
         expect(response.status).toBe(200);
         expect(data.totalApplications).toBe(15);
-        expect(data.tailoredDocs).toBe(10);
+        expect(data.tailoredDocs).toBe(4);
+        expect(data.pendingReview).toBe(4);
+        expect(data.discoveredCount).toBe(5);
+        expect(data.guardBlockedCount).toBe(1);
+        expect(data.plainDiscoveredCount).toBe(4);
+        expect(data.plainDiscoveredCount + data.guardBlockedCount).toBe(data.discoveredCount);
         expect(data.avgScore).toBe(79); // rounded
         expect(data.subscriptionStatus).toBe("pro");
         expect(data.creditsRemaining).toBe(42);

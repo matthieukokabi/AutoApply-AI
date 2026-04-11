@@ -71,6 +71,15 @@ describe("GET /api/applications", () => {
         expect(response.status).toBe(200);
         expect(data.applications).toHaveLength(2);
         expect(data.applications[0].job.title).toBe("Frontend Engineer");
+        expect(data.summary).toEqual(
+            expect.objectContaining({
+                totalCount: 2,
+                tailoredCount: 1,
+                discoveredCount: 1,
+                plainDiscoveredCount: 1,
+                guardBlockedCount: 0,
+            })
+        );
     });
 
     it("keeps legacy fallback linkage via externalId when applicationId is absent", async () => {
@@ -98,6 +107,18 @@ describe("GET /api/applications", () => {
             blockedAt: "2026-04-11T12:00:00.000Z",
         });
         expect(data.applications[1].factualGuard).toBeNull();
+        expect(data.summary).toEqual(
+            expect.objectContaining({
+                totalCount: 2,
+                tailoredCount: 1,
+                discoveredCount: 1,
+                plainDiscoveredCount: 0,
+                guardBlockedCount: 1,
+            })
+        );
+        expect(data.summary.plainDiscoveredCount + data.summary.guardBlockedCount).toBe(
+            data.summary.discoveredCount
+        );
         expect(prisma.workflowError.findMany).toHaveBeenCalledWith(
             expect.objectContaining({
                 where: expect.objectContaining({
@@ -140,6 +161,13 @@ describe("GET /api/applications", () => {
             reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
             blockedAt: "2026-04-11T12:00:00.000Z",
         });
+        expect(data.summary).toEqual(
+            expect.objectContaining({
+                discoveredCount: 1,
+                plainDiscoveredCount: 0,
+                guardBlockedCount: 1,
+            })
+        );
     });
 
     it("filters by status when query param provided", async () => {

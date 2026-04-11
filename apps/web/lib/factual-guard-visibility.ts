@@ -26,6 +26,20 @@ export type ApplicationFactualGuardInfo = {
     blockedAt: string;
 };
 
+type ApplicationStateSummaryInput = {
+    id: string;
+    status: string;
+};
+
+export type ApplicationStateSummary = {
+    totalCount: number;
+    tailoredCount: number;
+    discoveredCount: number;
+    plainDiscoveredCount: number;
+    guardBlockedCount: number;
+    byStatus: Record<string, number>;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -158,4 +172,32 @@ export async function getFactualGuardByApplicationId(params: {
     }
 
     return factualGuardByApplicationId;
+}
+
+export function summarizeApplicationStates(params: {
+    applications: ApplicationStateSummaryInput[];
+    factualGuardByApplicationId: Map<string, ApplicationFactualGuardInfo>;
+}): ApplicationStateSummary {
+    const { applications, factualGuardByApplicationId } = params;
+    const byStatus: Record<string, number> = {};
+    let guardBlockedCount = 0;
+
+    for (const application of applications) {
+        byStatus[application.status] = (byStatus[application.status] || 0) + 1;
+        if (application.status === "discovered" && factualGuardByApplicationId.has(application.id)) {
+            guardBlockedCount += 1;
+        }
+    }
+
+    const discoveredCount = byStatus.discovered || 0;
+    const plainDiscoveredCount = Math.max(discoveredCount - guardBlockedCount, 0);
+
+    return {
+        totalCount: applications.length,
+        tailoredCount: byStatus.tailored || 0,
+        discoveredCount,
+        plainDiscoveredCount,
+        guardBlockedCount,
+        byStatus,
+    };
 }
