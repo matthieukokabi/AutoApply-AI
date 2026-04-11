@@ -473,4 +473,268 @@ Education: Bachelor of Computer Science`,
         },
         60_000
     );
+
+    itRealDb(
+        "returns factual-guard mapping and summary contract for GET /api/applications under noisy history",
+        async () => {
+            if (!process.env.DATABASE_URL) {
+                throw new Error("DATABASE_URL is required for real-db integration test");
+            }
+
+            vi.unmock("@/lib/prisma");
+            vi.resetModules();
+
+            const { prisma } = await import("@/lib/prisma");
+            const { getAuthUser } = await import("@/lib/auth");
+            const { GET } = await import("@/app/api/applications/route");
+
+            const runSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const externalPrefix = `it-applications-route-noisy-${runSuffix}`;
+            const userEmail = `integration+applications-route-${runSuffix}@example.com`;
+            const noiseUserEmail = `integration+applications-route-noise-${runSuffix}@example.com`;
+            const clerkId = `integration-applications-route-${runSuffix}`;
+            const noiseClerkId = `integration-applications-route-noise-${runSuffix}`;
+
+            let userId: string | null = null;
+            let noiseUserId: string | null = null;
+            try {
+                const [user, noiseUser] = await Promise.all([
+                    prisma.user.create({
+                        data: {
+                            email: userEmail,
+                            clerkId,
+                            name: "Integration Applications Route User",
+                            automationEnabled: true,
+                            subscriptionStatus: "pro",
+                            creditsRemaining: 10,
+                        },
+                        select: { id: true },
+                    }),
+                    prisma.user.create({
+                        data: {
+                            email: noiseUserEmail,
+                            clerkId: noiseClerkId,
+                            name: "Integration Applications Route Noise User",
+                            automationEnabled: true,
+                            subscriptionStatus: "pro",
+                            creditsRemaining: 10,
+                        },
+                        select: { id: true },
+                    }),
+                ]);
+                userId = user.id;
+                noiseUserId = noiseUser.id;
+
+                const [guardedJob, plainJob, tailoredJob] = await Promise.all([
+                    prisma.job.create({
+                        data: {
+                            externalId: `${externalPrefix}-guarded`,
+                            title: "Guarded Discovered Role",
+                            company: "Guarded Corp",
+                            location: "Remote",
+                            description: "Guarded role",
+                            source: "manual",
+                            url: "https://example.com/guarded",
+                        },
+                        select: { id: true, externalId: true },
+                    }),
+                    prisma.job.create({
+                        data: {
+                            externalId: `${externalPrefix}-plain`,
+                            title: "Plain Discovered Role",
+                            company: "Plain Corp",
+                            location: "Remote",
+                            description: "Plain role",
+                            source: "manual",
+                            url: "https://example.com/plain",
+                        },
+                        select: { id: true, externalId: true },
+                    }),
+                    prisma.job.create({
+                        data: {
+                            externalId: `${externalPrefix}-tailored`,
+                            title: "Tailored Role",
+                            company: "Tailored Corp",
+                            location: "Remote",
+                            description: "Tailored role",
+                            source: "manual",
+                            url: "https://example.com/tailored",
+                        },
+                        select: { id: true, externalId: true },
+                    }),
+                ]);
+
+                await prisma.application.createMany({
+                    data: [
+                        {
+                            userId,
+                            jobId: guardedJob.id,
+                            compatibilityScore: 84,
+                            status: "discovered",
+                            tailoredCvMarkdown: null,
+                            coverLetterMarkdown: null,
+                        },
+                        {
+                            userId,
+                            jobId: plainJob.id,
+                            compatibilityScore: 70,
+                            status: "discovered",
+                            tailoredCvMarkdown: null,
+                            coverLetterMarkdown: null,
+                        },
+                        {
+                            userId,
+                            jobId: tailoredJob.id,
+                            compatibilityScore: 93,
+                            status: "tailored",
+                            tailoredCvMarkdown: "# Tailored CV",
+                            coverLetterMarkdown: "# Tailored Cover Letter",
+                        },
+                    ],
+                });
+
+                const [guardedApplication, plainApplication, tailoredApplication] = await Promise.all([
+                    prisma.application.findUnique({
+                        where: { userId_jobId: { userId, jobId: guardedJob.id } },
+                        select: { id: true },
+                    }),
+                    prisma.application.findUnique({
+                        where: { userId_jobId: { userId, jobId: plainJob.id } },
+                        select: { id: true },
+                    }),
+                    prisma.application.findUnique({
+                        where: { userId_jobId: { userId, jobId: tailoredJob.id } },
+                        select: { id: true },
+                    }),
+                ]);
+                expect(guardedApplication).toBeTruthy();
+                expect(plainApplication).toBeTruthy();
+                expect(tailoredApplication).toBeTruthy();
+
+                const olderRelevantBlockedAt = new Date("2024-02-01T08:30:00.000Z");
+                await prisma.workflowError.create({
+                    data: {
+                        workflowId: "job-discovery-pipeline-v3",
+                        nodeName: "Guard Evaluation",
+                        errorType: "FACTUAL_GUARD_BLOCKED",
+                        message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+                        userId,
+                        payload: {
+                            applicationId: guardedApplication!.id,
+                            reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+                        },
+                        createdAt: olderRelevantBlockedAt,
+                    },
+                });
+
+                const noisyRows = Array.from({ length: 700 }, (_, index) => ({
+                    workflowId: "job-discovery-pipeline-v3",
+                    nodeName: "Guard Evaluation",
+                    errorType: "FACTUAL_GUARD_BLOCKED",
+                    message: "FACTUAL_GUARD_UNSUPPORTED_TOOL",
+                    userId,
+                    payload: {
+                        applicationId: `noise-app-${runSuffix}-${index}`,
+                        jobId: `noise-job-${runSuffix}-${index}`,
+                        externalId: `noise-external-${runSuffix}-${index}`,
+                        reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_TOOL"],
+                    },
+                    createdAt: new Date(Date.now() + index),
+                }));
+                await prisma.workflowError.createMany({ data: noisyRows });
+
+                await prisma.workflowError.create({
+                    data: {
+                        workflowId: "single-job-tailoring-v3",
+                        nodeName: "Guard Evaluation",
+                        errorType: "FACTUAL_GUARD_BLOCKED",
+                        message: "FACTUAL_GUARD_UNSUPPORTED_YEAR",
+                        userId: noiseUserId,
+                        payload: {
+                            applicationId: guardedApplication!.id,
+                            reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_YEAR"],
+                        },
+                    },
+                });
+
+                vi.mocked(getAuthUser).mockResolvedValue({
+                    id: userId,
+                    email: userEmail,
+                    clerkId,
+                } as any);
+
+                const request = new Request("http://localhost/api/applications");
+                const response = await GET(request);
+                const data = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(Array.isArray(data.applications)).toBe(true);
+                expect(data.applications).toHaveLength(3);
+
+                const guardedEntry = data.applications.find(
+                    (application: any) => application.job?.externalId === guardedJob.externalId
+                );
+                const plainEntry = data.applications.find(
+                    (application: any) => application.job?.externalId === plainJob.externalId
+                );
+                const tailoredEntry = data.applications.find(
+                    (application: any) => application.job?.externalId === tailoredJob.externalId
+                );
+
+                expect(guardedEntry?.factualGuard).toEqual({
+                    blocked: true,
+                    reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+                    blockedAt: olderRelevantBlockedAt.toISOString(),
+                });
+                expect(plainEntry?.factualGuard).toBeNull();
+                expect(tailoredEntry?.factualGuard).toBeNull();
+
+                const blockedCount = data.applications.filter(
+                    (application: any) => application.factualGuard?.blocked === true
+                ).length;
+                expect(blockedCount).toBe(1);
+
+                expect(data.summary).toEqual(
+                    expect.objectContaining({
+                        totalCount: 3,
+                        tailoredCount: 1,
+                        discoveredCount: 2,
+                        guardBlockedCount: 1,
+                        plainDiscoveredCount: 1,
+                    })
+                );
+                expect(data.summary.plainDiscoveredCount + data.summary.guardBlockedCount).toBe(
+                    data.summary.discoveredCount
+                );
+            } finally {
+                if (userId || noiseUserId) {
+                    await prisma.workflowError.deleteMany({
+                        where: {
+                            userId: {
+                                in: [userId, noiseUserId].filter(Boolean) as string[],
+                            },
+                        },
+                    });
+                }
+                if (userId || noiseUserId) {
+                    await prisma.user.deleteMany({
+                        where: {
+                            id: {
+                                in: [userId, noiseUserId].filter(Boolean) as string[],
+                            },
+                        },
+                    });
+                }
+                await prisma.job.deleteMany({
+                    where: {
+                        externalId: {
+                            startsWith: externalPrefix,
+                        },
+                    },
+                });
+                await prisma.$disconnect();
+            }
+        },
+        60_000
+    );
 });
