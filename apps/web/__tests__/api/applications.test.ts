@@ -15,6 +15,8 @@ const mockApplications = [
         userId: "user_1",
         jobId: "job_1",
         status: "discovered",
+        tailoredCvMarkdown: null,
+        coverLetterMarkdown: null,
         compatibilityScore: 85,
         atsKeywords: ["React", "TypeScript"],
         matchingStrengths: ["Frontend experience"],
@@ -23,6 +25,7 @@ const mockApplications = [
         createdAt: new Date(),
         job: {
             id: "job_1",
+            externalId: "external_job_1",
             title: "Frontend Engineer",
             company: "Acme Corp",
             location: "Remote",
@@ -33,6 +36,8 @@ const mockApplications = [
         userId: "user_1",
         jobId: "job_2",
         status: "tailored",
+        tailoredCvMarkdown: "# Tailored CV",
+        coverLetterMarkdown: "# Cover Letter",
         compatibilityScore: 72,
         atsKeywords: ["Node.js"],
         matchingStrengths: ["Backend experience"],
@@ -41,6 +46,7 @@ const mockApplications = [
         createdAt: new Date(),
         job: {
             id: "job_2",
+            externalId: "external_job_2",
             title: "Backend Developer",
             company: "Tech Inc",
             location: "Berlin",
@@ -50,6 +56,7 @@ const mockApplications = [
 
 beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.workflowError.findMany).mockResolvedValue([]);
 });
 
 describe("GET /api/applications", () => {
@@ -64,6 +71,41 @@ describe("GET /api/applications", () => {
         expect(response.status).toBe(200);
         expect(data.applications).toHaveLength(2);
         expect(data.applications[0].job.title).toBe("Frontend Engineer");
+    });
+
+    it("surfaces factual guard quarantine metadata for blocked discovered applications", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.findMany).mockResolvedValue(mockApplications as any);
+        vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
+            {
+                createdAt: new Date("2026-04-11T12:00:00.000Z"),
+                message: "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+                payload: {
+                    externalId: "external_job_1",
+                    reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+                },
+            },
+        ] as any);
+
+        const request = new Request("http://localhost/api/applications");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.applications[0].factualGuard).toEqual({
+            blocked: true,
+            reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_EMPLOYER"],
+            blockedAt: "2026-04-11T12:00:00.000Z",
+        });
+        expect(data.applications[1].factualGuard).toBeNull();
+        expect(prisma.workflowError.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    userId: "user_1",
+                    errorType: "FACTUAL_GUARD_BLOCKED",
+                }),
+            })
+        );
     });
 
     it("filters by status when query param provided", async () => {

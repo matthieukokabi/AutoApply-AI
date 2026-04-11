@@ -106,6 +106,7 @@ vi.mock("@/lib/prisma", () => ({
         },
         workflowError: {
             create: vi.fn(),
+            findMany: vi.fn(),
         },
         automationLock: {
             findUnique: vi.fn(),

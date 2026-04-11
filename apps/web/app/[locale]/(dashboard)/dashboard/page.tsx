@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, FileText, TrendingUp, Clock } from "lucide-react";
 import { KanbanBoard } from "@/components/kanban-board";
 import { getTranslations } from "next-intl/server";
+import { getFactualGuardByApplicationId } from "@/lib/factual-guard-visibility";
 
 export const metadata: Metadata = {
     title: "Dashboard — AutoApply AI",
@@ -46,6 +47,11 @@ async function getDashboardData(clerkId: string) {
         byStatus[s.status] = s._count.id;
     });
 
+    const factualGuardByApplicationId = await getFactualGuardByApplicationId({
+        userId: user.id,
+        applications,
+    });
+
     return {
         applications: applications.map((a) => ({
             id: a.id,
@@ -54,6 +60,7 @@ async function getDashboardData(clerkId: string) {
             atsKeywords: a.atsKeywords,
             recommendation: a.recommendation,
             createdAt: a.createdAt.toISOString(),
+            factualGuard: factualGuardByApplicationId.get(a.id) || null,
             job: {
                 id: a.job.id,
                 title: a.job.title,

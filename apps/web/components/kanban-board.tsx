@@ -16,6 +16,11 @@ interface ApplicationWithJob {
     atsKeywords: string[];
     recommendation: string | null;
     createdAt: string;
+    factualGuard: {
+        blocked: true;
+        reasonCodes: string[];
+        blockedAt: string;
+    } | null;
     job: {
         id: string;
         title: string;
@@ -154,10 +159,30 @@ export function KanbanBoard({
                                                                 >
                                                                     {app.compatibilityScore}%
                                                                 </Badge>
+                                                                {app.factualGuard?.blocked && (
+                                                                    <Badge
+                                                                        variant="destructive"
+                                                                        className="text-[10px]"
+                                                                        title={
+                                                                            app.factualGuard.reasonCodes.join(
+                                                                                ", "
+                                                                            ) ||
+                                                                            "FACTUAL_GUARD_BLOCKED"
+                                                                        }
+                                                                    >
+                                                                        Guard blocked
+                                                                    </Badge>
+                                                                )}
                                                                 <span className="text-xs text-muted-foreground">
                                                                     {formatDate(app.createdAt)}
                                                                 </span>
                                                             </div>
+                                                            {app.factualGuard?.blocked && (
+                                                                <p className="text-[10px] text-muted-foreground">
+                                                                    Factual guard reasons:{" "}
+                                                                    {app.factualGuard.reasonCodes.length}
+                                                                </p>
+                                                            )}
                                                             <Link href={`/documents/${app.id}`}>
                                                                 <Button
                                                                     variant="ghost"
