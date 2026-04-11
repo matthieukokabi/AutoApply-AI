@@ -782,6 +782,155 @@ describe("POST /api/webhooks/n8n", () => {
             expect(prisma.workflowError.create).not.toHaveBeenCalled();
         });
 
+        it("handles mixed clean and blocked batch items in one run", async () => {
+            const infoSpy = vi.spyOn(console, "info").mockImplementation(() => undefined);
+            try {
+                vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+                vi.mocked(prisma.job.upsert)
+                    .mockResolvedValueOnce({
+                        id: "job_clean_1",
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                    } as any)
+                    .mockResolvedValueOnce({
+                        id: "job_blocked_1",
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                    } as any);
+                vi.mocked(prisma.application.upsert)
+                    .mockResolvedValueOnce({
+                        ...mockApplication,
+                        id: "app_clean_1",
+                        jobId: "job_clean_1",
+                        status: "tailored",
+                        tailoredCvMarkdown: "# Tailored CV",
+                        coverLetterMarkdown: "# Tailored Cover",
+                        job: {
+                            id: "job_clean_1",
+                            title: "Senior Developer",
+                            company: "Tech Corp",
+                        },
+                    } as any)
+                    .mockResolvedValueOnce({
+                        ...mockApplication,
+                        id: "app_blocked_1",
+                        jobId: "job_blocked_1",
+                        status: "discovered",
+                        tailoredCvMarkdown: null,
+                        coverLetterMarkdown: null,
+                        job: {
+                            id: "job_blocked_1",
+                            title: "Senior Developer",
+                            company: "Tech Corp",
+                        },
+                    } as any);
+
+                const request = createWebhookRequest("new_applications", {
+                    userId: "user_1",
+                    applications: [
+                        {
+                            externalId: "adzuna-mixed-clean-1",
+                            title: "Senior Developer",
+                            company: "Tech Corp",
+                            compatibilityScore: 90,
+                            additionalContext:
+                                "Verified candidate context: Kubernetes operations and Rust services ownership since 2024.",
+                            tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Operated Kubernetes workloads and shipped Rust backend services.`,
+                            coverLetterMarkdown:
+                                "My Kubernetes and Rust experience directly matches your platform team needs.",
+                        },
+                        {
+                            externalId: "adzuna-mixed-blocked-1",
+                            title: "Senior Developer",
+                            company: "Tech Corp",
+                            compatibilityScore: 88,
+                            tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Principal Engineer at Moonshot Labs
+**2030 - Present**
+- Led enterprise platform delivery with Kubernetes and Rust.`,
+                            coverLetterMarkdown:
+                                "I recently completed an Executive MBA and led Moonshot Labs cloud migration programs.",
+                        },
+                    ],
+                });
+
+                const response = await POST(request);
+                const data = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(data.message).toContain("2 applications");
+
+                const upsertCalls = vi.mocked(prisma.application.upsert).mock.calls;
+                expect(upsertCalls).toHaveLength(2);
+                expect(upsertCalls[0][0]).toEqual(
+                    expect.objectContaining({
+                        create: expect.objectContaining({
+                            status: "tailored",
+                        }),
+                    })
+                );
+                expect(upsertCalls[1][0]).toEqual(
+                    expect.objectContaining({
+                        create: expect.objectContaining({
+                            status: "discovered",
+                            tailoredCvMarkdown: null,
+                            coverLetterMarkdown: null,
+                        }),
+                        update: expect.objectContaining({
+                            status: "discovered",
+                            tailoredCvMarkdown: null,
+                            coverLetterMarkdown: null,
+                        }),
+                    })
+                );
+
+                expect(prisma.workflowError.create).toHaveBeenCalledTimes(1);
+                expect(prisma.workflowError.create).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        data: expect.objectContaining({
+                            errorType: "FACTUAL_GUARD_BLOCKED",
+                            payload: expect.objectContaining({
+                                reasonCodes: expect.arrayContaining([
+                                    "FACTUAL_GUARD_UNSUPPORTED_EMPLOYER",
+                                ]),
+                            }),
+                        }),
+                    })
+                );
+
+                const persistedEvent = infoSpy.mock.calls
+                    .map((call) => {
+                        const raw = call[0];
+                        if (typeof raw !== "string") {
+                            return null;
+                        }
+                        try {
+                            return JSON.parse(raw) as Record<string, unknown>;
+                        } catch {
+                            return null;
+                        }
+                    })
+                    .find((entry) => entry?.event === "new_applications_persisted");
+
+                expect(persistedEvent).toEqual(
+                    expect.objectContaining({
+                        createdCount: 2,
+                        persistedCount: 2,
+                        tailoredCount: 1,
+                        discoveredCount: 1,
+                        quarantinedCount: 1,
+                    })
+                );
+            } finally {
+                infoSpy.mockRestore();
+            }
+        });
+
         it("uses a stable fallback externalId when n8n payload omits externalId", async () => {
             vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue(mockApplication as any);
