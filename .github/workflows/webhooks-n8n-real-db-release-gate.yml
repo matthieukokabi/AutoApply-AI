@@ -42,6 +42,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prisma migration status (before)
+        run: npx prisma migrate status --schema prisma/schema.prisma || true
+
+      - name: Apply pending migrations to dedicated test DB
+        run: npx prisma migrate deploy --schema prisma/schema.prisma
+
+      - name: Prisma migration status (after)
+        run: npx prisma migrate status --schema prisma/schema.prisma
+
       - name: Run real-DB webhook factual-guard integration test
         run: npm run test -- __tests__/integration/webhooks-n8n.real-db.test.ts
 
@@ -52,6 +61,10 @@ jobs:
             echo "## Webhooks n8n Real-DB Release Gate"
             echo ""
             echo "- Test target: \`__tests__/integration/webhooks-n8n.real-db.test.ts\`"
+            echo "- Migration prep:"
+            echo "  - Prisma migrate status (before)"
+            echo "  - Prisma migrate deploy"
+            echo "  - Prisma migrate status (after)"
             echo "- Expected proof:"
             echo "  - clean item persists as tailored"
             echo "  - hallucinated item downgraded to discovered with null tailored markdown"
