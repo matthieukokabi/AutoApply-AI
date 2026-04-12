@@ -2,6 +2,35 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
+function sanitizeSalaryDisplayValue(rawSalary: unknown): string | null {
+    if (typeof rawSalary !== "string") {
+        return null;
+    }
+
+    const salary = rawSalary.trim();
+    if (!salary) {
+        return null;
+    }
+
+    const isInvalidToken = (value: string) =>
+        /(undefined|null|nan)/i.test(value) || value.trim().length === 0;
+
+    const rangeParts = salary
+        .split(/\s*[–—-]\s*/)
+        .map((part) => part.trim())
+        .filter((part) => !isInvalidToken(part));
+
+    if (rangeParts.length >= 2) {
+        return `${rangeParts[0]} - ${rangeParts[1]}`;
+    }
+
+    if (rangeParts.length === 1) {
+        return rangeParts[0];
+    }
+
+    return null;
+}
+
 /**
  * GET /api/jobs — list discovered jobs for the current user
  * Query params:
@@ -84,6 +113,7 @@ export async function GET(req: Request) {
 
             result = applications.map((application) => ({
                 ...application.job,
+                salary: sanitizeSalaryDisplayValue(application.job.salary),
                 application: {
                     id: application.id,
                     compatibilityScore: application.compatibilityScore,
@@ -122,6 +152,7 @@ export async function GET(req: Request) {
             // Flatten: attach the user's application data to each job
             result = jobs.map((job) => ({
                 ...job,
+                salary: sanitizeSalaryDisplayValue(job.salary),
                 application: job.applications[0] || null,
                 applications: undefined,
             }));

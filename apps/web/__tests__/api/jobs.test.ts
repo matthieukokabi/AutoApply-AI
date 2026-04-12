@@ -135,6 +135,42 @@ describe("GET /api/jobs", () => {
         expect(data.hasAnyJobs).toBe(false);
     });
 
+    it("sanitizes malformed salary strings before returning jobs", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(prisma.application.count).mockResolvedValue(3 as any);
+        vi.mocked(prisma.job.findMany).mockResolvedValue(
+            [
+                {
+                    ...mockJobs[0],
+                    id: "job_salary_1",
+                    externalId: "ext_salary_1",
+                    salary: "$ undefined-undefined",
+                },
+                {
+                    ...mockJobs[0],
+                    id: "job_salary_2",
+                    externalId: "ext_salary_2",
+                    salary: "USD 120000-undefined",
+                },
+                {
+                    ...mockJobs[0],
+                    id: "job_salary_3",
+                    externalId: "ext_salary_3",
+                    salary: "USD 120000-140000",
+                },
+            ] as any
+        );
+
+        const request = new Request("http://localhost/api/jobs");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.jobs[0].salary).toBeNull();
+        expect(data.jobs[1].salary).toBe("USD 120000");
+        expect(data.jobs[2].salary).toBe("USD 120000 - 140000");
+    });
+
     it("filters by source query param", async () => {
         vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
         vi.mocked(prisma.job.findMany).mockResolvedValue([mockJobs[0]] as any);
