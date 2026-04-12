@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 
 const FACTUAL_GUARD_BLOCKED_ERROR_TYPE = "FACTUAL_GUARD_BLOCKED";
 const FACTUAL_GUARD_REASON_PREFIX = "FACTUAL_GUARD_";
+const COVER_LETTER_QUALITY_BLOCKED_ERROR_TYPE = "COVER_LETTER_QUALITY_BLOCKED";
+const COVER_LETTER_QUALITY_REASON_PREFIX = "COVER_LETTER_QUALITY_";
 const FACTUAL_GUARD_RELEVANT_WORKFLOW_IDS = [
     "job-discovery-pipeline-v3",
     "single-job-tailoring-v3",
@@ -33,6 +35,12 @@ export type ApplicationFactualGuardInfo = {
     blockedAt: string;
 };
 
+export type ApplicationCoverLetterQualityInfo = {
+    blocked: true;
+    reasonCodes: string[];
+    blockedAt: string;
+};
+
 type ApplicationStateSummaryInput = {
     id: string;
     status: string;
@@ -58,22 +66,22 @@ function getPayloadString(payload: WorkflowErrorPayload, key: string): string {
     return typeof value === "string" ? value.trim() : "";
 }
 
-function dedupeReasonCodes(reasonCodes: string[]): string[] {
+function dedupeReasonCodes(reasonCodes: string[], reasonPrefix: string): string[] {
     const unique = new Set<string>();
     for (const reasonCode of reasonCodes) {
         const normalized = reasonCode.trim();
-        if (normalized.startsWith(FACTUAL_GUARD_REASON_PREFIX)) {
+        if (normalized.startsWith(reasonPrefix)) {
             unique.add(normalized);
         }
     }
     return Array.from(unique);
 }
 
-function getReasonCodes(payload: WorkflowErrorPayload, message: string): string[] {
+function getReasonCodes(payload: WorkflowErrorPayload, message: string, reasonPrefix: string): string[] {
     const payloadReasonCodes = Array.isArray(payload.reasonCodes)
         ? payload.reasonCodes.filter((value): value is string => typeof value === "string")
         : [];
-    const dedupedPayloadReasonCodes = dedupeReasonCodes(payloadReasonCodes);
+    const dedupedPayloadReasonCodes = dedupeReasonCodes(payloadReasonCodes, reasonPrefix);
     if (dedupedPayloadReasonCodes.length > 0) {
         return dedupedPayloadReasonCodes;
     }
@@ -83,7 +91,7 @@ function getReasonCodes(payload: WorkflowErrorPayload, message: string): string[
         .map((part) => part.trim())
         .filter(Boolean);
 
-    return dedupeReasonCodes(fallbackMessageReasonCodes);
+    return dedupeReasonCodes(fallbackMessageReasonCodes, reasonPrefix);
 }
 
 function dedupeNonEmptyStrings(values: string[]): string[] {
@@ -144,11 +152,12 @@ function buildWorkflowErrorPayloadMatchClauses(params: {
 
 async function getTargetedWorkflowErrors(params: {
     userId: string;
+    errorType: string;
     applicationIds: string[];
     jobIds: string[];
     externalIds: string[];
 }): Promise<WorkflowErrorReadRow[]> {
-    const { userId, applicationIds, jobIds, externalIds } = params;
+    const { userId, errorType, applicationIds, jobIds, externalIds } = params;
     const payloadMatchClauses = buildWorkflowErrorPayloadMatchClauses({
         applicationIds,
         jobIds,
@@ -164,7 +173,7 @@ async function getTargetedWorkflowErrors(params: {
             prisma.workflowError.findMany({
                 where: {
                     userId,
-                    errorType: FACTUAL_GUARD_BLOCKED_ERROR_TYPE,
+                    errorType,
                     workflowId: { in: FACTUAL_GUARD_RELEVANT_WORKFLOW_IDS },
                     OR: batchClauses,
                 },
@@ -237,6 +246,7 @@ export async function getFactualGuardByApplicationId(params: {
 
     const workflowErrors = await getTargetedWorkflowErrors({
         userId,
+        errorType: FACTUAL_GUARD_BLOCKED_ERROR_TYPE,
         applicationIds: targetedApplicationIds,
         jobIds: targetedJobIds,
         externalIds: targetedExternalIds,
@@ -251,7 +261,11 @@ export async function getFactualGuardByApplicationId(params: {
             continue;
         }
         const payload = workflowError.payload as WorkflowErrorPayload;
-        const reasonCodes = getReasonCodes(payload, workflowError.message);
+        const reasonCodes = getReasonCodes(
+            payload,
+            workflowError.message,
+            FACTUAL_GUARD_REASON_PREFIX
+        );
         if (reasonCodes.length === 0) {
             continue;
         }
@@ -296,6 +310,105 @@ export async function getFactualGuardByApplicationId(params: {
     }
 
     return factualGuardByApplicationId;
+}
+
+export async function getCoverLetterQualityByApplicationId(params: {
+    userId: string;
+    applications: ApplicationGuardReadInput[];
+}): Promise<Map<string, ApplicationCoverLetterQualityInfo>> {
+    const { userId, applications } = params;
+    if (!userId || applications.length === 0) {
+        return new Map();
+    }
+
+    const coverLetterQualityCandidates = applications.filter((application) => {
+        if (application.status !== "tailored") {
+            return false;
+        }
+        const tailoredCv = typeof application.tailoredCvMarkdown === "string"
+            ? application.tailoredCvMarkdown.trim()
+            : "";
+        const coverLetter = typeof application.coverLetterMarkdown === "string"
+            ? application.coverLetterMarkdown.trim()
+            : "";
+        return Boolean(tailoredCv) && !coverLetter;
+    });
+    if (coverLetterQualityCandidates.length === 0) {
+        return new Map();
+    }
+
+    const targetedApplicationIds = dedupeNonEmptyStrings(
+        coverLetterQualityCandidates.map((application) => application.id)
+    );
+    const targetedJobIds = dedupeNonEmptyStrings(
+        coverLetterQualityCandidates.map((application) => application.jobId)
+    );
+    const targetedExternalIds = dedupeNonEmptyStrings(
+        coverLetterQualityCandidates.map((application) => application.job?.externalId || "")
+    );
+
+    const workflowErrors = await getTargetedWorkflowErrors({
+        userId,
+        errorType: COVER_LETTER_QUALITY_BLOCKED_ERROR_TYPE,
+        applicationIds: targetedApplicationIds,
+        jobIds: targetedJobIds,
+        externalIds: targetedExternalIds,
+    });
+
+    const latestByJobId = new Map<string, ApplicationCoverLetterQualityInfo>();
+    const latestByExternalId = new Map<string, ApplicationCoverLetterQualityInfo>();
+    const latestByApplicationId = new Map<string, ApplicationCoverLetterQualityInfo>();
+
+    for (const workflowError of workflowErrors) {
+        if (!isRecord(workflowError.payload)) {
+            continue;
+        }
+        const payload = workflowError.payload as WorkflowErrorPayload;
+        const reasonCodes = getReasonCodes(
+            payload,
+            workflowError.message,
+            COVER_LETTER_QUALITY_REASON_PREFIX
+        );
+        if (reasonCodes.length === 0) {
+            continue;
+        }
+
+        const signal: ApplicationCoverLetterQualityInfo = {
+            blocked: true,
+            reasonCodes,
+            blockedAt: workflowError.createdAt.toISOString(),
+        };
+
+        const applicationId = getPayloadString(payload, "applicationId");
+        if (applicationId && !latestByApplicationId.has(applicationId)) {
+            latestByApplicationId.set(applicationId, signal);
+        }
+
+        const jobId = getPayloadString(payload, "jobId");
+        if (jobId && !latestByJobId.has(jobId)) {
+            latestByJobId.set(jobId, signal);
+        }
+
+        const externalId = getPayloadString(payload, "externalId");
+        if (externalId && !latestByExternalId.has(externalId)) {
+            latestByExternalId.set(externalId, signal);
+        }
+    }
+
+    const coverLetterQualityByApplicationId = new Map<string, ApplicationCoverLetterQualityInfo>();
+
+    for (const application of coverLetterQualityCandidates) {
+        const signalFromApplicationId = latestByApplicationId.get(application.id);
+        const signalFromJobId = latestByJobId.get(application.jobId);
+        const externalId = application.job?.externalId?.trim() || "";
+        const signalFromExternalId = externalId ? latestByExternalId.get(externalId) : undefined;
+        const signal = signalFromApplicationId || signalFromJobId || signalFromExternalId;
+        if (signal) {
+            coverLetterQualityByApplicationId.set(application.id, signal);
+        }
+    }
+
+    return coverLetterQualityByApplicationId;
 }
 
 export function summarizeApplicationStates(params: {

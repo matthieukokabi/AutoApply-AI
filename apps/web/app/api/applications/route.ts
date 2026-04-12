@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { APPLICATION_STATUSES } from "@/lib/utils";
 import {
+    getCoverLetterQualityByApplicationId,
     getFactualGuardByApplicationId,
     summarizeApplicationStates,
 } from "@/lib/factual-guard-visibility";
@@ -72,10 +73,15 @@ export async function GET(req: Request) {
             userId: user.id,
             applications,
         });
+        const coverLetterQualityByApplicationId = await getCoverLetterQualityByApplicationId({
+            userId: user.id,
+            applications,
+        });
 
         const applicationsWithFactualGuard = applications.map((application) => ({
             ...application,
             factualGuard: factualGuardByApplicationId.get(application.id) || null,
+            coverLetterQuality: coverLetterQualityByApplicationId.get(application.id) || null,
         }));
 
         const summary = summarizeApplicationStates({

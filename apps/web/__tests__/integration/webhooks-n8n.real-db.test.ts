@@ -1084,4 +1084,287 @@ Education: Bachelor of Computer Science`,
         },
         60_000
     );
+
+    itRealDb(
+        "surfaces cover-letter quality quarantine for tailored applications on GET /api/applications",
+        async () => {
+            if (!process.env.DATABASE_URL) {
+                throw new Error("DATABASE_URL is required for real-db integration test");
+            }
+
+            vi.unmock("@/lib/prisma");
+            vi.resetModules();
+
+            const { prisma } = await import("@/lib/prisma");
+            const { getAuthUser } = await import("@/lib/auth");
+            const { GET } = await import("@/app/api/applications/route");
+
+            const runSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const externalPrefix = `it-applications-route-cover-quality-${runSuffix}`;
+            const userEmail = `integration+applications-cover-quality-${runSuffix}@example.com`;
+            const noiseUserEmail = `integration+applications-cover-quality-noise-${runSuffix}@example.com`;
+            const clerkId = `integration-applications-cover-quality-${runSuffix}`;
+            const noiseClerkId = `integration-applications-cover-quality-noise-${runSuffix}`;
+
+            let userId: string | null = null;
+            let noiseUserId: string | null = null;
+            try {
+                const [user, noiseUser] = await Promise.all([
+                    prisma.user.create({
+                        data: {
+                            email: userEmail,
+                            clerkId,
+                            name: "Integration Applications Cover Quality User",
+                            automationEnabled: true,
+                            subscriptionStatus: "pro",
+                            creditsRemaining: 10,
+                        },
+                        select: { id: true },
+                    }),
+                    prisma.user.create({
+                        data: {
+                            email: noiseUserEmail,
+                            clerkId: noiseClerkId,
+                            name: "Integration Applications Cover Quality Noise User",
+                            automationEnabled: true,
+                            subscriptionStatus: "pro",
+                            creditsRemaining: 10,
+                        },
+                        select: { id: true },
+                    }),
+                ]);
+                userId = user.id;
+                noiseUserId = noiseUser.id;
+
+                const [coverBlockedJob, cleanTailoredJob, discoveredJob] = await Promise.all([
+                    prisma.job.create({
+                        data: {
+                            externalId: `${externalPrefix}-cover-blocked`,
+                            title: "Senior Developer",
+                            company: "Tech Corp",
+                            location: "Remote",
+                            description: "Role where tailored CV is valid and cover letter can be quarantined",
+                            source: "manual",
+                            url: "https://example.com/cover-blocked",
+                        },
+                        select: { id: true, externalId: true },
+                    }),
+                    prisma.job.create({
+                        data: {
+                            externalId: `${externalPrefix}-tailored-clean`,
+                            title: "Senior Developer",
+                            company: "Clean Corp",
+                            location: "Remote",
+                            description: "Role with complete tailored outputs",
+                            source: "manual",
+                            url: "https://example.com/tailored-clean",
+                        },
+                        select: { id: true, externalId: true },
+                    }),
+                    prisma.job.create({
+                        data: {
+                            externalId: `${externalPrefix}-discovered`,
+                            title: "Discovered Role",
+                            company: "Discovery Corp",
+                            location: "Remote",
+                            description: "Discovered role",
+                            source: "manual",
+                            url: "https://example.com/discovered",
+                        },
+                        select: { id: true, externalId: true },
+                    }),
+                ]);
+
+                await prisma.application.createMany({
+                    data: [
+                        {
+                            userId,
+                            jobId: coverBlockedJob.id,
+                            compatibilityScore: 92,
+                            status: "tailored",
+                            tailoredCvMarkdown: "# Tailored CV",
+                            coverLetterMarkdown: null,
+                        },
+                        {
+                            userId,
+                            jobId: cleanTailoredJob.id,
+                            compatibilityScore: 88,
+                            status: "tailored",
+                            tailoredCvMarkdown: "# Tailored CV",
+                            coverLetterMarkdown: "# Tailored Cover Letter",
+                        },
+                        {
+                            userId,
+                            jobId: discoveredJob.id,
+                            compatibilityScore: 70,
+                            status: "discovered",
+                            tailoredCvMarkdown: null,
+                            coverLetterMarkdown: null,
+                        },
+                    ],
+                });
+
+                const [coverBlockedApplication, cleanTailoredApplication, discoveredApplication] =
+                    await Promise.all([
+                        prisma.application.findUnique({
+                            where: { userId_jobId: { userId, jobId: coverBlockedJob.id } },
+                            select: { id: true },
+                        }),
+                        prisma.application.findUnique({
+                            where: { userId_jobId: { userId, jobId: cleanTailoredJob.id } },
+                            select: { id: true },
+                        }),
+                        prisma.application.findUnique({
+                            where: { userId_jobId: { userId, jobId: discoveredJob.id } },
+                            select: { id: true },
+                        }),
+                    ]);
+                expect(coverBlockedApplication).toBeTruthy();
+                expect(cleanTailoredApplication).toBeTruthy();
+                expect(discoveredApplication).toBeTruthy();
+
+                const blockedAt = new Date("2026-04-12T08:15:00.000Z");
+                await prisma.workflowError.create({
+                    data: {
+                        workflowId: "single-job-tailoring-v3",
+                        nodeName: "Cover Letter Quality Gate",
+                        errorType: "COVER_LETTER_QUALITY_BLOCKED",
+                        message:
+                            "COVER_LETTER_QUALITY_MISSING_COMPANY,COVER_LETTER_QUALITY_LOW_GROUNDING,COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
+                        userId,
+                        payload: {
+                            applicationId: coverBlockedApplication!.id,
+                            reasonCodes: [
+                                "COVER_LETTER_QUALITY_MISSING_COMPANY",
+                                "COVER_LETTER_QUALITY_LOW_GROUNDING",
+                                "COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
+                            ],
+                        },
+                        createdAt: blockedAt,
+                    },
+                });
+
+                const noisyRows = Array.from({ length: 420 }, (_, index) => ({
+                    workflowId: "job-discovery-pipeline-v3",
+                    nodeName: "Cover Letter Quality Gate",
+                    errorType: "COVER_LETTER_QUALITY_BLOCKED",
+                    message: "COVER_LETTER_QUALITY_LOW_GROUNDING",
+                    userId,
+                    payload: {
+                        applicationId: `noise-cover-quality-app-${runSuffix}-${index}`,
+                        jobId: `noise-cover-quality-job-${runSuffix}-${index}`,
+                        externalId: `noise-cover-quality-external-${runSuffix}-${index}`,
+                        reasonCodes: ["COVER_LETTER_QUALITY_LOW_GROUNDING"],
+                    },
+                    createdAt: new Date(Date.now() + index),
+                }));
+                await prisma.workflowError.createMany({ data: noisyRows });
+
+                await prisma.workflowError.create({
+                    data: {
+                        workflowId: "single-job-tailoring-v3",
+                        nodeName: "Cover Letter Quality Gate",
+                        errorType: "COVER_LETTER_QUALITY_BLOCKED",
+                        message: "COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
+                        userId: noiseUserId,
+                        payload: {
+                            applicationId: coverBlockedApplication!.id,
+                            reasonCodes: ["COVER_LETTER_QUALITY_GENERIC_TEMPLATE"],
+                        },
+                    },
+                });
+
+                vi.mocked(getAuthUser).mockResolvedValue({
+                    id: userId,
+                    email: userEmail,
+                    clerkId,
+                } as any);
+
+                const request = new Request("http://localhost/api/applications");
+                const response = await GET(request);
+                const data = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(Array.isArray(data.applications)).toBe(true);
+                expect(data.applications).toHaveLength(3);
+
+                const coverBlockedEntry = data.applications.find(
+                    (application: any) => application.job?.externalId === coverBlockedJob.externalId
+                );
+                const cleanTailoredEntry = data.applications.find(
+                    (application: any) => application.job?.externalId === cleanTailoredJob.externalId
+                );
+                const discoveredEntry = data.applications.find(
+                    (application: any) => application.job?.externalId === discoveredJob.externalId
+                );
+
+                expect(coverBlockedEntry?.status).toBe("tailored");
+                expect(coverBlockedEntry?.tailoredCvMarkdown).toEqual(expect.any(String));
+                expect(coverBlockedEntry?.coverLetterMarkdown).toBeNull();
+                expect(coverBlockedEntry?.coverLetterQuality).toEqual({
+                    blocked: true,
+                    reasonCodes: [
+                        "COVER_LETTER_QUALITY_MISSING_COMPANY",
+                        "COVER_LETTER_QUALITY_LOW_GROUNDING",
+                        "COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
+                    ],
+                    blockedAt: blockedAt.toISOString(),
+                });
+                expect(coverBlockedEntry?.factualGuard).toBeNull();
+
+                expect(cleanTailoredEntry?.status).toBe("tailored");
+                expect(cleanTailoredEntry?.coverLetterQuality).toBeNull();
+                expect(cleanTailoredEntry?.factualGuard).toBeNull();
+
+                expect(discoveredEntry?.status).toBe("discovered");
+                expect(discoveredEntry?.coverLetterQuality).toBeNull();
+
+                const coverLetterQualityBlockedCount = data.applications.filter(
+                    (application: any) => application.coverLetterQuality?.blocked === true
+                ).length;
+                expect(coverLetterQualityBlockedCount).toBe(1);
+
+                expect(data.summary).toEqual(
+                    expect.objectContaining({
+                        totalCount: 3,
+                        tailoredCount: 2,
+                        discoveredCount: 1,
+                        guardBlockedCount: 0,
+                        plainDiscoveredCount: 1,
+                    })
+                );
+                expect(data.summary.plainDiscoveredCount + data.summary.guardBlockedCount).toBe(
+                    data.summary.discoveredCount
+                );
+            } finally {
+                if (userId || noiseUserId) {
+                    await prisma.workflowError.deleteMany({
+                        where: {
+                            userId: {
+                                in: [userId, noiseUserId].filter(Boolean) as string[],
+                            },
+                        },
+                    });
+                }
+                if (userId || noiseUserId) {
+                    await prisma.user.deleteMany({
+                        where: {
+                            id: {
+                                in: [userId, noiseUserId].filter(Boolean) as string[],
+                            },
+                        },
+                    });
+                }
+                await prisma.job.deleteMany({
+                    where: {
+                        externalId: {
+                            startsWith: externalPrefix,
+                        },
+                    },
+                });
+                await prisma.$disconnect();
+            }
+        },
+        60_000
+    );
 });
