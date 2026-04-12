@@ -66,11 +66,83 @@ const FACTUAL_GUARD_REASON_CODES = {
     unsupportedTechnology: "FACTUAL_GUARD_UNSUPPORTED_TECHNOLOGY",
 } as const;
 
+const COVER_LETTER_QUALITY_REASON_CODES = {
+    missingCompany: "COVER_LETTER_QUALITY_MISSING_COMPANY",
+    lowGrounding: "COVER_LETTER_QUALITY_LOW_GROUNDING",
+    genericTemplate: "COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
+} as const;
+
+const COVER_LETTER_QUALITY_BLOCKED_ERROR_TYPE = "COVER_LETTER_QUALITY_BLOCKED";
+
 const EXPERIENCE_SECTION_REGEX =
     /\b(experience|employment|work history|professional experience|expérience|experiencia|erfahrung|esperienza)\b/i;
 const CREDENTIAL_LINE_REGEX =
     /\b(certified|certification|certificate|certificat|zertifikat|certificazione|degree|diploma|diplôme|bachelor|master|phd|doctorate|mba|licence|license|licenciatura|maestr[ií]a)\b/i;
 const YEAR_REGEX = /\b(?:19|20)\d{2}\b/g;
+const COVER_LETTER_GENERIC_TEMPLATE_PATTERNS: ReadonlyArray<{ label: string; regex: RegExp }> = [
+    { label: "dear_hiring_manager", regex: /\bdear hiring manager\b/i },
+    { label: "to_whom_it_may_concern", regex: /\bto whom it may concern\b/i },
+    { label: "writing_to_express", regex: /\bi am writing to (?:express|apply|submit)\b/i },
+    { label: "excited_to_apply", regex: /\bi am (?:excited|thrilled) to apply\b/i },
+    {
+        label: "thank_you_consideration",
+        regex: /\bthank you for your time(?: and)? consideration\b/i,
+    },
+];
+const COMPANY_PLACEHOLDER_VALUES = new Set([
+    "unknown",
+    "unknown company",
+    "not specified",
+    "n a",
+    "n/a",
+    "none",
+    "company",
+    "your company",
+]);
+const COMPANY_SUFFIX_TOKENS = new Set([
+    "inc",
+    "corp",
+    "corporation",
+    "llc",
+    "ltd",
+    "limited",
+    "company",
+    "co",
+    "gmbh",
+    "ag",
+    "sa",
+    "srl",
+    "bv",
+    "plc",
+]);
+const JOB_CONTEXT_NOISE_TOKENS = new Set([
+    "experience",
+    "experiences",
+    "years",
+    "year",
+    "role",
+    "roles",
+    "position",
+    "positions",
+    "skills",
+    "skill",
+    "candidate",
+    "candidates",
+    "required",
+    "requirements",
+    "responsibility",
+    "responsibilities",
+    "ability",
+    "abilities",
+    "strong",
+    "knowledge",
+    "work",
+    "working",
+    "looking",
+    "seeking",
+    "team",
+    "teams",
+]);
 const CLAIM_STOPWORDS = new Set([
     "the",
     "and",
@@ -216,6 +288,99 @@ function tokenOverlapRatio(tokens: string[], trustedTokens: Set<string>) {
         }
     }
     return overlap / tokens.length;
+}
+
+function normalizeCompanyCandidate(company: string) {
+    const normalized = normalizeClaimText(company);
+    if (!normalized || COMPANY_PLACEHOLDER_VALUES.has(normalized)) {
+        return "";
+    }
+    return normalized;
+}
+
+function collectCompanyMentionTokens(normalizedCompany: string) {
+    return tokenizeClaim(normalizedCompany).filter(
+        (token) => token.length >= 3 && !COMPANY_SUFFIX_TOKENS.has(token)
+    );
+}
+
+function collectCoverLetterContextTokens(text: string) {
+    return Array.from(
+        new Set(
+            tokenizeClaim(text).filter(
+                (token) =>
+                    token.length >= 4 &&
+                    !CLAIM_STOPWORDS.has(token) &&
+                    !JOB_CONTEXT_NOISE_TOKENS.has(token)
+            )
+        )
+    );
+}
+
+function assessCoverLetterSpecificity(params: {
+    coverLetterMarkdown: string;
+    targetJobTitle: string;
+    targetCompany: string;
+    targetJobDescription: string;
+}) {
+    const generatedCoverLetter = String(params.coverLetterMarkdown || "").trim();
+    if (!generatedCoverLetter) {
+        return { blocked: false, reasonCodes: [], detail: {} } as FactualGuardAssessment;
+    }
+
+    const normalizedCoverLetter = normalizeClaimText(generatedCoverLetter);
+    const coverLetterTokenSet = new Set(tokenizeClaim(generatedCoverLetter));
+
+    const normalizedTargetCompany = normalizeCompanyCandidate(String(params.targetCompany || "").trim());
+    const companyMentionTokens = collectCompanyMentionTokens(normalizedTargetCompany);
+    let companyMentionDetected = true;
+    if (normalizedTargetCompany) {
+        companyMentionDetected =
+            normalizedCoverLetter.includes(normalizedTargetCompany) ||
+            companyMentionTokens.some((token) => coverLetterTokenSet.has(token));
+    }
+    const missingCompanyMention = Boolean(normalizedTargetCompany) && !companyMentionDetected;
+
+    const contextTokenUniverse = collectCoverLetterContextTokens(
+        [String(params.targetJobTitle || ""), String(params.targetJobDescription || "")].join("\n")
+    );
+    const groundingMatches = contextTokenUniverse.filter((token) => coverLetterTokenSet.has(token));
+    const minimumGroundingHits = contextTokenUniverse.length >= 8 ? 2 : contextTokenUniverse.length > 0 ? 1 : 0;
+    const lowGrounding =
+        minimumGroundingHits > 0 && groundingMatches.length < minimumGroundingHits;
+
+    const genericTemplateSignals = COVER_LETTER_GENERIC_TEMPLATE_PATTERNS.filter(({ regex }) =>
+        regex.test(generatedCoverLetter)
+    ).map(({ label }) => label);
+    const genericTemplateLikely =
+        genericTemplateSignals.length > 0 && (missingCompanyMention || lowGrounding);
+
+    const reasonCodes: string[] = [];
+    if (missingCompanyMention) {
+        reasonCodes.push(COVER_LETTER_QUALITY_REASON_CODES.missingCompany);
+    }
+    if (lowGrounding) {
+        reasonCodes.push(COVER_LETTER_QUALITY_REASON_CODES.lowGrounding);
+    }
+    if (genericTemplateLikely) {
+        reasonCodes.push(COVER_LETTER_QUALITY_REASON_CODES.genericTemplate);
+    }
+
+    return {
+        blocked: reasonCodes.length > 0,
+        reasonCodes,
+        detail: {
+            companyCheckApplied: Boolean(normalizedTargetCompany),
+            normalizedTargetCompany: normalizedTargetCompany || null,
+            companyMentionTokens: companyMentionTokens.slice(0, 6),
+            companyMentionDetected,
+            contextTokenCount: contextTokenUniverse.length,
+            contextTokenSample: contextTokenUniverse.slice(0, 12),
+            minimumGroundingHits,
+            groundingMatches: groundingMatches.slice(0, 8),
+            genericTemplateSignals,
+        },
+    } as FactualGuardAssessment;
 }
 
 function extractExperienceClaims(cvMarkdown: string) {
@@ -1677,6 +1842,7 @@ export async function POST(req: Request) {
                 let discoveredCount = 0;
                 let tailoredCount = 0;
                 let quarantinedCount = 0;
+                let coverLetterQuarantinedCount = 0;
 
                 for (let index = 0; index < applications.length; index += 1) {
                     const app = applications[index];
@@ -1709,6 +1875,20 @@ export async function POST(req: Request) {
                         targetCompany: typeof appData.company === "string" ? appData.company : "",
                     });
                     const quarantinedByFactualGuard = factualGuardAssessment.blocked;
+                    const coverLetterQualityAssessment = quarantinedByFactualGuard
+                        ? ({ blocked: false, reasonCodes: [], detail: {} } as FactualGuardAssessment)
+                        : assessCoverLetterSpecificity({
+                              coverLetterMarkdown:
+                                  typeof appData.coverLetterMarkdown === "string"
+                                      ? appData.coverLetterMarkdown
+                                      : "",
+                              targetJobTitle: typeof appData.title === "string" ? appData.title : "",
+                              targetCompany: typeof appData.company === "string" ? appData.company : "",
+                              targetJobDescription:
+                                  typeof appData.description === "string" ? appData.description : "",
+                          });
+                    const quarantinedByCoverLetterQuality =
+                        !quarantinedByFactualGuard && coverLetterQualityAssessment.blocked;
                     if (quarantinedByFactualGuard) {
                         quarantinedCount += 1;
                         logPipelineEvent("warn", "new_applications_factual_guard_blocked", {
@@ -1720,10 +1900,22 @@ export async function POST(req: Request) {
                             detail: factualGuardAssessment.detail,
                         });
                     }
+                    if (quarantinedByCoverLetterQuality) {
+                        coverLetterQuarantinedCount += 1;
+                        logPipelineEvent("warn", "new_applications_cover_letter_quality_blocked", {
+                            runId,
+                            userId,
+                            externalId,
+                            applicationIndex: index,
+                            reasonCodes: coverLetterQualityAssessment.reasonCodes,
+                            detail: coverLetterQualityAssessment.detail,
+                        });
+                    }
                     const normalizedTailoredCvMarkdown = quarantinedByFactualGuard
                         ? null
                         : safeNormalizeTailoredCv(appData.tailoredCvMarkdown);
-                    const normalizedCoverLetterMarkdown = quarantinedByFactualGuard
+                    const normalizedCoverLetterMarkdown =
+                        quarantinedByFactualGuard || quarantinedByCoverLetterQuality
                         ? null
                         : safeNormalizeCoverLetter(appData.coverLetterMarkdown);
                     const resolvedStatus = quarantinedByFactualGuard
@@ -1835,6 +2027,44 @@ export async function POST(req: Request) {
                                         : String(workflowError),
                             });
                         }
+                    } else if (quarantinedByCoverLetterQuality) {
+                        try {
+                            await prisma.workflowError.create({
+                                data: {
+                                    workflowId: "job-discovery-pipeline-v3",
+                                    nodeName: "Cover Letter Quality Gate",
+                                    errorType: COVER_LETTER_QUALITY_BLOCKED_ERROR_TYPE,
+                                    message: coverLetterQualityAssessment.reasonCodes.join(","),
+                                    payload: {
+                                        runId,
+                                        userId,
+                                        jobId: job.id,
+                                        applicationId: result.id,
+                                        externalId,
+                                        applicationIndex: index,
+                                        reasonCodes: coverLetterQualityAssessment.reasonCodes,
+                                        detail:
+                                            coverLetterQualityAssessment.detail as Prisma.JsonObject,
+                                    } as Prisma.InputJsonValue,
+                                    userId,
+                                },
+                            });
+                        } catch (workflowError) {
+                            logPipelineEvent(
+                                "warn",
+                                "new_applications_cover_letter_quality_log_failed",
+                                {
+                                    runId,
+                                    userId,
+                                    externalId,
+                                    applicationId: result.id,
+                                    error:
+                                        workflowError instanceof Error
+                                            ? workflowError.message
+                                            : String(workflowError),
+                                }
+                            );
+                        }
                     }
                 }
 
@@ -1846,6 +2076,7 @@ export async function POST(req: Request) {
                     tailoredCount,
                     discoveredCount,
                     quarantinedCount,
+                    coverLetterQuarantinedCount,
                 });
 
                 if (idempotencyKey) {
@@ -1933,6 +2164,8 @@ export async function POST(req: Request) {
                     jobId: tailorJobId,
                     jobTitle,
                     company,
+                    jobDescription,
+                    description,
                     additionalContext,
                     compatibilityScore,
                     atsKeywords,
@@ -1989,6 +2222,22 @@ export async function POST(req: Request) {
                 });
 
                 const quarantinedByFactualGuard = factualGuardAssessment.blocked;
+                const coverLetterQualityAssessment = quarantinedByFactualGuard
+                    ? ({ blocked: false, reasonCodes: [], detail: {} } as FactualGuardAssessment)
+                    : assessCoverLetterSpecificity({
+                          coverLetterMarkdown:
+                              typeof coverLetterMarkdown === "string" ? coverLetterMarkdown : "",
+                          targetJobTitle: typeof jobTitle === "string" ? jobTitle : "",
+                          targetCompany: typeof company === "string" ? company : "",
+                          targetJobDescription:
+                              typeof jobDescription === "string"
+                                  ? jobDescription
+                                  : typeof description === "string"
+                                    ? description
+                                    : "",
+                      });
+                const quarantinedByCoverLetterQuality =
+                    !quarantinedByFactualGuard && coverLetterQualityAssessment.blocked;
                 if (quarantinedByFactualGuard) {
                     logPipelineEvent("warn", "single_tailoring_factual_guard_blocked", {
                         runId,
@@ -1998,11 +2247,21 @@ export async function POST(req: Request) {
                         detail: factualGuardAssessment.detail,
                     });
                 }
+                if (quarantinedByCoverLetterQuality) {
+                    logPipelineEvent("warn", "single_tailoring_cover_letter_quality_blocked", {
+                        runId,
+                        userId: normalizedTailorUserId,
+                        jobId: normalizedTailorJobId,
+                        reasonCodes: coverLetterQualityAssessment.reasonCodes,
+                        detail: coverLetterQualityAssessment.detail,
+                    });
+                }
 
                 const normalizedTailoredCvMarkdown = quarantinedByFactualGuard
                     ? null
                     : safeNormalizeTailoredCv(tailoredCvMarkdown);
-                const normalizedCoverLetterMarkdown = quarantinedByFactualGuard
+                const normalizedCoverLetterMarkdown =
+                    quarantinedByFactualGuard || quarantinedByCoverLetterQuality
                     ? null
                     : safeNormalizeCoverLetter(coverLetterMarkdown);
                 const resolvedApplicationStatus = normalizedTailoredCvMarkdown
@@ -2126,6 +2385,37 @@ export async function POST(req: Request) {
                                     : String(workflowError),
                         });
                     }
+                } else if (quarantinedByCoverLetterQuality) {
+                    try {
+                        await prisma.workflowError.create({
+                            data: {
+                                workflowId: "single-job-tailoring-v3",
+                                nodeName: "Cover Letter Quality Gate",
+                                errorType: COVER_LETTER_QUALITY_BLOCKED_ERROR_TYPE,
+                                message: coverLetterQualityAssessment.reasonCodes.join(","),
+                                payload: {
+                                    runId,
+                                    userId: normalizedTailorUserId,
+                                    jobId: normalizedTailorJobId,
+                                    resolvedJobId,
+                                    applicationId: application.id,
+                                    reasonCodes: coverLetterQualityAssessment.reasonCodes,
+                                    detail: coverLetterQualityAssessment.detail as Prisma.JsonObject,
+                                } as Prisma.InputJsonValue,
+                                userId: normalizedTailorUserId,
+                            },
+                        });
+                    } catch (workflowError) {
+                        logPipelineEvent("warn", "single_tailoring_cover_letter_quality_log_failed", {
+                            runId,
+                            userId: normalizedTailorUserId,
+                            applicationId: application.id,
+                            error:
+                                workflowError instanceof Error
+                                    ? workflowError.message
+                                    : String(workflowError),
+                        });
+                    }
                 }
 
                 if (idempotencyKey) {
@@ -2162,6 +2452,24 @@ export async function POST(req: Request) {
                         runId,
                         quarantined: true,
                         reasonCodes: factualGuardAssessment.reasonCodes,
+                    });
+                }
+                if (quarantinedByCoverLetterQuality) {
+                    logPipelineEvent("warn", "single_tailoring_cover_letter_quarantined", {
+                        runId,
+                        userId: normalizedTailorUserId,
+                        jobId: normalizedTailorJobId,
+                        applicationId: application.id,
+                        reasonCodes: coverLetterQualityAssessment.reasonCodes,
+                    });
+                    return NextResponse.json({
+                        message: normalizedTailoredCvMarkdown
+                            ? "Cover letter quarantined; tailored CV saved"
+                            : "Cover letter quarantined",
+                        applicationId: application.id,
+                        runId,
+                        coverLetterQuarantined: true,
+                        reasonCodes: coverLetterQualityAssessment.reasonCodes,
                     });
                 }
 

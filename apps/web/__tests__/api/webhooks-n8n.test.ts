@@ -642,7 +642,8 @@ describe("POST /api/webhooks/n8n", () => {
                         gaps: [],
                         recommendation: "apply",
                         tailoredCvMarkdown: "# CV Content",
-                        coverLetterMarkdown: "# Cover Letter",
+                        coverLetterMarkdown:
+                            "I am applying for the Senior Developer role at Tech Corp because my React and TypeScript background matches this role.",
                     },
                 ],
             });
@@ -766,7 +767,7 @@ describe("POST /api/webhooks/n8n", () => {
 **2024 - Present**
 - Operated Kubernetes workloads and shipped Rust backend services.`,
                         coverLetterMarkdown:
-                            "My Kubernetes and Rust experience directly matches your platform team needs.",
+                            "My Kubernetes and Rust experience directly matches the Senior Developer needs at Tech Corp.",
                     },
                 ],
             });
@@ -785,6 +786,72 @@ describe("POST /api/webhooks/n8n", () => {
                 })
             );
             expect(prisma.workflowError.create).not.toHaveBeenCalled();
+        });
+
+        it("quarantines generic cover letters while preserving tailored CV persistence in batch payloads", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "tailored",
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: null,
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest("new_applications", {
+                userId: "user_1",
+                applications: [
+                    {
+                        externalId: "adzuna-cover-quality-1",
+                        title: "Senior Developer",
+                        company: "Tech Corp",
+                        description:
+                            "Build and operate React and TypeScript applications for a production platform team.",
+                        compatibilityScore: 89,
+                        tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Built and operated React and TypeScript services for production teams.`,
+                        coverLetterMarkdown:
+                            "Dear Hiring Manager, I am excited to apply. Thank you for your time and consideration.",
+                    },
+                ],
+            });
+
+            const response = await POST(request);
+
+            expect(response.status).toBe(200);
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    create: expect.objectContaining({
+                        status: "tailored",
+                        tailoredCvMarkdown: expect.any(String),
+                        coverLetterMarkdown: null,
+                    }),
+                    update: expect.objectContaining({
+                        status: "tailored",
+                        tailoredCvMarkdown: expect.any(String),
+                        coverLetterMarkdown: null,
+                    }),
+                })
+            );
+            expect(prisma.workflowError.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        workflowId: "job-discovery-pipeline-v3",
+                        errorType: "COVER_LETTER_QUALITY_BLOCKED",
+                        payload: expect.objectContaining({
+                            applicationId: "app_1",
+                            jobId: "job_1",
+                            reasonCodes: expect.arrayContaining([
+                                "COVER_LETTER_QUALITY_MISSING_COMPANY",
+                                "COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
+                            ]),
+                        }),
+                    }),
+                })
+            );
         });
 
         it("handles mixed clean and blocked batch items in one run", async () => {
@@ -846,7 +913,7 @@ describe("POST /api/webhooks/n8n", () => {
 **2024 - Present**
 - Operated Kubernetes workloads and shipped Rust backend services.`,
                             coverLetterMarkdown:
-                                "My Kubernetes and Rust experience directly matches your platform team needs.",
+                                "My Kubernetes and Rust experience directly matches the Senior Developer needs at Tech Corp.",
                         },
                         {
                             externalId: "adzuna-mixed-blocked-1",
@@ -1117,7 +1184,8 @@ describe("POST /api/webhooks/n8n", () => {
                 ...mockApplication,
                 compatibilityScore: 92,
                 tailoredCvMarkdown: "# Tailored CV",
-                coverLetterMarkdown: "# Cover Letter",
+                coverLetterMarkdown:
+                    "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
             } as any);
             vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
 
@@ -1134,7 +1202,8 @@ describe("POST /api/webhooks/n8n", () => {
                     gaps: [],
                     recommendation: "apply",
                     tailoredCvMarkdown: "# Tailored CV",
-                    coverLetterMarkdown: "# Cover Letter",
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
                 },
                 { idempotencyKeyHeader: "tailor_v3:user_1:job_1:once" }
             );
@@ -1159,7 +1228,8 @@ describe("POST /api/webhooks/n8n", () => {
                     create: expect.objectContaining({
                         compatibilityScore: 92,
                         tailoredCvMarkdown: "# Tailored CV",
-                        coverLetterMarkdown: "# Cover Letter",
+                        coverLetterMarkdown:
+                            "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
                     }),
                 })
             );
@@ -1252,6 +1322,84 @@ describe("POST /api/webhooks/n8n", () => {
             expect(sendTailoringCompleteEmail).not.toHaveBeenCalled();
         });
 
+        it("quarantines generic low-specificity cover letters while preserving tailored CV output", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_cover_quality_1" } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "tailored",
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: null,
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    jobDescription:
+                        "Build and operate React and TypeScript services for a production platform team.",
+                    compatibilityScore: 90,
+                    tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Operated React and TypeScript services for production workloads.`,
+                    coverLetterMarkdown:
+                        "Dear Hiring Manager, I am excited to apply. Thank you for your time and consideration.",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1:cover-quality-block" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toBe("Cover letter quarantined; tailored CV saved");
+            expect(data.coverLetterQuarantined).toBe(true);
+            expect(data.reasonCodes).toEqual(
+                expect.arrayContaining([
+                    "COVER_LETTER_QUALITY_MISSING_COMPANY",
+                    "COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
+                ])
+            );
+            expect(prisma.application.upsert).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    create: expect.objectContaining({
+                        status: "tailored",
+                        tailoredCvMarkdown: expect.any(String),
+                        coverLetterMarkdown: null,
+                    }),
+                    update: expect.objectContaining({
+                        status: "tailored",
+                        tailoredCvMarkdown: expect.any(String),
+                        coverLetterMarkdown: null,
+                    }),
+                })
+            );
+            expect(prisma.workflowError.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        workflowId: "single-job-tailoring-v3",
+                        errorType: "COVER_LETTER_QUALITY_BLOCKED",
+                        payload: expect.objectContaining({
+                            applicationId: "app_1",
+                            jobId: "job_1",
+                            reasonCodes: expect.arrayContaining([
+                                "COVER_LETTER_QUALITY_MISSING_COMPANY",
+                                "COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
+                            ]),
+                        }),
+                    }),
+                })
+            );
+            expect(sendTailoringCompleteEmail).not.toHaveBeenCalled();
+        });
+
         it("allows claims present in trusted additional context", async () => {
             vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
             vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_guard_2" } as any);
@@ -1280,7 +1428,7 @@ describe("POST /api/webhooks/n8n", () => {
 **2024 - Present**
 - Operated Kubernetes workloads and shipped Rust backend services.`,
                     coverLetterMarkdown:
-                        "My Kubernetes and Rust experience directly matches your production platform needs.",
+                        "My Kubernetes and Rust experience directly matches the Senior Developer needs at Tech Corp.",
                 },
                 { idempotencyKeyHeader: "tailor_v3:user_1:job_1:guard-pass" }
             );
@@ -1332,7 +1480,8 @@ describe("POST /api/webhooks/n8n", () => {
                     company: "Manual Co",
                     compatibilityScore: 77,
                     tailoredCvMarkdown: "# Tailored CV",
-                    coverLetterMarkdown: "# Cover Letter",
+                    coverLetterMarkdown:
+                        "I am applying for the Canary Role at Manual Co and can deliver production platform work quickly.",
                 },
                 { idempotencyKeyHeader: "tailor_v3:user_1:test-job-canary-007" }
             );
