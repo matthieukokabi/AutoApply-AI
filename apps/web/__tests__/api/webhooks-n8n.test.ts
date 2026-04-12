@@ -1559,6 +1559,46 @@ describe("POST /api/webhooks/n8n", () => {
             expect(sendTailoringCompleteEmail).not.toHaveBeenCalled();
         });
 
+        it("does not treat plain 'next' wording as unsupported nextjs technology", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_guard_next_wording" } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "tailored",
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: "# Tailored Cover",
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    compatibilityScore: 90,
+                    tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Delivered TypeScript and Node.js services for production workloads.`,
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp. In my next role, I want to keep building reliable TypeScript and Node.js services in production.",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1:next-wording-no-nextjs" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toBe("Tailoring results saved");
+            expect(data.quarantined).not.toBe(true);
+            expect(prisma.workflowError.create).not.toHaveBeenCalled();
+        });
+
         it("quarantines generic low-specificity cover letters while preserving tailored CV output", async () => {
             vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
             vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_cover_quality_1" } as any);

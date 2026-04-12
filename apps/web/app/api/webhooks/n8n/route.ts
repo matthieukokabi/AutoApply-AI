@@ -177,7 +177,7 @@ const CLAIM_STOPWORDS = new Set([
 
 const TECHNOLOGY_PATTERNS: ReadonlyArray<{ key: string; regex: RegExp }> = [
     { key: "react", regex: /\breact(?:\.js)?\b/i },
-    { key: "nextjs", regex: /\bnext(?:\.js)?\b/i },
+    { key: "nextjs", regex: /\bnext(?:\.js|js)\b/i },
     { key: "nodejs", regex: /\bnode(?:\.js)?\b/i },
     { key: "typescript", regex: /\btypescript\b/i },
     { key: "javascript", regex: /\bjavascript\b/i },
