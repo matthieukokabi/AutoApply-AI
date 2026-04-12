@@ -42,6 +42,15 @@ beforeEach(() => {
     vi.clearAllMocks();
     process.env.N8N_WEBHOOK_SECRET = "test_webhook_secret";
     vi.mocked(prisma.application.findUnique).mockResolvedValue(null as any);
+    vi.mocked(prisma.$transaction).mockImplementation(async (input: any) => {
+        if (typeof input === "function") {
+            return input(prisma as any);
+        }
+        if (Array.isArray(input)) {
+            return Promise.all(input);
+        }
+        return input;
+    });
 });
 
 function createWebhookRequest(
@@ -679,6 +688,124 @@ describe("POST /api/webhooks/n8n", () => {
             );
         });
 
+        it("records durable run attribution for batch create and later update writes", async () => {
+            vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+            vi.mocked(prisma.application.findUnique)
+                .mockResolvedValueOnce(null as any)
+                .mockResolvedValueOnce({ id: "app_1" } as any);
+            vi.mocked(prisma.application.upsert)
+                .mockResolvedValueOnce({
+                    ...mockApplication,
+                    status: "tailored",
+                    tailoredCvMarkdown: "# Tailored CV v1",
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                } as any)
+                .mockResolvedValueOnce({
+                    ...mockApplication,
+                    status: "tailored",
+                    tailoredCvMarkdown: "# Tailored CV v2",
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                } as any);
+
+            const requestCreate = createRawWebhookRequest({
+                type: "new_applications",
+                runId: "run_attr_batch_1",
+                executionId: 8101,
+                data: {
+                    userId: "user_1",
+                    schedulerSource: "manual_operator",
+                    triggerKind: "controlled_verification",
+                    slotId: "slot_attr_batch_1",
+                    applications: [
+                        {
+                            externalId: "adzuna-attr-1",
+                            title: "Senior Developer",
+                            company: "Tech Corp",
+                            compatibilityScore: 90,
+                            tailoredCvMarkdown: "# Tailored CV v1",
+                            coverLetterMarkdown:
+                                "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                        },
+                    ],
+                },
+            });
+
+            const requestUpdate = createRawWebhookRequest({
+                type: "new_applications",
+                runId: "run_attr_batch_2",
+                executionId: 8102,
+                data: {
+                    userId: "user_1",
+                    schedulerSource: "manual_operator",
+                    triggerKind: "controlled_verification",
+                    slotId: "slot_attr_batch_2",
+                    applications: [
+                        {
+                            externalId: "adzuna-attr-1",
+                            title: "Senior Developer",
+                            company: "Tech Corp",
+                            compatibilityScore: 91,
+                            tailoredCvMarkdown: "# Tailored CV v2",
+                            coverLetterMarkdown:
+                                "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                        },
+                    ],
+                },
+            });
+
+            const createResponse = await POST(requestCreate);
+            const updateResponse = await POST(requestUpdate);
+
+            expect(createResponse.status).toBe(200);
+            expect(updateResponse.status).toBe(200);
+            expect(prisma.applicationRunAttribution.create).toHaveBeenCalledTimes(2);
+            expect(prisma.applicationRunAttribution.create).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        applicationId: "app_1",
+                        userId: "user_1",
+                        jobId: "job_1",
+                        eventType: "new_applications",
+                        workflowId: "job-discovery-pipeline-v3",
+                        runId: "run_attr_batch_1",
+                        n8nExecutionId: 8101,
+                        slotId: "slot_attr_batch_1",
+                        schedulerSource: "manual_operator",
+                        triggerKind: "controlled_verification",
+                        writeAction: "created",
+                        persistedStatus: "tailored",
+                        persistedTailoredCv: true,
+                        persistedCoverLetter: true,
+                    }),
+                })
+            );
+            expect(prisma.applicationRunAttribution.create).toHaveBeenNthCalledWith(
+                2,
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        applicationId: "app_1",
+                        userId: "user_1",
+                        jobId: "job_1",
+                        eventType: "new_applications",
+                        workflowId: "job-discovery-pipeline-v3",
+                        runId: "run_attr_batch_2",
+                        n8nExecutionId: 8102,
+                        slotId: "slot_attr_batch_2",
+                        schedulerSource: "manual_operator",
+                        triggerKind: "controlled_verification",
+                        writeAction: "updated",
+                        persistedStatus: "tailored",
+                        persistedTailoredCv: true,
+                        persistedCoverLetter: true,
+                    }),
+                })
+            );
+        });
+
         it("quarantines unsupported factual claims in batch payload before persistence", async () => {
             vi.mocked(prisma.job.upsert).mockResolvedValue(mockJob as any);
             vi.mocked(prisma.application.upsert).mockResolvedValue({
@@ -1242,6 +1369,116 @@ describe("POST /api/webhooks/n8n", () => {
                 "Tech Corp",
                 92,
                 "app_1"
+            );
+        });
+
+        it("records durable run attribution for single-job create and later update writes", async () => {
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+            vi.mocked(prisma.application.findUnique)
+                .mockResolvedValueOnce(null as any)
+                .mockResolvedValueOnce({ id: "app_1" } as any);
+            vi.mocked(prisma.application.upsert)
+                .mockResolvedValueOnce({
+                    ...mockApplication,
+                    status: "tailored",
+                    tailoredCvMarkdown: "# Tailored CV v1",
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                } as any)
+                .mockResolvedValueOnce({
+                    ...mockApplication,
+                    status: "tailored",
+                    tailoredCvMarkdown: "# Tailored CV v2",
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                } as any);
+
+            const createRequest = createRawWebhookRequest({
+                type: "single_tailoring_complete",
+                runId: "run_attr_single_1",
+                executionId: 9101,
+                data: {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    schedulerSource: "manual_operator",
+                    triggerKind: "single_job_manual",
+                    slotId: "slot_attr_single_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    compatibilityScore: 92,
+                    tailoredCvMarkdown: "# Tailored CV v1",
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                },
+            });
+
+            const updateRequest = createRawWebhookRequest({
+                type: "single_tailoring_complete",
+                runId: "run_attr_single_2",
+                executionId: 9102,
+                data: {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    schedulerSource: "manual_operator",
+                    triggerKind: "single_job_manual",
+                    slotId: "slot_attr_single_2",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    compatibilityScore: 93,
+                    tailoredCvMarkdown: "# Tailored CV v2",
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                },
+            });
+
+            const createResponse = await POST(createRequest);
+            const updateResponse = await POST(updateRequest);
+
+            expect(createResponse.status).toBe(200);
+            expect(updateResponse.status).toBe(200);
+            expect(prisma.applicationRunAttribution.create).toHaveBeenCalledTimes(2);
+            expect(prisma.applicationRunAttribution.create).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        applicationId: "app_1",
+                        userId: "user_1",
+                        jobId: "job_1",
+                        eventType: "single_tailoring_complete",
+                        workflowId: "single-job-tailoring-v3",
+                        runId: "run_attr_single_1",
+                        n8nExecutionId: 9101,
+                        slotId: "slot_attr_single_1",
+                        schedulerSource: "manual_operator",
+                        triggerKind: "single_job_manual",
+                        writeAction: "created",
+                        persistedStatus: "tailored",
+                        persistedTailoredCv: true,
+                        persistedCoverLetter: true,
+                    }),
+                })
+            );
+            expect(prisma.applicationRunAttribution.create).toHaveBeenNthCalledWith(
+                2,
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        applicationId: "app_1",
+                        userId: "user_1",
+                        jobId: "job_1",
+                        eventType: "single_tailoring_complete",
+                        workflowId: "single-job-tailoring-v3",
+                        runId: "run_attr_single_2",
+                        n8nExecutionId: 9102,
+                        slotId: "slot_attr_single_2",
+                        schedulerSource: "manual_operator",
+                        triggerKind: "single_job_manual",
+                        writeAction: "updated",
+                        persistedStatus: "tailored",
+                        persistedTailoredCv: true,
+                        persistedCoverLetter: true,
+                    }),
+                })
             );
         });
 

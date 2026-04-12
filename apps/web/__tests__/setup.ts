@@ -99,6 +99,10 @@ vi.mock("@/lib/prisma", () => ({
             update: vi.fn(),
             upsert: vi.fn(),
         },
+        applicationRunAttribution: {
+            create: vi.fn(),
+            findMany: vi.fn(),
+        },
         job: {
             findMany: vi.fn(),
             findUnique: vi.fn(),

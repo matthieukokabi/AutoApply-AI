@@ -214,6 +214,123 @@ type FactualGuardAssessment = {
     detail: Record<string, unknown>;
 };
 
+type WebhookRunContext = {
+    n8nExecutionId: number | null;
+    slotId: string | null;
+    schedulerSource: string | null;
+    triggerKind: string | null;
+};
+
+type ApplicationRunAttributionCreateClient = {
+    applicationRunAttribution: {
+        create: (args: Prisma.ApplicationRunAttributionCreateArgs) => Promise<unknown>;
+    };
+};
+
+type RecordApplicationRunAttributionParams = {
+    applicationId: string;
+    userId: string;
+    jobId: string;
+    eventType: string;
+    workflowId: string;
+    runId: string;
+    writeAction: "created" | "updated";
+    persistedStatus: string;
+    persistedTailoredCv: boolean;
+    persistedCoverLetter: boolean;
+    runContext: WebhookRunContext;
+};
+
+function parseOptionalExecutionId(value: unknown): number | null {
+    const parsed =
+        typeof value === "number"
+            ? value
+            : typeof value === "string"
+              ? Number(value)
+              : NaN;
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return null;
+    }
+    return Math.floor(parsed);
+}
+
+function normalizeOptionalString(value: unknown): string | null {
+    if (typeof value !== "string") {
+        return null;
+    }
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+}
+
+function firstNonEmptyString(...values: unknown[]): string | null {
+    for (const value of values) {
+        const normalized = normalizeOptionalString(value);
+        if (normalized) {
+            return normalized;
+        }
+    }
+    return null;
+}
+
+function resolveWebhookRunContext(
+    req: Request,
+    body: Record<string, unknown>,
+    webhookData: Record<string, unknown>
+): WebhookRunContext {
+    const summary =
+        webhookData.summary && typeof webhookData.summary === "object" && !Array.isArray(webhookData.summary)
+            ? (webhookData.summary as Record<string, unknown>)
+            : null;
+
+    return {
+        n8nExecutionId: parseOptionalExecutionId(
+            body.executionId ??
+                webhookData.executionId ??
+                summary?.executionId ??
+                req.headers.get("x-n8n-execution-id")
+        ),
+        slotId: firstNonEmptyString(
+            webhookData.slotId,
+            summary?.slotId,
+            req.headers.get("x-slot-id")
+        ),
+        schedulerSource: firstNonEmptyString(
+            webhookData.schedulerSource,
+            summary?.schedulerSource,
+            req.headers.get("x-scheduler-source")
+        ),
+        triggerKind: firstNonEmptyString(
+            webhookData.triggerKind,
+            summary?.triggerKind,
+            req.headers.get("x-trigger-kind")
+        ),
+    };
+}
+
+async function recordApplicationRunAttribution(
+    client: ApplicationRunAttributionCreateClient,
+    params: RecordApplicationRunAttributionParams
+) {
+    await client.applicationRunAttribution.create({
+        data: {
+            applicationId: params.applicationId,
+            userId: params.userId,
+            jobId: params.jobId,
+            eventType: params.eventType,
+            workflowId: params.workflowId,
+            runId: params.runId,
+            n8nExecutionId: params.runContext.n8nExecutionId,
+            slotId: params.runContext.slotId,
+            schedulerSource: params.runContext.schedulerSource,
+            triggerKind: params.runContext.triggerKind,
+            writeAction: params.writeAction,
+            persistedStatus: params.persistedStatus,
+            persistedTailoredCv: params.persistedTailoredCv,
+            persistedCoverLetter: params.persistedCoverLetter,
+        },
+    });
+}
+
 function normalizeClaimText(value: string) {
     return String(value || "")
         .normalize("NFKD")
@@ -1089,6 +1206,7 @@ export async function POST(req: Request) {
         }
         const allowsMissingData = type === "fetch_active_users";
         const webhookData = data ?? {};
+        const webhookRunContext = resolveWebhookRunContext(req, body, webhookData);
         const idempotencyKey = resolveIdempotencyKey(req, body, webhookData);
 
         if (!type || (!allowsMissingData && !data)) {
@@ -1942,47 +2060,68 @@ export async function POST(req: Request) {
                         },
                     });
 
-                    // Then, create/upsert the Application record
-                    const existingApplication = await prisma.application.findUnique({
-                        where: {
-                            userId_jobId: {
-                                userId,
-                                jobId: job.id,
+                    // Then, create/upsert the Application record and persist durable run attribution.
+                    const { result, wasCreated } = await prisma.$transaction(async (tx) => {
+                        const existingApplication = await tx.application.findUnique({
+                            where: {
+                                userId_jobId: {
+                                    userId,
+                                    jobId: job.id,
+                                },
                             },
-                        },
-                        select: { id: true },
-                    });
+                            select: { id: true },
+                        });
 
-                    const result = await prisma.application.upsert({
-                        where: {
-                            userId_jobId: {
+                        const persistedApplication = await tx.application.upsert({
+                            where: {
+                                userId_jobId: {
+                                    userId,
+                                    jobId: job.id,
+                                },
+                            },
+                            create: {
                                 userId,
                                 jobId: job.id,
+                                compatibilityScore: appData.compatibilityScore || 0,
+                                atsKeywords: appData.atsKeywords || [],
+                                matchingStrengths: appData.matchingStrengths || [],
+                                gaps: appData.gaps || [],
+                                recommendation: appData.recommendation || "skip",
+                                tailoredCvMarkdown: normalizedTailoredCvMarkdown,
+                                coverLetterMarkdown: normalizedCoverLetterMarkdown,
+                                status: resolvedStatus,
                             },
-                        },
-                        create: {
+                            update: {
+                                compatibilityScore: appData.compatibilityScore || 0,
+                                atsKeywords: appData.atsKeywords || [],
+                                matchingStrengths: appData.matchingStrengths || [],
+                                gaps: appData.gaps || [],
+                                recommendation: appData.recommendation || "skip",
+                                tailoredCvMarkdown: normalizedTailoredCvMarkdown,
+                                coverLetterMarkdown: normalizedCoverLetterMarkdown,
+                                status: resolvedStatus,
+                            },
+                            include: { job: true },
+                        });
+
+                        await recordApplicationRunAttribution(tx, {
+                            applicationId: persistedApplication.id,
                             userId,
                             jobId: job.id,
-                            compatibilityScore: appData.compatibilityScore || 0,
-                            atsKeywords: appData.atsKeywords || [],
-                            matchingStrengths: appData.matchingStrengths || [],
-                            gaps: appData.gaps || [],
-                            recommendation: appData.recommendation || "skip",
-                            tailoredCvMarkdown: normalizedTailoredCvMarkdown,
-                            coverLetterMarkdown: normalizedCoverLetterMarkdown,
-                            status: resolvedStatus,
-                        },
-                        update: {
-                            compatibilityScore: appData.compatibilityScore || 0,
-                            atsKeywords: appData.atsKeywords || [],
-                            matchingStrengths: appData.matchingStrengths || [],
-                            gaps: appData.gaps || [],
-                            recommendation: appData.recommendation || "skip",
-                            tailoredCvMarkdown: normalizedTailoredCvMarkdown,
-                            coverLetterMarkdown: normalizedCoverLetterMarkdown,
-                            status: resolvedStatus,
-                        },
-                        include: { job: true },
+                            eventType: "new_applications",
+                            workflowId: "job-discovery-pipeline-v3",
+                            runId,
+                            runContext: webhookRunContext,
+                            writeAction: existingApplication ? "updated" : "created",
+                            persistedStatus: persistedApplication.status,
+                            persistedTailoredCv: Boolean(persistedApplication.tailoredCvMarkdown),
+                            persistedCoverLetter: Boolean(persistedApplication.coverLetterMarkdown),
+                        });
+
+                        return {
+                            result: persistedApplication,
+                            wasCreated: !existingApplication,
+                        };
                     });
                     if (result.status === "tailored") {
                         tailoredCount += 1;
@@ -1990,7 +2129,7 @@ export async function POST(req: Request) {
                         discoveredCount += 1;
                     }
                     persistedApps.push(result);
-                    if (!existingApplication) {
+                    if (wasCreated) {
                         newlyCreatedApps.push(result);
                     }
 
@@ -2321,37 +2460,65 @@ export async function POST(req: Request) {
                     resolvedJobId = manualJob.id;
                 }
 
-                // Save tailoring results to database
-                const application = await prisma.application.upsert({
-                    where: {
-                        userId_jobId: {
+                // Save tailoring results and durable run attribution in one transaction.
+                const { application } = await prisma.$transaction(async (tx) => {
+                    const existingApplication = await tx.application.findUnique({
+                        where: {
+                            userId_jobId: {
+                                userId: normalizedTailorUserId,
+                                jobId: resolvedJobId,
+                            },
+                        },
+                        select: { id: true },
+                    });
+
+                    const persistedApplication = await tx.application.upsert({
+                        where: {
+                            userId_jobId: {
+                                userId: normalizedTailorUserId,
+                                jobId: resolvedJobId,
+                            },
+                        },
+                        create: {
                             userId: normalizedTailorUserId,
                             jobId: resolvedJobId,
+                            compatibilityScore: compatibilityScore || 0,
+                            atsKeywords: atsKeywords || [],
+                            matchingStrengths: matchingStrengths || [],
+                            gaps: gaps || [],
+                            recommendation: recommendation || "stretch",
+                            tailoredCvMarkdown: normalizedTailoredCvMarkdown,
+                            coverLetterMarkdown: normalizedCoverLetterMarkdown,
+                            status: resolvedApplicationStatus,
                         },
-                    },
-                    create: {
+                        update: {
+                            compatibilityScore: compatibilityScore || 0,
+                            atsKeywords: atsKeywords || [],
+                            matchingStrengths: matchingStrengths || [],
+                            gaps: gaps || [],
+                            recommendation: recommendation || "stretch",
+                            tailoredCvMarkdown: normalizedTailoredCvMarkdown,
+                            coverLetterMarkdown: normalizedCoverLetterMarkdown,
+                            status: resolvedApplicationStatus,
+                        },
+                        include: { job: true },
+                    });
+
+                    await recordApplicationRunAttribution(tx, {
+                        applicationId: persistedApplication.id,
                         userId: normalizedTailorUserId,
                         jobId: resolvedJobId,
-                        compatibilityScore: compatibilityScore || 0,
-                        atsKeywords: atsKeywords || [],
-                        matchingStrengths: matchingStrengths || [],
-                        gaps: gaps || [],
-                        recommendation: recommendation || "stretch",
-                        tailoredCvMarkdown: normalizedTailoredCvMarkdown,
-                        coverLetterMarkdown: normalizedCoverLetterMarkdown,
-                        status: resolvedApplicationStatus,
-                    },
-                    update: {
-                        compatibilityScore: compatibilityScore || 0,
-                        atsKeywords: atsKeywords || [],
-                        matchingStrengths: matchingStrengths || [],
-                        gaps: gaps || [],
-                        recommendation: recommendation || "stretch",
-                        tailoredCvMarkdown: normalizedTailoredCvMarkdown,
-                        coverLetterMarkdown: normalizedCoverLetterMarkdown,
-                        status: resolvedApplicationStatus,
-                    },
-                    include: { job: true },
+                        eventType: "single_tailoring_complete",
+                        workflowId: "single-job-tailoring-v3",
+                        runId,
+                        runContext: webhookRunContext,
+                        writeAction: existingApplication ? "updated" : "created",
+                        persistedStatus: persistedApplication.status,
+                        persistedTailoredCv: Boolean(persistedApplication.tailoredCvMarkdown),
+                        persistedCoverLetter: Boolean(persistedApplication.coverLetterMarkdown),
+                    });
+
+                    return { application: persistedApplication };
                 });
 
                 if (quarantinedByFactualGuard) {

@@ -100,6 +100,7 @@ model Application {
   status             String    @default("tailored") // discovered | tailored | applied | interview | offer | rejected
   appliedAt          DateTime?
   notes              String?
+  runAttributions    ApplicationRunAttribution[]
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -107,6 +108,35 @@ model Application {
   @@index([userId, status])
   @@index([createdAt])
   @@map("applications")
+}
+
+// ─── Application Run Attribution (successful write lineage) ──────────────
+
+model ApplicationRunAttribution {
+  id                  String      @id @default(cuid())
+  applicationId       String
+  application         Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  userId              String
+  jobId               String
+  eventType           String
+  workflowId          String
+  runId               String
+  n8nExecutionId      Int?
+  schedulerSource     String?
+  triggerKind         String?
+  slotId              String?
+  writeAction         String
+  persistedStatus     String
+  persistedTailoredCv Boolean
+  persistedCoverLetter Boolean
+  createdAt           DateTime    @default(now())
+
+  @@index([applicationId, createdAt])
+  @@index([runId, createdAt])
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([jobId, createdAt])
+  @@map("application_run_attributions")
 }
 
 // ─── Workflow Errors (n8n error logging) ────────────────────

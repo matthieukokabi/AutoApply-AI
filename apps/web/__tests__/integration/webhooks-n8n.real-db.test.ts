@@ -224,6 +224,245 @@ Education: Bachelor of Computer Science`,
     );
 
     itRealDb(
+        "persists durable successful-run attribution across batch and single-job upserts",
+        async () => {
+            if (!process.env.DATABASE_URL) {
+                throw new Error("DATABASE_URL is required for real-db integration test");
+            }
+
+            const webhookSecret = "test_webhook_secret_real_db_attribution";
+            process.env.N8N_WEBHOOK_SECRET = webhookSecret;
+
+            vi.unmock("@/lib/prisma");
+            vi.resetModules();
+
+            const { POST } = await import("@/app/api/webhooks/n8n/route");
+            const { prisma } = await import("@/lib/prisma");
+
+            const runSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const externalPrefix = `it-attr-${runSuffix}`;
+            const externalId = `${externalPrefix}-job`;
+            const userEmail = `integration+attr-${runSuffix}@example.com`;
+            const clerkId = `integration-attr-${runSuffix}`;
+
+            let userId: string | null = null;
+            try {
+                const user = await prisma.user.create({
+                    data: {
+                        email: userEmail,
+                        clerkId,
+                        name: "Integration Attribution User",
+                        automationEnabled: true,
+                        subscriptionStatus: "pro",
+                        creditsRemaining: 10,
+                    },
+                    select: { id: true },
+                });
+                userId = user.id;
+
+                await prisma.masterProfile.create({
+                    data: {
+                        userId,
+                        rawText: `Jane Doe
+Senior Developer
+Experience at Tech Corp (2021-2024)
+Skills: React, TypeScript, Node.js, AWS`,
+                        structuredJson: {
+                            skills: ["React", "TypeScript", "Node.js", "AWS"],
+                        },
+                    },
+                });
+
+                const batchCreate = await POST(
+                    new Request("http://localhost/api/webhooks/n8n", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-webhook-secret": webhookSecret,
+                        },
+                        body: JSON.stringify({
+                            type: "new_applications",
+                            runId: `${externalPrefix}-run-1`,
+                            executionId: 7001,
+                            data: {
+                                userId,
+                                schedulerSource: "manual_operator",
+                                triggerKind: "controlled_verification",
+                                slotId: `${externalPrefix}-slot-1`,
+                                applications: [
+                                    {
+                                        externalId,
+                                        title: "Senior Developer",
+                                        company: "Tech Corp",
+                                        compatibilityScore: 90,
+                                        tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Built React and TypeScript services.`,
+                                        coverLetterMarkdown:
+                                            "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                                    },
+                                ],
+                            },
+                        }),
+                    })
+                );
+                expect(batchCreate.status).toBe(200);
+
+                const createdJob = await prisma.job.findUnique({
+                    where: { externalId },
+                    select: { id: true },
+                });
+                expect(createdJob?.id).toBeTruthy();
+
+                const batchUpdate = await POST(
+                    new Request("http://localhost/api/webhooks/n8n", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-webhook-secret": webhookSecret,
+                        },
+                        body: JSON.stringify({
+                            type: "new_applications",
+                            runId: `${externalPrefix}-run-2`,
+                            executionId: 7002,
+                            data: {
+                                userId,
+                                schedulerSource: "manual_operator",
+                                triggerKind: "controlled_verification",
+                                slotId: `${externalPrefix}-slot-2`,
+                                applications: [
+                                    {
+                                        externalId,
+                                        title: "Senior Developer",
+                                        company: "Tech Corp",
+                                        compatibilityScore: 91,
+                                        tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Built and operated React and TypeScript services.`,
+                                        coverLetterMarkdown:
+                                            "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                                    },
+                                ],
+                            },
+                        }),
+                    })
+                );
+                expect(batchUpdate.status).toBe(200);
+
+                const singleUpdate = await POST(
+                    new Request("http://localhost/api/webhooks/n8n", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-webhook-secret": webhookSecret,
+                        },
+                        body: JSON.stringify({
+                            type: "single_tailoring_complete",
+                            runId: `${externalPrefix}-run-3`,
+                            executionId: 7003,
+                            data: {
+                                userId,
+                                jobId: createdJob!.id,
+                                schedulerSource: "manual_operator",
+                                triggerKind: "single_job_manual",
+                                slotId: `${externalPrefix}-slot-3`,
+                                jobTitle: "Senior Developer",
+                                company: "Tech Corp",
+                                compatibilityScore: 92,
+                                tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Led React and TypeScript delivery for production services.`,
+                                coverLetterMarkdown:
+                                    "I am applying for the Senior Developer role at Tech Corp and bring React and TypeScript delivery experience.",
+                            },
+                        }),
+                    })
+                );
+                expect(singleUpdate.status).toBe(200);
+
+                const application = await prisma.application.findUnique({
+                    where: {
+                        userId_jobId: {
+                            userId,
+                            jobId: createdJob!.id,
+                        },
+                    },
+                    select: { id: true },
+                });
+                expect(application?.id).toBeTruthy();
+
+                const attributions = await prisma.applicationRunAttribution.findMany({
+                    where: { applicationId: application!.id },
+                    orderBy: { createdAt: "asc" },
+                    select: {
+                        eventType: true,
+                        workflowId: true,
+                        runId: true,
+                        n8nExecutionId: true,
+                        writeAction: true,
+                        persistedStatus: true,
+                        persistedTailoredCv: true,
+                        persistedCoverLetter: true,
+                    },
+                });
+
+                expect(attributions).toEqual([
+                    expect.objectContaining({
+                        eventType: "new_applications",
+                        workflowId: "job-discovery-pipeline-v3",
+                        runId: `${externalPrefix}-run-1`,
+                        n8nExecutionId: 7001,
+                        writeAction: "created",
+                        persistedStatus: "tailored",
+                        persistedTailoredCv: true,
+                        persistedCoverLetter: true,
+                    }),
+                    expect.objectContaining({
+                        eventType: "new_applications",
+                        workflowId: "job-discovery-pipeline-v3",
+                        runId: `${externalPrefix}-run-2`,
+                        n8nExecutionId: 7002,
+                        writeAction: "updated",
+                        persistedStatus: "tailored",
+                        persistedTailoredCv: true,
+                        persistedCoverLetter: true,
+                    }),
+                    expect.objectContaining({
+                        eventType: "single_tailoring_complete",
+                        workflowId: "single-job-tailoring-v3",
+                        runId: `${externalPrefix}-run-3`,
+                        n8nExecutionId: 7003,
+                        writeAction: "updated",
+                        persistedStatus: "tailored",
+                        persistedTailoredCv: true,
+                        persistedCoverLetter: true,
+                    }),
+                ]);
+            } finally {
+                if (userId) {
+                    await prisma.workflowError.deleteMany({ where: { userId } });
+                    await prisma.user.deleteMany({ where: { id: userId } });
+                }
+                await prisma.job.deleteMany({
+                    where: {
+                        externalId: {
+                            startsWith: externalPrefix,
+                        },
+                    },
+                });
+                await prisma.$disconnect();
+            }
+        },
+        45_000
+    );
+
+    itRealDb(
         "quarantines only cover letter and preserves tailored CV for single_tailoring_complete",
         async () => {
             if (!process.env.DATABASE_URL) {
