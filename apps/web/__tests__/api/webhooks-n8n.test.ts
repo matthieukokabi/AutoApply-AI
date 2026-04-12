@@ -1599,6 +1599,102 @@ describe("POST /api/webhooks/n8n", () => {
             expect(prisma.workflowError.create).not.toHaveBeenCalled();
         });
 
+        it("does not block unsupported technology when mention is only employer-stack context", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({
+                id: "evt_guard_employer_stack_context",
+            } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "tailored",
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: "# Tailored Cover",
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    compatibilityScore: 90,
+                    tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Delivered TypeScript and Node.js services for production workloads.`,
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp. My TypeScript and Node.js background will support your existing infrastructure using MySQL clusters.",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1:employer-stack-context-no-block" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toBe("Tailoring results saved");
+            expect(data.quarantined).not.toBe(true);
+            expect(prisma.workflowError.create).not.toHaveBeenCalled();
+        });
+
+        it("still blocks unsupported technology self-claims", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({
+                id: "evt_guard_unsupported_tech_self_claim",
+            } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "discovered",
+                tailoredCvMarkdown: null,
+                coverLetterMarkdown: null,
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    compatibilityScore: 90,
+                    tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Delivered TypeScript and Node.js services for production workloads.`,
+                    coverLetterMarkdown:
+                        "I am applying for the Senior Developer role at Tech Corp. I have hands-on experience with MySQL clusters and use MySQL daily in production.",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1:self-claim-tech-block" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toBe("Tailoring output quarantined");
+            expect(data.quarantined).toBe(true);
+            expect(data.reasonCodes).toEqual(
+                expect.arrayContaining(["FACTUAL_GUARD_UNSUPPORTED_TECHNOLOGY"])
+            );
+            expect(prisma.workflowError.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        errorType: "FACTUAL_GUARD_BLOCKED",
+                        message: expect.stringContaining(
+                            "FACTUAL_GUARD_UNSUPPORTED_TECHNOLOGY"
+                        ),
+                    }),
+                })
+            );
+        });
+
         it("quarantines generic low-specificity cover letters while preserving tailored CV output", async () => {
             vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
             vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({ id: "evt_cover_quality_1" } as any);

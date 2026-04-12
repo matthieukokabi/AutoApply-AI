@@ -207,6 +207,22 @@ const TECHNOLOGY_PATTERNS: ReadonlyArray<{ key: string; regex: RegExp }> = [
     { key: "graphql", regex: /\bgraphql\b/i },
     { key: "tailwind", regex: /\btailwind\b/i },
 ];
+const TECHNOLOGY_PLACEHOLDER_TOKEN = "techtoken";
+const TECHNOLOGY_SELF_CLAIM_PATTERNS: ReadonlyArray<RegExp> = [
+    /\b(?:experience|experienced|expertise|knowledge|proficient|skilled|familiar|hands on|worked|working|built|building|developed|developing|implemented|implementing)\b(?:\s+\w+){0,6}\s+(?:with|in|using)?\s*techtoken\b/i,
+    /\btechtoken\b(?:\s+\w+){0,6}\b(?:experience|expertise|skills?|knowledge)\b/i,
+    /\bskills?\b(?:\s+\w+){0,4}\b(?:include|including|in|with|using)\b(?:\s+\w+){0,6}\btechtoken\b/i,
+    /\bi\b(?:\s+\w+){0,6}\b(?:have|bring|offer|use|used|built|developed|worked)\b(?:\s+\w+){0,6}\btechtoken\b/i,
+];
+const TECHNOLOGY_EMPLOYER_CONTEXT_PATTERNS: ReadonlyArray<RegExp> = [
+    /\byour\b(?:\s+\w+){0,6}\b(?:stack|frontend|backend|team|environment|infrastructure|platform|systems?|requirements?|role|position|job)\b/i,
+    /\b(?:the|this)\s+(?:role|team|position|job)\s+(?:uses?|requires?|involves?|focuses)\b/i,
+    /\b(?:role|team|position|job)\s+(?:uses?|requires?|involves?)\b/i,
+    /\bwithin\s+your\b/i,
+    /\bin\s+your\s+(?:stack|team|environment|infrastructure|platform|systems?)\b/i,
+    /\bfor\s+your\s+(?:stack|team|environment|infrastructure|platform|systems?)\b/i,
+    /\byour\s+existing\s+(?:stack|team|environment|infrastructure|platform|systems?)\b/i,
+];
 
 type FactualGuardAssessment = {
     blocked: boolean;
@@ -392,6 +408,76 @@ function collectTechnologyKeys(text: string) {
         }
     }
     return found;
+}
+
+type TechnologyMentionContext = "self_claim" | "employer_context" | "ambiguous";
+
+function buildGlobalRegex(pattern: RegExp) {
+    const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+    return new RegExp(pattern.source, flags);
+}
+
+function classifyTechnologyMentionContext(line: string, technologyPattern: { regex: RegExp }) {
+    const normalizedLine = normalizeClaimText(
+        String(line || "").replace(
+            buildGlobalRegex(technologyPattern.regex),
+            TECHNOLOGY_PLACEHOLDER_TOKEN
+        )
+    );
+
+    if (!normalizedLine) {
+        return "ambiguous" as TechnologyMentionContext;
+    }
+
+    if (TECHNOLOGY_SELF_CLAIM_PATTERNS.some((pattern) => pattern.test(normalizedLine))) {
+        return "self_claim" as TechnologyMentionContext;
+    }
+
+    if (TECHNOLOGY_EMPLOYER_CONTEXT_PATTERNS.some((pattern) => pattern.test(normalizedLine))) {
+        return "employer_context" as TechnologyMentionContext;
+    }
+
+    return "ambiguous" as TechnologyMentionContext;
+}
+
+function assessUnsupportedTechnologies(params: {
+    generatedText: string;
+    trustedTechnologies: Set<string>;
+}) {
+    const lines = String(params.generatedText || "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+    const unsupportedTechnologies: string[] = [];
+    const suppressedEmployerContextTechnologies: string[] = [];
+
+    for (const technologyPattern of TECHNOLOGY_PATTERNS) {
+        if (params.trustedTechnologies.has(technologyPattern.key)) {
+            continue;
+        }
+
+        const mentionContexts = lines
+            .filter((line) => technologyPattern.regex.test(line))
+            .map((line) => classifyTechnologyMentionContext(line, technologyPattern));
+
+        if (mentionContexts.length === 0) {
+            continue;
+        }
+
+        const hasNonEmployerContextMention = mentionContexts.some(
+            (context) => context !== "employer_context"
+        );
+        if (hasNonEmployerContextMention) {
+            unsupportedTechnologies.push(technologyPattern.key);
+        } else {
+            suppressedEmployerContextTechnologies.push(technologyPattern.key);
+        }
+    }
+
+    return {
+        unsupportedTechnologies,
+        suppressedEmployerContextTechnologies,
+    };
 }
 
 function tokenOverlapRatio(tokens: string[], trustedTokens: Set<string>) {
@@ -594,9 +680,11 @@ function assessTailoredOutputFactualGuard(params: {
         return numericYear < currentYear - 1 || numericYear > currentYear + 1;
     });
 
-    const unsupportedTechnologies = Array.from(collectTechnologyKeys(combinedGenerated)).filter(
-        (tech) => !trustedTechnologies.has(tech)
-    );
+    const technologyAssessment = assessUnsupportedTechnologies({
+        generatedText: combinedGenerated,
+        trustedTechnologies,
+    });
+    const unsupportedTechnologies = technologyAssessment.unsupportedTechnologies;
 
     const credentialLines = combinedGenerated
         .split("\n")
@@ -658,6 +746,8 @@ function assessTailoredOutputFactualGuard(params: {
             unsupportedYears: unsupportedYears.slice(0, 8),
             unsupportedCredentialLines: unsupportedCredentialLines.slice(0, 6),
             unsupportedTechnologies: unsupportedTechnologies.slice(0, 10),
+            suppressedEmployerContextTechnologies:
+                technologyAssessment.suppressedEmployerContextTechnologies.slice(0, 10),
         },
     } as FactualGuardAssessment;
 }
