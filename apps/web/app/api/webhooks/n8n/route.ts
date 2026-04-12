@@ -215,14 +215,15 @@ const TECHNOLOGY_SELF_CLAIM_PATTERNS: ReadonlyArray<RegExp> = [
     /\bi\b(?:\s+\w+){0,6}\b(?:have|bring|offer|use|used|built|developed|worked)\b(?:\s+\w+){0,6}\btechtoken\b/i,
 ];
 const TECHNOLOGY_EMPLOYER_CONTEXT_PATTERNS: ReadonlyArray<RegExp> = [
-    /\byour\b(?:\s+\w+){0,6}\b(?:stack|frontend|backend|team|environment|infrastructure|platform|systems?|requirements?|role|position|job)\b/i,
+    /\byour\b(?:\s+\w+){0,6}\s+(?:stack|frontend|backend|team|environments?|infrastructure|platform|systems?|requirements?|role|position|job)\b/i,
     /\b(?:the|this)\s+(?:role|team|position|job)\s+(?:uses?|requires?|involves?|focuses)\b/i,
     /\b(?:role|team|position|job)\s+(?:uses?|requires?|involves?)\b/i,
     /\bwithin\s+your\b/i,
-    /\bin\s+your\s+(?:stack|team|environment|infrastructure|platform|systems?)\b/i,
-    /\bfor\s+your\s+(?:stack|team|environment|infrastructure|platform|systems?)\b/i,
-    /\byour\s+existing\s+(?:stack|team|environment|infrastructure|platform|systems?)\b/i,
+    /\bin\s+your\s+(?:stack|team|environments?|infrastructure|platform|systems?)\b/i,
+    /\bfor\s+your\s+(?:stack|team|environments?|infrastructure|platform|systems?)\b/i,
+    /\byour\s+existing\s+(?:stack|team|environments?|infrastructure|platform|systems?)\b/i,
 ];
+const TECHNOLOGY_EMPLOYER_TOKEN_REFERENCE_PATTERN = /\b(?:your|their)\s+techtoken\b/i;
 
 type FactualGuardAssessment = {
     blocked: boolean;
@@ -427,6 +428,10 @@ function classifyTechnologyMentionContext(line: string, technologyPattern: { reg
 
     if (!normalizedLine) {
         return "ambiguous" as TechnologyMentionContext;
+    }
+
+    if (TECHNOLOGY_EMPLOYER_TOKEN_REFERENCE_PATTERN.test(normalizedLine)) {
+        return "employer_context" as TechnologyMentionContext;
     }
 
     if (TECHNOLOGY_SELF_CLAIM_PATTERNS.some((pattern) => pattern.test(normalizedLine))) {

@@ -1641,6 +1641,48 @@ describe("POST /api/webhooks/n8n", () => {
             expect(prisma.workflowError.create).not.toHaveBeenCalled();
         });
 
+        it("does not block employer-context technology mentions with plural environments phrasing", async () => {
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({
+                id: "evt_guard_employer_environments_context",
+            } as any);
+            vi.mocked(prisma.job.findUnique).mockResolvedValue({ id: "job_1" } as any);
+            vi.mocked(prisma.application.upsert).mockResolvedValue({
+                ...mockApplication,
+                status: "tailored",
+                tailoredCvMarkdown: "# Tailored CV",
+                coverLetterMarkdown: "# Tailored Cover",
+            } as any);
+            vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+
+            const request = createWebhookRequest(
+                "single_tailoring_complete",
+                {
+                    userId: "user_1",
+                    jobId: "job_1",
+                    jobTitle: "Senior Developer",
+                    company: "Tech Corp",
+                    compatibilityScore: 90,
+                    tailoredCvMarkdown: `# Jane Doe
+## Experience
+### Senior Developer at Tech Corp
+**2024 - Present**
+- Delivered TypeScript and Node.js services for production workloads.`,
+                    coverLetterMarkdown:
+                        "I am excited about the Senior Developer role at Tech Corp. I can contribute to your React platform and TypeScript services, and my backend experience will translate well to your MySQL and containerized development environments.",
+                },
+                { idempotencyKeyHeader: "tailor_v3:user_1:job_1:employer-env-context-no-block" }
+            );
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.message).toBe("Tailoring results saved");
+            expect(data.quarantined).not.toBe(true);
+            expect(prisma.workflowError.create).not.toHaveBeenCalled();
+        });
+
         it("still blocks unsupported technology self-claims", async () => {
             vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null);
             vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({
