@@ -39,6 +39,7 @@
         "incident:pipeline:await-post-update": "node scripts/automation_pipeline_post_update_gate.js --timeout-seconds 21600 --poll-seconds 60 --json",
         "incident:pipeline:checkpoint": "node scripts/n8n_workflow_checkpoint.js",
         "incident:pipeline:trigger-discovery-v3-controlled": "node scripts/trigger_discovery_v3_controlled.js",
+        "incident:pipeline:discovery-ledger-audit": "node scripts/discovery_run_ledger_audit.js --json",
         "incident:pipeline:publish-v3": "node scripts/publish_v3_workflows.js",
         "maintenance:factual-guard:backfill-application-id": "node scripts/backfill_factual_guard_application_id.js"
     },

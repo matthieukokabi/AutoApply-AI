@@ -1,6 +1,6 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-04-12 (Europe/Zurich)
+Last updated: 2026-04-13 (Europe/Zurich)
 
 ## P0 — v3 automation reliability rebuild (additive, no UX/UI change)
 
@@ -49,6 +49,7 @@ Last updated: 2026-04-12 (Europe/Zurich)
 - [x] Run final bounded live stability sample for discovery v3 parse-fix lane (`disc_v3_parsefix_live_20260412_r2/r3/r4`, executions `4939/4940/4941`) to confirm no recurring `TAILORING_PARSE_FAILURE`: all executions finished `success`, all emitted `new_applications`, parse node reported `tailorParseOk=true` with no additional recovery needed (`tailorParseRecoveredTrailingBrace=false`), and no new parse defects surfaced — completed on 2026-04-12 (checks: controlled trigger utility runs + execution-data decode query + workflow-error scan)
 - [x] Harden successful-run attribution for persisted applications by adding durable `application_run_attributions` writes in both `new_applications` and `single_tailoring_complete` paths (records `runId`, optional `executionId`, `created|updated` write action, and persisted CV/cover status per write) so later analysis no longer depends only on `updatedAt` windows — completed on 2026-04-12 (`apps/web/prisma/schema.prisma`, `apps/web/prisma/migrations/20260412164500_add_application_run_attributions/migration.sql`, `apps/web/app/api/webhooks/n8n/route.ts`, webhook attribution tests)
 - [x] Apply attribution migration and real-DB end-to-end verification on dedicated non-production DB path: configured `AUTOAPPLY_TEST_DATABASE_URL`, baselined historical additive migrations (`20260324101000`, `20260404183000`), applied attribution migration (`20260412164500`) + public-schema safety migration (`20260412191000`), and ran `RUN_REAL_DB_INTEGRATION=1 npm run test -- __tests__/integration/webhooks-n8n.real-db.test.ts` with all 7 tests passing — completed on 2026-04-12 (root-cause fixed: attribution table initially landed under `n8n` schema while runtime queried `public`; follow-up migration now ensures canonical `public.application_run_attributions` and backfills from `n8n` when present)
+- [x] Add operator-safe recent discovery run ledger audit utility with anomaly checks (`failed runs`, `repeated zero-tailored streak`, block-rate spikes, missing summary fields, latest-run status) powered directly by durable `discovery_schedule_runs.metadata.runMetrics`, plus script-level regression coverage and npm command wiring — completed on 2026-04-13 (`apps/web/scripts/discovery_run_ledger_audit.js`, `apps/web/__tests__/discovery-run-ledger-audit.test.ts`, `apps/web/package.json`; checks: `npm --prefix apps/web run test -- __tests__/discovery-run-ledger-audit.test.ts`, `npm --prefix apps/web run lint -- scripts/discovery_run_ledger_audit.js __tests__/discovery-run-ledger-audit.test.ts`)
 
 ## P0 — Incident: onboarding CV upload returning 500
 
