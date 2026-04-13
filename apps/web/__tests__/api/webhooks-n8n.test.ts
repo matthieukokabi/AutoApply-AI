@@ -2018,10 +2018,7 @@ describe("POST /api/webhooks/n8n", () => {
 
         it("marks discovery ledger run as failed for job-discovery workflow errors", async () => {
             vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
-            vi.mocked(prisma.discoveryScheduleRun.findUnique).mockResolvedValue({
-                id: "ledger_discovery_1",
-            } as any);
-            vi.mocked(prisma.discoveryScheduleRun.update).mockResolvedValue({} as any);
+            vi.mocked(prisma.discoveryScheduleRun.upsert).mockResolvedValue({} as any);
 
             const request = createWebhookRequest("workflow_error", {
                 workflowId: "job-discovery-pipeline-v3",
@@ -2039,12 +2036,50 @@ describe("POST /api/webhooks/n8n", () => {
             const response = await POST(request);
 
             expect(response.status).toBe(200);
-            expect(prisma.discoveryScheduleRun.update).toHaveBeenCalledWith({
-                where: { id: "ledger_discovery_1" },
-                data: expect.objectContaining({
+            expect(prisma.discoveryScheduleRun.upsert).toHaveBeenCalledWith({
+                where: { runId: "disc_v3_slot_2026_04_04T07_20_scheduled" },
+                create: expect.objectContaining({
+                    runId: "disc_v3_slot_2026_04_04T07_20_scheduled",
+                    slotKey: "2026-04-04T07:20",
                     status: "failed",
                     errorCode: "SCORING_PARSE_FAILURE",
                     errorMessage: "Could not parse scoring payload",
+                }),
+                update: expect.objectContaining({
+                    status: "failed",
+                    errorCode: "SCORING_PARSE_FAILURE",
+                    errorMessage: "Could not parse scoring payload",
+                }),
+            });
+        });
+
+        it("creates discovery ledger failure row when only runId is available", async () => {
+            vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
+            vi.mocked(prisma.discoveryScheduleRun.upsert).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("workflow_error", {
+                workflowId: "job-discovery-pipeline-v3",
+                nodeName: "Parse Scores v3",
+                errorType: "TAILORING_PARSE_FAILURE",
+                message: "Could not parse tailoring payload",
+                payload: {
+                    runId: "disc_v3_run_only_2026_04_13",
+                },
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+            expect(prisma.discoveryScheduleRun.upsert).toHaveBeenCalledWith({
+                where: { runId: "disc_v3_run_only_2026_04_13" },
+                create: expect.objectContaining({
+                    runId: "disc_v3_run_only_2026_04_13",
+                    slotKey: "disc_v3_run_only_2026_04_13",
+                    status: "failed",
+                    errorCode: "TAILORING_PARSE_FAILURE",
+                }),
+                update: expect.objectContaining({
+                    status: "failed",
+                    errorCode: "TAILORING_PARSE_FAILURE",
                 }),
             });
         });
@@ -2134,6 +2169,100 @@ describe("POST /api/webhooks/n8n", () => {
                     persistedApplications: 4,
                     lockAcquired: true,
                     lockReleased: true,
+                }),
+            });
+        });
+
+        it("creates a ledger row from runId when slotKey is missing", async () => {
+            vi.mocked(prisma.discoveryScheduleRun.findUnique)
+                .mockResolvedValueOnce(null as any)
+                .mockResolvedValueOnce(null as any);
+            vi.mocked(prisma.discoveryScheduleRun.create).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("discovery_run_status", {
+                runId: "disc_v3_no_slot_2026_04_13",
+                status: "completed",
+                usersSeen: 1,
+                usersCanary: 1,
+                usersProcessed: 1,
+                usersFailed: 0,
+                lockAcquired: true,
+                lockReleased: true,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.ok).toBe(true);
+            expect(data.created).toBe(true);
+            expect(prisma.discoveryScheduleRun.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    runId: "disc_v3_no_slot_2026_04_13",
+                    slotKey: "disc_v3_no_slot_2026_04_13",
+                    schedulerSource: "n8n_callback",
+                    triggerKind: "scheduled",
+                    status: "completed",
+                    usersProcessed: 1,
+                }),
+            });
+        });
+
+        it("stores derived persistence/block counts in run summary metadata", async () => {
+            vi.mocked(prisma.applicationRunAttribution.findMany).mockResolvedValue([
+                { persistedStatus: "tailored" },
+                { persistedStatus: "discovered" },
+                { persistedStatus: "discovered" },
+            ] as any);
+            vi.mocked(prisma.workflowError.findMany).mockResolvedValue([
+                { errorType: "FACTUAL_GUARD_BLOCKED" },
+                { errorType: "COVER_LETTER_QUALITY_BLOCKED" },
+            ] as any);
+            vi.mocked(prisma.discoveryScheduleRun.findUnique)
+                .mockResolvedValueOnce({
+                    usersSeen: 3,
+                    usersCanary: 3,
+                    usersProcessed: 3,
+                    usersFailed: 0,
+                    persistedApplications: 0,
+                    lockAcquired: true,
+                    lockReleased: true,
+                    status: "completed",
+                    errorCode: null,
+                    errorMessage: null,
+                } as any)
+                .mockResolvedValueOnce({
+                    id: "ledger_discovery_derived",
+                    metadata: { reason: "scheduled_run" },
+                } as any);
+            vi.mocked(prisma.discoveryScheduleRun.update).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("discovery_run_status", {
+                runId: "disc_v3_summary_derived_2026_04_13",
+                slotKey: "2026-04-13T09:20",
+                triggerKind: "scheduled",
+                schedulerSource: "vercel_cron",
+                status: "completed",
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.ok).toBe(true);
+            expect(prisma.discoveryScheduleRun.update).toHaveBeenCalledWith({
+                where: { id: "ledger_discovery_derived" },
+                data: expect.objectContaining({
+                    persistedApplications: 3,
+                    metadata: expect.objectContaining({
+                        reason: "scheduled_run",
+                        runMetrics: {
+                            tailoredCount: 1,
+                            discoveredCount: 2,
+                            factualGuardBlockedCount: 1,
+                            coverLetterQualityBlockedCount: 1,
+                        },
+                    }),
                 }),
             });
         });

@@ -218,6 +218,8 @@ type DiscoveryRunSummary = {
     slotKey?: unknown;
     schedulerSource?: unknown;
     triggerKind?: unknown;
+    n8nExecutionId?: unknown;
+    executionId?: unknown;
     status?: unknown;
     reason?: unknown;
     reasonCode?: unknown;
@@ -226,6 +228,10 @@ type DiscoveryRunSummary = {
     usersProcessed?: unknown;
     usersFailed?: unknown;
     persistedApplications?: unknown;
+    tailoredCount?: unknown;
+    discoveredCount?: unknown;
+    factualGuardBlockedCount?: unknown;
+    coverLetterQualityBlockedCount?: unknown;
     lockAcquired?: unknown;
     lockReleased?: unknown;
 };
@@ -260,6 +266,73 @@ function toStringOrNull(value: unknown) {
     return trimmed ? trimmed : null;
 }
 
+function toOptionalPositiveInt(value: unknown) {
+    const numeric =
+        typeof value === "number" ? value : Number.parseInt(String(value || ""), 10);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+        return null;
+    }
+    return Math.floor(numeric);
+}
+
+const RUN_METRIC_KEYS = [
+    "tailoredCount",
+    "discoveredCount",
+    "factualGuardBlockedCount",
+    "coverLetterQualityBlockedCount",
+] as const;
+type RunMetricKey = (typeof RUN_METRIC_KEYS)[number];
+
+function extractRunMetric(value: unknown) {
+    const numeric =
+        typeof value === "number" ? value : Number.parseInt(String(value || ""), 10);
+    if (!Number.isFinite(numeric)) {
+        return undefined;
+    }
+    return Math.max(0, Math.floor(numeric));
+}
+
+function toObjectOrNull(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return null;
+    }
+    return value as Record<string, unknown>;
+}
+
+function buildMetadataForSummary(
+    existingMetadata: Prisma.JsonValue | null,
+    summaryInput: DiscoveryRunSummary,
+    now: Date
+) {
+    const existingMetadataObject = toObjectOrNull(existingMetadata) || {};
+    const existingRunMetricsObject =
+        toObjectOrNull(existingMetadataObject.runMetrics) || {};
+
+    const mergedRunMetrics: Partial<Record<RunMetricKey, number>> = {};
+    for (const key of RUN_METRIC_KEYS) {
+        const fromSummary = extractRunMetric(summaryInput[key]);
+        if (fromSummary !== undefined) {
+            mergedRunMetrics[key] = fromSummary;
+            continue;
+        }
+
+        const fromExisting = extractRunMetric(existingRunMetricsObject[key]);
+        if (fromExisting !== undefined) {
+            mergedRunMetrics[key] = fromExisting;
+        }
+    }
+
+    if (Object.keys(mergedRunMetrics).length === 0) {
+        return undefined;
+    }
+
+    return {
+        ...existingMetadataObject,
+        runMetrics: mergedRunMetrics,
+        metricsUpdatedAt: now.toISOString(),
+    } as Prisma.InputJsonValue;
+}
+
 function resolveLedgerStatus(summary: DiscoveryRunSummary) {
     const status = toStringOrNull(summary.status);
     const reason = toStringOrNull(summary.reason);
@@ -287,10 +360,12 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
     const triggerKind = toStringOrNull(summaryInput.triggerKind) || "scheduled";
     const schedulerSource =
         toStringOrNull(summaryInput.schedulerSource) || "n8n_callback";
+    const n8nExecutionId = toOptionalPositiveInt(
+        summaryInput.n8nExecutionId ?? summaryInput.executionId
+    );
     const status = resolveLedgerStatus(summaryInput);
     const now = new Date();
-
-    const commonData = {
+    const commonData: Prisma.DiscoveryScheduleRunUpdateInput = {
         status,
         finishedAt: now,
         usersSeen: safeNumber(summaryInput.usersSeen, 0),
@@ -303,34 +378,78 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
         errorCode: toStringOrNull(summaryInput.reasonCode),
         errorMessage: toStringOrNull(summaryInput.reason),
     };
+    if (n8nExecutionId !== null) {
+        commonData.n8nExecutionId = n8nExecutionId;
+    }
 
     if (runId) {
         const existing = await prisma.discoveryScheduleRun.findUnique({
             where: { runId },
-            select: { id: true },
+            select: { id: true, metadata: true },
         });
 
         if (existing) {
+            const metadata = buildMetadataForSummary(existing.metadata, summaryInput, now);
             await prisma.discoveryScheduleRun.update({
                 where: { id: existing.id },
-                data: commonData,
+                data: {
+                    ...commonData,
+                    ...(metadata ? { metadata } : {}),
+                },
             });
             return { updated: true as const, created: false as const, runId };
         }
+
+        const metadata = buildMetadataForSummary(null, summaryInput, now);
+        await prisma.discoveryScheduleRun.create({
+            data: {
+                slotKey: slotKey || runId,
+                triggerKind,
+                schedulerSource,
+                runId,
+                requestedAt: now,
+                startedAt: now,
+                ...commonData,
+                ...(metadata ? { metadata } : {}),
+            },
+        });
+
+        return { updated: true as const, created: true as const, runId };
     }
 
     if (!slotKey) {
         return { updated: false as const, created: false as const, runId };
     }
 
-    await prisma.discoveryScheduleRun.upsert({
+    const existingBySlot = await prisma.discoveryScheduleRun.findFirst({
         where: {
-            slotKey_triggerKind: {
-                slotKey,
-                triggerKind,
-            },
+            slotKey,
+            triggerKind,
         },
-        create: {
+        select: {
+            id: true,
+            metadata: true,
+        },
+    });
+    const metadata = buildMetadataForSummary(
+        existingBySlot?.metadata ?? null,
+        summaryInput,
+        now
+    );
+
+    if (existingBySlot) {
+        await prisma.discoveryScheduleRun.update({
+            where: { id: existingBySlot.id },
+            data: {
+                ...commonData,
+                ...(metadata ? { metadata } : {}),
+            },
+        });
+        return { updated: true as const, created: false as const, runId };
+    }
+
+    await prisma.discoveryScheduleRun.create({
+        data: {
             slotKey,
             triggerKind,
             schedulerSource,
@@ -338,10 +457,7 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
             requestedAt: now,
             startedAt: now,
             ...commonData,
-        },
-        update: {
-            runId: runId || undefined,
-            ...commonData,
+            ...(metadata ? { metadata } : {}),
         },
     });
 
@@ -362,23 +478,28 @@ export async function markDiscoveryRunFailed(params: {
     const slotKey = params.slotKey?.trim() || null;
 
     if (runId) {
-        const existing = await prisma.discoveryScheduleRun.findUnique({
+        await prisma.discoveryScheduleRun.upsert({
             where: { runId },
-            select: { id: true },
+            create: {
+                slotKey: slotKey || runId,
+                triggerKind,
+                schedulerSource: params.schedulerSource || "n8n_callback",
+                runId,
+                status: "failed",
+                requestedAt: now,
+                startedAt: now,
+                finishedAt: now,
+                errorCode: params.errorCode,
+                errorMessage: params.errorMessage.slice(0, 500),
+            },
+            update: {
+                status: "failed",
+                finishedAt: now,
+                errorCode: params.errorCode,
+                errorMessage: params.errorMessage.slice(0, 500),
+            },
         });
-
-        if (existing) {
-            await prisma.discoveryScheduleRun.update({
-                where: { id: existing.id },
-                data: {
-                    status: "failed",
-                    finishedAt: now,
-                    errorCode: params.errorCode,
-                    errorMessage: params.errorMessage.slice(0, 500),
-                },
-            });
-            return;
-        }
+        return;
     }
 
     if (!slotKey) {
@@ -413,4 +534,3 @@ export async function markDiscoveryRunFailed(params: {
         },
     });
 }
-

@@ -72,6 +72,7 @@ const COVER_LETTER_QUALITY_REASON_CODES = {
     genericTemplate: "COVER_LETTER_QUALITY_GENERIC_TEMPLATE",
 } as const;
 
+const FACTUAL_GUARD_BLOCKED_ERROR_TYPE = "FACTUAL_GUARD_BLOCKED";
 const COVER_LETTER_QUALITY_BLOCKED_ERROR_TYPE = "COVER_LETTER_QUALITY_BLOCKED";
 
 const EXPERIENCE_SECTION_REGEX =
@@ -238,6 +239,14 @@ type WebhookRunContext = {
     triggerKind: string | null;
 };
 
+type DiscoveryRunDerivedSummary = {
+    persistedApplications: number;
+    tailoredCount: number;
+    discoveredCount: number;
+    factualGuardBlockedCount: number;
+    coverLetterQualityBlockedCount: number;
+};
+
 type ApplicationRunAttributionCreateClient = {
     applicationRunAttribution: {
         create: (args: Prisma.ApplicationRunAttributionCreateArgs) => Promise<unknown>;
@@ -321,6 +330,70 @@ function resolveWebhookRunContext(
             summary?.triggerKind,
             req.headers.get("x-trigger-kind")
         ),
+    };
+}
+
+function toNonNegativeInt(value: unknown) {
+    const parsed = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(parsed)) {
+        return null;
+    }
+    return Math.max(0, Math.floor(parsed));
+}
+
+async function deriveDiscoveryRunSummary(runId: string): Promise<DiscoveryRunDerivedSummary> {
+    const [attributionRows, workflowErrorRows] = await Promise.all([
+        prisma.applicationRunAttribution.findMany({
+            where: {
+                runId,
+                workflowId: "job-discovery-pipeline-v3",
+                eventType: { in: ["new_applications", "single_tailoring_complete"] },
+            },
+            select: {
+                persistedStatus: true,
+            },
+        }),
+        prisma.workflowError.findMany({
+            where: {
+                workflowId: "job-discovery-pipeline-v3",
+                errorType: {
+                    in: [
+                        FACTUAL_GUARD_BLOCKED_ERROR_TYPE,
+                        COVER_LETTER_QUALITY_BLOCKED_ERROR_TYPE,
+                    ],
+                },
+                payload: {
+                    path: ["runId"],
+                    equals: runId,
+                },
+            },
+            select: {
+                errorType: true,
+            },
+        }),
+    ]);
+
+    const safeAttributions = Array.isArray(attributionRows) ? attributionRows : [];
+    const safeWorkflowErrors = Array.isArray(workflowErrorRows) ? workflowErrorRows : [];
+    const tailoredCount = safeAttributions.filter(
+        (row) => row.persistedStatus === "tailored"
+    ).length;
+    const discoveredCount = safeAttributions.filter(
+        (row) => row.persistedStatus === "discovered"
+    ).length;
+    const factualGuardBlockedCount = safeWorkflowErrors.filter(
+        (row) => row.errorType === FACTUAL_GUARD_BLOCKED_ERROR_TYPE
+    ).length;
+    const coverLetterQualityBlockedCount = safeWorkflowErrors.filter(
+        (row) => row.errorType === COVER_LETTER_QUALITY_BLOCKED_ERROR_TYPE
+    ).length;
+
+    return {
+        persistedApplications: safeAttributions.length,
+        tailoredCount,
+        discoveredCount,
+        factualGuardBlockedCount,
+        coverLetterQualityBlockedCount,
     };
 }
 
@@ -2234,7 +2307,7 @@ export async function POST(req: Request) {
                                 data: {
                                     workflowId: "job-discovery-pipeline-v3",
                                     nodeName: "Factual Guard",
-                                    errorType: "FACTUAL_GUARD_BLOCKED",
+                                    errorType: FACTUAL_GUARD_BLOCKED_ERROR_TYPE,
                                     message: factualGuardAssessment.reasonCodes.join(","),
                                     payload: {
                                         runId,
@@ -2621,8 +2694,8 @@ export async function POST(req: Request) {
                         await prisma.workflowError.create({
                             data: {
                                 workflowId: "single-job-tailoring-v3",
-                                nodeName: "Factual Guard",
-                                errorType: "FACTUAL_GUARD_BLOCKED",
+                                    nodeName: "Factual Guard",
+                                errorType: FACTUAL_GUARD_BLOCKED_ERROR_TYPE,
                                 message: factualGuardAssessment.reasonCodes.join(","),
                                 payload: {
                                     runId,
@@ -2893,6 +2966,33 @@ export async function POST(req: Request) {
                     typeof summaryData.runId === "string" && summaryData.runId.trim()
                         ? summaryData.runId.trim()
                         : null;
+                if (
+                    webhookRunContext.n8nExecutionId !== null &&
+                    summaryData.n8nExecutionId === undefined &&
+                    summaryData.executionId === undefined
+                ) {
+                    summaryData.n8nExecutionId = webhookRunContext.n8nExecutionId;
+                }
+                if (summaryRunId) {
+                    const derivedSummary = await deriveDiscoveryRunSummary(summaryRunId);
+                    summaryData.tailoredCount = derivedSummary.tailoredCount;
+                    summaryData.discoveredCount = derivedSummary.discoveredCount;
+                    summaryData.factualGuardBlockedCount =
+                        derivedSummary.factualGuardBlockedCount;
+                    summaryData.coverLetterQualityBlockedCount =
+                        derivedSummary.coverLetterQualityBlockedCount;
+
+                    const persistedApplicationsValue = toNonNegativeInt(
+                        summaryData.persistedApplications
+                    );
+                    summaryData.persistedApplications =
+                        persistedApplicationsValue === null
+                            ? derivedSummary.persistedApplications
+                            : Math.max(
+                                  persistedApplicationsValue,
+                                  derivedSummary.persistedApplications
+                              );
+                }
                 const summarySlotKey =
                     typeof summaryData.slotKey === "string" && summaryData.slotKey.trim()
                         ? summaryData.slotKey.trim()
