@@ -4,6 +4,327 @@ const itRealDb = process.env.RUN_REAL_DB_INTEGRATION === "1" ? it : it.skip;
 
 describe("POST /api/webhooks/n8n (real-db)", () => {
     itRealDb(
+        "creates runId-only discovery ledger summary and derives runMetrics from durable rows",
+        async () => {
+            if (!process.env.DATABASE_URL) {
+                throw new Error("DATABASE_URL is required for real-db integration test");
+            }
+
+            const webhookSecret = "test_webhook_secret_real_db_discovery_status";
+            process.env.N8N_WEBHOOK_SECRET = webhookSecret;
+
+            vi.unmock("@/lib/prisma");
+            vi.resetModules();
+
+            const { POST } = await import("@/app/api/webhooks/n8n/route");
+            const { prisma } = await import("@/lib/prisma");
+
+            const runSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const externalPrefix = `it-discovery-status-${runSuffix}`;
+            const runId = `${externalPrefix}-run`;
+            const userEmail = `integration+discovery-status-${runSuffix}@example.com`;
+            const clerkId = `integration-discovery-status-${runSuffix}`;
+
+            let userId: string | null = null;
+            try {
+                const user = await prisma.user.create({
+                    data: {
+                        email: userEmail,
+                        clerkId,
+                        name: "Integration Discovery Status User",
+                        automationEnabled: true,
+                        subscriptionStatus: "pro",
+                        creditsRemaining: 10,
+                    },
+                    select: { id: true },
+                });
+                userId = user.id;
+
+                const [tailoredJob, discoveredJob] = await Promise.all([
+                    prisma.job.create({
+                        data: {
+                            externalId: `${externalPrefix}-tailored`,
+                            title: "Tailored Role",
+                            company: "Tailored Corp",
+                            location: "Remote",
+                            description: "Tailored role description",
+                            source: "manual",
+                            url: "https://example.com/discovery-status-tailored",
+                        },
+                        select: { id: true },
+                    }),
+                    prisma.job.create({
+                        data: {
+                            externalId: `${externalPrefix}-discovered`,
+                            title: "Discovered Role",
+                            company: "Discovery Corp",
+                            location: "Remote",
+                            description: "Discovered role description",
+                            source: "manual",
+                            url: "https://example.com/discovery-status-discovered",
+                        },
+                        select: { id: true },
+                    }),
+                ]);
+
+                const [tailoredApplication, discoveredApplication] = await Promise.all([
+                    prisma.application.create({
+                        data: {
+                            userId,
+                            jobId: tailoredJob.id,
+                            compatibilityScore: 91,
+                            status: "tailored",
+                            tailoredCvMarkdown: "# Tailored CV",
+                            coverLetterMarkdown: "# Tailored Cover Letter",
+                        },
+                        select: { id: true },
+                    }),
+                    prisma.application.create({
+                        data: {
+                            userId,
+                            jobId: discoveredJob.id,
+                            compatibilityScore: 72,
+                            status: "discovered",
+                            tailoredCvMarkdown: null,
+                            coverLetterMarkdown: null,
+                        },
+                        select: { id: true },
+                    }),
+                ]);
+
+                await prisma.applicationRunAttribution.createMany({
+                    data: [
+                        {
+                            applicationId: tailoredApplication.id,
+                            userId,
+                            jobId: tailoredJob.id,
+                            eventType: "new_applications",
+                            workflowId: "job-discovery-pipeline-v3",
+                            runId,
+                            n8nExecutionId: 9111,
+                            writeAction: "created",
+                            persistedStatus: "tailored",
+                            persistedTailoredCv: true,
+                            persistedCoverLetter: true,
+                        },
+                        {
+                            applicationId: discoveredApplication.id,
+                            userId,
+                            jobId: discoveredJob.id,
+                            eventType: "new_applications",
+                            workflowId: "job-discovery-pipeline-v3",
+                            runId,
+                            n8nExecutionId: 9111,
+                            writeAction: "created",
+                            persistedStatus: "discovered",
+                            persistedTailoredCv: false,
+                            persistedCoverLetter: false,
+                        },
+                    ],
+                });
+
+                await prisma.workflowError.createMany({
+                    data: [
+                        {
+                            workflowId: "job-discovery-pipeline-v3",
+                            nodeName: "Factual Guard",
+                            errorType: "FACTUAL_GUARD_BLOCKED",
+                            message: "FACTUAL_GUARD_UNSUPPORTED_TECHNOLOGY",
+                            userId,
+                            payload: {
+                                runId,
+                                applicationId: discoveredApplication.id,
+                                reasonCodes: ["FACTUAL_GUARD_UNSUPPORTED_TECHNOLOGY"],
+                            },
+                        },
+                        {
+                            workflowId: "job-discovery-pipeline-v3",
+                            nodeName: "Cover Letter Quality Gate",
+                            errorType: "COVER_LETTER_QUALITY_BLOCKED",
+                            message: "COVER_LETTER_QUALITY_LOW_GROUNDING",
+                            userId,
+                            payload: {
+                                runId,
+                                applicationId: discoveredApplication.id,
+                                reasonCodes: ["COVER_LETTER_QUALITY_LOW_GROUNDING"],
+                            },
+                        },
+                    ],
+                });
+
+                const response = await POST(
+                    new Request("http://localhost/api/webhooks/n8n", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-webhook-secret": webhookSecret,
+                        },
+                        body: JSON.stringify({
+                            type: "discovery_run_status",
+                            executionId: 9123,
+                            data: {
+                                runId,
+                                status: "completed",
+                                usersSeen: 1,
+                                usersCanary: 1,
+                                usersProcessed: 1,
+                                usersFailed: 0,
+                                lockAcquired: true,
+                                lockReleased: true,
+                            },
+                        }),
+                    })
+                );
+                const responseBody = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(responseBody.ok).toBe(true);
+                expect(responseBody.updated).toBe(true);
+                expect(responseBody.created).toBe(true);
+                expect(responseBody.runId).toBe(runId);
+
+                const ledgerRow = await prisma.discoveryScheduleRun.findUnique({
+                    where: { runId },
+                    select: {
+                        runId: true,
+                        slotKey: true,
+                        status: true,
+                        triggerKind: true,
+                        schedulerSource: true,
+                        n8nExecutionId: true,
+                        persistedApplications: true,
+                        metadata: true,
+                    },
+                });
+                expect(ledgerRow).toBeTruthy();
+                expect(ledgerRow?.runId).toBe(runId);
+                expect(ledgerRow?.slotKey).toBe(runId);
+                expect(ledgerRow?.status).toBe("completed");
+                expect(ledgerRow?.triggerKind).toBe("scheduled");
+                expect(ledgerRow?.schedulerSource).toBe("n8n_callback");
+                expect(ledgerRow?.n8nExecutionId).toBe(9123);
+                expect(ledgerRow?.persistedApplications).toBe(2);
+
+                const metadata =
+                    ledgerRow?.metadata && typeof ledgerRow.metadata === "object"
+                        ? (ledgerRow.metadata as Record<string, unknown>)
+                        : {};
+                const runMetrics =
+                    metadata.runMetrics && typeof metadata.runMetrics === "object"
+                        ? (metadata.runMetrics as Record<string, unknown>)
+                        : {};
+                expect(runMetrics).toEqual(
+                    expect.objectContaining({
+                        tailoredCount: 1,
+                        discoveredCount: 1,
+                        factualGuardBlockedCount: 1,
+                        coverLetterQualityBlockedCount: 1,
+                    })
+                );
+                expect(typeof metadata.metricsUpdatedAt).toBe("string");
+            } finally {
+                await prisma.discoveryScheduleRun.deleteMany({ where: { runId } });
+                if (userId) {
+                    await prisma.workflowError.deleteMany({ where: { userId } });
+                    await prisma.user.deleteMany({ where: { id: userId } });
+                }
+                await prisma.job.deleteMany({
+                    where: {
+                        externalId: {
+                            startsWith: externalPrefix,
+                        },
+                    },
+                });
+                await prisma.$disconnect();
+            }
+        },
+        60_000
+    );
+
+    itRealDb(
+        "persists failed discovery ledger row from workflow_error when only runId is provided",
+        async () => {
+            if (!process.env.DATABASE_URL) {
+                throw new Error("DATABASE_URL is required for real-db integration test");
+            }
+
+            const webhookSecret = "test_webhook_secret_real_db_discovery_failed";
+            process.env.N8N_WEBHOOK_SECRET = webhookSecret;
+
+            vi.unmock("@/lib/prisma");
+            vi.resetModules();
+
+            const { POST } = await import("@/app/api/webhooks/n8n/route");
+            const { prisma } = await import("@/lib/prisma");
+
+            const runSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const runId = `it-discovery-failed-${runSuffix}`;
+            const errorMessage = `TAILORING_PARSE_FAILURE ${runId}`;
+            try {
+                const response = await POST(
+                    new Request("http://localhost/api/webhooks/n8n", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-webhook-secret": webhookSecret,
+                        },
+                        body: JSON.stringify({
+                            type: "workflow_error",
+                            data: {
+                                workflowId: "job-discovery-pipeline-v3",
+                                nodeName: "Parse Tailoring Output v3",
+                                errorType: "TAILORING_PARSE_FAILURE",
+                                message: errorMessage,
+                                payload: {
+                                    runId,
+                                },
+                            },
+                        }),
+                    })
+                );
+                const responseBody = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(responseBody.message).toBe("Error logged");
+
+                const ledgerRow = await prisma.discoveryScheduleRun.findUnique({
+                    where: { runId },
+                    select: {
+                        runId: true,
+                        slotKey: true,
+                        status: true,
+                        triggerKind: true,
+                        schedulerSource: true,
+                        errorCode: true,
+                        errorMessage: true,
+                        finishedAt: true,
+                    },
+                });
+
+                expect(ledgerRow).toBeTruthy();
+                expect(ledgerRow?.runId).toBe(runId);
+                expect(ledgerRow?.slotKey).toBe(runId);
+                expect(ledgerRow?.status).toBe("failed");
+                expect(ledgerRow?.triggerKind).toBe("scheduled");
+                expect(ledgerRow?.schedulerSource).toBe("n8n_callback");
+                expect(ledgerRow?.errorCode).toBe("TAILORING_PARSE_FAILURE");
+                expect(ledgerRow?.errorMessage).toBe(errorMessage);
+                expect(ledgerRow?.finishedAt).toBeTruthy();
+            } finally {
+                await prisma.workflowError.deleteMany({
+                    where: {
+                        workflowId: "job-discovery-pipeline-v3",
+                        message: errorMessage,
+                    },
+                });
+                await prisma.discoveryScheduleRun.deleteMany({ where: { runId } });
+                await prisma.$disconnect();
+            }
+        },
+        45_000
+    );
+
+    itRealDb(
         "persists mixed clean/blocked batch outcomes and workflow error row",
         async () => {
             if (!process.env.DATABASE_URL) {
