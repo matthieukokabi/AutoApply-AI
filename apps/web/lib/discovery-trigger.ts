@@ -364,23 +364,47 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
         summaryInput.n8nExecutionId ?? summaryInput.executionId
     );
     const status = resolveLedgerStatus(summaryInput);
+    const usersSeen = safeNumber(summaryInput.usersSeen, 0);
+    const usersCanary = safeNumber(summaryInput.usersCanary, 0);
+    const usersProcessed = safeNumber(summaryInput.usersProcessed, 0);
+    const usersFailed = safeNumber(summaryInput.usersFailed, 0);
+    const persistedApplications = safeNumber(summaryInput.persistedApplications, 0);
+    const lockAcquired = toOptionalBoolean(summaryInput.lockAcquired);
+    const lockReleased = toOptionalBoolean(summaryInput.lockReleased);
+    const errorCode = toStringOrNull(summaryInput.reasonCode);
+    const errorMessage = toStringOrNull(summaryInput.reason);
     const now = new Date();
-    const commonData: Prisma.DiscoveryScheduleRunUpdateInput = {
+    const commonUpdateData: Prisma.DiscoveryScheduleRunUpdateInput = {
         status,
         finishedAt: now,
-        usersSeen: safeNumber(summaryInput.usersSeen, 0),
-        usersCanary: safeNumber(summaryInput.usersCanary, 0),
-        usersProcessed: safeNumber(summaryInput.usersProcessed, 0),
-        usersFailed: safeNumber(summaryInput.usersFailed, 0),
-        persistedApplications: safeNumber(summaryInput.persistedApplications, 0),
-        lockAcquired: toOptionalBoolean(summaryInput.lockAcquired),
-        lockReleased: toOptionalBoolean(summaryInput.lockReleased),
-        errorCode: toStringOrNull(summaryInput.reasonCode),
-        errorMessage: toStringOrNull(summaryInput.reason),
+        usersSeen,
+        usersCanary,
+        usersProcessed,
+        usersFailed,
+        persistedApplications,
+        lockAcquired,
+        lockReleased,
+        errorCode,
+        errorMessage,
+        n8nExecutionId: n8nExecutionId ?? undefined,
     };
-    if (n8nExecutionId !== null) {
-        commonData.n8nExecutionId = n8nExecutionId;
-    }
+    const commonCreateData = {
+        status,
+        finishedAt: now,
+        usersSeen,
+        usersCanary,
+        usersProcessed,
+        usersFailed,
+        persistedApplications,
+        lockAcquired: lockAcquired ?? false,
+        lockReleased: lockReleased ?? false,
+        errorCode,
+        errorMessage,
+        n8nExecutionId: n8nExecutionId ?? undefined,
+    } satisfies Omit<
+        Prisma.DiscoveryScheduleRunCreateInput,
+        "slotKey" | "triggerKind" | "schedulerSource" | "requestedAt" | "startedAt"
+    >;
 
     if (runId) {
         const existing = await prisma.discoveryScheduleRun.findUnique({
@@ -393,7 +417,7 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
             await prisma.discoveryScheduleRun.update({
                 where: { id: existing.id },
                 data: {
-                    ...commonData,
+                    ...commonUpdateData,
                     ...(metadata ? { metadata } : {}),
                 },
             });
@@ -409,7 +433,7 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
                 runId,
                 requestedAt: now,
                 startedAt: now,
-                ...commonData,
+                ...commonCreateData,
                 ...(metadata ? { metadata } : {}),
             },
         });
@@ -441,7 +465,7 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
         await prisma.discoveryScheduleRun.update({
             where: { id: existingBySlot.id },
             data: {
-                ...commonData,
+                ...commonUpdateData,
                 ...(metadata ? { metadata } : {}),
             },
         });
@@ -456,7 +480,7 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
             runId: runId || undefined,
             requestedAt: now,
             startedAt: now,
-            ...commonData,
+            ...commonCreateData,
             ...(metadata ? { metadata } : {}),
         },
     });
