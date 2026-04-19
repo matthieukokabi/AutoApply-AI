@@ -12,6 +12,55 @@ const runtimeHealthSnapshotRequestLog = new Map<string, number[]>();
 
 type JsonRecord = Record<string, unknown>;
 
+function readOptionalEnv(name: string) {
+    const value = process.env[name]?.trim();
+    return value ? value : null;
+}
+
+function toDeploymentUrl(value: string | null) {
+    if (!value) {
+        return null;
+    }
+
+    if (value.startsWith("http://") || value.startsWith("https://")) {
+        return value;
+    }
+
+    return `https://${value}`;
+}
+
+function buildRuntimeProvenance(generatedAt: string) {
+    const deploymentId =
+        readOptionalEnv("DEPLOY_PROVENANCE_DEPLOYMENT_ID") ||
+        readOptionalEnv("VERCEL_DEPLOYMENT_ID");
+    const deploymentUrl = toDeploymentUrl(
+        readOptionalEnv("DEPLOY_PROVENANCE_DEPLOYMENT_URL") ||
+            readOptionalEnv("VERCEL_URL")
+    );
+    const commitSha =
+        readOptionalEnv("DEPLOY_PROVENANCE_COMMIT_SHA") ||
+        readOptionalEnv("VERCEL_GIT_COMMIT_SHA");
+    const commitRef =
+        readOptionalEnv("DEPLOY_PROVENANCE_COMMIT_REF") ||
+        readOptionalEnv("VERCEL_GIT_COMMIT_REF");
+    const deployedAt = readOptionalEnv("DEPLOY_PROVENANCE_DEPLOYED_AT");
+    const source = readOptionalEnv("DEPLOY_PROVENANCE_SOURCE") || "unknown";
+    const hasTraceableDeployment = Boolean(
+        deploymentId && deploymentUrl && commitSha
+    );
+
+    return {
+        source,
+        deploymentId,
+        deploymentUrl,
+        commitSha,
+        commitRef,
+        deployedAt,
+        generatedAt,
+        hasTraceableDeployment,
+    };
+}
+
 function resolveReportsDirectory() {
     const overrideDir = process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR?.trim();
     if (overrideDir) {
@@ -295,11 +344,14 @@ export async function GET(req: Request) {
     const sentinelSummary = asRecord(sentinelReport?.summary);
     const sentinelAlertDispatch = asRecord(sentinelSummary.alertDispatch);
     const contactMailHealth = getContactMailHealthSnapshot();
+    const generatedAt = new Date().toISOString();
+    const runtimeProvenance = buildRuntimeProvenance(generatedAt);
 
     const response = NextResponse.json(
         {
-            generatedAt: new Date().toISOString(),
+            generatedAt,
             reportsDir,
+            provenance: runtimeProvenance,
             snapshot: {
                 perfGate: {
                     status: toStatus(perfReport?.status),

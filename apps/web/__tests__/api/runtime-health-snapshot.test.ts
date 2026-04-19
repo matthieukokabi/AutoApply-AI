@@ -18,6 +18,16 @@ beforeEach(() => {
     delete process.env.SMTP_PASS;
     delete process.env.CONTACT_INBOX_EMAIL;
     delete process.env.CONTACT_FROM_EMAIL;
+    delete process.env.DEPLOY_PROVENANCE_DEPLOYMENT_ID;
+    delete process.env.DEPLOY_PROVENANCE_DEPLOYMENT_URL;
+    delete process.env.DEPLOY_PROVENANCE_COMMIT_SHA;
+    delete process.env.DEPLOY_PROVENANCE_COMMIT_REF;
+    delete process.env.DEPLOY_PROVENANCE_DEPLOYED_AT;
+    delete process.env.DEPLOY_PROVENANCE_SOURCE;
+    delete process.env.VERCEL_DEPLOYMENT_ID;
+    delete process.env.VERCEL_URL;
+    delete process.env.VERCEL_GIT_COMMIT_SHA;
+    delete process.env.VERCEL_GIT_COMMIT_REF;
 });
 
 afterEach(() => {
@@ -32,6 +42,16 @@ afterEach(() => {
     delete process.env.SMTP_PASS;
     delete process.env.CONTACT_INBOX_EMAIL;
     delete process.env.CONTACT_FROM_EMAIL;
+    delete process.env.DEPLOY_PROVENANCE_DEPLOYMENT_ID;
+    delete process.env.DEPLOY_PROVENANCE_DEPLOYMENT_URL;
+    delete process.env.DEPLOY_PROVENANCE_COMMIT_SHA;
+    delete process.env.DEPLOY_PROVENANCE_COMMIT_REF;
+    delete process.env.DEPLOY_PROVENANCE_DEPLOYED_AT;
+    delete process.env.DEPLOY_PROVENANCE_SOURCE;
+    delete process.env.VERCEL_DEPLOYMENT_ID;
+    delete process.env.VERCEL_URL;
+    delete process.env.VERCEL_GIT_COMMIT_SHA;
+    delete process.env.VERCEL_GIT_COMMIT_REF;
 
     for (const dir of TEMP_DIRS.splice(0, TEMP_DIRS.length)) {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -81,6 +101,14 @@ describe("GET /api/runtime/health-snapshot", () => {
             Date.now() - 5 * 24 * 60 * 60 * 1000
         ).toISOString();
         process.env.RESEND_API_KEY = "re_test_key";
+        process.env.DEPLOY_PROVENANCE_SOURCE = "manual_cli";
+        process.env.DEPLOY_PROVENANCE_DEPLOYMENT_ID = "dpl_wave_test";
+        process.env.DEPLOY_PROVENANCE_DEPLOYMENT_URL =
+            "https://auto-apply-wave-test.vercel.app";
+        process.env.DEPLOY_PROVENANCE_COMMIT_SHA =
+            "005a4d884b127a40121fb6a07a0e8d0c4f06f562";
+        process.env.DEPLOY_PROVENANCE_COMMIT_REF = "main";
+        process.env.DEPLOY_PROVENANCE_DEPLOYED_AT = "2026-04-19T14:35:00.000Z";
 
         fs.writeFileSync(
             path.join(reportsDir, "wave5-performance-budget-20260318_200000.json"),
@@ -174,6 +202,103 @@ describe("GET /api/runtime/health-snapshot", () => {
         );
         expect(data.snapshot.contactMail.missingEnv).toEqual([]);
         expect(data.security.tokenRotation.isStale).toBe(false);
+        expect(data.provenance.source).toBe("manual_cli");
+        expect(data.provenance.deploymentId).toBe("dpl_wave_test");
+        expect(data.provenance.deploymentUrl).toBe(
+            "https://auto-apply-wave-test.vercel.app"
+        );
+        expect(data.provenance.commitSha).toBe(
+            "005a4d884b127a40121fb6a07a0e8d0c4f06f562"
+        );
+        expect(data.provenance.commitRef).toBe("main");
+        expect(data.provenance.deployedAt).toBe("2026-04-19T14:35:00.000Z");
+        expect(data.provenance.hasTraceableDeployment).toBe(true);
+    });
+
+    it("falls back to Vercel runtime metadata when explicit deploy provenance is missing", async () => {
+        const reportsDir = createReportsDir();
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN = "snapshot_secret";
+        process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR = reportsDir;
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT = new Date(
+            Date.now() - 5 * 24 * 60 * 60 * 1000
+        ).toISOString();
+        process.env.VERCEL_DEPLOYMENT_ID = "dpl_from_vercel_runtime";
+        process.env.VERCEL_URL = "auto-apply-runtime.vercel.app";
+        process.env.VERCEL_GIT_COMMIT_SHA =
+            "15b8a6bda13632b6eb41b908f1aa9aae8c86fae9";
+        process.env.VERCEL_GIT_COMMIT_REF = "main";
+
+        fs.writeFileSync(
+            path.join(reportsDir, "wave5-performance-budget-20260318_200000.json"),
+            JSON.stringify({ status: "pass", failureReason: null }, null, 2)
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave6-conversion-trend-live-20260318_200000.json"),
+            JSON.stringify(
+                {
+                    status: "pass",
+                    anomalyCount: 0,
+                    sourceMode: "live",
+                    sourceFreshness: {
+                        isFresh: true,
+                        ageMinutes: 2,
+                        freshnessWindowMinutes: 180,
+                    },
+                    dataQuality: {
+                        qualityScore: 95,
+                        minQualityScore: 80,
+                        status: "pass",
+                    },
+                },
+                null,
+                2
+            )
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave6-conversion-sentinel-20260318_200000.json"),
+            JSON.stringify(
+                {
+                    status: "pass",
+                    summary: {
+                        triggerCode: null,
+                        alertDispatch: {
+                            status: "no_alert",
+                        },
+                    },
+                },
+                null,
+                2
+            )
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave3-canonical-og-parity-prod-2026-03-18.txt"),
+            "PASS canonical_og_parity_all_indexable\n"
+        );
+        fs.writeFileSync(
+            path.join(reportsDir, "wave3-live-squirrel-audit-prod-2026-03-18.json"),
+            JSON.stringify({ status: "pass" }, null, 2)
+        );
+
+        const response = await GET(
+            new Request("http://localhost/api/runtime/health-snapshot", {
+                headers: {
+                    "x-health-snapshot-token": "snapshot_secret",
+                },
+            })
+        );
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.provenance.source).toBe("unknown");
+        expect(data.provenance.deploymentId).toBe("dpl_from_vercel_runtime");
+        expect(data.provenance.deploymentUrl).toBe(
+            "https://auto-apply-runtime.vercel.app"
+        );
+        expect(data.provenance.commitSha).toBe(
+            "15b8a6bda13632b6eb41b908f1aa9aae8c86fae9"
+        );
+        expect(data.provenance.commitRef).toBe("main");
+        expect(data.provenance.hasTraceableDeployment).toBe(true);
     });
 
     it("returns stale token warning when rotation timestamp is too old", async () => {

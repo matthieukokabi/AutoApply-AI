@@ -15,6 +15,11 @@ Endpoint: `/api/runtime/health-snapshot`
 5. Validate endpoint access with the new token only.
 6. Remove old token from any local scripts/notes.
 
+## Activation verification
+After setting token vars and redeploying production:
+- request without `x-health-snapshot-token` should return `401 Unauthorized`
+- request with valid `x-health-snapshot-token` should return `200` and snapshot payload
+
 ## Staleness policy
 - Token is considered stale after `30` days.
 - Endpoint response includes `security.tokenRotation.isStale=true` with warnings when stale or misconfigured.
