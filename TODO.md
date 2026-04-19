@@ -1,6 +1,10 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-04-13 (Europe/Zurich)
+Last updated: 2026-04-19 (Europe/Zurich)
+
+## P0 — Protected Path Gate 0 (runway hardening)
+
+- [x] Restore deterministic Web CI baseline and runtime policy alignment for protected-path rollout: remediated `npm audit` blockers to zero moderate+ vulnerabilities, fixed time-sensitive/regression-prone test fixtures (`analytics-events`, `telemetry-history-store`, `runtime-health-snapshot`), pinned Node runtime policy to `24.x` across repo/CI (`.nvmrc`, `apps/web/.nvmrc`, `apps/web/package.json#engines`, `.github/workflows/web-ci.yml`), and revalidated `npm --prefix apps/web run lint`, `npm --prefix apps/web test`, `npm --prefix apps/web run build`, `npm --prefix apps/web audit --audit-level=moderate` — completed on 2026-04-19
 
 ## P0 — v3 automation reliability rebuild (additive, no UX/UI change)
 

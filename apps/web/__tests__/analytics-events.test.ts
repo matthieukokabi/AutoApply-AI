@@ -6,14 +6,43 @@ import { trackAnalyticsEvent, trackPurchase } from "@/lib/analytics";
 describe("lib/analytics business events", () => {
     let originalGtag: unknown;
     let originalDataLayer: unknown;
+    let originalLocalStorage: Storage | undefined;
+
+    const createMemoryStorage = (): Storage => {
+        const state = new Map<string, string>();
+        return {
+            get length() {
+                return state.size;
+            },
+            clear() {
+                state.clear();
+            },
+            getItem(key: string) {
+                return state.has(key) ? state.get(key)! : null;
+            },
+            key(index: number) {
+                return Array.from(state.keys())[index] ?? null;
+            },
+            removeItem(key: string) {
+                state.delete(key);
+            },
+            setItem(key: string, value: string) {
+                state.set(key, String(value));
+            },
+        };
+    };
 
     beforeEach(() => {
         originalGtag = (window as Window & { gtag?: unknown }).gtag;
         originalDataLayer = (window as Window & { dataLayer?: unknown }).dataLayer;
+        originalLocalStorage = window.localStorage;
 
         delete (window as Window & { gtag?: unknown }).gtag;
         delete (window as Window & { dataLayer?: unknown }).dataLayer;
-        window.localStorage.clear();
+        Object.defineProperty(window, "localStorage", {
+            value: createMemoryStorage(),
+            configurable: true,
+        });
     });
 
     afterEach(() => {
@@ -29,7 +58,10 @@ describe("lib/analytics business events", () => {
             (window as Window & { dataLayer?: unknown }).dataLayer = originalDataLayer;
         }
 
-        window.localStorage.clear();
+        Object.defineProperty(window, "localStorage", {
+            value: originalLocalStorage,
+            configurable: true,
+        });
         vi.restoreAllMocks();
     });
 
