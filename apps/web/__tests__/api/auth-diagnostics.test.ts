@@ -87,7 +87,7 @@ describe("GET /api/auth/diagnostics", () => {
 
     it("keeps real auth failures visible as error state", async () => {
         process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.works";
-        vi.mocked(auth).mockRejectedValue(new Error("upstream auth outage"));
+        vi.mocked(auth).mockRejectedValue(new Error("Unable to authenticate request"));
 
         const req = new Request("https://autoapply.works/api/auth/diagnostics");
         const res = await GET(req);
@@ -100,6 +100,9 @@ describe("GET /api/auth/diagnostics", () => {
         expect(data.supportCode).toBe("AUTH_INIT_BLOCKED");
         expect(data.recommendations).toContain(
             "Server auth check failed. Verify Clerk middleware and server auth configuration."
+        );
+        expect(data.recommendations).not.toContain(
+            "Server auth lookup is unavailable on this diagnostics route; status is inferred from request cookies."
         );
     });
 

@@ -80,8 +80,7 @@ function isClerkContextUnavailableError(error: unknown) {
     return (
         message.includes("clerkmiddleware") ||
         message.includes("auth() was called") ||
-        message.includes("can't detect usage") ||
-        message.includes("unable to authenticate request")
+        message.includes("can't detect usage")
     );
 }
 
