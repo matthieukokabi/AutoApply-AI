@@ -65,16 +65,50 @@ function readJsonSafe(filePath) {
     }
 }
 
+function parseFilenameTimestamp(name, prefix) {
+    if (!name.startsWith(prefix) || !name.endsWith(".json")) {
+        return null;
+    }
+
+    const timestamp = name.slice(prefix.length, -".json".length);
+    if (!/^\d{8}_\d{6}$/.test(timestamp)) {
+        return null;
+    }
+
+    return timestamp;
+}
+
 function listMatchingReports(directory, prefix) {
     if (!fs.existsSync(directory)) {
         return [];
     }
 
-    return fs
+    return (
+        fs
         .readdirSync(directory)
         .filter((name) => name.startsWith(prefix) && name.endsWith(".json"))
-        .map((name) => path.join(directory, name))
-        .sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs);
+        .map((name) => ({
+            name,
+            fullPath: path.join(directory, name),
+            timestamp: parseFilenameTimestamp(name, prefix),
+        }))
+        // Deterministic sort independent of filesystem mtime behavior in CI.
+        .sort((a, b) => {
+            if (a.timestamp && b.timestamp) {
+                const compare = a.timestamp.localeCompare(b.timestamp);
+                if (compare !== 0) {
+                    return compare;
+                }
+            } else if (a.timestamp && !b.timestamp) {
+                return 1;
+            } else if (!a.timestamp && b.timestamp) {
+                return -1;
+            }
+
+            return a.name.localeCompare(b.name);
+        })
+        .map((entry) => entry.fullPath)
+    );
 }
 
 function average(values) {
@@ -492,17 +526,24 @@ function evaluateSourceGuard(report, config) {
 }
 
 function resolveLatestTrendReport(reportsDir) {
-    const candidates = [
-        ...listMatchingReports(reportsDir, "wave7-conversion-trend-live-"),
-        ...listMatchingReports(reportsDir, "wave5-conversion-trend-"),
-        ...listMatchingReports(reportsDir, "wave6-conversion-trend-live-"),
-    ].sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs);
+    // Canonical precedence:
+    // 1) wave6 live trend reports (current CI gate contract)
+    // 2) wave5 legacy trend reports
+    // 3) wave7 live trend reports (fallback/experimental lineage)
+    const precedence = [
+        "wave6-conversion-trend-live-",
+        "wave5-conversion-trend-",
+        "wave7-conversion-trend-live-",
+    ];
 
-    if (candidates.length === 0) {
-        return null;
+    for (const prefix of precedence) {
+        const candidates = listMatchingReports(reportsDir, prefix);
+        if (candidates.length > 0) {
+            return candidates[candidates.length - 1];
+        }
     }
 
-    return candidates[candidates.length - 1];
+    return null;
 }
 
 function resolveStatePath(reportsDir, sourceReportPath) {
@@ -580,7 +621,10 @@ function persistState(statePath, statePayload) {
 function main() {
     const now = new Date();
     const workspaceRoot = path.resolve(__dirname, "../../..");
-    const reportsDir = path.join(workspaceRoot, "docs", "reports");
+    const reportsDir =
+        process.env.CONVERSION_SENTINEL_REPORTS_DIR?.trim()
+            ? path.resolve(process.env.CONVERSION_SENTINEL_REPORTS_DIR.trim())
+            : path.join(workspaceRoot, "docs", "reports");
     const configPath = path.join(
         __dirname,
         "..",
