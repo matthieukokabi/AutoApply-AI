@@ -4,15 +4,9 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - "apps/web/**"
-      - ".github/workflows/web-ci.yml"
   push:
     branches:
       - main
-    paths:
-      - "apps/web/**"
-      - ".github/workflows/web-ci.yml"
 
 permissions:
   contents: read
@@ -31,8 +25,42 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect web-impacting changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" > /tmp/web-ci-changed-files.txt
+          else
+            BEFORE_SHA="${{ github.event.before }}"
+            AFTER_SHA="${{ github.sha }}"
+            if [[ "${BEFORE_SHA}" == "0000000000000000000000000000000000000000" ]]; then
+              git ls-tree -r --name-only "${AFTER_SHA}" > /tmp/web-ci-changed-files.txt
+            else
+              git diff --name-only "${BEFORE_SHA}" "${AFTER_SHA}" > /tmp/web-ci-changed-files.txt
+            fi
+          fi
+
+          echo "Changed files:"
+          cat /tmp/web-ci-changed-files.txt || true
+
+          if grep -E -q '^(apps/web/|\.github/workflows/web-ci\.yml$)' /tmp/web-ci-changed-files.txt; then
+            echo "run_web_quality=true" >> "${GITHUB_OUTPUT}"
+            echo "web-quality heavy checks enabled."
+          else
+            echo "run_web_quality=false" >> "${GITHUB_OUTPUT}"
+            echo "web-quality heavy checks skipped (no apps/web impact)."
+          fi
 
       - name: Setup Node.js
+        if: steps.changes.outputs.run_web_quality == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -40,21 +68,27 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Install dependencies
+        if: steps.changes.outputs.run_web_quality == 'true'
         run: npm ci
 
       - name: Security audit
+        if: steps.changes.outputs.run_web_quality == 'true'
         run: npm audit --audit-level=moderate
 
       - name: Lint
+        if: steps.changes.outputs.run_web_quality == 'true'
         run: npm run lint
 
       - name: Test
+        if: steps.changes.outputs.run_web_quality == 'true'
         run: npm test
 
       - name: Build
+        if: steps.changes.outputs.run_web_quality == 'true'
         run: npm run build
 
       - name: Performance budget gate
+        if: steps.changes.outputs.run_web_quality == 'true'
         env:
           LIGHTHOUSE_REQUIRED_SUCCESSES: "1"
           LIGHTHOUSE_MAX_ATTEMPTS_PER_RUN: "2"
@@ -76,6 +110,13 @@ jobs:
           PERF_BASE_URL=http://127.0.0.1:4100 npm run perf:routes:audit
 
       - name: Conversion regression sentinel
+        if: steps.changes.outputs.run_web_quality == 'true'
         env:
           CONVERSION_SENTINEL_EMERGENCY_BYPASS: ${{ vars.CONVERSION_SENTINEL_EMERGENCY_BYPASS }}
         run: npm run telemetry:conversion:sentinel
+
+      - name: No-op success for non-web-only changes
+        if: steps.changes.outputs.run_web_quality != 'true'
+        run: |
+          echo "No apps/web or web-ci workflow changes detected."
+          echo "Emitting deterministic web-quality status for protected-path compatibility."
