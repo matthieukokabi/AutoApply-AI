@@ -13,6 +13,21 @@ const AUTH_DIAGNOSTICS_RATE_LIMIT_MAX_REQUESTS = 10;
 const AUTH_DIAGNOSTICS_RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const authDiagnosticsRequestLog = new Map<string, number[]>();
 
+type AuthStatus =
+    | "signed_in"
+    | "signed_out"
+    | "anonymous"
+    | "cookie_present_unauthenticated"
+    | "error";
+
+type AuthLookupState = "ok" | "unavailable" | "error";
+
+interface AuthResolution {
+    status: AuthStatus;
+    lookup: AuthLookupState;
+    errorCode: string | null;
+}
+
 function parseCookieNames(cookieHeader: string) {
     if (!cookieHeader) return [];
 
@@ -56,40 +71,143 @@ function resolveAppUrlDiagnostics(reqHost: string) {
     }
 }
 
+function isClerkContextUnavailableError(error: unknown) {
+    if (!(error instanceof Error)) {
+        return false;
+    }
+
+    const message = error.message.toLowerCase();
+    return (
+        message.includes("clerkmiddleware") ||
+        message.includes("auth() was called") ||
+        message.includes("can't detect usage")
+    );
+}
+
+async function resolveAuthState(input: {
+    hasKnownAuthCookie: boolean;
+}): Promise<AuthResolution> {
+    try {
+        const { userId } = await auth();
+        if (userId) {
+            return {
+                status: "signed_in",
+                lookup: "ok",
+                errorCode: null,
+            };
+        }
+
+        return {
+            status: input.hasKnownAuthCookie
+                ? "cookie_present_unauthenticated"
+                : "signed_out",
+            lookup: "ok",
+            errorCode: null,
+        };
+    } catch (error) {
+        if (isClerkContextUnavailableError(error)) {
+            return {
+                status: input.hasKnownAuthCookie
+                    ? "cookie_present_unauthenticated"
+                    : "anonymous",
+                lookup: "unavailable",
+                errorCode: "AUTH_CONTEXT_UNAVAILABLE",
+            };
+        }
+
+        return {
+            status: "error",
+            lookup: "error",
+            errorCode: "AUTH_LOOKUP_FAILURE",
+        };
+    }
+}
+
+function resolveSupportCode(input: { status: AuthStatus; lookup: AuthLookupState }) {
+    if (input.status === "error") {
+        return "AUTH_INIT_BLOCKED";
+    }
+
+    if (input.status === "signed_in") {
+        return "AUTH_SESSION_ACTIVE";
+    }
+
+    if (input.lookup === "unavailable") {
+        return "AUTH_STATUS_INFERRED";
+    }
+
+    return "AUTH_NOT_SIGNED_IN";
+}
+
 function buildRecommendations(input: {
     hasCookieHeader: boolean;
     hasSessionCookie: boolean;
     hasKnownAuthCookie: boolean;
     appUrlValid: boolean;
     appUrlMatchesHost: boolean | null;
-    authStatus: "signed_in" | "signed_out" | "error";
+    authStatus: AuthStatus;
+    authLookup: AuthLookupState;
 }) {
     const recommendations: string[] = [];
 
-    if (!input.hasCookieHeader) {
+    if (input.authStatus === "signed_in") {
+        recommendations.push("Auth session is active.");
+    }
+
+    if (input.authStatus === "anonymous") {
+        recommendations.push("No auth cookies detected. This is normal before sign-in.");
+    }
+
+    if (input.authStatus === "signed_out") {
+        recommendations.push("No active session found. Sign in again to continue.");
+    }
+
+    if (input.authStatus === "cookie_present_unauthenticated") {
+        if (input.hasSessionCookie) {
+            recommendations.push(
+                "Session cookie exists but no active authenticated session was confirmed. Sign out and sign in again."
+            );
+        } else {
+            recommendations.push(
+                "Auth cookies exist but session cookie is missing. Complete sign-in again to refresh session."
+            );
+        }
+    }
+
+    if (!input.hasCookieHeader && input.authStatus !== "signed_in") {
         recommendations.push("Browser did not send cookies. Enable cookies for autoapply.works.");
     }
 
-    if (input.hasCookieHeader && !input.hasKnownAuthCookie) {
-        recommendations.push("No known auth cookies detected. Disable strict tracking protection and retry sign-in.");
-    }
-
-    if (input.hasKnownAuthCookie && !input.hasSessionCookie) {
-        recommendations.push("Auth cookies exist but session cookie is missing. Complete sign-in again to refresh session.");
+    if (input.hasCookieHeader && !input.hasKnownAuthCookie && input.authStatus !== "signed_in") {
+        recommendations.push(
+            "No known auth cookies detected. Disable strict tracking protection and retry sign-in."
+        );
     }
 
     if (!input.appUrlValid) {
         recommendations.push("NEXT_PUBLIC_APP_URL is missing or invalid on the server.");
     } else if (input.appUrlMatchesHost === false) {
-        recommendations.push("Request host and NEXT_PUBLIC_APP_URL host differ. Verify deployment domain configuration.");
+        recommendations.push(
+            "Request host and NEXT_PUBLIC_APP_URL host differ. Verify deployment domain configuration."
+        );
+    }
+
+    if (input.authLookup === "unavailable") {
+        recommendations.push(
+            "Server auth lookup is unavailable on this diagnostics route; status is inferred from request cookies."
+        );
     }
 
     if (input.authStatus === "error") {
-        recommendations.push("Server auth check failed. Verify Clerk middleware and server auth configuration.");
+        recommendations.push(
+            "Server auth check failed. Verify Clerk middleware and server auth configuration."
+        );
     }
 
     if (recommendations.length === 0) {
-        recommendations.push("No obvious server-side issue detected. If auth still fails, test without VPN/ad blocker/private DNS.");
+        recommendations.push(
+            "No obvious server-side issue detected. If auth still fails, test without VPN/ad blocker/private DNS."
+        );
     }
 
     return recommendations;
@@ -133,14 +251,7 @@ export async function GET(req: Request) {
     const hasSessionCookie = hasCookie(cookieNames, "__session");
     const hasKnownAuthCookie = AUTH_COOKIE_NAMES.some((name) => hasCookie(cookieNames, name));
     const appUrlDiagnostics = resolveAppUrlDiagnostics(reqHost);
-
-    let authStatus: "signed_in" | "signed_out" | "error" = "signed_out";
-    try {
-        const { userId } = await auth();
-        authStatus = userId ? "signed_in" : "signed_out";
-    } catch {
-        authStatus = "error";
-    }
+    const authResolution = await resolveAuthState({ hasKnownAuthCookie });
 
     const recommendations = buildRecommendations({
         hasCookieHeader: cookieHeader.length > 0,
@@ -148,7 +259,8 @@ export async function GET(req: Request) {
         hasKnownAuthCookie,
         appUrlValid: appUrlDiagnostics.valid,
         appUrlMatchesHost: appUrlDiagnostics.matchesRequestHost,
-        authStatus,
+        authStatus: authResolution.status,
+        authLookup: authResolution.lookup,
     });
 
     const response = NextResponse.json(
@@ -164,7 +276,9 @@ export async function GET(req: Request) {
                 hasKnownAuthCookie,
             },
             auth: {
-                status: authStatus,
+                status: authResolution.status,
+                lookup: authResolution.lookup,
+                errorCode: authResolution.errorCode,
             },
             configuration: {
                 appUrl: appUrlDiagnostics,
@@ -173,7 +287,10 @@ export async function GET(req: Request) {
                 expectedAuthHost: "clerk.autoapply.works",
             },
             recommendations,
-            supportCode: "AUTH_INIT_BLOCKED",
+            supportCode: resolveSupportCode({
+                status: authResolution.status,
+                lookup: authResolution.lookup,
+            }),
         },
         { status: 200 }
     );
