@@ -24,6 +24,10 @@ describe("telemetry history store script", () => {
         const outputPath = path.join(reportsDir, "wave7-telemetry-history-test.json");
         const storePath = path.join(reportsDir, "wave7-telemetry-history-store.json");
         const configPath = path.join(reportsDir, "telemetry-history-store.json");
+        const nowMs = Date.now();
+        const conversionGeneratedAt = new Date(nowMs - 5 * 60 * 1000).toISOString();
+        const sentinelGeneratedAt = new Date(nowMs - 4 * 60 * 1000).toISOString();
+        const perfGeneratedAt = new Date(nowMs - 3 * 60 * 1000).toISOString();
 
         fs.writeFileSync(
             configPath,
@@ -43,7 +47,7 @@ describe("telemetry history store script", () => {
             path.join(reportsDir, "wave6-conversion-trend-live-20260318_220000.json"),
             JSON.stringify(
                 {
-                    generatedAt: "2026-03-18T22:00:00.000Z",
+                    generatedAt: conversionGeneratedAt,
                     status: "pass",
                     sourceMode: "live",
                     anomalyCount: 0,
@@ -71,7 +75,7 @@ describe("telemetry history store script", () => {
             path.join(reportsDir, "wave6-conversion-sentinel-20260318_220100.json"),
             JSON.stringify(
                 {
-                    generatedAt: "2026-03-18T22:01:00.000Z",
+                    generatedAt: sentinelGeneratedAt,
                     status: "pass",
                     summary: {
                         triggered: false,
@@ -91,7 +95,7 @@ describe("telemetry history store script", () => {
             path.join(reportsDir, "wave5-perf-trend-20260318_220200.json"),
             JSON.stringify(
                 {
-                    generatedAt: "2026-03-18T22:02:00.000Z",
+                    generatedAt: perfGeneratedAt,
                     overallStatus: "pass",
                     deterministicRoutes: {
                         highIntentRoute: "/en/sign-up",

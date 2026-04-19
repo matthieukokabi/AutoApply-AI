@@ -77,8 +77,9 @@ describe("GET /api/runtime/health-snapshot", () => {
         const reportsDir = createReportsDir();
         process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN = "snapshot_secret";
         process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR = reportsDir;
-        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT =
-            "2026-03-17T00:00:00.000Z";
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT = new Date(
+            Date.now() - 5 * 24 * 60 * 60 * 1000
+        ).toISOString();
         process.env.RESEND_API_KEY = "re_test_key";
 
         fs.writeFileSync(
@@ -179,8 +180,9 @@ describe("GET /api/runtime/health-snapshot", () => {
         const reportsDir = createReportsDir();
         process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN = "snapshot_secret";
         process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR = reportsDir;
-        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT =
-            "2026-01-01T00:00:00.000Z";
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT = new Date(
+            Date.now() - 45 * 24 * 60 * 60 * 1000
+        ).toISOString();
 
         fs.writeFileSync(
             path.join(reportsDir, "wave5-performance-budget-20260318_200000.json"),
@@ -251,8 +253,9 @@ describe("GET /api/runtime/health-snapshot", () => {
         const reportsDir = createReportsDir();
         process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN = "snapshot_secret";
         process.env.RUNTIME_HEALTH_SNAPSHOT_REPORTS_DIR = reportsDir;
-        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT =
-            "2026-03-17T00:00:00.000Z";
+        process.env.RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT = new Date(
+            Date.now() - 5 * 24 * 60 * 60 * 1000
+        ).toISOString();
 
         fs.writeFileSync(
             path.join(reportsDir, "wave5-performance-budget-20260318_200000.json"),

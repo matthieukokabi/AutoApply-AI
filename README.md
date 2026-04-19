@@ -40,7 +40,7 @@ An AI-powered career assistant that aggregates job listings from official APIs, 
 
 ### Prerequisites
 - Docker & Docker Compose
-- Node.js 18+
+- Node.js 24.x
 - pnpm (recommended) or npm
 
 ### Setup
