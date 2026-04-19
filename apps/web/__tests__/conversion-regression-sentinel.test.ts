@@ -25,6 +25,9 @@ function writeTrendReport(
         generatedAt?: string;
         organicFormStarts?: number;
         organicCompletionRate?: number;
+        status?: "pass" | "alert" | "fail";
+        sourceMode?: string;
+        failureCodes?: string[];
     }
 ) {
     const days = completionRates.map((rate, index) => ({
@@ -40,8 +43,9 @@ function writeTrendReport(
         JSON.stringify(
             {
                 generatedAt: options?.generatedAt || "2026-03-18T22:00:00.000Z",
-                status: "pass",
-                sourceMode: "live",
+                status: options?.status ?? "pass",
+                sourceMode: options?.sourceMode ?? "live",
+                failureCodes: options?.failureCodes ?? [],
                 channels: {
                     organic: {
                         formStarts: options?.organicFormStarts ?? 12,
@@ -195,5 +199,54 @@ describe("conversion regression sentinel script", () => {
         expect(output.status).toBe("pass");
         expect(output.channelTracks.organic.status).toBe("guarded_sparse_current");
         expect(output.summary.organicBaseline.triggered).toBe(false);
+    });
+
+    it("auto-selects canonical wave6 trend report regardless of wave7 file mtime", () => {
+        const tmpDir = createTempDir();
+        const reportsDir = path.join(tmpDir, "reports");
+        fs.mkdirSync(reportsDir, { recursive: true });
+
+        const wave6TrendPath = path.join(
+            reportsDir,
+            "wave6-conversion-trend-live-20260318_221719.json"
+        );
+        const wave7TrendPath = path.join(
+            reportsDir,
+            "wave7-conversion-trend-live-20260318_234850.json"
+        );
+        const outputReportPath = path.join(tmpDir, "wave6-conversion-sentinel-output.json");
+        const statePath = path.join(tmpDir, "wave6-conversion-sentinel-state.json");
+        const historyStorePath = path.join(tmpDir, "wave7-telemetry-history-store.json");
+
+        writeTrendReport(wave6TrendPath, [0.58, 0.6, 0.59, 0.57, 0.58, 0.6, 0.59]);
+        writeTrendReport(wave7TrendPath, [0.58, 0.6, 0.59, 0.57, 0.58, 0.6, 0.59], {
+            status: "fail",
+            failureCodes: [
+                "route_dimension_missing",
+                "campaign_dimension_missing",
+                "quality_score_below_threshold",
+            ],
+        });
+
+        const now = Date.now();
+        fs.utimesSync(wave6TrendPath, new Date(now - 120_000), new Date(now - 120_000));
+        fs.utimesSync(wave7TrendPath, new Date(now), new Date(now));
+
+        const result = spawnSync("node", ["scripts/conversion_regression_sentinel.js"], {
+            cwd: path.resolve(process.cwd()),
+            env: {
+                ...process.env,
+                CONVERSION_SENTINEL_REPORTS_DIR: reportsDir,
+                CONVERSION_SENTINEL_HISTORY_STORE_PATH: historyStorePath,
+                CONVERSION_SENTINEL_STATE_PATH: statePath,
+                REPORT_PATH: outputReportPath,
+            },
+            encoding: "utf8",
+        });
+
+        expect(result.status).toBe(0);
+        const output = JSON.parse(fs.readFileSync(outputReportPath, "utf8"));
+        expect(output.status).toBe("pass");
+        expect(output.sourceReport).toBe(path.resolve(wave6TrendPath));
     });
 });
