@@ -1,6 +1,6 @@
 # AutoApply AI — Vercel Deploy Batching Rule
 
-Last updated: 2026-03-17 (Europe/Zurich)
+Last updated: 2026-04-19 (Europe/Zurich)
 
 ## Goal
 
@@ -34,8 +34,24 @@ Before any `--prod` deploy:
 From `apps/web`:
 
 ```bash
-vercel deploy --prod --yes
+COMMIT_SHA="$(git rev-parse HEAD)"
+COMMIT_REF="$(git rev-parse --abbrev-ref HEAD)"
+DEPLOYED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+vercel deploy --prod --yes \
+  --meta commit_sha="${COMMIT_SHA}" \
+  --meta commit_ref="${COMMIT_REF}" \
+  --meta deployed_at="${DEPLOYED_AT}" \
+  --meta deploy_source="manual_cli" \
+  --env DEPLOY_PROVENANCE_COMMIT_SHA="${COMMIT_SHA}" \
+  --env DEPLOY_PROVENANCE_COMMIT_REF="${COMMIT_REF}" \
+  --env DEPLOY_PROVENANCE_DEPLOYED_AT="${DEPLOYED_AT}" \
+  --env DEPLOY_PROVENANCE_SOURCE="manual_cli"
 ```
+
+This ensures each deployment exposes traceable provenance in:
+- Vercel deployment metadata (`meta.*`)
+- protected runtime snapshot response (`provenance.*`)
 
 ## Post-deploy check
 
@@ -46,3 +62,25 @@ npm run smoke:uptime:prod
 ```
 
 If smoke fails, pause additional deploys until root cause is identified.
+
+## Required post-deploy provenance capture
+
+After deploy succeeds, capture and log the live production linkage:
+
+```bash
+vercel inspect autoapply.works --json | sed -n '/^{/,$p' | jq '{
+  id,
+  createdAt,
+  url,
+  aliases,
+  target,
+  meta
+}'
+```
+
+Append to `SESSION_LOG.md`:
+- deployed commit SHA
+- deployment ID + URL
+- alias confirmation (`autoapply.works`)
+- deployment timestamp
+- runtime snapshot probe result (`/api/runtime/health-snapshot`: 200/401/503 as applicable)
