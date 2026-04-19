@@ -10,7 +10,7 @@ describe("GET /api/auth/diagnostics", () => {
         delete process.env.CLERK_SECRET_KEY;
     });
 
-    it("returns safe diagnostics with auth and cookie booleans", async () => {
+    it("returns safe diagnostics with signed-in auth state", async () => {
         process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.works";
         process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_123";
         process.env.CLERK_SECRET_KEY = "sk_test_123";
@@ -29,8 +29,10 @@ describe("GET /api/auth/diagnostics", () => {
 
         expect(res.status).toBe(200);
         expect(res.headers.get("cache-control")).toContain("no-store");
-        expect(data.supportCode).toBe("AUTH_INIT_BLOCKED");
+        expect(data.supportCode).toBe("AUTH_SESSION_ACTIVE");
         expect(data.auth.status).toBe("signed_in");
+        expect(data.auth.lookup).toBe("ok");
+        expect(data.auth.errorCode).toBeNull();
         expect(data.request.hasCookieHeader).toBe(true);
         expect(data.request.hasSessionCookie).toBe(true);
         expect(data.request.hasKnownAuthCookie).toBe(true);
@@ -40,9 +42,52 @@ describe("GET /api/auth/diagnostics", () => {
         expect(serialized).not.toContain("super_secret");
     });
 
-    it("marks auth status error when auth lookup fails", async () => {
-        process.env.NEXT_PUBLIC_APP_URL = "invalid_url";
-        vi.mocked(auth).mockRejectedValue(new Error("auth failure"));
+    it("infers anonymous state when Clerk auth lookup is unavailable", async () => {
+        process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.works";
+        vi.mocked(auth).mockRejectedValue(
+            new Error("auth() was called but Clerk can't detect usage of clerkMiddleware()")
+        );
+
+        const req = new Request("https://autoapply.works/api/auth/diagnostics");
+        const res = await GET(req);
+        const data = await res.json();
+
+        expect(res.status).toBe(200);
+        expect(data.auth.status).toBe("anonymous");
+        expect(data.auth.lookup).toBe("unavailable");
+        expect(data.auth.errorCode).toBe("AUTH_CONTEXT_UNAVAILABLE");
+        expect(data.supportCode).toBe("AUTH_STATUS_INFERRED");
+        expect(data.recommendations).not.toContain(
+            "Server auth check failed. Verify Clerk middleware and server auth configuration."
+        );
+    });
+
+    it("infers cookie-present unauthenticated state when cookies exist but auth lookup is unavailable", async () => {
+        process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.works";
+        vi.mocked(auth).mockRejectedValue(
+            new Error("Clerk can't detect usage of clerkMiddleware")
+        );
+
+        const req = new Request("https://autoapply.works/api/auth/diagnostics", {
+            headers: {
+                cookie: "__session=token; __client_uat=1234",
+            },
+        });
+
+        const res = await GET(req);
+        const data = await res.json();
+
+        expect(res.status).toBe(200);
+        expect(data.auth.status).toBe("cookie_present_unauthenticated");
+        expect(data.auth.lookup).toBe("unavailable");
+        expect(data.supportCode).toBe("AUTH_STATUS_INFERRED");
+        expect(data.request.hasKnownAuthCookie).toBe(true);
+        expect(data.request.hasSessionCookie).toBe(true);
+    });
+
+    it("keeps real auth failures visible as error state", async () => {
+        process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.works";
+        vi.mocked(auth).mockRejectedValue(new Error("upstream auth outage"));
 
         const req = new Request("https://autoapply.works/api/auth/diagnostics");
         const res = await GET(req);
@@ -50,13 +95,16 @@ describe("GET /api/auth/diagnostics", () => {
 
         expect(res.status).toBe(200);
         expect(data.auth.status).toBe("error");
-        expect(data.request.hasCookieHeader).toBe(false);
-        expect(data.configuration.appUrl.valid).toBe(false);
-        expect(Array.isArray(data.recommendations)).toBe(true);
-        expect(data.recommendations.length).toBeGreaterThan(0);
+        expect(data.auth.lookup).toBe("error");
+        expect(data.auth.errorCode).toBe("AUTH_LOOKUP_FAILURE");
+        expect(data.supportCode).toBe("AUTH_INIT_BLOCKED");
+        expect(data.recommendations).toContain(
+            "Server auth check failed. Verify Clerk middleware and server auth configuration."
+        );
     });
 
     it("returns 429 when diagnostics is called too frequently from one IP", async () => {
+        process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.works";
         vi.mocked(auth).mockResolvedValue({ userId: null } as any);
 
         const makeReq = () =>
