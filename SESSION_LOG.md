@@ -4684,3 +4684,44 @@ Included in this rollout:
   - `npm run lint` ✅
   - `npm test` ✅
   - `npm run build` ✅
+
+---
+
+## Session 149 — 2026-04-19
+
+### Completed
+
+**Operator Visibility / Deterministic Artifact Wave 1 (production provenance + runtime snapshot activation):**
+- Merged PR `#4` (`feat(ops): add runtime snapshot deployment provenance`) to `main`.
+- Main commit after merge: `4db13e2f156ee0401cbf1131e3bf48397db11310`.
+- Activated runtime snapshot production token contract:
+  - `RUNTIME_HEALTH_SNAPSHOT_TOKEN` (production)
+  - `RUNTIME_HEALTH_SNAPSHOT_TOKEN_ROTATED_AT` (production)
+- Performed production deploy with provenance env injection:
+  - inspect URL: `https://vercel.com/matts-projects-d33e5f04/auto-apply-ai/4TWUB8ep8q23cHAHXmYcwAJJg3ep`
+  - deployment id: `dpl_4TWUB8ep8q23cHAHXmYcwAJJg3ep`
+  - production URL: `https://auto-apply-q1seup4z4-matts-projects-d33e5f04.vercel.app`
+  - alias: `https://autoapply.works`
+- Live runtime snapshot verification:
+  - without token: `401 {"error":"Unauthorized"}`
+  - with token: `200` and `provenance` reports:
+    - `deploymentId: dpl_4TWUB8ep8q23cHAHXmYcwAJJg3ep`
+    - `deploymentUrl: https://auto-apply-q1seup4z4-matts-projects-d33e5f04.vercel.app`
+    - `commitSha: 4db13e2f156ee0401cbf1131e3bf48397db11310`
+    - `commitRef: main`
+    - `source: manual_cli`
+    - `hasTraceableDeployment: true`
+
+### Verification
+
+- `npm --prefix apps/web run lint` ✅
+- `npm --prefix apps/web run test -- __tests__/api/runtime-health-snapshot.test.ts` ✅
+- `npm --prefix apps/web run build` ✅
+- Main Web CI: `24632000017` ✅
+- Post-deploy uptime smoke: `npm run smoke:uptime:prod` ✅
+  - artifact: `/tmp/production-uptime-check-20260419_170852.jsonl`
+
+### Files Modified This Session
+
+- `SESSION_LOG.md`
+- `TODO.md`
