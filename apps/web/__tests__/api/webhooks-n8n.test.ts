@@ -2266,5 +2266,90 @@ describe("POST /api/webhooks/n8n", () => {
                 }),
             });
         });
+
+        it("derives usersProcessed from distinct persisted users across branch-local summaries", async () => {
+            vi.mocked(prisma.applicationRunAttribution.findMany).mockResolvedValue([
+                ...Array.from({ length: 10 }, () => ({
+                    userId: "tailor_user_1",
+                    persistedStatus: "discovered",
+                })),
+                ...Array.from({ length: 24 }, () => ({
+                    userId: "tailor_user_2",
+                    persistedStatus: "tailored",
+                })),
+                ...Array.from({ length: 6 }, () => ({
+                    userId: "no_tailor_user_1",
+                    persistedStatus: "discovered",
+                })),
+                ...Array.from({ length: 25 }, () => ({
+                    userId: "no_tailor_user_2",
+                    persistedStatus: "discovered",
+                })),
+                ...Array.from({ length: 25 }, () => ({
+                    userId: "no_tailor_user_3",
+                    persistedStatus: "discovered",
+                })),
+            ] as any);
+            vi.mocked(prisma.workflowError.findMany).mockResolvedValue([] as any);
+            vi.mocked(prisma.discoveryScheduleRun.findUnique)
+                .mockResolvedValueOnce({
+                    usersSeen: 5,
+                    usersCanary: 5,
+                    usersProcessed: 2,
+                    usersFailed: 0,
+                    persistedApplications: 34,
+                    lockAcquired: true,
+                    lockReleased: true,
+                    status: "completed",
+                    errorCode: null,
+                    errorMessage: null,
+                } as any)
+                .mockResolvedValueOnce({
+                    id: "ledger_branch_aggregate",
+                    metadata: { reason: "scheduled_run" },
+                } as any);
+            vi.mocked(prisma.discoveryScheduleRun.update).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("discovery_run_status", {
+                runId: "disc_v3_branch_aggregate",
+                slotKey: "2026-05-01T07:20",
+                triggerKind: "scheduled",
+                schedulerSource: "external_cron",
+                status: "completed",
+                usersSeen: 5,
+                usersCanary: 5,
+                usersProcessed: 3,
+                usersFailed: 0,
+                persistedApplications: 56,
+                lockAcquired: true,
+                lockReleased: true,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.ok).toBe(true);
+            expect(prisma.discoveryScheduleRun.update).toHaveBeenCalledWith({
+                where: { id: "ledger_branch_aggregate" },
+                data: expect.objectContaining({
+                    status: "completed",
+                    usersSeen: 5,
+                    usersCanary: 5,
+                    usersProcessed: 5,
+                    usersFailed: 0,
+                    persistedApplications: 90,
+                    metadata: expect.objectContaining({
+                        reason: "scheduled_run",
+                        runMetrics: expect.objectContaining({
+                            tailoredCount: 24,
+                            discoveredCount: 66,
+                            factualGuardBlockedCount: 0,
+                            coverLetterQualityBlockedCount: 0,
+                        }),
+                    }),
+                }),
+            });
+        });
     });
 });
