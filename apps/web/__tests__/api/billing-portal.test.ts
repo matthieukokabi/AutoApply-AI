@@ -1,7 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/billing-portal/route";
 import { getAuthUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 
 const mockUser = {
@@ -16,6 +15,12 @@ beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_APP_URL = "https://autoapply.test";
     process.env.STRIPE_SECRET_KEY = "sk_test_123";
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+    vi.restoreAllMocks();
 });
 
 describe("POST /api/billing-portal", () => {
@@ -64,44 +69,10 @@ describe("POST /api/billing-portal", () => {
         });
     });
 
-    it("maps customer by email when stripeCustomerId is missing", async () => {
+    it("returns 409 for paid users that are not already Stripe-backed", async () => {
         vi.mocked(getAuthUser).mockResolvedValue({
             ...mockUser,
             stripeCustomerId: null,
-        } as any);
-        vi.mocked(stripe.customers.list).mockResolvedValue({
-            data: [{ id: "cus_from_email" }],
-        } as any);
-        vi.mocked(stripe.billingPortal.sessions.create).mockResolvedValue({
-            url: "https://billing.stripe.com/session_789",
-        } as any);
-
-        const request = new Request("http://localhost/api/billing-portal", {
-            method: "POST",
-        });
-
-        const response = await POST(request);
-        const data = await response.json();
-
-        expect(response.status).toBe(200);
-        expect(data.url).toBe("https://billing.stripe.com/session_789");
-        expect(stripe.customers.list).toHaveBeenCalledWith({
-            email: "test@example.com",
-            limit: 1,
-        });
-        expect(prisma.user.update).toHaveBeenCalledWith({
-            where: { id: "user_1" },
-            data: { stripeCustomerId: "cus_from_email" },
-        });
-    });
-
-    it("returns 409 when no paid customer can be resolved", async () => {
-        vi.mocked(getAuthUser).mockResolvedValue({
-            ...mockUser,
-            stripeCustomerId: null,
-        } as any);
-        vi.mocked(stripe.customers.list).mockResolvedValue({
-            data: [],
         } as any);
 
         const request = new Request("http://localhost/api/billing-portal", {
@@ -112,8 +83,58 @@ describe("POST /api/billing-portal", () => {
         const data = await response.json();
 
         expect(response.status).toBe(409);
-        expect(data.error).toContain("No active paid subscription");
+        expect(data.error).toContain("not managed through Stripe Billing Portal");
+        expect(data.requestId).toBeTruthy();
+        expect(stripe.customers.list).not.toHaveBeenCalled();
         expect(stripe.billingPortal.sessions.create).not.toHaveBeenCalled();
+        expect(console.warn).toHaveBeenCalledWith(
+            "[billing-portal] stripe_customer_missing",
+            expect.objectContaining({
+                userId: "user_1",
+                subscriptionStatus: "pro",
+                hasStripeCustomerId: false,
+            })
+        );
+    });
+
+    it("returns 409 for free users even if a stale Stripe customer ID exists", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue({
+            ...mockUser,
+            subscriptionStatus: "free",
+        } as any);
+
+        const request = new Request("http://localhost/api/billing-portal", {
+            method: "POST",
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(409);
+        expect(data.error).toContain("not managed through Stripe Billing Portal");
+        expect(stripe.billingPortal.sessions.create).not.toHaveBeenCalled();
+    });
+
+    it("returns a clear error when Stripe does not return a portal URL", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockUser as any);
+        vi.mocked(stripe.billingPortal.sessions.create).mockResolvedValue({} as any);
+
+        const request = new Request("http://localhost/api/billing-portal", {
+            method: "POST",
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(500);
+        expect(data.error).toBe("Billing portal session could not be created.");
+        expect(data.requestId).toBeTruthy();
+        expect(console.error).toHaveBeenCalledWith(
+            "[billing-portal] session_url_missing",
+            expect.objectContaining({
+                userId: "user_1",
+            })
+        );
     });
 
     it("returns 401 when user is not authenticated", async () => {

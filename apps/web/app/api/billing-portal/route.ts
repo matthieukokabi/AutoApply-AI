@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 
 const BILLING_PORTAL_DEFAULT_RETURN_PATH = "/settings";
+const NON_STRIPE_BILLING_PORTAL_MESSAGE =
+    "This plan is not managed through Stripe Billing Portal. Contact support for billing or refund questions.";
 
 function resolveSafeReturnPath(candidate: unknown): string {
     if (typeof candidate !== "string") {
@@ -72,26 +73,16 @@ export async function POST(req: Request) {
         const returnPath = resolveSafeReturnPath(body.returnPath);
         const returnUrl = new URL(returnPath, appUrl).toString();
 
-        let stripeCustomerId = user.stripeCustomerId;
-        if (!stripeCustomerId) {
-            const matches = await stripe.customers.list({
-                email: user.email,
-                limit: 1,
+        const stripeCustomerId = user.stripeCustomerId;
+        if (user.subscriptionStatus === "free" || !stripeCustomerId) {
+            console.warn("[billing-portal] stripe_customer_missing", {
+                requestId,
+                userId: user.id,
+                subscriptionStatus: user.subscriptionStatus,
+                hasStripeCustomerId: Boolean(stripeCustomerId),
             });
-            const matchedCustomerId = matches.data[0]?.id;
-
-            if (matchedCustomerId) {
-                stripeCustomerId = matchedCustomerId;
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: { stripeCustomerId: matchedCustomerId },
-                });
-            }
-        }
-
-        if (!stripeCustomerId) {
             return withRequestId(
-                { error: "No active paid subscription found for this account." },
+                { error: NON_STRIPE_BILLING_PORTAL_MESSAGE },
                 409,
                 requestId
             );
@@ -103,6 +94,10 @@ export async function POST(req: Request) {
         });
 
         if (!session.url) {
+            console.error("[billing-portal] session_url_missing", {
+                requestId,
+                userId: user.id,
+            });
             return withRequestId(
                 { error: "Billing portal session could not be created." },
                 500,

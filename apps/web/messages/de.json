@@ -257,7 +257,6 @@
                 "upgrade": "Upgrade",
                 "changePlan": "Plan wechseln",
                 "manageBilling": "Abrechnung verwalten",
-                "autoRenewNotice": "Bezahlte Pläne verlängern sich automatisch, bis sie in „Abrechnung verwalten“ gekündigt werden.",
                 "freePlanNotice": "Sie können jederzeit upgraden. Beim Free-Plan gibt es keine wiederkehrende Abbuchung.",
                 "creditsRemaining": "Verbleibende Credits",
                 "creditsCount": "{count} Credits",
@@ -266,7 +265,11 @@
                     "free": "Kostenlos",
                     "pro": "Pro",
                     "unlimited": "Unlimited"
-                }
+                },
+                "stripeBillingNotice": "Die Abrechnung wird im Stripe Billing Portal verwaltet. Sie können dort kündigen; die Kündigung wird zum Ende des aktuellen Abrechnungszeitraums wirksam.",
+                "manualBillingNotice": "Dieser Plan wird nicht über das Stripe Billing Portal verwaltet. Kontaktieren Sie den Support bei Fragen zu Abrechnung oder Rückerstattung.",
+                "billingSupportHint": "Bei Fragen zu Abrechnung oder Rückerstattung kontaktieren Sie den Support. Wir prüfen die Anfrage und melden uns über den Support-Kanal.",
+                "contactBillingSupport": "Billing-Support kontaktieren"
             },
             "dataManagement": {
                 "title": "Datenverwaltung",

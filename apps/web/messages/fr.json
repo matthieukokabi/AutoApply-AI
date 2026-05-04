@@ -257,7 +257,6 @@
                 "upgrade": "Passer à Pro",
                 "changePlan": "Changer de formule",
                 "manageBilling": "Gérer la facturation",
-                "autoRenewNotice": "Les plans payants se renouvellent automatiquement jusqu'à résiliation depuis Gérer la facturation.",
                 "freePlanNotice": "Vous pouvez passer à un plan payant à tout moment. Aucun prélèvement récurrent sur le plan gratuit.",
                 "creditsRemaining": "Crédits restants",
                 "creditsCount": "{count} crédits",
@@ -266,7 +265,11 @@
                     "free": "Gratuit",
                     "pro": "Pro",
                     "unlimited": "Illimité"
-                }
+                },
+                "stripeBillingNotice": "La facturation est gérée dans le portail de facturation Stripe. Vous pouvez y résilier; la résiliation prend effet à la fin de la période de facturation en cours.",
+                "manualBillingNotice": "Ce plan n’est pas géré dans le portail de facturation Stripe. Contactez le support pour toute question de facturation ou de remboursement.",
+                "billingSupportHint": "Pour toute question de facturation ou de remboursement, contactez le support. Nous examinerons la demande et répondrons via le canal de support.",
+                "contactBillingSupport": "Contacter le support facturation"
             },
             "dataManagement": {
                 "title": "Gestion des données",
