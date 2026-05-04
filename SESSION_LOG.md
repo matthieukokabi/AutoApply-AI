@@ -4725,3 +4725,43 @@ Included in this rollout:
 
 - `SESSION_LOG.md`
 - `TODO.md`
+
+---
+
+## Session 150 — 2026-05-04
+
+### Completed
+
+**Billing UX hardening production deploy preserving discovery metric fix:**
+- Confirmed `origin/main` did not contain either release commit:
+  - metric fix: `4da4bfe370fb623c22edcc326261d5e2478f8d34`
+  - billing UX hardening: `bd214d642b08cfd0ebaca6747c83ba02429dc366`
+- Created deploy branch `codex/deploy-billing-metric-20260504` from the already-live metric fix commit and merged the billing UX hardening commit on top.
+- Deploy commit: `03d0f197fcff76fe8a4e1599f22c7d8f2407dea5`
+- Commit range in batch: `362192a..03d0f19`
+- Production deployment executed via Vercel CLI with provenance env injection:
+  - deployment id: `dpl_92ef682oSKSP2mL8xgoo7hcKTxEC`
+  - production URL: `https://auto-apply-b7y16rja0-matts-projects-d33e5f04.vercel.app`
+  - alias: `https://autoapply.works`
+
+### Verification
+
+- `npm run lint` (apps/web) ✅
+- `npm test` (apps/web) ✅ — 63 files passed, 1 skipped; 412 tests passed, 9 skipped.
+- `npm run build` (apps/web) ✅
+- Post-deploy uptime smoke: `npm run smoke:uptime:prod` ✅
+  - artifact: `/tmp/production-uptime-check-20260504_213652.jsonl`
+- Live route smoke:
+  - `POST https://autoapply.works/api/billing-portal` signed out returns `401` with `x-request-id` ✅
+  - `GET https://autoapply.works/api/runtime/health-snapshot` signed out returns `401` ✅
+- Live settings/i18n payload includes the billing hardening copy:
+  - `Stripe Billing Portal`
+  - `end of the current billing period`
+  - `Contact billing support`
+  - `billing or refund questions`
+  - `not managed through Stripe Billing Portal`
+
+### Residual Verification Gap
+
+- Authenticated customer-specific checks were not executed in this session because no active production customer session was available in the automation context.
+- The Stripe-backed success path and non-Stripe/manual-user `409` path are covered by the deployed unit tests and live route availability check, but were not exercised through a real authenticated production customer session.
