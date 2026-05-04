@@ -11,12 +11,14 @@ const mockUser = {
     automationEnabled: false,
     subscriptionStatus: "free",
     creditsRemaining: 3,
+    stripeCustomerId: null,
 };
 
 const mockProUser = {
     ...mockUser,
     subscriptionStatus: "pro",
     creditsRemaining: 50,
+    stripeCustomerId: "cus_existing",
 };
 
 beforeEach(() => {
@@ -35,6 +37,19 @@ describe("GET /api/user", () => {
         expect(data.user.email).toBe("test@example.com");
         expect(data.user.subscriptionStatus).toBe("free");
         expect(data.user.creditsRemaining).toBe(3);
+        expect(data.user.billingPortalAvailable).toBe(false);
+    });
+
+    it("exposes billing portal eligibility without exposing Stripe customer IDs", async () => {
+        vi.mocked(getAuthUser).mockResolvedValue(mockProUser as any);
+
+        const request = new Request("http://localhost/api/user");
+        const response = await GET(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.user.billingPortalAvailable).toBe(true);
+        expect(data.user.stripeCustomerId).toBeUndefined();
     });
 
     it("returns 401 when not authenticated", async () => {

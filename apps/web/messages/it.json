@@ -257,7 +257,6 @@
                 "upgrade": "Upgrade",
                 "changePlan": "Cambia piano",
                 "manageBilling": "Gestisci fatturazione",
-                "autoRenewNotice": "I piani a pagamento si rinnovano automaticamente finché non vengono annullati da Gestisci fatturazione.",
                 "freePlanNotice": "Puoi fare upgrade in qualsiasi momento. Il piano Gratis non prevede addebiti ricorrenti.",
                 "creditsRemaining": "Crediti rimanenti",
                 "creditsCount": "{count} crediti",
@@ -266,7 +265,11 @@
                     "free": "Gratis",
                     "pro": "Pro",
                     "unlimited": "Unlimited"
-                }
+                },
+                "stripeBillingNotice": "La fatturazione è gestita in Stripe Billing Portal. Puoi annullare da lì; l’annullamento ha effetto alla fine del periodo di fatturazione corrente.",
+                "manualBillingNotice": "Questo piano non è gestito tramite Stripe Billing Portal. Contatta il supporto per domande su fatturazione o rimborsi.",
+                "billingSupportHint": "Per domande su fatturazione o rimborsi, contatta il supporto. Esamineremo la richiesta e risponderemo tramite il canale di supporto.",
+                "contactBillingSupport": "Contatta supporto fatturazione"
             },
             "dataManagement": {
                 "title": "Gestione dati",

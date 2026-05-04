@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import {
     Card,
     CardContent,
@@ -25,11 +26,18 @@ import {
     type CheckoutPlan,
 } from "@/lib/checkout-intent";
 import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
+import {
+    canManageBillingInStripe,
+    formatBillingPortalErrorMessage,
+    getBillingAccessKind,
+    normalizePlanStatus,
+} from "@/lib/billing-access";
 
 interface UserInfo {
     automationEnabled: boolean;
     subscriptionStatus: string;
     creditsRemaining: number;
+    billingPortalAvailable: boolean;
 }
 
 interface Preferences {
@@ -62,14 +70,6 @@ const SETTINGS_AUTH_RETRY_ATTEMPTS = 3;
 const SETTINGS_AUTH_RETRY_DELAY_MS = 500;
 const CHECKOUT_RETURN_SYNC_ATTEMPTS = 5;
 const CHECKOUT_RETURN_SYNC_DELAY_MS = 2000;
-
-function normalizePlanStatus(value: string | null | undefined) {
-    if (value === "pro" || value === "unlimited" || value === "free") {
-        return value;
-    }
-
-    return "free";
-}
 
 async function fetchUserWithAuthRetry() {
     let response: Response | null = null;
@@ -335,7 +335,11 @@ export default function SettingsPage() {
             });
             const data = await res
                 .json()
-                .catch(() => ({})) as { url?: string; error?: string };
+                .catch(() => ({})) as {
+                    url?: string;
+                    error?: string;
+                    requestId?: string;
+                };
 
             if (isUnauthorizedCheckoutError(res.status, data.error)) {
                 const signInPath = getLocalizedPathForRoute(
@@ -351,15 +355,25 @@ export default function SettingsPage() {
             }
 
             if (!res.ok || !data.url) {
+                console.error("[settings] billing_portal_open_failed", {
+                    status: res.status,
+                    error: data.error,
+                    requestId: data.requestId,
+                });
                 setMessage({
                     type: "error",
-                    text: data.error || t("messages.billingPortalFailed"),
+                    text: formatBillingPortalErrorMessage({
+                        error: data.error,
+                        fallback: t("messages.billingPortalFailed"),
+                        requestId: data.requestId,
+                    }),
                 });
                 return;
             }
 
             window.location.href = data.url;
-        } catch {
+        } catch (error) {
+            console.error("[settings] billing_portal_network_error", { error });
             setMessage({ type: "error", text: t("messages.billingPortalFailed") });
         } finally {
             setOpeningBillingPortal(false);
@@ -520,6 +534,14 @@ export default function SettingsPage() {
 
     const normalizedPlanStatus = normalizePlanStatus(user?.subscriptionStatus);
     const isPaidPlan = normalizedPlanStatus !== "free";
+    const billingAccessKind = getBillingAccessKind(user);
+    const canUseBillingPortal = canManageBillingInStripe(user);
+    const billingNotice =
+        billingAccessKind === "stripe_portal"
+            ? t("subscription.stripeBillingNotice")
+            : billingAccessKind === "manual"
+              ? t("subscription.manualBillingNotice")
+              : t("subscription.freePlanNotice");
     const automationStatusText =
         normalizedPlanStatus === "free"
             ? t("automation.status.requiresPaidPlan")
@@ -716,13 +738,11 @@ export default function SettingsPage() {
                                 {t(`subscription.planLabels.${normalizedPlanStatus}`)}
                             </Badge>
                             <p className="text-xs text-muted-foreground mt-2">
-                                {isPaidPlan
-                                    ? t("subscription.autoRenewNotice")
-                                    : t("subscription.freePlanNotice")}
+                                {billingNotice}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            {isPaidPlan ? (
+                            {canUseBillingPortal ? (
                                 <Button
                                     variant="outline"
                                     onClick={handleOpenBillingPortal}
@@ -755,6 +775,18 @@ export default function SettingsPage() {
                             onClick={() => handleCheckout("credit_pack")}
                         >
                             {t("subscription.buyCredits")}
+                        </Button>
+                    </div>
+                    <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+                        <p>{t("subscription.billingSupportHint")}</p>
+                        <Button
+                            asChild
+                            variant="link"
+                            className="h-auto p-0 text-sm"
+                        >
+                            <Link href="/contact">
+                                {t("subscription.contactBillingSupport")}
+                            </Link>
                         </Button>
                     </div>
                 </CardContent>

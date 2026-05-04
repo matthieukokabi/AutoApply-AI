@@ -9,6 +9,10 @@ const NON_EN_LOCALES = ["fr", "de", "es", "it"] as const;
 const CRITICAL_TRANSLATION_PATHS = [
     ["dashboard", "settings", "title"],
     ["dashboard", "settings", "automation", "title"],
+    ["dashboard", "settings", "subscription", "stripeBillingNotice"],
+    ["dashboard", "settings", "subscription", "manualBillingNotice"],
+    ["dashboard", "settings", "subscription", "billingSupportHint"],
+    ["dashboard", "settings", "subscription", "contactBillingSupport"],
     ["onboarding", "welcome", "title"],
     ["onboarding", "cv", "title"],
     ["onboarding", "preferences", "title"],
@@ -47,6 +51,33 @@ describe("i18n onboarding/settings regression", () => {
             const value = getPathValue(enMessages, keyPath);
             expect(value.length).toBeGreaterThan(0);
         }
+    });
+
+    it("keeps billing copy operational and non-promissory", () => {
+        const stripeNotice = getPathValue(enMessages, [
+            "dashboard",
+            "settings",
+            "subscription",
+            "stripeBillingNotice",
+        ]);
+        const manualNotice = getPathValue(enMessages, [
+            "dashboard",
+            "settings",
+            "subscription",
+            "manualBillingNotice",
+        ]);
+        const supportHint = getPathValue(enMessages, [
+            "dashboard",
+            "settings",
+            "subscription",
+            "billingSupportHint",
+        ]);
+
+        expect(stripeNotice).toContain("Stripe Billing Portal");
+        expect(stripeNotice).toContain("end of the current billing period");
+        expect(manualNotice).toContain("not managed through Stripe Billing Portal");
+        expect(supportHint).toContain("billing or refund questions");
+        expect(supportHint).not.toMatch(/guarantee|statutory|prorat/i);
     });
 
     it("keeps FR/DE/ES/IT critical keys localized and distinct from English", () => {

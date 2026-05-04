@@ -256,7 +256,6 @@
                 "upgrade": "Upgrade",
                 "changePlan": "Change Plan",
                 "manageBilling": "Manage Billing",
-                "autoRenewNotice": "Paid plans auto-renew until cancelled from Manage Billing.",
                 "freePlanNotice": "You can upgrade anytime. No recurring charge on the Free plan.",
                 "creditsRemaining": "Credits Remaining",
                 "creditsCount": "{count} credits",
@@ -265,7 +264,11 @@
                     "free": "Free",
                     "pro": "Pro",
                     "unlimited": "Unlimited"
-                }
+                },
+                "stripeBillingNotice": "Billing is managed in Stripe Billing Portal. You can cancel there; cancellation takes effect at the end of the current billing period.",
+                "manualBillingNotice": "This plan is not managed through Stripe Billing Portal. Contact support for billing or refund questions.",
+                "billingSupportHint": "For billing or refund questions, contact support. We will review the request and follow up through the support channel.",
+                "contactBillingSupport": "Contact billing support"
             },
             "dataManagement": {
                 "title": "Data Management",

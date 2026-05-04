@@ -20,6 +20,8 @@ export async function GET(req: Request) {
                 automationEnabled: user.automationEnabled,
                 subscriptionStatus: user.subscriptionStatus,
                 creditsRemaining: user.creditsRemaining,
+                billingPortalAvailable:
+                    user.subscriptionStatus !== "free" && Boolean(user.stripeCustomerId),
             },
         });
     } catch (error) {
