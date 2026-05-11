@@ -118,6 +118,12 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[100] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow"
+            >
+                Skip to main content
+            </a>
             {/* Navigation */}
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-16 items-center">
@@ -157,60 +163,61 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                 </div>
             </header>
 
-            {/* Hero */}
-            <section className="container flex flex-col items-center gap-6 pb-12 pt-20 md:pt-32 text-center">
-                <Badge variant="secondary" className="px-4 py-1.5 text-sm">
-                    {t("hero.badge")}
-                </Badge>
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl max-w-4xl">
-                    {t("hero.titleStart")}{" "}
-                    <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-                        {t("hero.titleHighlight")}
-                    </span>
-                </h1>
-                <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl leading-relaxed">
-                    {t("hero.description")}
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                    <NextLink href={signUpPath}>
-                        <Button size="lg" className="gap-2 px-8">
-                            {t("hero.startFree")} <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </NextLink>
-                    <Link href="#pricing">
-                        <Button size="lg" variant="outline" className="px-8">
-                            {t("hero.viewPricing")}
-                        </Button>
-                    </Link>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2 max-w-md">
-                    {t("hero.noCreditCard")}
-                </p>
-            </section>
+            <main id="main-content" className="flex-1">
+                {/* Hero */}
+                <section className="container flex flex-col items-center gap-6 pb-12 pt-20 text-center md:pt-32">
+                    <Badge variant="secondary" className="px-4 py-1.5 text-sm">
+                        {t("hero.badge")}
+                    </Badge>
+                    <h1 className="max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+                        {t("hero.titleStart")}{" "}
+                        <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                            {t("hero.titleHighlight")}
+                        </span>
+                    </h1>
+                    <p className="max-w-[750px] text-lg leading-relaxed text-muted-foreground sm:text-xl">
+                        {t("hero.description")}
+                    </p>
+                    <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+                        <NextLink href={signUpPath}>
+                            <Button size="lg" className="gap-2 px-8">
+                                {t("hero.startFree")} <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </NextLink>
+                        <Link href="#pricing">
+                            <Button size="lg" variant="outline" className="px-8">
+                                {t("hero.viewPricing")}
+                            </Button>
+                        </Link>
+                    </div>
+                    <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                        {t("hero.noCreditCard")}
+                    </p>
+                </section>
 
-            {/* Stats Bar */}
-            <section className="border-y bg-muted/50">
-                <div className="container py-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                        <div>
-                            <div className="text-3xl font-bold text-primary">7</div>
-                            <div className="text-sm text-muted-foreground mt-1">{t("stats.jobApis")}</div>
-                        </div>
-                        <div>
-                            <div className="text-3xl font-bold text-primary">100+</div>
-                            <div className="text-sm text-muted-foreground mt-1">{t("stats.atsKeywords")}</div>
-                        </div>
-                        <div>
-                            <div className="text-3xl font-bold text-primary">0</div>
-                            <div className="text-sm text-muted-foreground mt-1">{t("stats.fabricatedSkills")}</div>
-                        </div>
-                        <div>
-                            <div className="text-3xl font-bold text-primary">4h</div>
-                            <div className="text-sm text-muted-foreground mt-1">{t("stats.discoveryCycle")}</div>
+                {/* Stats Bar */}
+                <section className="border-y bg-muted/50">
+                    <div className="container py-8">
+                        <div className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
+                            <div>
+                                <div className="text-3xl font-bold text-primary">7</div>
+                                <div className="mt-1 text-sm text-muted-foreground">{t("stats.jobApis")}</div>
+                            </div>
+                            <div>
+                                <div className="text-3xl font-bold text-primary">100+</div>
+                                <div className="mt-1 text-sm text-muted-foreground">{t("stats.atsKeywords")}</div>
+                            </div>
+                            <div>
+                                <div className="text-3xl font-bold text-primary">0</div>
+                                <div className="mt-1 text-sm text-muted-foreground">{t("stats.fabricatedSkills")}</div>
+                            </div>
+                            <div>
+                                <div className="text-3xl font-bold text-primary">4h</div>
+                                <div className="mt-1 text-sm text-muted-foreground">{t("stats.discoveryCycle")}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
             {/* How It Works */}
             <section id="how-it-works" className="container py-20">
@@ -469,22 +476,23 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                 </div>
             </section>
 
-            {/* CTA */}
-            <section className="bg-primary text-primary-foreground">
-                <div className="container py-16 text-center">
-                    <h2 className="text-3xl font-bold mb-4">
-                        {t("cta.title")}
-                    </h2>
-                    <p className="text-lg opacity-90 mb-8 max-w-lg mx-auto">
-                        {t("cta.subtitle")}
-                    </p>
-                    <NextLink href={signUpPath}>
-                        <Button size="lg" variant="secondary" className="gap-2 px-8">
-                            {t("cta.getStarted")} <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </NextLink>
-                </div>
-            </section>
+                {/* CTA */}
+                <section className="bg-primary text-primary-foreground">
+                    <div className="container py-16 text-center">
+                        <h2 className="mb-4 text-3xl font-bold">
+                            {t("cta.title")}
+                        </h2>
+                        <p className="mx-auto mb-8 max-w-lg text-lg text-primary-foreground/95">
+                            {t("cta.subtitle")}
+                        </p>
+                        <NextLink href={signUpPath}>
+                            <Button size="lg" variant="secondary" className="gap-2 px-8">
+                                {t("cta.getStarted")} <ArrowRight className="h-4 w-4" />
+                            </Button>
+                        </NextLink>
+                    </div>
+                </section>
+            </main>
 
             {/* Footer */}
             <footer className="border-t py-12 mt-auto">
@@ -508,7 +516,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </div>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-3 text-sm">{t("footer.product")}</h4>
+                            <h3 className="mb-3 text-sm font-semibold">{t("footer.product")}</h3>
                             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                                 <Link href="#features" className="hover:text-foreground transition-colors">{t("nav.features")}</Link>
                                 <Link href="#pricing" className="hover:text-foreground transition-colors">{t("nav.pricing")}</Link>
@@ -518,7 +526,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </div>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-3 text-sm">{t("footer.legal")}</h4>
+                            <h3 className="mb-3 text-sm font-semibold">{t("footer.legal")}</h3>
                             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                                 <Link href="/terms" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link>
                                 <Link href="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link>
@@ -526,7 +534,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </div>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-3 text-sm">{t("footer.dataSources")}</h4>
+                            <h3 className="mb-3 text-sm font-semibold">{t("footer.dataSources")}</h3>
                             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                                 <span>Adzuna API</span>
                                 <span>The Muse API</span>

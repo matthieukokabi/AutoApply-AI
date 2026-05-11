@@ -58,7 +58,7 @@ export default function AuthDiagnosticsPage() {
     }, [t]);
 
     return (
-        <div className="container max-w-3xl py-10">
+        <main className="container max-w-3xl py-10">
             <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
             <p className="mt-2 text-muted-foreground">
                 {t("subtitle")}
@@ -151,6 +151,6 @@ export default function AuthDiagnosticsPage() {
                     <Button variant="outline">{t("actions.backToSignUp")}</Button>
                 </Link>
             </div>
-        </div>
+        </main>
     );
 }

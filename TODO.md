@@ -1,6 +1,6 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-04-19 (Europe/Zurich)
+Last updated: 2026-05-11 (Europe/Zurich)
 
 ## P0 — Protected Path Gate 0 (runway hardening)
 
@@ -272,6 +272,7 @@ Last updated: 2026-04-19 (Europe/Zurich)
 - [x] Stabilize Lighthouse reliability run (`NO_LCP` mitigation) with warm-up, retries, deterministic flags, and explicit fail reason — completed on 2026-03-18 (`apps/web/scripts/lighthouse_reliability_check.sh`, npm script `perf:lighthouse:reliability`)
 - [x] Add performance budget hard gates (LCP, CLS, JS bytes, image bytes) with CI fail-on-regression and emergency override path — completed on 2026-03-18 (`apps/web/config/performance-budgets.json`, `apps/web/scripts/performance_budget_gate.js`, `.github/workflows/web-ci.yml`, `docs/performance-budget-emergency-override.md`)
 - [x] Pin deterministic audited routes (including one high-intent route) and fail when a required route is unavailable — completed on 2026-03-18 (`apps/web/config/performance-audit-routes.json`, `apps/web/scripts/performance_route_audit.sh`, `.github/workflows/web-ci.yml`)
+- [x] Mobile performance + accessibility hardening pass: removed global `ClerkProvider` from root layout and scoped it to auth-required layouts (`sign-in`, `sign-up`, `onboarding`, `dashboard`), added Clerk `preconnect`/`dns-prefetch` hints on auth surfaces, preserved checkout intent flow while removing landing-page `useAuth` dependency, added missing `main` landmarks (`landing`, `sign-in`, `sign-up`, `auth-diagnostics`) with skip link + footer heading-level cleanup, improved CTA contrast, and added enforced CSP `worker-src 'self' blob:`; revalidated `npm --prefix apps/web run lint`, `npm --prefix apps/web run test`, `npm --prefix apps/web run build` — completed on 2026-05-11 (`apps/web/app/layout.tsx`, `apps/web/app/[locale]/(dashboard)/layout.tsx`, `apps/web/app/[locale]/page.tsx`, `apps/web/app/[locale]/auth-diagnostics/page.tsx`, `apps/web/app/[locale]/sign-in/layout.tsx`, `apps/web/app/[locale]/sign-in/[[...sign-in]]/page.tsx`, `apps/web/app/[locale]/sign-up/layout.tsx`, `apps/web/app/[locale]/sign-up/[[...sign-up]]/page.tsx`, `apps/web/app/[locale]/onboarding/layout.tsx`, `apps/web/components/checkout-button.tsx`, `apps/web/next.config.js`)
 - [x] Expand conversion telemetry funnel (`page_view` → `cta_click` → `form_start` → `captcha_pass|fail` → `submit_result`) with daily artifact + anomaly detection — completed on 2026-03-18 (`lib/contact-telemetry.ts`, `/api/contact/telemetry`, contact client instrumentation, `scripts/conversion_telemetry_daily_report.js`)
 - [x] Add protected runtime health snapshot endpoint (latest perf gate, funnel telemetry, parity status), non-indexable + auth-protected — completed on 2026-03-18 (`/api/runtime/health-snapshot`, token header auth + `X-Robots-Tag: noindex`)
 - [x] Publish Wave 4 validation report with reliability proof, perf gate outcome, telemetry baseline, and SEO/security non-regression evidence — completed on 2026-03-18 (`docs/wave4-validation-report-2026-03-18.md`)
