@@ -59,6 +59,7 @@ const CONTENT_SECURITY_POLICY = [
     "connect-src 'self' https: wss:",
     "frame-src 'self' https:",
     "form-action 'self' https:",
+    "worker-src 'self' blob:",
     "upgrade-insecure-requests",
 ]
     .join("; ")
