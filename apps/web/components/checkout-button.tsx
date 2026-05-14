@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type MouseEvent } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -35,7 +34,6 @@ export function CheckoutButton({
     const t = useTranslations("checkoutButton");
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const { isLoaded, userId } = useAuth();
 
     function redirectToSignUpWithIntent() {
         const signUpPath = getLocalizedPathForRoute(
@@ -54,13 +52,6 @@ export function CheckoutButton({
         setErrorMessage(null);
         trackBeginCheckout(plan, "landing_pricing");
         try {
-            // Landing-page pricing should route anonymous visitors straight to sign-up,
-            // avoiding unnecessary checkout API calls and 401 noise.
-            if (!isLoaded || !userId) {
-                redirectToSignUpWithIntent();
-                return;
-            }
-
             const controller = new AbortController();
             const timeoutId = window.setTimeout(
                 () => controller.abort(),
@@ -82,6 +73,8 @@ export function CheckoutButton({
                 .catch(() => ({})) as { url?: string; error?: string };
 
             if (isUnauthorizedCheckoutError(res.status, data.error)) {
+                // When a user is not authenticated, preserve checkout intent by
+                // redirecting to sign-up with the selected plan.
                 redirectToSignUpWithIntent();
                 return;
             }

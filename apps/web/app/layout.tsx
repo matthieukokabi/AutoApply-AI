@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CookieConsent } from "@/components/cookie-consent";
@@ -8,7 +7,10 @@ import { AnalyticsConsentGate } from "@/components/analytics-consent-gate";
 import { getAppBaseUrl, toAbsoluteAppUrl } from "@/lib/site-url";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+    subsets: ["latin"],
+    display: "swap",
+});
 const appBaseUrl = getAppBaseUrl();
 const defaultOgImage = toAbsoluteAppUrl("/opengraph-image");
 const defaultTwitterImage = toAbsoluteAppUrl("/twitter-image");
@@ -82,23 +84,21 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <ClerkProvider>
-            <html lang="en" suppressHydrationWarning>
-                <head />
-                <body className={inter.className}>
-                    <AnalyticsConsentGate />
-                    <ThemeProvider
-                        attribute="class"
-                        defaultTheme="system"
-                        enableSystem
-                        disableTransitionOnChange
-                    >
-                        <AnalyticsSessionEvents />
-                        {children}
-                        <CookieConsent />
-                    </ThemeProvider>
-                </body>
-            </html>
-        </ClerkProvider>
+        <html lang="en" suppressHydrationWarning>
+            <head />
+            <body className={inter.className}>
+                <AnalyticsConsentGate />
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <AnalyticsSessionEvents />
+                    {children}
+                    <CookieConsent />
+                </ThemeProvider>
+            </body>
+        </html>
     );
 }

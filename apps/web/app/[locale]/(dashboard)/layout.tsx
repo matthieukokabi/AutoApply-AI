@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -112,9 +113,10 @@ export default async function DashboardLayout({
     ];
 
     return (
-        <div className="flex h-dvh min-h-0">
+        <ClerkProvider>
+            <div className="flex h-dvh min-h-0">
             {/* Sidebar */}
-            <aside className="w-64 border-r bg-card flex flex-col min-h-0 overflow-hidden">
+                <aside className="w-64 border-r bg-card flex flex-col min-h-0 overflow-hidden">
                 <div className="p-6 border-b">
                     <Link href="/" className="flex items-center space-x-2">
                         <Sparkles className="h-6 w-6 text-primary" />
@@ -173,12 +175,13 @@ export default async function DashboardLayout({
                     </div>
                     <SignOutButton label={t("signOut")} />
                 </div>
-            </aside>
+                </aside>
 
-            {/* Main content */}
-            <main className="flex-1 overflow-auto">
-                <div className="p-8">{children}</div>
-            </main>
-        </div>
+                {/* Main content */}
+                <main className="flex-1 overflow-auto">
+                    <div className="p-8">{children}</div>
+                </main>
+            </div>
+        </ClerkProvider>
     );
 }

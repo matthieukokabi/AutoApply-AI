@@ -26,6 +26,7 @@ import { trackSignUpStarted } from "@/lib/analytics";
 const CLERK_LOAD_TIMEOUT_MS = 8000;
 const CLERK_WIDGET_MOUNT_TIMEOUT_MS = 5000;
 const SIGNUP_COMPLETED_PENDING_KEY = "aa_signup_completed_pending";
+const AUTH_WIDGET_SHELL_CLASS = "min-h-[640px] sm:min-h-[680px]";
 
 function markSignUpCompletedPending(
     locale: string | undefined,
@@ -201,27 +202,31 @@ export default function SignUpPage() {
     });
 
     return (
-        <div className="min-h-screen overflow-x-hidden px-4 py-8 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        <main className="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 to-slate-100 px-4 pb-10 pt-6 dark:from-slate-950 dark:to-slate-900 sm:py-8 flex items-start justify-center sm:items-center">
             <div className="w-full max-w-md">
-                <div className="text-center mb-6">
+                <div className="mb-6 min-h-[72px] text-center">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                         {t("title")}
                     </h1>
-                    <p className="text-slate-600 dark:text-slate-400 mt-1">
+                    <p className="mt-1 text-slate-600 dark:text-slate-400">
                         {t("description")}
                     </p>
                 </div>
 
                 {shouldShowRecoveryCard ? (
-                    <AuthRecoveryCard
-                        mode="sign-up"
-                        alternateUrl={signInUrl}
-                        diagnosticsUrl={diagnosticsUrl}
-                    />
+                    <div className={AUTH_WIDGET_SHELL_CLASS}>
+                        <AuthRecoveryCard
+                            mode="sign-up"
+                            alternateUrl={signInUrl}
+                            diagnosticsUrl={diagnosticsUrl}
+                        />
+                    </div>
                 ) : null}
 
                 {shouldShowLoadingCard ? (
-                    <div className="rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                    <div
+                        className={`${AUTH_WIDGET_SHELL_CLASS} rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80 flex flex-col items-center justify-center`}
+                    >
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                             {t("loading")}
                         </p>
@@ -240,7 +245,11 @@ export default function SignUpPage() {
                     <div
                         ref={widgetHostRef}
                         aria-hidden={shouldHideWidget ? true : undefined}
-                        className={shouldHideWidget ? "hidden" : undefined}
+                        className={
+                            shouldHideWidget || shouldShowLoadingCard
+                                ? "hidden"
+                                : AUTH_WIDGET_SHELL_CLASS
+                        }
                     >
                         <SignUp
                             path={signUpPath}
@@ -280,6 +289,6 @@ export default function SignUpPage() {
                     />
                 </ClerkFailed>
             </div>
-        </div>
+        </main>
     );
 }

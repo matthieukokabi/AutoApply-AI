@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
     robots: {
@@ -12,5 +13,5 @@ export default function OnboardingLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return children;
+    return <ClerkProvider>{children}</ClerkProvider>;
 }
