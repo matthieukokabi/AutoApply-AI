@@ -240,6 +240,7 @@ type WebhookRunContext = {
 };
 
 type DiscoveryRunDerivedSummary = {
+    usersProcessed: number;
     persistedApplications: number;
     tailoredCount: number;
     discoveredCount: number;
@@ -350,6 +351,7 @@ async function deriveDiscoveryRunSummary(runId: string): Promise<DiscoveryRunDer
                 eventType: { in: ["new_applications", "single_tailoring_complete"] },
             },
             select: {
+                userId: true,
                 persistedStatus: true,
             },
         }),
@@ -381,6 +383,14 @@ async function deriveDiscoveryRunSummary(runId: string): Promise<DiscoveryRunDer
     const discoveredCount = safeAttributions.filter(
         (row) => row.persistedStatus === "discovered"
     ).length;
+    const usersProcessed = new Set(
+        safeAttributions
+            .map((row) => row.userId)
+            .filter(
+                (userId): userId is string =>
+                    typeof userId === "string" && userId.trim().length > 0
+            )
+    ).size;
     const factualGuardBlockedCount = safeWorkflowErrors.filter(
         (row) => row.errorType === FACTUAL_GUARD_BLOCKED_ERROR_TYPE
     ).length;
@@ -389,6 +399,7 @@ async function deriveDiscoveryRunSummary(runId: string): Promise<DiscoveryRunDer
     ).length;
 
     return {
+        usersProcessed,
         persistedApplications: safeAttributions.length,
         tailoredCount,
         discoveredCount,
@@ -2981,6 +2992,17 @@ export async function POST(req: Request) {
                         derivedSummary.factualGuardBlockedCount;
                     summaryData.coverLetterQualityBlockedCount =
                         derivedSummary.coverLetterQualityBlockedCount;
+
+                    const usersProcessedValue = toNonNegativeInt(
+                        summaryData.usersProcessed
+                    );
+                    summaryData.usersProcessed =
+                        usersProcessedValue === null
+                            ? derivedSummary.usersProcessed
+                            : Math.max(
+                                  usersProcessedValue,
+                                  derivedSummary.usersProcessed
+                              );
 
                     const persistedApplicationsValue = toNonNegativeInt(
                         summaryData.persistedApplications
