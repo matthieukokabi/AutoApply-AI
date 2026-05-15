@@ -164,6 +164,7 @@ export const config = {
         "/api/account",
         "/api/applications",
         "/api/applications/:path*",
+        "/api/billing-portal",
         "/api/checkout",
         "/api/jobs",
         "/api/onboarding",

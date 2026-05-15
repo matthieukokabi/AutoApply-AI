@@ -90,6 +90,12 @@ describe("middleware auth + i18n routing", () => {
         expect(auth).not.toHaveBeenCalled();
     });
 
+    it("keeps billing-portal API inside matcher scope for Clerk session resolution", () => {
+        const matcher = (config as { matcher: string[] }).matcher;
+        expect(matcher).toContain("/api/billing-portal");
+        expect(matcher).toContain("/api/checkout");
+    });
+
     it("does not invoke auth callback for public content routes", async () => {
         const auth = vi.fn().mockResolvedValue({ userId: "clerk_user_1" });
 

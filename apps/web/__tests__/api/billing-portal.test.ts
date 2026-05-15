@@ -113,6 +113,7 @@ describe("POST /api/billing-portal", () => {
 
         expect(response.status).toBe(409);
         expect(data.error).toContain("No active paid subscription");
+        expect(prisma.user.update).not.toHaveBeenCalled();
         expect(stripe.billingPortal.sessions.create).not.toHaveBeenCalled();
     });
 
@@ -125,6 +126,7 @@ describe("POST /api/billing-portal", () => {
 
         const response = await POST(request);
         expect(response.status).toBe(401);
+        expect(stripe.billingPortal.sessions.create).not.toHaveBeenCalled();
     });
 
     it("returns 503 when Stripe config is missing", async () => {
