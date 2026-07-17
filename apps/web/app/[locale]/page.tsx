@@ -28,6 +28,7 @@ import {
     Twitter,
     Linkedin,
     Rocket,
+    Menu,
 } from "lucide-react";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -159,6 +160,39 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         <NextLink href={signUpPath} className="hidden sm:inline-flex">
                             <Button>{t("nav.getStarted")}</Button>
                         </NextLink>
+                        <details className="group relative sm:hidden">
+                            <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-md border border-input bg-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                                <Menu className="h-5 w-5" aria-hidden="true" />
+                                <span className="sr-only">Open navigation menu</span>
+                            </summary>
+                            <nav
+                                aria-label="Mobile navigation"
+                                className="absolute right-0 top-12 z-50 flex w-72 flex-col gap-1 rounded-lg border bg-background p-2 shadow-lg"
+                            >
+                                <Link href="#features" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.features")}
+                                </Link>
+                                <Link href="#pricing" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.pricing")}
+                                </Link>
+                                <Link href="#how-it-works" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.howItWorks")}
+                                </Link>
+                                <Link href="/blog" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.blog")}
+                                </Link>
+                                <Link href="/roadmap" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.roadmap")}
+                                </Link>
+                                <div className="my-1 border-t" />
+                                <NextLink href={signInPath} className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.signIn")}
+                                </NextLink>
+                                <NextLink href={signUpPath} className="rounded-md bg-primary px-3 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                                    {t("nav.getStarted")}
+                                </NextLink>
+                            </nav>
+                        </details>
                     </div>
                 </div>
             </header>
