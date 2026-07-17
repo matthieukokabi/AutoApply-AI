@@ -17,6 +17,16 @@
         "viewPricing": "View Pricing",
         "noCreditCard": "No credit card required. 3 free tailored documents per month."
     },
+    "productProof": {
+        "eyebrow": "Real product workflow",
+        "title": "Your entire job search, at a glance",
+        "description": "Review every opportunity, compatibility score, tailored document, and application status from one focused workspace.",
+        "compatibility": "Compatibility scores",
+        "documents": "Tailored CVs and cover letters",
+        "pipeline": "Application pipeline",
+        "imageAlt": "AutoApply AI dashboard showing application totals, average compatibility score, and a Kanban application pipeline",
+        "caption": "The live AutoApply dashboard keeps discovered, tailored, applied, interview, offer, and rejected roles organized."
+    },
     "stats": {
         "jobApis": "Job Board APIs",
         "atsKeywords": "ATS Keywords Matched",

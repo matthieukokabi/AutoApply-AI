@@ -50,4 +50,11 @@ describe("landing mobile navigation", () => {
         expect(languageSwitcher).toContain('className="h-11');
         expect(themeToggle).toContain('className="h-11 w-11"');
     });
+
+    it("shows an accessible real-product dashboard immediately after the hero", () => {
+        expect(landingPage).toContain('aria-labelledby="product-proof-title"');
+        expect(landingPage).toContain('src="/images/dashboard-autoapply.webp"');
+        expect(landingPage).toContain('alt={t("productProof.imageAlt")}');
+        expect(landingPage).toContain("<figcaption");
+    });
 });

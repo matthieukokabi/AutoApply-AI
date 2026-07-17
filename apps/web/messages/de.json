@@ -17,6 +17,16 @@
         "viewPricing": "Preise ansehen",
         "noCreditCard": "Keine Kreditkarte erforderlich. 3 kostenlose massgeschneiderte Dokumente pro Monat."
     },
+    "productProof": {
+        "eyebrow": "Echter Produktablauf",
+        "title": "Ihre gesamte Jobsuche auf einen Blick",
+        "description": "Prüfen Sie jede Stelle, jeden Kompatibilitätswert, jedes angepasste Dokument und jeden Bewerbungsstatus in einem übersichtlichen Arbeitsbereich.",
+        "compatibility": "Kompatibilitätswerte",
+        "documents": "Angepasste Lebensläufe und Anschreiben",
+        "pipeline": "Bewerbungspipeline",
+        "imageAlt": "AutoApply-AI-Dashboard mit Bewerbungszahlen, durchschnittlichem Kompatibilitätswert und Kanban-Bewerbungspipeline",
+        "caption": "Das AutoApply-Dashboard organisiert entdeckte, angepasste, versendete, interviewte, angenommene und abgelehnte Stellen."
+    },
     "stats": {
         "jobApis": "Job-APIs",
         "atsKeywords": "ATS-Schlüsselwörter erkannt",

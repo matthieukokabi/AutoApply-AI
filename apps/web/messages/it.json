@@ -17,6 +17,16 @@
         "viewPricing": "Vedi prezzi",
         "noCreditCard": "Nessuna carta di credito richiesta. 3 documenti personalizzati gratuiti al mese."
     },
+    "productProof": {
+        "eyebrow": "Flusso reale del prodotto",
+        "title": "Tutta la tua ricerca di lavoro a colpo d’occhio",
+        "description": "Controlla ogni opportunità, punteggio di compatibilità, documento personalizzato e stato della candidatura in un unico spazio di lavoro.",
+        "compatibility": "Punteggi di compatibilità",
+        "documents": "CV e lettere personalizzati",
+        "pipeline": "Pipeline delle candidature",
+        "imageAlt": "Dashboard di AutoApply AI con totali delle candidature, compatibilità media e pipeline Kanban",
+        "caption": "La dashboard AutoApply organizza ruoli scoperti, personalizzati, inviati, in colloquio, accettati e rifiutati."
+    },
     "stats": {
         "jobApis": "API di lavoro",
         "atsKeywords": "Parole chiave ATS rilevate",

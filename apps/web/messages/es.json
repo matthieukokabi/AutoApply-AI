@@ -17,6 +17,16 @@
         "viewPricing": "Ver precios",
         "noCreditCard": "Sin tarjeta de crédito. 3 documentos personalizados gratis al mes."
     },
+    "productProof": {
+        "eyebrow": "Flujo real del producto",
+        "title": "Toda tu búsqueda de empleo de un vistazo",
+        "description": "Revisa cada oportunidad, puntuación de compatibilidad, documento personalizado y estado de candidatura desde un único espacio de trabajo.",
+        "compatibility": "Puntuaciones de compatibilidad",
+        "documents": "CV y cartas personalizados",
+        "pipeline": "Proceso de candidaturas",
+        "imageAlt": "Panel de AutoApply AI con totales de candidaturas, compatibilidad media y proceso Kanban de candidaturas",
+        "caption": "El panel de AutoApply organiza los puestos descubiertos, personalizados, solicitados, en entrevista, aceptados y rechazados."
+    },
     "stats": {
         "jobApis": "APIs de empleo",
         "atsKeywords": "Palabras clave ATS detectadas",

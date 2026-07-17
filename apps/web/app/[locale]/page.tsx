@@ -1,5 +1,6 @@
 import { Link } from "@/i18n/routing";
 import NextLink from "next/link";
+import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,6 +226,45 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     <p className="mt-2 max-w-md text-sm text-muted-foreground">
                         {t("hero.noCreditCard")}
                     </p>
+                </section>
+
+                {/* Product proof */}
+                <section aria-labelledby="product-proof-title" className="container pb-20">
+                    <div className="mx-auto mb-8 max-w-2xl text-center">
+                        <Badge variant="outline" className="mb-4">
+                            {t("productProof.eyebrow")}
+                        </Badge>
+                        <h2 id="product-proof-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                            {t("productProof.title")}
+                        </h2>
+                        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+                            {t("productProof.description")}
+                        </p>
+                    </div>
+                    <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-3">
+                        <div className="rounded-lg border bg-card/60 px-4 py-3 text-center text-sm font-medium">
+                            {t("productProof.compatibility")}
+                        </div>
+                        <div className="rounded-lg border bg-card/60 px-4 py-3 text-center text-sm font-medium">
+                            {t("productProof.documents")}
+                        </div>
+                        <div className="rounded-lg border bg-card/60 px-4 py-3 text-center text-sm font-medium">
+                            {t("productProof.pipeline")}
+                        </div>
+                    </div>
+                    <figure className="mx-auto mt-6 max-w-6xl overflow-hidden rounded-xl border bg-card shadow-2xl shadow-primary/10">
+                        <Image
+                            src="/images/dashboard-autoapply.webp"
+                            width={1425}
+                            height={811}
+                            sizes="(max-width: 768px) 100vw, 1152px"
+                            alt={t("productProof.imageAlt")}
+                            className="h-auto w-full"
+                        />
+                        <figcaption className="border-t px-4 py-3 text-center text-sm text-muted-foreground">
+                            {t("productProof.caption")}
+                        </figcaption>
+                    </figure>
                 </section>
 
                 {/* Stats Bar */}

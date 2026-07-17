@@ -17,6 +17,16 @@
         "viewPricing": "Voir les tarifs",
         "noCreditCard": "Aucune carte bancaire requise. 3 documents personnalisés gratuits par mois."
     },
+    "productProof": {
+        "eyebrow": "Flux produit réel",
+        "title": "Toute votre recherche d’emploi en un coup d’œil",
+        "description": "Consultez chaque opportunité, score de compatibilité, document personnalisé et statut de candidature dans un seul espace de travail.",
+        "compatibility": "Scores de compatibilité",
+        "documents": "CV et lettres personnalisés",
+        "pipeline": "Suivi des candidatures",
+        "imageAlt": "Tableau de bord AutoApply AI affichant les candidatures, le score de compatibilité moyen et le suivi Kanban",
+        "caption": "Le tableau de bord AutoApply organise les postes découverts, personnalisés, postulés, en entretien, acceptés ou refusés."
+    },
     "stats": {
         "jobApis": "APIs d'emploi",
         "atsKeywords": "Mots-clés ATS identifiés",
