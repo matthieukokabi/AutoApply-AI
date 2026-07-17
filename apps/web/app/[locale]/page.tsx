@@ -129,8 +129,8 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-16 items-center">
                     <div className="mr-2 flex shrink-0">
-                        <Link href="/" className="flex items-center space-x-2">
-                            <Sparkles className="h-6 w-6 text-primary" />
+                        <Link href="/" aria-label="AutoApply AI home" className="flex items-center space-x-2">
+                            <Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />
                             <span className="hidden text-xl font-bold sm:inline">AutoApply AI</span>
                         </Link>
                     </div>

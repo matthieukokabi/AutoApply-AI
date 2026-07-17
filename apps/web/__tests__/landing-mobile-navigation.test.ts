@@ -25,6 +25,11 @@ describe("landing mobile navigation", () => {
         expect(landingPage).toContain('className="group relative sm:hidden"');
     });
 
+    it("keeps an accessible home name when the mobile wordmark is hidden", () => {
+        expect(landingPage).toContain('aria-label="AutoApply AI home"');
+        expect(landingPage).toContain('<Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />');
+    });
+
     it("renders CTA links without nesting interactive buttons inside anchors", () => {
         expect(landingPage).not.toMatch(/<(?:Next)?Link[^>]*>\s*<Button/);
         expect(landingPage).toContain("<Button asChild");
