@@ -245,10 +245,13 @@ export default function ContactPageClient() {
                             >
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div>
-                                        <label className="text-sm font-medium block mb-1">
+                                        <label htmlFor="contact-name" className="text-sm font-medium block mb-1">
                                             {t("form.nameLabel")}
                                         </label>
                                         <input
+                                            id="contact-name"
+                                            name="name"
+                                            autoComplete="name"
                                             required
                                             className="w-full px-3 py-2 border rounded-md text-sm"
                                             placeholder={t("form.namePlaceholder")}
@@ -257,10 +260,13 @@ export default function ContactPageClient() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-sm font-medium block mb-1">
+                                        <label htmlFor="contact-email" className="text-sm font-medium block mb-1">
                                             {t("form.emailLabel")}
                                         </label>
                                         <input
+                                            id="contact-email"
+                                            name="email"
+                                            autoComplete="email"
                                             required
                                             type="email"
                                             className="w-full px-3 py-2 border rounded-md text-sm"
@@ -271,10 +277,12 @@ export default function ContactPageClient() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium block mb-1">
+                                    <label htmlFor="contact-subject" className="text-sm font-medium block mb-1">
                                         {t("form.subjectLabel")}
                                     </label>
                                     <select
+                                        id="contact-subject"
+                                        name="subject"
                                         className="w-full px-3 py-2 border rounded-md text-sm"
                                         value={subject}
                                         onChange={(e) => setSubject(e.target.value)}
@@ -288,10 +296,12 @@ export default function ContactPageClient() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium block mb-1">
+                                    <label htmlFor="contact-message" className="text-sm font-medium block mb-1">
                                         {t("form.messageLabel")}
                                     </label>
                                     <textarea
+                                        id="contact-message"
+                                        name="message"
                                         required
                                         className="w-full h-32 px-3 py-2 border rounded-md text-sm resize-none"
                                         placeholder={t("form.messagePlaceholder")}
