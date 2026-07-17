@@ -291,6 +291,37 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     </div>
                 </section>
 
+                {/* Verifiable trust evidence */}
+                <section aria-labelledby="trust-evidence-title" className="container py-20">
+                    <div className="mx-auto mb-10 max-w-2xl text-center">
+                        <h2 id="trust-evidence-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                            {t("trustEvidence.title")}
+                        </h2>
+                        <p className="mt-4 text-lg text-muted-foreground">{t("trustEvidence.description")}</p>
+                    </div>
+                    <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+                        {[
+                            { icon: Shield, titleKey: "trustEvidence.controlTitle", descKey: "trustEvidence.controlDescription" },
+                            { icon: Check, titleKey: "trustEvidence.paymentTitle", descKey: "trustEvidence.paymentDescription" },
+                            { icon: Search, titleKey: "trustEvidence.sourcesTitle", descKey: "trustEvidence.sourcesDescription" },
+                        ].map((item) => (
+                            <div key={item.titleKey} className="rounded-xl border bg-card p-6">
+                                <item.icon aria-hidden="true" className="mb-4 h-8 w-8 text-primary" />
+                                <h3 className="text-lg font-semibold">{t(item.titleKey)}</h3>
+                                <p className="mt-2 leading-relaxed text-muted-foreground">{t(item.descKey)}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-8 flex flex-wrap justify-center gap-3">
+                        <Button asChild variant="outline" className="min-h-11">
+                            <Link href="/privacy">{t("trustEvidence.privacyLink")}</Link>
+                        </Button>
+                        <Button asChild variant="ghost" className="min-h-11">
+                            <Link href="/terms">{t("trustEvidence.termsLink")}</Link>
+                        </Button>
+                    </div>
+                </section>
+
             {/* How It Works */}
             <section id="how-it-works" className="container py-20">
                 <h2 className="text-3xl font-bold text-center mb-4">

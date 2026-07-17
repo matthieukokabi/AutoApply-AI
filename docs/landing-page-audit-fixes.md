@@ -6,6 +6,6 @@
 - [x] Associate every visible contact field with a programmatic label and browser autofill metadata — completed 2026-07-17.
 - [x] Raise compact landing navigation, pricing, social, and footer controls to a minimum 44px touch target — completed 2026-07-17.
 - [x] Add a localized, accessible real-product dashboard proof section immediately after the hero — completed 2026-07-17.
-- [ ] Add verifiable trust content and supporting evidence for privacy and product claims.
+- [x] Add verifiable trust content with explicit data controls, payment handling, official-source evidence, and localized policy links — completed 2026-07-17.
 - [ ] Correct sitemap, localized-link, and auth metadata inconsistencies.
 - [ ] Improve public-route caching and tighten the enforced content security policy.

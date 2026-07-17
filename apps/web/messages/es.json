@@ -33,6 +33,18 @@
         "fabricatedSkills": "Habilidades inventadas",
         "discoveryCycle": "Ciclo de descubrimiento"
     },
+    "trustEvidence": {
+        "title": "Confianza respaldada por controles claros",
+        "description": "Protecciones concretas que puedes comprobar, sin insignias vagas ni certificaciones inventadas.",
+        "controlTitle": "Tú controlas tus datos",
+        "controlDescription": "Exporta los datos de tu cuenta como JSON o elimina tu cuenta y los datos asociados desde Ajustes.",
+        "paymentTitle": "Los datos de la tarjeta permanecen en Stripe",
+        "paymentDescription": "Stripe procesa los pagos. AutoApply no almacena los datos de tu tarjeta.",
+        "sourcesTitle": "Solo API de empleo oficiales",
+        "sourcesDescription": "La búsqueda usa API oficiales y no envía datos personales del perfil en las consultas.",
+        "privacyLink": "Leer la política de privacidad",
+        "termsLink": "Revisar los términos"
+    },
     "howItWorks": {
         "title": "Cómo funciona",
         "subtitle": "Tres simples pasos desde subir tu CV hasta documentos listos para aplicar.",
@@ -55,7 +67,7 @@
         "automatedPipeline": "Pipeline automatizado",
         "automatedPipelineDesc": "Configura tus preferencias una vez. Cada 4 horas se descubren nuevos empleos y se preparan documentos automáticamente.",
         "privacyFirst": "Privacidad primero",
-        "privacyFirstDesc": "Cumple con RGPD. Sin almacenamiento de credenciales. Sin inicios de sesión automáticos. Tus datos son tuyos.",
+        "privacyFirstDesc": "Sin almacenar credenciales de portales de empleo ni iniciar sesión automáticamente. Exporta o elimina tus datos desde Ajustes.",
         "antiHallucination": "Anti-alucinación",
         "antiHallucinationDesc": "Tolerancia cero con contenido fabricado. La IA solo reordena, reformula y destaca lo que ya existe en tu CV. Nada inventado."
     },

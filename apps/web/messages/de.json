@@ -33,6 +33,18 @@
         "fabricatedSkills": "Erfundene Fähigkeiten",
         "discoveryCycle": "Auto-Entdeckungszyklus"
     },
+    "trustEvidence": {
+        "title": "Vertrauen durch klare Kontrollen",
+        "description": "Konkrete Schutzmaßnahmen, die Sie prüfen können – ohne vage Sicherheitssiegel oder erfundene Zertifizierungen.",
+        "controlTitle": "Sie kontrollieren Ihre Daten",
+        "controlDescription": "Exportieren Sie Ihre Kontodaten als JSON oder löschen Sie Ihr Konto und die zugehörigen Daten in den Einstellungen.",
+        "paymentTitle": "Kartendaten bleiben bei Stripe",
+        "paymentDescription": "Zahlungen werden von Stripe verarbeitet. AutoApply speichert Ihre Kartendaten nicht.",
+        "sourcesTitle": "Nur offizielle Job-APIs",
+        "sourcesDescription": "Die Jobsuche nutzt offizielle Anbieter-APIs und sendet keine persönlichen Profildaten in Suchanfragen.",
+        "privacyLink": "Datenschutzerklärung lesen",
+        "termsLink": "Bedingungen ansehen"
+    },
     "howItWorks": {
         "title": "So funktioniert's",
         "subtitle": "Drei einfache Schritte vom Upload bis zu bewerbungsfertigen Dokumenten.",
@@ -55,7 +67,7 @@
         "automatedPipeline": "Automatisierte Pipeline",
         "automatedPipelineDesc": "Präferenzen einmal festlegen. Alle 4 Stunden werden neue passende Stellen gefunden und Dokumente automatisch vorbereitet.",
         "privacyFirst": "Datenschutz zuerst",
-        "privacyFirstDesc": "DSGVO-konform. Keine Zugangsdaten gespeichert. Keine automatischen Anmeldungen. Ihre Daten gehören Ihnen.",
+        "privacyFirstDesc": "Keine Speicherung von Jobportal-Zugangsdaten und keine automatisierten Logins. Exportieren oder löschen Sie Ihre Kontodaten in den Einstellungen.",
         "antiHallucination": "Anti-Halluzination",
         "antiHallucinationDesc": "Null Toleranz für erfundene Inhalte. KI ordnet nur um, formuliert um und hebt hervor, was bereits in Ihrem Lebenslauf steht."
     },

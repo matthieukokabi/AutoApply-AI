@@ -16,6 +16,9 @@ describe("landing mobile navigation", () => {
         join(process.cwd(), "components", "theme-toggle.tsx"),
         "utf8",
     );
+    const englishMessages = JSON.parse(
+        readFileSync(join(process.cwd(), "messages", "en.json"), "utf8"),
+    ) as { features: { privacyFirstDesc: string } };
 
     it("exposes the complete product and authentication navigation on mobile", () => {
         expect(landingPage).toContain('aria-label="Mobile navigation"');
@@ -56,5 +59,13 @@ describe("landing mobile navigation", () => {
         expect(landingPage).toContain('src="/images/dashboard-autoapply.webp"');
         expect(landingPage).toContain('alt={t("productProof.imageAlt")}');
         expect(landingPage).toContain("<figcaption");
+    });
+
+    it("supports trust claims with inspectable evidence and localized policy links", () => {
+        expect(landingPage).toContain('aria-labelledby="trust-evidence-title"');
+        expect(landingPage).toContain('descKey: "trustEvidence.controlDescription"');
+        expect(landingPage).toContain('<Link href="/privacy">');
+        expect(landingPage).toContain('<Link href="/terms">');
+        expect(englishMessages.features.privacyFirstDesc).not.toContain("GDPR-compliant");
     });
 });
