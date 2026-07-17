@@ -154,12 +154,12 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
-                        <NextLink href={signInPath} className="hidden sm:inline-flex">
-                            <Button variant="ghost">{t("nav.signIn")}</Button>
-                        </NextLink>
-                        <NextLink href={signUpPath} className="hidden sm:inline-flex">
-                            <Button>{t("nav.getStarted")}</Button>
-                        </NextLink>
+                        <Button asChild variant="ghost" className="hidden sm:inline-flex">
+                            <NextLink href={signInPath}>{t("nav.signIn")}</NextLink>
+                        </Button>
+                        <Button asChild className="hidden sm:inline-flex">
+                            <NextLink href={signUpPath}>{t("nav.getStarted")}</NextLink>
+                        </Button>
                         <details className="group relative sm:hidden">
                             <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-md border border-input bg-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
                                 <Menu className="h-5 w-5" aria-hidden="true" />
@@ -213,16 +213,14 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         {t("hero.description")}
                     </p>
                     <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-                        <NextLink href={signUpPath}>
-                            <Button size="lg" className="gap-2 px-8">
+                        <Button asChild size="lg" className="gap-2 px-8">
+                            <NextLink href={signUpPath}>
                                 {t("hero.startFree")} <ArrowRight className="h-4 w-4" />
-                            </Button>
-                        </NextLink>
-                        <Link href="#pricing">
-                            <Button size="lg" variant="outline" className="px-8">
-                                {t("hero.viewPricing")}
-                            </Button>
-                        </Link>
+                            </NextLink>
+                        </Button>
+                        <Button asChild size="lg" variant="outline" className="px-8">
+                            <Link href="#pricing">{t("hero.viewPricing")}</Link>
+                        </Button>
                     </div>
                     <p className="mt-2 max-w-md text-sm text-muted-foreground">
                         {t("hero.noCreditCard")}
@@ -330,11 +328,11 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             <p className="text-sm text-muted-foreground">{t("roadmap.builtInPublicDesc")}</p>
                         </div>
                     </div>
-                    <Link href="/roadmap">
-                        <Button variant="outline" className="gap-2 sm:whitespace-nowrap">
+                    <Button asChild variant="outline" className="gap-2 sm:whitespace-nowrap">
+                        <Link href="/roadmap">
                             {t("roadmap.viewRoadmap")} <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
                 </div>
             </section>
 
@@ -378,11 +376,9 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </ul>
                         </CardContent>
                         <CardFooter>
-                            <NextLink href={signUpPath} className="w-full">
-                                <Button variant="outline" className="h-auto w-full whitespace-normal py-3 text-center">
-                                    {t("hero.startFree")}
-                                </Button>
-                            </NextLink>
+                            <Button asChild variant="outline" className="h-auto w-full whitespace-normal py-3 text-center">
+                                <NextLink href={signUpPath}>{t("hero.startFree")}</NextLink>
+                            </Button>
                         </CardFooter>
                     </Card>
 
@@ -519,11 +515,11 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         <p className="mx-auto mb-8 max-w-lg text-lg text-primary-foreground/95">
                             {t("cta.subtitle")}
                         </p>
-                        <NextLink href={signUpPath}>
-                            <Button size="lg" variant="secondary" className="gap-2 px-8">
+                        <Button asChild size="lg" variant="secondary" className="gap-2 px-8">
+                            <NextLink href={signUpPath}>
                                 {t("cta.getStarted")} <ArrowRight className="h-4 w-4" />
-                            </Button>
-                        </NextLink>
+                            </NextLink>
+                        </Button>
                     </div>
                 </section>
             </main>

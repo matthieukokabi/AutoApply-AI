@@ -24,4 +24,9 @@ describe("landing mobile navigation", () => {
         expect(landingPage).toContain("Open navigation menu");
         expect(landingPage).toContain('className="group relative sm:hidden"');
     });
+
+    it("renders CTA links without nesting interactive buttons inside anchors", () => {
+        expect(landingPage).not.toMatch(/<(?:Next)?Link[^>]*>\s*<Button/);
+        expect(landingPage).toContain("<Button asChild");
+    });
 });
