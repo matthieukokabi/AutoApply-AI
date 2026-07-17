@@ -8,6 +8,14 @@ describe("landing mobile navigation", () => {
         join(process.cwd(), "app", "[locale]", "page.tsx"),
         "utf8",
     );
+    const languageSwitcher = readFileSync(
+        join(process.cwd(), "components", "language-switcher.tsx"),
+        "utf8",
+    );
+    const themeToggle = readFileSync(
+        join(process.cwd(), "components", "theme-toggle.tsx"),
+        "utf8",
+    );
 
     it("exposes the complete product and authentication navigation on mobile", () => {
         expect(landingPage).toContain('aria-label="Mobile navigation"');
@@ -33,5 +41,13 @@ describe("landing mobile navigation", () => {
     it("renders CTA links without nesting interactive buttons inside anchors", () => {
         expect(landingPage).not.toMatch(/<(?:Next)?Link[^>]*>\s*<Button/);
         expect(landingPage).toContain("<Button asChild");
+    });
+
+    it("gives compact header and social controls 44px touch targets", () => {
+        expect(landingPage).toContain("flex min-h-11 min-w-11 items-center");
+        expect(landingPage).toContain("flex h-11 w-11 cursor-pointer");
+        expect(landingPage).toContain("flex h-11 w-11 items-center justify-center rounded-md");
+        expect(languageSwitcher).toContain('className="h-11');
+        expect(themeToggle).toContain('className="h-11 w-11"');
     });
 });
