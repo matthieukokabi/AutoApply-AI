@@ -126,4 +126,38 @@ describe("automation pipeline diagnostics script helpers", () => {
         const codes = new Set(alerts.map((alert: { code: string }) => alert.code));
         expect(codes.has("repeated_zero_users_processed")).toBe(true);
     });
+
+    it("flags repeated low processed/seen ratio when only one user is processed repeatedly", () => {
+        const alerts = diagnostics.inferAlerts({
+            cadenceMinutes: 240,
+            latestSuccessfulRunAt: new Date().toISOString(),
+            eligibleProfileCount: 5,
+            runSummaries: [
+                {
+                    status: "success",
+                    usersProcessedCount: 1,
+                    usersSeenCount: 5,
+                    failureReason: "ok",
+                    stageSummaries: [],
+                },
+                {
+                    status: "success",
+                    usersProcessedCount: 1,
+                    usersSeenCount: 5,
+                    failureReason: "ok",
+                    stageSummaries: [],
+                },
+                {
+                    status: "success",
+                    usersProcessedCount: 1,
+                    usersSeenCount: 5,
+                    failureReason: "ok",
+                    stageSummaries: [],
+                },
+            ],
+        });
+
+        const codes = new Set(alerts.map((alert: { code: string }) => alert.code));
+        expect(codes.has("repeated_low_processed_seen_ratio")).toBe(true);
+    });
 });

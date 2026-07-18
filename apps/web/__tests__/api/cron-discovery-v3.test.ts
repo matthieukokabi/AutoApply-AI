@@ -1,3 +1,4 @@
+import { createRequire } from "module";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { sendAutomationHealthAlert } from "@/lib/email";
@@ -12,6 +13,9 @@ import {
     getZurichNowLabel,
     normalizeSlotKey,
 } from "@/lib/discovery-scheduler";
+
+const require = createRequire(import.meta.url);
+const rolloutParity = require("../../scripts/rollout_discovery_v3_parity.js");
 
 vi.mock("@/lib/discovery-trigger", () => ({
     triggerDiscoveryRun: vi.fn(),
@@ -32,6 +36,36 @@ vi.mock("@/lib/discovery-scheduler", () => ({
     })),
     getExpectedSlotKeys: vi.fn(() => []),
 }));
+
+describe("discovery v3 rollout parity guardrails", () => {
+    it("rejects --user-id without explicit force-controlled-canary flag", () => {
+        expect(() => rolloutParity.parseArgs(["--user-id", "user_123"])).toThrow(
+            /controlled_canary_requires_force_flag/
+        );
+    });
+
+    it("allows controlled targeting only when force-controlled-canary is provided", () => {
+        const parsed = rolloutParity.parseArgs([
+            "--workflow-id",
+            "wf_test",
+            "--user-id",
+            "user_123",
+            "--force-controlled-canary",
+            "--dry-run",
+        ]);
+
+        expect(parsed.workflowId).toBe("wf_test");
+        expect(parsed.userIds).toEqual(["user_123"]);
+        expect(parsed.forceControlledCanary).toBe(true);
+        expect(parsed.dryRun).toBe(true);
+
+        const generated = rolloutParity.buildPrepareCanaryJsCode(
+            parsed.userIds,
+            parsed.forceControlledCanary
+        );
+        expect(generated).toContain("CONTROLLED_CANARY_USER_IDS");
+    });
+});
 
 describe("discovery v3 cron routes", () => {
     beforeEach(() => {
@@ -320,6 +354,70 @@ describe("discovery v3 cron routes", () => {
                 ])
             );
             expect(sendAutomationHealthAlert).toHaveBeenCalled();
+        });
+
+        it("flags repeated low processed/seen ratio as suspicious", async () => {
+            vi.mocked(getExpectedSlotKeys).mockReturnValue([]);
+            vi.mocked(prisma.discoveryScheduleRun.findMany).mockReset();
+            vi.mocked(prisma.discoveryScheduleRun.findMany).mockResolvedValue([
+                {
+                    slotKey: "2026-04-05T18:20",
+                    status: "completed",
+                    usersSeen: 5,
+                    usersCanary: 1,
+                    usersProcessed: 1,
+                    lockAcquired: true,
+                },
+                {
+                    slotKey: "2026-04-05T12:20",
+                    status: "completed",
+                    usersSeen: 5,
+                    usersCanary: 1,
+                    usersProcessed: 1,
+                    lockAcquired: true,
+                },
+                {
+                    slotKey: "2026-04-05T07:20",
+                    status: "completed",
+                    usersSeen: 5,
+                    usersCanary: 1,
+                    usersProcessed: 1,
+                    lockAcquired: true,
+                },
+            ] as any);
+            vi.mocked(prisma.automationLock.findMany).mockReset();
+            vi.mocked(prisma.automationLock.findMany)
+                .mockResolvedValueOnce([] as any)
+                .mockResolvedValueOnce([] as any);
+            vi.mocked(prisma.automationLock.deleteMany).mockReset();
+            vi.mocked(prisma.automationLock.deleteMany).mockResolvedValue({
+                count: 0,
+            } as any);
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockReset();
+            vi.mocked(prisma.n8nWebhookEvent.findUnique).mockResolvedValue(null as any);
+            vi.mocked(prisma.n8nWebhookEvent.create).mockReset();
+            vi.mocked(prisma.n8nWebhookEvent.create).mockResolvedValue({} as any);
+            vi.mocked(prisma.workflowError.create).mockReset();
+            vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
+
+            const request = new Request("http://localhost/api/cron/discovery-v3/health", {
+                method: "POST",
+                headers: { authorization: "Bearer test_cron_secret" },
+            });
+
+            const response = await HEALTH_POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.healthy).toBe(false);
+            expect(data.alerts).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        code: "LOW_PROCESSED_SEEN_RATIO_SUSPICIOUS",
+                        severity: "warning",
+                    }),
+                ])
+            );
         });
 
         it("keeps historical misses visible without failing current health", async () => {

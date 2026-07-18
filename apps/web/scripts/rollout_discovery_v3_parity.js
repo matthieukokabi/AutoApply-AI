@@ -4,7 +4,8 @@
  * Patch/publish live discovery v3 workflow for controlled parity rollout.
  *
  * Usage:
- *   node scripts/rollout_discovery_v3_parity.js --workflow-id wjATx0lg85LnQqd4 --user-id <id> --user-id <id>
+ *   node scripts/rollout_discovery_v3_parity.js --workflow-id wjATx0lg85LnQqd4
+ *   node scripts/rollout_discovery_v3_parity.js --workflow-id wjATx0lg85LnQqd4 --user-id <id> --force-controlled-canary
  *   node scripts/rollout_discovery_v3_parity.js --json
  *   node scripts/rollout_discovery_v3_parity.js --dry-run
  */
@@ -49,6 +50,7 @@ function parseArgs(argv) {
     const args = {
         workflowId: DEFAULT_DISCOVERY_V3_WORKFLOW_ID,
         userIds: [],
+        forceControlledCanary: false,
         dryRun: false,
         jsonOnly: false,
         author: "AutoApply Parity Rollout Bot",
@@ -65,6 +67,10 @@ function parseArgs(argv) {
             const userId = String(argv[i + 1] || "").trim();
             if (userId) args.userIds.push(userId);
             i += 1;
+            continue;
+        }
+        if (token === "--force-controlled-canary") {
+            args.forceControlledCanary = true;
             continue;
         }
         if (token === "--dry-run") {
@@ -84,6 +90,11 @@ function parseArgs(argv) {
     }
 
     args.userIds = [...new Set(args.userIds)];
+    if (args.userIds.length > 0 && !args.forceControlledCanary) {
+        throw new Error(
+            "controlled_canary_requires_force_flag: --user-id requires --force-controlled-canary"
+        );
+    }
     return args;
 }
 
@@ -95,14 +106,20 @@ function stringifyUserIds(userIds) {
     return JSON.stringify(userIds);
 }
 
-function buildPrepareCanaryJsCode(controlledUserIds) {
-    const serialized = stringifyUserIds(controlledUserIds);
-    return `const CONTROLLED_CANARY_USER_IDS = ${serialized};
-const base = $('Parse Lock Result v3').first().json || {};
+function buildPrepareCanaryJsCode(controlledUserIds, forceControlledCanary) {
+    const controlledPrefix = forceControlledCanary
+        ? `const CONTROLLED_CANARY_USER_IDS = ${stringifyUserIds(controlledUserIds)};
+`
+        : "";
+    const controlledSelection = forceControlledCanary
+        ? "const controlledAllowlist = new Set(CONTROLLED_CANARY_USER_IDS.map((id) => String(id || '').trim()).filter(Boolean));"
+        : "const controlledAllowlist = new Set();";
+
+    return `${controlledPrefix}const base = $('Parse Lock Result v3').first().json || {};
 const payload = $input.first().json || {};
 const users = Array.isArray(payload.users) ? payload.users : [];
 const allowlistFromRuntime = new Set(Array.isArray(base.canaryAllowlist) ? base.canaryAllowlist : []);
-const controlledAllowlist = new Set(CONTROLLED_CANARY_USER_IDS.map((id) => String(id || '').trim()).filter(Boolean));
+${controlledSelection}
 const allowlist = controlledAllowlist.size > 0 ? controlledAllowlist : allowlistFromRuntime;
 const sampleRateRaw = Number(
   base.config && base.config.v3CanarySampleRate ? base.config.v3CanarySampleRate : 0
@@ -245,7 +262,7 @@ async function upsertPublishedVersion(tx, workflowId, versionId) {
     );
 }
 
-function applyRuntimePatch(templateWorkflow, liveWorkflow, controlledUserIds) {
+function applyRuntimePatch(templateWorkflow, liveWorkflow, controlledUserIds, forceControlledCanary) {
     const patched = JSON.parse(JSON.stringify(templateWorkflow));
     const liveLoadConfig = getNodeByName(liveWorkflow.nodes, "Load Config v3");
     const patchedLoadConfig = getNodeByName(patched.nodes, "Load Config v3");
@@ -265,7 +282,7 @@ function applyRuntimePatch(templateWorkflow, liveWorkflow, controlledUserIds) {
 
     patchedCanaryNode.parameters = {
         ...(patchedCanaryNode.parameters || {}),
-        jsCode: buildPrepareCanaryJsCode(controlledUserIds),
+        jsCode: buildPrepareCanaryJsCode(controlledUserIds, forceControlledCanary),
     };
 
     return patched;
@@ -310,12 +327,18 @@ async function main() {
             throw new Error("live_workflow_history_missing");
         }
 
-        const patchedWorkflow = applyRuntimePatch(templateWorkflow, liveWorkflow, args.userIds);
+        const patchedWorkflow = applyRuntimePatch(
+            templateWorkflow,
+            liveWorkflow,
+            args.userIds,
+            args.forceControlledCanary
+        );
         const dryRunResult = {
             mode: args.dryRun ? "dry_run" : "apply",
             workflowId: liveWorkflow.id,
             workflowName: liveWorkflow.name,
             controlledCanaryUserIds: args.userIds,
+            forceControlledCanary: args.forceControlledCanary,
             previousVersionId: liveWorkflow.versionId || null,
             currentVersionId: liveWorkflow.versionId || null,
             active: liveWorkflow.active,
@@ -389,6 +412,7 @@ async function main() {
             workflowId: updated.id,
             workflowName: updated.name,
             controlledCanaryUserIds: args.userIds,
+            forceControlledCanary: args.forceControlledCanary,
             previousVersionId: liveWorkflow.versionId || null,
             currentVersionId: updated.versionId || null,
             active: updated.active,
@@ -400,7 +424,15 @@ async function main() {
     }
 }
 
-main().catch((error) => {
-    console.error(`rollout_discovery_v3_parity_failed: ${error.message}`);
-    process.exit(1);
-});
+if (require.main === module) {
+    main().catch((error) => {
+        console.error(`rollout_discovery_v3_parity_failed: ${error.message}`);
+        process.exit(1);
+    });
+}
+
+module.exports = {
+    parseArgs,
+    buildPrepareCanaryJsCode,
+    applyRuntimePatch,
+};

@@ -16,6 +16,8 @@ const DEFAULT_WORKFLOW_ID = "job-discovery-pipeline-v3";
 const DEFAULT_ZERO_TAILORED_STREAK_THRESHOLD = 2;
 const DEFAULT_BLOCK_RATE_SPIKE_THRESHOLD = 0.5;
 const DEFAULT_MIN_RUNS_FOR_SPIKE = 3;
+const DEFAULT_LOW_PROCESSED_SEEN_RATIO_THRESHOLD = 0.35;
+const DEFAULT_LOW_PROCESSED_SEEN_RATIO_STREAK = 3;
 
 const COMPLETED_STATUS = "completed";
 const FAILED_STATUSES = new Set(["failed", "trigger_failed"]);
@@ -100,6 +102,8 @@ function parseArgs(argv) {
         zeroTailoredStreakThreshold: DEFAULT_ZERO_TAILORED_STREAK_THRESHOLD,
         blockRateSpikeThreshold: DEFAULT_BLOCK_RATE_SPIKE_THRESHOLD,
         minRunsForSpike: DEFAULT_MIN_RUNS_FOR_SPIKE,
+        lowProcessedSeenRatioThreshold: DEFAULT_LOW_PROCESSED_SEEN_RATIO_THRESHOLD,
+        lowProcessedSeenRatioStreak: DEFAULT_LOW_PROCESSED_SEEN_RATIO_STREAK,
     };
 
     for (let i = 0; i < argv.length; i += 1) {
@@ -134,6 +138,18 @@ function parseArgs(argv) {
             i += 1;
         } else if (token === "--min-runs-for-spike") {
             parsed.minRunsForSpike = toPositiveInt(argv[i + 1], DEFAULT_MIN_RUNS_FOR_SPIKE);
+            i += 1;
+        } else if (token === "--low-processed-seen-ratio-threshold") {
+            const threshold = Number(argv[i + 1]);
+            if (Number.isFinite(threshold) && threshold >= 0 && threshold <= 1) {
+                parsed.lowProcessedSeenRatioThreshold = threshold;
+            }
+            i += 1;
+        } else if (token === "--low-processed-seen-ratio-streak") {
+            parsed.lowProcessedSeenRatioStreak = toPositiveInt(
+                argv[i + 1],
+                DEFAULT_LOW_PROCESSED_SEEN_RATIO_STREAK
+            );
             i += 1;
         }
     }
@@ -170,6 +186,9 @@ function extractRunMetrics(metadata) {
 
 function normalizeLedgerRow(row) {
     const metrics = extractRunMetrics(row.metadata);
+    const usersSeen = toNonNegativeInt(row.usersSeen);
+    const usersCanary = toNonNegativeInt(row.usersCanary);
+    const usersProcessed = toNonNegativeInt(row.usersProcessed);
     const missingExpectedSummaryFields = [];
 
     if (!row.runId) {
@@ -197,7 +216,13 @@ function normalizeLedgerRow(row) {
         requestedAt: toIsoOrNull(row.requestedAt),
         startedAt: toIsoOrNull(row.startedAt),
         finishedAt: toIsoOrNull(row.finishedAt),
-        usersProcessed: row.usersProcessed,
+        usersSeen,
+        usersCanary,
+        usersProcessed,
+        processedSeenRatio:
+            usersSeen && usersSeen > 0 && usersProcessed !== null
+                ? Number((usersProcessed / usersSeen).toFixed(3))
+                : null,
         persistedApplications: row.persistedApplications,
         errorCode: row.errorCode,
         errorMessage: row.errorMessage,
@@ -224,6 +249,12 @@ function detectAnomalies(normalizedRuns, options = {}) {
             ? options.blockRateSpikeThreshold
             : DEFAULT_BLOCK_RATE_SPIKE_THRESHOLD;
     const minRunsForSpike = options.minRunsForSpike || DEFAULT_MIN_RUNS_FOR_SPIKE;
+    const lowProcessedSeenRatioThreshold =
+        typeof options.lowProcessedSeenRatioThreshold === "number"
+            ? options.lowProcessedSeenRatioThreshold
+            : DEFAULT_LOW_PROCESSED_SEEN_RATIO_THRESHOLD;
+    const lowProcessedSeenRatioStreak =
+        options.lowProcessedSeenRatioStreak || DEFAULT_LOW_PROCESSED_SEEN_RATIO_STREAK;
 
     const failedRuns = normalizedRuns.filter((run) => FAILED_STATUSES.has(run.status));
     if (failedRuns.length > 0) {
@@ -262,6 +293,33 @@ function detectAnomalies(normalizedRuns, options = {}) {
         });
     }
 
+    const completedRunsWithSeen = normalizedRuns.filter(
+        (run) =>
+            run.status === COMPLETED_STATUS &&
+            typeof run.usersSeen === "number" &&
+            run.usersSeen > 0 &&
+            typeof run.processedSeenRatio === "number"
+    );
+    let lowProcessedSeenRatioStreakCount = 0;
+    for (const run of completedRunsWithSeen) {
+        if (run.processedSeenRatio < lowProcessedSeenRatioThreshold) {
+            lowProcessedSeenRatioStreakCount += 1;
+        } else {
+            break;
+        }
+    }
+    if (lowProcessedSeenRatioStreakCount >= lowProcessedSeenRatioStreak) {
+        const ratioLabel = completedRunsWithSeen
+            .slice(0, lowProcessedSeenRatioStreak)
+            .map((run) => `${run.usersProcessed}/${run.usersSeen}`)
+            .join(", ");
+        anomalies.push({
+            code: "repeated_low_processed_seen_ratio",
+            severity: "warning",
+            detail: `${lowProcessedSeenRatioStreakCount} consecutive completed run(s) processed a low share of seen users (< ${lowProcessedSeenRatioThreshold.toFixed(2)}). ratios=${ratioLabel}.`,
+        });
+    }
+
     const completedRuns = normalizedRuns.filter((run) => run.status === COMPLETED_STATUS);
     if (completedRuns.length >= minRunsForSpike) {
         const factualBlockRate =
@@ -292,6 +350,10 @@ function detectAnomalies(normalizedRuns, options = {}) {
 
 function summarizeRuns(rows, options = {}) {
     const normalizedRuns = Array.isArray(rows) ? rows.map(normalizeLedgerRow) : [];
+    const lowProcessedSeenRatioThreshold =
+        typeof options.lowProcessedSeenRatioThreshold === "number"
+            ? options.lowProcessedSeenRatioThreshold
+            : DEFAULT_LOW_PROCESSED_SEEN_RATIO_THRESHOLD;
     const totalRunsInspected = normalizedRuns.length;
     const completedRuns = normalizedRuns.filter(
         (run) => run.status === COMPLETED_STATUS
@@ -306,6 +368,12 @@ function summarizeRuns(rows, options = {}) {
     const runsWithCoverLetterQualityBlocks = normalizedRuns.filter(
         (run) => (run.coverLetterQualityBlockedCount || 0) > 0
     ).length;
+    const runsWithLowProcessedSeenRatio = normalizedRuns.filter(
+        (run) =>
+            run.status === COMPLETED_STATUS &&
+            typeof run.processedSeenRatio === "number" &&
+            run.processedSeenRatio < lowProcessedSeenRatioThreshold
+    ).length;
     const runsMissingExpectedSummaryFields = normalizedRuns.filter(
         (run) => run.missingExpectedSummaryFields.length > 0
     ).length;
@@ -319,6 +387,7 @@ function summarizeRuns(rows, options = {}) {
         runsWithZeroTailoredOutputs,
         runsWithFactualGuardBlocks,
         runsWithCoverLetterQualityBlocks,
+        runsWithLowProcessedSeenRatio,
         runsMissingExpectedSummaryFields,
         latestRunStatus: latestRun ? latestRun.status : null,
         latestRunRequestedAt: latestRun ? latestRun.requestedAt : null,
@@ -357,6 +426,8 @@ async function fetchLedgerRows(prisma, args) {
             requestedAt: true,
             startedAt: true,
             finishedAt: true,
+            usersSeen: true,
+            usersCanary: true,
             usersProcessed: true,
             persistedApplications: true,
             errorCode: true,
@@ -377,6 +448,7 @@ function printHuman(report) {
             `zero_tailored_runs=${summary.runsWithZeroTailoredOutputs}`,
             `factual_block_runs=${summary.runsWithFactualGuardBlocks}`,
             `cover_block_runs=${summary.runsWithCoverLetterQualityBlocks}`,
+            `low_processed_seen_ratio_runs=${summary.runsWithLowProcessedSeenRatio}`,
             `missing_summary_runs=${summary.runsMissingExpectedSummaryFields}`,
             `latest_status=${summary.latestRunStatus || "none"}`,
             `latest_requested_at=${summary.latestRunRequestedAt || "none"}`,
@@ -422,6 +494,7 @@ async function main() {
                 runsWithZeroTailoredOutputs: summary.runsWithZeroTailoredOutputs,
                 runsWithFactualGuardBlocks: summary.runsWithFactualGuardBlocks,
                 runsWithCoverLetterQualityBlocks: summary.runsWithCoverLetterQualityBlocks,
+                runsWithLowProcessedSeenRatio: summary.runsWithLowProcessedSeenRatio,
                 runsMissingExpectedSummaryFields: summary.runsMissingExpectedSummaryFields,
                 latestRunStatus: summary.latestRunStatus,
                 latestRunRequestedAt: summary.latestRunRequestedAt,
