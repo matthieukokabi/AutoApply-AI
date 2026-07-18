@@ -11,5 +11,6 @@
 - [x] Enforce full translation-key parity across EN, FR, DE, ES, and IT catalogs — completed 2026-07-18.
 - [x] Declare the correct server-rendered document language for every locale while retaining static generation — completed 2026-07-18.
 - [x] Bind every landing cross-page link to the active locale to eliminate canonical redirect hops — completed 2026-07-18.
+- [x] Route public blog and roadmap authentication entry points directly into the active locale's Clerk catch-all pages — completed 2026-07-18.
 - [ ] Correct remaining localized-link and auth metadata inconsistencies.
 - [ ] Improve public-route caching and tighten the enforced content security policy.

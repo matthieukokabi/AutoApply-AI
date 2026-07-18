@@ -112,7 +112,7 @@ export default async function BlogPostPage({
             {/* Navigation */}
             <header className="border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-50">
                 <div className="container flex h-16 items-center justify-between">
-                    <Link href="/" className="flex items-center space-x-2">
+                    <Link href="/" locale={locale} className="flex items-center space-x-2">
                         <Sparkles className="h-6 w-6 text-primary" />
                         <span className="font-bold text-xl">AutoApply AI</span>
                     </Link>
@@ -120,6 +120,7 @@ export default async function BlogPostPage({
                         <LanguageSwitcher />
                         <Link
                             href="/sign-in"
+                            locale={locale}
                             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {t("signIn")}
@@ -131,7 +132,7 @@ export default async function BlogPostPage({
             {/* Article */}
             <article className="container max-w-3xl py-12">
                 {/* Back to Blog */}
-                <Link href="/blog" className="inline-block mb-8">
+                <Link href="/blog" locale={locale} className="inline-block mb-8">
                     <Button variant="ghost" size="sm" className="gap-2">
                         <ArrowLeft className="h-4 w-4" />
                         {t("backToBlog")}
@@ -186,7 +187,7 @@ export default async function BlogPostPage({
                     <p className="text-muted-foreground mb-4">
                         {t("ctaDescription")}
                     </p>
-                    <Link href="/sign-up">
+                    <Link href="/sign-up" locale={locale}>
                         <Button size="lg">{t("ctaButton")}</Button>
                     </Link>
                 </div>
@@ -202,6 +203,7 @@ export default async function BlogPostPage({
                                 <Link
                                     key={related.slug}
                                     href={`/blog/${related.slug}` as any}
+                                    locale={locale}
                                     className="group"
                                 >
                                     <div className="p-4 rounded-lg border hover:shadow-md transition-all">
