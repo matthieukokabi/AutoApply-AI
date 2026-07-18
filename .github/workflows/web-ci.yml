@@ -90,7 +90,7 @@ jobs:
       - name: Performance budget gate
         if: steps.changes.outputs.run_web_quality == 'true'
         env:
-          LIGHTHOUSE_REQUIRED_SUCCESSES: "1"
+          LIGHTHOUSE_REQUIRED_SUCCESSES: "3"
           LIGHTHOUSE_MAX_ATTEMPTS_PER_RUN: "2"
           LIGHTHOUSE_WARMUP_REQUESTS: "1"
           PERF_BUDGET_EMERGENCY_BYPASS: ${{ vars.PERF_BUDGET_EMERGENCY_BYPASS }}

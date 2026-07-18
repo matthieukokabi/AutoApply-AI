@@ -23,6 +23,55 @@ function writeJson(filePath: string, payload: unknown) {
 }
 
 describe("performance budget and trend scripts", () => {
+    it("uses the median of passing Lighthouse samples instead of a noisy last sample", () => {
+        const reportsDir = createTempDir();
+        const sourceReportPath = path.join(reportsDir, "wave4-lighthouse-reliability-source.json");
+        const outputReportPath = path.join(reportsDir, "wave4-performance-budget-output.json");
+
+        writeJson(sourceReportPath, {
+            target: { route: "/en" },
+            attempts: [
+                { status: "pass", metrics: { lcpMs: 600, cls: 0.01, jsBytes: 250000, imageBytes: 20000 } },
+                { status: "pass", metrics: { lcpMs: 650, cls: 0.011, jsBytes: 252000, imageBytes: 21000 } },
+                { status: "pass", metrics: { lcpMs: 5000, cls: 0.2, jsBytes: 900000, imageBytes: 900000 } },
+            ],
+        });
+
+        for (const [index, lcpMs] of [590, 600, 610].entries()) {
+            writeJson(path.join(reportsDir, `wave4-performance-budget-${index}.json`), {
+                status: "pass",
+                route: "/en",
+                metrics: { lcpMs, cls: 0.01, jsBytes: 250000, imageBytes: 20000 },
+            });
+        }
+
+        const result = spawnSync("node", ["scripts/performance_budget_gate.js"], {
+            cwd: path.resolve(process.cwd()),
+            env: {
+                ...process.env,
+                PERF_BUDGET_REPORTS_DIR: reportsDir,
+                PERF_BUDGET_SOURCE_REPORT: sourceReportPath,
+                REPORT_PATH: outputReportPath,
+            },
+            encoding: "utf8",
+        });
+
+        expect(result.status).toBe(0);
+        const output = JSON.parse(fs.readFileSync(outputReportPath, "utf8"));
+        expect(output.status).toBe("pass");
+        expect(output.metrics).toEqual({
+            lcpMs: 650,
+            cls: 0.011,
+            jsBytes: 252000,
+            imageBytes: 21000,
+        });
+        expect(output.measurementAggregation).toEqual({
+            method: "median",
+            passingAttemptCount: 3,
+            sampleCounts: { lcpMs: 3, cls: 3, jsBytes: 3, imageBytes: 3 },
+        });
+    });
+
     it("fails budget gate when percentile trend regression exceeds limit", () => {
         const reportsDir = createTempDir();
         const sourceReportPath = path.join(reportsDir, "wave4-lighthouse-reliability-source.json");

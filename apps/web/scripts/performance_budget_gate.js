@@ -64,7 +64,7 @@ function calculatePercentile(values, percentile) {
     return Number(interpolated.toFixed(4));
 }
 
-function pickLatestPassingAttempt(report) {
+function aggregatePassingAttemptMetrics(report) {
     if (!Array.isArray(report.attempts)) {
         return null;
     }
@@ -74,7 +74,22 @@ function pickLatestPassingAttempt(report) {
         return null;
     }
 
-    return passingAttempts[passingAttempts.length - 1];
+    const metrics = {};
+    const sampleCounts = {};
+    for (const metric of METRIC_KEYS) {
+        const values = passingAttempts
+            .map((attempt) => toNumberOrNull(attempt?.metrics?.[metric]))
+            .filter((value) => value !== null);
+        metrics[metric] = calculatePercentile(values, 50);
+        sampleCounts[metric] = values.length;
+    }
+
+    return {
+        method: "median",
+        passingAttemptCount: passingAttempts.length,
+        sampleCounts,
+        metrics,
+    };
 }
 
 function findViolation(metric, currentValue, thresholdValue) {
@@ -207,18 +222,18 @@ function main() {
     const trendPercentile = toNumberOrNull(percentileGuard.percentile) || 75;
     const trendMinSamples = toNumberOrNull(percentileGuard.minSamples) || 3;
     const trendRegressionThresholds = percentileGuard.maxRegressionPercent || {};
-    const latestPassingAttempt = pickLatestPassingAttempt(report);
+    const measurementAggregation = aggregatePassingAttemptMetrics(report);
 
-    if (!latestPassingAttempt || !latestPassingAttempt.metrics) {
+    if (!measurementAggregation) {
         console.error(`No passing Lighthouse attempt found in ${sourceReportPath}`);
         process.exit(1);
     }
 
     const currentMetrics = {
-        lcpMs: toNumberOrNull(latestPassingAttempt.metrics.lcpMs),
-        cls: toNumberOrNull(latestPassingAttempt.metrics.cls),
-        jsBytes: toNumberOrNull(latestPassingAttempt.metrics.jsBytes),
-        imageBytes: toNumberOrNull(latestPassingAttempt.metrics.imageBytes),
+        lcpMs: toNumberOrNull(measurementAggregation.metrics.lcpMs),
+        cls: toNumberOrNull(measurementAggregation.metrics.cls),
+        jsBytes: toNumberOrNull(measurementAggregation.metrics.jsBytes),
+        imageBytes: toNumberOrNull(measurementAggregation.metrics.imageBytes),
     };
 
     const baselineCandidates = listMatchingReports(reportsDir, "wave4-performance-budget-");
@@ -356,6 +371,11 @@ function main() {
         sourceReport: path.resolve(sourceReportPath),
         route,
         metrics: currentMetrics,
+        measurementAggregation: {
+            method: measurementAggregation.method,
+            passingAttemptCount: measurementAggregation.passingAttemptCount,
+            sampleCounts: measurementAggregation.sampleCounts,
+        },
         thresholds: routeThresholds,
         regressionThresholds,
         trendPercentileGuard: {
