@@ -6,10 +6,12 @@ const routeLayouts = [
     {
         file: "app/[locale]/sign-in/[[...sign-in]]/layout.tsx",
         namespace: "auth.signIn",
+        path: "sign-in",
     },
     {
         file: "app/[locale]/sign-up/[[...sign-up]]/layout.tsx",
         namespace: "auth.signUp",
+        path: "sign-up",
     },
 ];
 
@@ -21,6 +23,9 @@ describe("localized Clerk route metadata", () => {
             expect(content).toContain(`namespace: "${route.namespace}"`);
             expect(content).toContain('title: t("title")');
             expect(content).toContain('description: t("description")');
+            expect(content).toContain(
+                `canonical: \`/\${locale}/${route.path}\``
+            );
             expect(content).toContain("index: false");
             expect(content).toContain("follow: false");
         }
