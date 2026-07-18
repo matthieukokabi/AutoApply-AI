@@ -87,6 +87,8 @@ describe("next config CSP analytics hashes", () => {
         expect(enforcedCsp).not.toMatch(/script-src[^;]*\shttps:\s*(?:;|$)/);
         expect(enforcedCsp).toContain("https://clerk.autoapply.works");
         expect(enforcedCsp).toContain("https://www.googletagmanager.com");
+        expect(enforcedCsp).toContain("upgrade-insecure-requests");
+        expect(reportOnlyCsp).not.toContain("upgrade-insecure-requests");
         expect(enforcedCsp).toContain(
             "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com"
         );

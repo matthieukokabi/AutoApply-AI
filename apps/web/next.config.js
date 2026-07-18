@@ -83,7 +83,6 @@ const STRICT_CSP_REPORT_ONLY = [
     "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
     "form-action 'self' https://checkout.stripe.com",
     "worker-src 'self' blob:",
-    "upgrade-insecure-requests",
 ]
     .join("; ")
     .replace(/\s{2,}/g, " ")
