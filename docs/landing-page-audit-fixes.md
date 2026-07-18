@@ -8,5 +8,7 @@
 - [x] Add a localized, accessible real-product dashboard proof section immediately after the hero — completed 2026-07-17.
 - [x] Add verifiable trust content with explicit data controls, payment handling, official-source evidence, and localized policy links — completed 2026-07-17.
 - [x] Align sitemap URLs and language alternates with localized canonicals, including all indexable campaign pages — completed 2026-07-18.
+- [x] Enforce full translation-key parity across EN, FR, DE, ES, and IT catalogs — completed 2026-07-18.
+- [ ] Declare the correct document language for every localized route without sacrificing static rendering.
 - [ ] Correct remaining localized-link and auth metadata inconsistencies.
 - [ ] Improve public-route caching and tighten the enforced content security policy.
