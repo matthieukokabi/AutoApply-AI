@@ -80,6 +80,8 @@ describe("next config CSP analytics hashes", () => {
 
         expect(enforcedCsp).toContain("script-src");
         expect(reportOnlyCsp).toContain("script-src");
+        expect(enforcedCsp).toContain("default-src 'self'");
+        expect(enforcedCsp).not.toMatch(/default-src[^;]*(?:https:|data:|blob:)/);
         expect(enforcedCsp).toContain("'unsafe-inline'");
         expect(enforcedCsp).not.toContain("sha256-");
         expect(enforcedCsp).not.toMatch(/script-src[^;]*\shttps:\s*(?:;|$)/);

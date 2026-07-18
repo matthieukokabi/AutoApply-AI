@@ -52,7 +52,7 @@ const STRICT_REPORT_ONLY_SCRIPT_SRC = [
 ].join(" ");
 
 const CONTENT_SECURITY_POLICY = [
-    "default-src 'self' https: data: blob:",
+    "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
