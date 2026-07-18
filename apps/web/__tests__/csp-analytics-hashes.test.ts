@@ -102,6 +102,10 @@ describe("next config CSP analytics hashes", () => {
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
         );
         expect(enforcedCsp).not.toMatch(/style-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain(
+            "font-src 'self' data: https://fonts.gstatic.com"
+        );
+        expect(enforcedCsp).not.toMatch(/font-src[^;]*\shttps:\s*(?:;|$)/);
         expect(reportOnlyCsp).toContain("sha256-");
     });
 
