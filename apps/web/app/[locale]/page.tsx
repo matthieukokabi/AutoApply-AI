@@ -130,7 +130,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-16 items-center">
                     <div className="mr-2 flex shrink-0">
-                        <Link href="/" aria-label="AutoApply AI home" className="flex min-h-11 min-w-11 items-center justify-center space-x-2 sm:justify-start">
+                        <Link href="/" locale={locale} aria-label="AutoApply AI home" className="flex min-h-11 min-w-11 items-center justify-center space-x-2 sm:justify-start">
                             <Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />
                             <span className="hidden text-xl font-bold sm:inline">AutoApply AI</span>
                         </Link>
@@ -145,10 +145,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         <Link href="#how-it-works" className="py-3 text-muted-foreground transition-colors hover:text-foreground">
                             {t("nav.howItWorks")}
                         </Link>
-                        <Link href="/blog" className="py-3 text-muted-foreground transition-colors hover:text-foreground">
+                        <Link href="/blog" locale={locale} className="py-3 text-muted-foreground transition-colors hover:text-foreground">
                             {t("nav.blog")}
                         </Link>
-                        <Link href="/roadmap" className="py-3 text-muted-foreground transition-colors hover:text-foreground">
+                        <Link href="/roadmap" locale={locale} className="py-3 text-muted-foreground transition-colors hover:text-foreground">
                             {t("nav.roadmap")}
                         </Link>
                     </nav>
@@ -179,10 +179,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 <Link href="#how-it-works" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
                                     {t("nav.howItWorks")}
                                 </Link>
-                                <Link href="/blog" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                <Link href="/blog" locale={locale} className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
                                     {t("nav.blog")}
                                 </Link>
-                                <Link href="/roadmap" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                <Link href="/roadmap" locale={locale} className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
                                     {t("nav.roadmap")}
                                 </Link>
                                 <div className="my-1 border-t" />
@@ -314,10 +314,10 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                     </div>
                     <div className="mt-8 flex flex-wrap justify-center gap-3">
                         <Button asChild variant="outline" className="min-h-11">
-                            <Link href="/privacy">{t("trustEvidence.privacyLink")}</Link>
+                            <Link href="/privacy" locale={locale}>{t("trustEvidence.privacyLink")}</Link>
                         </Button>
                         <Button asChild variant="ghost" className="min-h-11">
-                            <Link href="/terms">{t("trustEvidence.termsLink")}</Link>
+                            <Link href="/terms" locale={locale}>{t("trustEvidence.termsLink")}</Link>
                         </Button>
                     </div>
                 </section>
@@ -400,7 +400,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         </div>
                     </div>
                     <Button asChild variant="outline" className="min-h-11 gap-2 sm:whitespace-nowrap">
-                        <Link href="/roadmap">
+                        <Link href="/roadmap" locale={locale}>
                             {t("roadmap.viewRoadmap")} <ArrowRight className="h-4 w-4" />
                         </Link>
                     </Button>
@@ -622,16 +622,16 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 <Link href="#features" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.features")}</Link>
                                 <Link href="#pricing" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.pricing")}</Link>
                                 <Link href="#how-it-works" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.howItWorks")}</Link>
-                                <Link href="/blog" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.blog")}</Link>
-                                <Link href="/roadmap" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.roadmap")}</Link>
+                                <Link href="/blog" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.blog")}</Link>
+                                <Link href="/roadmap" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.roadmap")}</Link>
                             </div>
                         </div>
                         <div>
                             <h3 className="mb-3 text-sm font-semibold">{t("footer.legal")}</h3>
                             <div className="flex flex-col text-sm text-muted-foreground">
-                                <Link href="/terms" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.termsOfService")}</Link>
-                                <Link href="/privacy" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.privacyPolicy")}</Link>
-                                <Link href="/contact" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.contact")}</Link>
+                                <Link href="/terms" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.termsOfService")}</Link>
+                                <Link href="/privacy" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.privacyPolicy")}</Link>
+                                <Link href="/contact" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.contact")}</Link>
                             </div>
                         </div>
                         <div>

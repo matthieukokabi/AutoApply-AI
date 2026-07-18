@@ -64,8 +64,18 @@ describe("landing mobile navigation", () => {
     it("supports trust claims with inspectable evidence and localized policy links", () => {
         expect(landingPage).toContain('aria-labelledby="trust-evidence-title"');
         expect(landingPage).toContain('descKey: "trustEvidence.controlDescription"');
-        expect(landingPage).toContain('<Link href="/privacy">');
-        expect(landingPage).toContain('<Link href="/terms">');
+        expect(landingPage).toContain('<Link href="/privacy" locale={locale}>');
+        expect(landingPage).toContain('<Link href="/terms" locale={locale}>');
         expect(englishMessages.features.privacyFirstDesc).not.toContain("GDPR-compliant");
+    });
+
+    it("binds every cross-page landing link to the active locale", () => {
+        const crossPageLinks = landingPage.match(/<Link href="\/(?:blog|roadmap|terms|privacy|contact)"[^>]*>/g) ?? [];
+
+        expect(crossPageLinks.length).toBeGreaterThan(0);
+        for (const link of crossPageLinks) {
+            expect(link).toContain("locale={locale}");
+        }
+        expect(landingPage).toContain('<Link href="/" locale={locale}');
     });
 });
