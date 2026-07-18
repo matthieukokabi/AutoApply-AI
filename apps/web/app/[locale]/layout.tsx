@@ -17,6 +17,7 @@ const inter = Inter({
     display: "swap",
 });
 const appBaseUrl = getAppBaseUrl();
+const defaultOpenGraphImage = toAbsoluteAppUrl("/opengraph-image");
 const defaultTwitterImage = toAbsoluteAppUrl("/twitter-image");
 const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
 
@@ -76,6 +77,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
             description: seo.description,
             locale: locale,
             alternateLocale: locales.filter((l) => l !== locale),
+            images: [
+                {
+                    url: defaultOpenGraphImage,
+                    width: 1200,
+                    height: 630,
+                    alt: "AutoApply AI — Tailor Your Resume & Cover Letter to Every Job with AI",
+                },
+            ],
         },
         twitter: {
             card: "summary_large_image",

@@ -1,10 +1,8 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "AutoApply AI — Tailor Your Resume & Cover Letter to Every Job with AI";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+const size = { width: 1200, height: 630 };
 
-export default function OGImage() {
+export function GET() {
     return new ImageResponse(
         (
             <div
@@ -17,7 +15,7 @@ export default function OGImage() {
                     overflow: "hidden",
                 }}
             >
-                {/* Gradient accent line top */}
+                {/* Gradient accent top */}
                 <div
                     style={{
                         position: "absolute",
@@ -30,7 +28,7 @@ export default function OGImage() {
                     }}
                 />
 
-                {/* Decorative circles */}
+                {/* Glow effects */}
                 <div
                     style={{
                         position: "absolute",
@@ -141,23 +139,14 @@ export default function OGImage() {
                     </div>
 
                     {/* Stats */}
-                    <div
-                        style={{
-                            display: "flex",
-                            gap: 48,
-                            marginTop: 48,
-                        }}
-                    >
+                    <div style={{ display: "flex", gap: 48, marginTop: 48 }}>
                         {[
                             { num: "7", label: "Job APIs" },
                             { num: "100+", label: "ATS Keywords" },
                             { num: "0", label: "Fabricated" },
                             { num: "60s", label: "Per Tailoring" },
                         ].map((stat) => (
-                            <div
-                                key={stat.label}
-                                style={{ display: "flex", flexDirection: "column", gap: 4 }}
-                            >
+                            <div key={stat.label} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                                 <div
                                     style={{
                                         fontSize: 36,
