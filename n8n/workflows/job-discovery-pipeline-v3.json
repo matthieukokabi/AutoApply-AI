@@ -513,7 +513,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2600, temperature: 0.1, messages: [{ role: 'user', content: $json.tailorPrompt }] }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2600, temperature: 0.1, messages: [{ role: 'user', content: $json.tailorPrompt }] }) }}",
         "options": {
           "timeout": 60000
         }
