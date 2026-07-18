@@ -1146,17 +1146,6 @@
         ]
       ]
     },
-    "Workflow Error Callback (Tailor) v3": {
-      "main": [
-        [
-          {
-            "node": "Finalize User Result v3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Prepare Persist Payload v3": {
       "main": [
         [

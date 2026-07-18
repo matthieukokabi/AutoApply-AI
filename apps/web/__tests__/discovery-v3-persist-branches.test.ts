@@ -137,6 +137,20 @@ describe("job discovery v3 persistence branches", () => {
                 expect.objectContaining({ node: "Prepare Persist Payload v3" }),
             ])
         );
+        expect(workflow.connections?.["Workflow Error Callback (Tailor) v3"]).toBeUndefined();
+
+        const finalizerSources = Object.entries(workflow.connections || {}).flatMap(
+            ([source, connection]: [string, any]) =>
+                (connection.main || []).flatMap((branch: Array<{ node?: string }>) =>
+                    branch
+                        .filter((edge) => edge.node === "Finalize User Result v3")
+                        .map(() => source)
+                )
+        );
+        expect(finalizerSources).not.toContain("Workflow Error Callback (Tailor) v3");
+        expect(finalizerSources).toEqual(
+            expect.arrayContaining(["Should Persist? v3", "Persist New Applications v3"])
+        );
     });
 
     it("emits one tailor error payload per failed user", () => {
