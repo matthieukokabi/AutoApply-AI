@@ -106,6 +106,11 @@ describe("next config CSP analytics hashes", () => {
             "font-src 'self' data: https://fonts.gstatic.com"
         );
         expect(enforcedCsp).not.toMatch(/font-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain(
+            "img-src 'self' data: blob: https://img.clerk.com https://www.google-analytics.com https://www.googletagmanager.com"
+        );
+        expect(enforcedCsp).not.toMatch(/img-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(reportOnlyCsp).toContain("https://img.clerk.com");
         expect(reportOnlyCsp).toContain("sha256-");
     });
 
