@@ -17,4 +17,23 @@ describe("auth exit localization", () => {
         );
         expect(signOutButton).toContain('signOut(() => router.push("/"))');
     });
+
+    it("returns users to their active locale after account deletion", () => {
+        const settingsPage = readFileSync(
+            path.join(
+                process.cwd(),
+                "app/[locale]/(dashboard)/settings/page.tsx"
+            ),
+            "utf8"
+        );
+
+        expect(settingsPage).toContain(
+            'import { useLocale, useTranslations } from "next-intl"'
+        );
+        expect(settingsPage).toContain("const locale = useLocale()");
+        expect(settingsPage).toContain(
+            "window.location.href = `/${locale}`"
+        );
+        expect(settingsPage).not.toContain('window.location.href = "/"');
+    });
 });

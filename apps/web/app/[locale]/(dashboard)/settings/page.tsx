@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
     Card,
     CardContent,
@@ -96,6 +96,7 @@ async function fetchUserWithAuthRetry() {
 
 export default function SettingsPage() {
     const t = useTranslations("dashboard.settings");
+    const locale = useLocale();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -498,7 +499,7 @@ export default function SettingsPage() {
         try {
             const res = await fetch("/api/account", { method: "DELETE" });
             if (res.ok) {
-                window.location.href = "/";
+                window.location.href = `/${locale}`;
             } else {
                 const data = await res.json();
                 setMessage({
