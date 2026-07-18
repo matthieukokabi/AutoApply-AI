@@ -23,5 +23,6 @@
 - [x] Restrict web fonts to same-origin, embedded data, and the audited Google Fonts asset host — completed 2026-07-18.
 - [x] Restrict images to app assets, CV previews, Clerk avatars, and campaign analytics pixels — completed 2026-07-18.
 - [x] Reduce the CSP default fallback to same-origin after explicitly auditing every resource directive — completed 2026-07-18.
+- [x] Preserve the active locale when Clerk sign-out returns users to the public site — completed 2026-07-18.
 - [ ] Correct remaining localized-link and auth metadata inconsistencies.
 - [x] Improve public-route caching and tighten the enforced content security policy — completed 2026-07-18.
