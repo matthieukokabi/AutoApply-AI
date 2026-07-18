@@ -73,9 +73,14 @@ async function getDashboardData(clerkId: string) {
     };
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+    params,
+}: {
+    params: Promise<{ locale: string }>;
+}) {
+    const { locale } = await params;
     const { userId } = await auth();
-    if (!userId) redirect("/sign-in");
+    if (!userId) redirect(`/${locale}/sign-in`);
     const t = await getTranslations("dashboard.dashboardPage");
 
     const data = await getDashboardData(userId);

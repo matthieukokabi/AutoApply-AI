@@ -32,12 +32,15 @@ export const metadata: Metadata = {
 
 export default async function DashboardLayout({
     children,
+    params,
 }: {
     children: React.ReactNode;
+    params: Promise<{ locale: string }>;
 }) {
+    const { locale } = await params;
     const t = await getTranslations("dashboard");
     const { userId } = await auth();
-    if (!userId) redirect("/sign-in");
+    if (!userId) redirect(`/${locale}/sign-in`);
 
     const user = await currentUser();
 
@@ -60,7 +63,7 @@ export default async function DashboardLayout({
             </div>
         );
     }
-    if (!dbUser) redirect("/sign-in");
+    if (!dbUser) redirect(`/${locale}/sign-in`);
 
     // Redirect to onboarding if no CV uploaded yet
     let profile;
@@ -72,7 +75,7 @@ export default async function DashboardLayout({
         console.error("Failed to check profile:", error);
     }
     if (!profile || !profile.rawText) {
-        redirect("/onboarding");
+        redirect(`/${locale}/onboarding`);
     }
 
     // Note: Link and redirect from @/i18n/routing are locale-aware
