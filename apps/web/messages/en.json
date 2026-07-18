@@ -17,11 +17,33 @@
         "viewPricing": "View Pricing",
         "noCreditCard": "No credit card required. 3 free tailored documents per month."
     },
+    "productProof": {
+        "eyebrow": "Real product workflow",
+        "title": "Your entire job search, at a glance",
+        "description": "Review every opportunity, compatibility score, tailored document, and application status from one focused workspace.",
+        "compatibility": "Compatibility scores",
+        "documents": "Tailored CVs and cover letters",
+        "pipeline": "Application pipeline",
+        "imageAlt": "AutoApply AI dashboard showing application totals, average compatibility score, and a Kanban application pipeline",
+        "caption": "The live AutoApply dashboard keeps discovered, tailored, applied, interview, offer, and rejected roles organized."
+    },
     "stats": {
         "jobApis": "Job Board APIs",
         "atsKeywords": "ATS Keywords Matched",
         "fabricatedSkills": "Fabricated Skills",
         "discoveryCycle": "Auto-Discovery Cycle"
+    },
+    "trustEvidence": {
+        "title": "Trust backed by clear controls",
+        "description": "Specific safeguards you can inspect—without vague security badges or invented certifications.",
+        "controlTitle": "You control your data",
+        "controlDescription": "Export your account data as JSON or delete your account and associated data from Settings.",
+        "paymentTitle": "Card details stay with Stripe",
+        "paymentDescription": "Payments are processed by Stripe. AutoApply does not store your card details.",
+        "sourcesTitle": "Official job APIs only",
+        "sourcesDescription": "Job discovery uses official provider APIs and sends no personal profile data in search queries.",
+        "privacyLink": "Read the privacy policy",
+        "termsLink": "Review the terms"
     },
     "howItWorks": {
         "title": "How It Works",
@@ -45,7 +67,7 @@
         "automatedPipeline": "Automated Pipeline",
         "automatedPipelineDesc": "Set preferences once. Every 4 hours, new matching jobs are discovered and documents prepared automatically for your review.",
         "privacyFirst": "Privacy First",
-        "privacyFirstDesc": "GDPR-compliant. No credential storage. No automated logins. Your data stays yours with one-click export and deletion.",
+        "privacyFirstDesc": "No job-site credential storage or automated logins. Export your account data or delete it from Settings.",
         "antiHallucination": "Anti-Hallucination",
         "antiHallucinationDesc": "Zero tolerance for fabricated content. AI only reorders, rephrases, and emphasizes what's already in your CV. Nothing invented."
     },

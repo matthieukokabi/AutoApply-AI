@@ -117,32 +117,32 @@ export default async function RoadmapPage({ params }: { params: Promise<{ locale
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-16 items-center">
                     <div className="mr-4 flex">
-                        <Link href="/" className="mr-6 flex items-center space-x-2">
+                        <Link href="/" locale={locale} className="mr-6 flex items-center space-x-2">
                             <Sparkles className="h-6 w-6 text-primary" />
                             <span className="font-bold text-xl">AutoApply AI</span>
                         </Link>
                     </div>
                     <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                        <Link href="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Link href="/#features" locale={locale} className="text-muted-foreground hover:text-foreground transition-colors">
                             {t("nav.features")}
                         </Link>
-                        <Link href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Link href="/#pricing" locale={locale} className="text-muted-foreground hover:text-foreground transition-colors">
                             {t("nav.pricing")}
                         </Link>
-                        <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Link href="/blog" locale={locale} className="text-muted-foreground hover:text-foreground transition-colors">
                             {t("nav.blog")}
                         </Link>
-                        <Link href="/roadmap" className="text-foreground font-semibold transition-colors">
+                        <Link href="/roadmap" locale={locale} className="text-foreground font-semibold transition-colors">
                             {t("nav.roadmap")}
                         </Link>
                     </nav>
                     <div className="flex flex-1 items-center justify-end space-x-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
-                        <Link href="/sign-in">
+                        <Link href="/sign-in" locale={locale}>
                             <Button variant="ghost">{t("nav.signIn")}</Button>
                         </Link>
-                        <Link href="/sign-up">
+                        <Link href="/sign-up" locale={locale}>
                             <Button>{t("nav.getStarted")}</Button>
                         </Link>
                     </div>

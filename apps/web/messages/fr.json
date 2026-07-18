@@ -17,11 +17,33 @@
         "viewPricing": "Voir les tarifs",
         "noCreditCard": "Aucune carte bancaire requise. 3 documents personnalisés gratuits par mois."
     },
+    "productProof": {
+        "eyebrow": "Flux produit réel",
+        "title": "Toute votre recherche d’emploi en un coup d’œil",
+        "description": "Consultez chaque opportunité, score de compatibilité, document personnalisé et statut de candidature dans un seul espace de travail.",
+        "compatibility": "Scores de compatibilité",
+        "documents": "CV et lettres personnalisés",
+        "pipeline": "Suivi des candidatures",
+        "imageAlt": "Tableau de bord AutoApply AI affichant les candidatures, le score de compatibilité moyen et le suivi Kanban",
+        "caption": "Le tableau de bord AutoApply organise les postes découverts, personnalisés, postulés, en entretien, acceptés ou refusés."
+    },
     "stats": {
         "jobApis": "APIs d'emploi",
         "atsKeywords": "Mots-clés ATS identifiés",
         "fabricatedSkills": "Compétences inventées",
         "discoveryCycle": "Cycle de découverte auto"
+    },
+    "trustEvidence": {
+        "title": "Une confiance fondée sur des contrôles clairs",
+        "description": "Des protections précises que vous pouvez vérifier, sans badges de sécurité vagues ni certifications inventées.",
+        "controlTitle": "Vous contrôlez vos données",
+        "controlDescription": "Exportez les données de votre compte au format JSON ou supprimez votre compte et les données associées depuis les paramètres.",
+        "paymentTitle": "Vos données bancaires restent chez Stripe",
+        "paymentDescription": "Les paiements sont traités par Stripe. AutoApply ne stocke pas les données de votre carte.",
+        "sourcesTitle": "Uniquement des API d’emploi officielles",
+        "sourcesDescription": "La recherche utilise les API officielles et n’envoie aucune donnée personnelle de profil dans les requêtes.",
+        "privacyLink": "Lire la politique de confidentialité",
+        "termsLink": "Consulter les conditions"
     },
     "howItWorks": {
         "title": "Comment ça marche",
@@ -45,7 +67,7 @@
         "automatedPipeline": "Pipeline automatisé",
         "automatedPipelineDesc": "Configurez vos préférences une fois. Toutes les 4 heures, de nouveaux emplois correspondants sont trouvés et les documents préparés automatiquement.",
         "privacyFirst": "Confidentialité d'abord",
-        "privacyFirstDesc": "Conforme RGPD. Aucun stockage d'identifiants. Aucune connexion automatique. Vos données restent les vôtres avec export et suppression en un clic.",
+        "privacyFirstDesc": "Aucun stockage d’identifiants de sites d’emploi ni connexion automatisée. Exportez ou supprimez les données du compte depuis les paramètres.",
         "antiHallucination": "Anti-hallucination",
         "antiHallucinationDesc": "Tolérance zéro pour le contenu fabriqué. L'IA réorganise, reformule et met en valeur uniquement ce qui existe dans votre CV. Rien d'inventé."
     },
@@ -86,8 +108,7 @@
     "cta": {
         "title": "Prêt à transformer votre recherche d'emploi ?",
         "subtitle": "Rejoignez les chercheurs d'emploi qui décrochent des entretiens plus rapidement grâce à des candidatures personnalisées par l'IA.",
-        "getStarted": "Commencer gratuitement",
-        "blog": "Blog"
+        "getStarted": "Commencer gratuitement"
     },
     "blog": {
         "title": "Blog",

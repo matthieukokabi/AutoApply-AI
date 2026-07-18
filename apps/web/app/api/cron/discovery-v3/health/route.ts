@@ -27,6 +27,8 @@ const HEALTH_LOOKBACK_DAYS = 7;
 const HEALTH_ACTIVE_WINDOW_HOURS = 12;
 const STALE_LOCK_WARNING_MINUTES = 10;
 const STALE_LOCK_PURGE_HOURS = 24;
+const LOW_PROCESSED_SEEN_RATIO_THRESHOLD = 0.35;
+const LOW_PROCESSED_SEEN_RATIO_STREAK = 3;
 
 function isFailureStatus(status: string) {
     return status === "failed" || status === "trigger_failed";
@@ -192,6 +194,8 @@ export async function POST(req: Request) {
             select: {
                 slotKey: true,
                 status: true,
+                usersSeen: true,
+                usersCanary: true,
                 usersProcessed: true,
                 lockAcquired: true,
             },
@@ -208,6 +212,21 @@ export async function POST(req: Request) {
                     row.lockAcquired === true &&
                     row.usersProcessed === 0
             );
+        const recentCompletedWithSeen = recentScheduled.filter(
+            (row) =>
+                row.status === "completed" &&
+                row.lockAcquired === true &&
+                row.usersSeen > 0
+        );
+        const suspiciousLowProcessedSeenRatio =
+            recentCompletedWithSeen.length >= LOW_PROCESSED_SEEN_RATIO_STREAK &&
+            recentCompletedWithSeen
+                .slice(0, LOW_PROCESSED_SEEN_RATIO_STREAK)
+                .every(
+                    (row) =>
+                        row.usersProcessed / row.usersSeen <
+                        LOW_PROCESSED_SEEN_RATIO_THRESHOLD
+                );
 
         const staleLockPurgeCandidates = await prisma.automationLock.findMany({
             where: {
@@ -281,6 +300,18 @@ export async function POST(req: Request) {
                 code: "ZERO_USERS_PROCESSED_SUSPICIOUS",
                 severity: "warning",
                 detail: "The last three completed discovery runs processed zero users.",
+            });
+        }
+
+        if (suspiciousLowProcessedSeenRatio) {
+            const ratioLabel = recentCompletedWithSeen
+                .slice(0, LOW_PROCESSED_SEEN_RATIO_STREAK)
+                .map((row) => `${row.usersProcessed}/${row.usersSeen}`)
+                .join(", ");
+            alerts.push({
+                code: "LOW_PROCESSED_SEEN_RATIO_SUSPICIOUS",
+                severity: "warning",
+                detail: `The last ${LOW_PROCESSED_SEEN_RATIO_STREAK} completed discovery runs processed a low share of seen users (< ${LOW_PROCESSED_SEEN_RATIO_THRESHOLD.toFixed(2)}). ratios=${ratioLabel}.`,
             });
         }
 
@@ -358,7 +389,13 @@ export async function POST(req: Request) {
             observedSlots: rows.map((row) => ({
                 slotKey: row.slotKey,
                 status: row.status,
+                usersSeen: row.usersSeen,
+                usersCanary: row.usersCanary,
                 usersProcessed: row.usersProcessed,
+                processedSeenRatio:
+                    row.usersSeen > 0
+                        ? Number((row.usersProcessed / row.usersSeen).toFixed(3))
+                        : null,
                 persistedApplications: row.persistedApplications,
                 requestedAt: row.requestedAt.toISOString(),
                 finishedAt: row.finishedAt?.toISOString() || null,

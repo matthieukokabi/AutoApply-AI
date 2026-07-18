@@ -50,6 +50,8 @@ const DEFAULT_WINDOW_RUNS = 10;
 const ALERTS = {
     schedulerMissedMultiplier: 1.5,
     repeatedZeroJobsThreshold: 3,
+    lowProcessedSeenRatioThreshold: 0.35,
+    lowProcessedSeenRatioStreak: 3,
 };
 
 function parseArgs(argv) {
@@ -224,6 +226,61 @@ function getStageAny(stageSummaries, stageNames) {
     return null;
 }
 
+function extractCanaryMetrics(runData) {
+    const stageEntries = Array.isArray(runData?.["Prepare Canary Users v3"])
+        ? runData["Prepare Canary Users v3"]
+        : [];
+    let usersSeenCount = null;
+    let usersCanaryCount = null;
+    let canaryMode = null;
+
+    for (const entry of stageEntries) {
+        const main = Array.isArray(entry?.data?.main) ? entry.data.main : [];
+        for (const branch of main) {
+            if (!Array.isArray(branch)) {
+                continue;
+            }
+            for (const item of branch) {
+                const json =
+                    item && typeof item === "object" && !Array.isArray(item)
+                        ? item.json
+                        : null;
+                if (!json || typeof json !== "object" || Array.isArray(json)) {
+                    continue;
+                }
+
+                const seen = Number.parseInt(String(json.usersSeen ?? ""), 10);
+                if (Number.isFinite(seen) && seen >= 0) {
+                    usersSeenCount =
+                        typeof usersSeenCount === "number"
+                            ? Math.max(usersSeenCount, seen)
+                            : seen;
+                }
+
+                const canary = Number.parseInt(String(json.usersCanary ?? ""), 10);
+                if (Number.isFinite(canary) && canary >= 0) {
+                    usersCanaryCount =
+                        typeof usersCanaryCount === "number"
+                            ? Math.max(usersCanaryCount, canary)
+                            : canary;
+                }
+
+                const mode =
+                    typeof json.canaryMode === "string" ? json.canaryMode.trim() : "";
+                if (!canaryMode && mode) {
+                    canaryMode = mode;
+                }
+            }
+        }
+    }
+
+    return {
+        usersSeenCount,
+        usersCanaryCount,
+        canaryMode,
+    };
+}
+
 function inferFailureReason(execution, stageSummaries) {
     if (!execution) {
         return "execution_missing";
@@ -368,6 +425,38 @@ function inferAlerts({
         });
     }
 
+    const completedRunsWithSeen = recentCompleted.filter(
+        (run) => typeof run.usersSeenCount === "number" && run.usersSeenCount > 0
+    );
+    const leadingLowProcessedSeenRatio = [];
+    for (const run of completedRunsWithSeen) {
+        const ratio = run.usersProcessedCount / run.usersSeenCount;
+        if (ratio < ALERTS.lowProcessedSeenRatioThreshold) {
+            leadingLowProcessedSeenRatio.push({ run, ratio });
+            continue;
+        }
+        break;
+    }
+
+    const hasNonZeroProcessing = leadingLowProcessedSeenRatio.some(
+        ({ run }) => run.usersProcessedCount > 0
+    );
+    if (
+        eligibleProfileCount > 1 &&
+        hasNonZeroProcessing &&
+        leadingLowProcessedSeenRatio.length >= ALERTS.lowProcessedSeenRatioStreak
+    ) {
+        const ratioLabel = leadingLowProcessedSeenRatio
+            .slice(0, ALERTS.lowProcessedSeenRatioStreak)
+            .map(({ run }) => `${run.usersProcessedCount}/${run.usersSeenCount}`)
+            .join(", ");
+        alerts.push({
+            code: "repeated_low_processed_seen_ratio",
+            severity: "critical",
+            detail: `${leadingLowProcessedSeenRatio.length} consecutive successful runs processed a low share of seen users (< ${ALERTS.lowProcessedSeenRatioThreshold.toFixed(2)}) while ${eligibleProfileCount} eligible profiles exist. ratios=${ratioLabel}`,
+        });
+    }
+
     if (
         recentCompleted.length >= ALERTS.repeatedZeroJobsThreshold &&
         recentCompleted.every((run) => run.failureReason === "zero_jobs_after_normalization")
@@ -500,6 +589,7 @@ async function main() {
         const decoded = executionDataMap.get(execution.id);
         const runData = decoded?.resultData?.runData || {};
         const stageSummaries = stageSummaryFromRunData(runData);
+        const canaryMetrics = extractCanaryMetrics(runData);
 
         const usersStage = getStageAny(stageSummaries, [
             "Prepare User Data",
@@ -522,6 +612,9 @@ async function main() {
             stoppedAt: execution.stoppedAt,
             mode: execution.mode,
             usersProcessedCount: usersStage ? usersStage.itemCount : 0,
+            usersSeenCount: canaryMetrics.usersSeenCount,
+            usersCanaryCount: canaryMetrics.usersCanaryCount,
+            canaryMode: canaryMetrics.canaryMode,
             jobsFoundCount: normalized ? normalized.itemCount : 0,
             documentsGeneratedCount: tailored ? tailored.itemCount : 0,
             failureReason: inferFailureReason(execution, stageSummaries),

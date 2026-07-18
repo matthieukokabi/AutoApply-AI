@@ -1,0 +1,30 @@
+# Landing-page audit fixes
+
+- [x] Restore complete mobile product and authentication navigation with a keyboard-accessible, pre-hydration menu — completed 2026-07-17.
+- [x] Remove nested interactive link/button markup by rendering CTA buttons as single semantic links — completed 2026-07-17.
+- [x] Restore the mobile logo link's accessible home name while retaining its compact icon-only presentation — completed 2026-07-17.
+- [x] Associate every visible contact field with a programmatic label and browser autofill metadata — completed 2026-07-17.
+- [x] Raise compact landing navigation, pricing, social, and footer controls to a minimum 44px touch target — completed 2026-07-17.
+- [x] Add a localized, accessible real-product dashboard proof section immediately after the hero — completed 2026-07-17.
+- [x] Add verifiable trust content with explicit data controls, payment handling, official-source evidence, and localized policy links — completed 2026-07-17.
+- [x] Align sitemap URLs and language alternates with localized canonicals, including all indexable campaign pages — completed 2026-07-18.
+- [x] Enforce full translation-key parity across EN, FR, DE, ES, and IT catalogs — completed 2026-07-18.
+- [x] Declare the correct server-rendered document language for every locale while retaining static generation — completed 2026-07-18.
+- [x] Bind every landing cross-page link to the active locale to eliminate canonical redirect hops — completed 2026-07-18.
+- [x] Route public blog and roadmap authentication entry points directly into the active locale's Clerk catch-all pages — completed 2026-07-18.
+- [x] Give localized Clerk sign-in and sign-up routes accurate translated metadata while preserving noindex/nofollow — completed 2026-07-18.
+- [x] Make auth-diagnostics recovery controls semantic, locale-bound links to Clerk sign-in and sign-up — completed 2026-07-18.
+- [x] Keep protected-route Clerk fallbacks and first-login onboarding in the requested locale — completed 2026-07-18.
+- [x] Bind the locale root before loading next-intl messages so public and campaign routes remain statically cacheable — completed 2026-07-18.
+- [x] Restrict enforced script execution to the app plus audited Clerk, analytics, Cloudflare, and Stripe origins — completed 2026-07-18.
+- [x] Restrict embedded frames and form submissions to audited Turnstile and Stripe destinations — completed 2026-07-18.
+- [x] Restrict browser connections to audited Clerk, analytics, and Stripe API destinations — completed 2026-07-18.
+- [x] Restrict external stylesheets to same-origin and Google Fonts while retaining required Clerk/Next inline styles — completed 2026-07-18.
+- [x] Restrict web fonts to same-origin, embedded data, and the audited Google Fonts asset host — completed 2026-07-18.
+- [x] Restrict images to app assets, CV previews, Clerk avatars, and campaign analytics pixels — completed 2026-07-18.
+- [x] Reduce the CSP default fallback to same-origin after explicitly auditing every resource directive — completed 2026-07-18.
+- [x] Preserve the active locale when Clerk sign-out returns users to the public site — completed 2026-07-18.
+- [x] Preserve the active locale after successful account deletion — completed 2026-07-18.
+- [x] Give localized Clerk routes self-referencing canonicals instead of inheriting the locale homepage — completed 2026-07-18.
+- [x] Correct remaining localized-link and auth metadata inconsistencies — completed 2026-07-18.
+- [x] Improve public-route caching and tighten the enforced content security policy — completed 2026-07-18.

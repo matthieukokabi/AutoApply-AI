@@ -36,7 +36,11 @@ const analyticsInlineScriptHashes = getAnalyticsInlineScriptHashes();
 const ENFORCED_SCRIPT_SRC = [
     "'self'",
     "'unsafe-inline'",
-    "https:",
+    "https://www.googletagmanager.com",
+    "https://www.google-analytics.com",
+    "https://challenges.cloudflare.com",
+    "https://clerk.autoapply.works",
+    "https://js.stripe.com",
 ].join(" ");
 const STRICT_REPORT_ONLY_SCRIPT_SRC = [
     "'self'",
@@ -48,17 +52,17 @@ const STRICT_REPORT_ONLY_SCRIPT_SRC = [
 ].join(" ");
 
 const CONTENT_SECURITY_POLICY = [
-    "default-src 'self' https: data: blob:",
+    "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
     `script-src ${ENFORCED_SCRIPT_SRC}`,
-    "style-src 'self' 'unsafe-inline' https:",
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data: https:",
-    "connect-src 'self' https: wss:",
-    "frame-src 'self' https:",
-    "form-action 'self' https:",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https://img.clerk.com https://www.google-analytics.com https://www.googletagmanager.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://api.clerk.com https://clerk.autoapply.works https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://checkout.stripe.com https://api.stripe.com",
+    "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
+    "form-action 'self' https://checkout.stripe.com",
     "worker-src 'self' blob:",
     "upgrade-insecure-requests",
 ]
@@ -73,13 +77,12 @@ const STRICT_CSP_REPORT_ONLY = [
     "frame-ancestors 'none'",
     `script-src ${STRICT_REPORT_ONLY_SCRIPT_SRC}`,
     "style-src 'self' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https:",
+    "img-src 'self' data: blob: https://img.clerk.com https://www.google-analytics.com https://www.googletagmanager.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "connect-src 'self' https://api.clerk.com https://clerk.autoapply.works https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://checkout.stripe.com https://api.stripe.com",
     "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
     "form-action 'self' https://checkout.stripe.com",
     "worker-src 'self' blob:",
-    "upgrade-insecure-requests",
 ]
     .join("; ")
     .replace(/\s{2,}/g, " ")

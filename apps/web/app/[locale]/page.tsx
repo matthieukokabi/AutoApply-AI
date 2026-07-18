@@ -1,5 +1,6 @@
 import { Link } from "@/i18n/routing";
 import NextLink from "next/link";
+import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ import {
     Twitter,
     Linkedin,
     Rocket,
+    Menu,
 } from "lucide-react";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -128,37 +130,70 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container flex h-16 items-center">
                     <div className="mr-2 flex shrink-0">
-                        <Link href="/" className="flex items-center space-x-2">
-                            <Sparkles className="h-6 w-6 text-primary" />
+                        <Link href="/" locale={locale} aria-label="AutoApply AI home" className="flex min-h-11 min-w-11 items-center justify-center space-x-2 sm:justify-start">
+                            <Sparkles className="h-6 w-6 text-primary" aria-hidden="true" />
                             <span className="hidden text-xl font-bold sm:inline">AutoApply AI</span>
                         </Link>
                     </div>
                     <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                        <Link href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Link href="#features" className="py-3 text-muted-foreground transition-colors hover:text-foreground">
                             {t("nav.features")}
                         </Link>
-                        <Link href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Link href="#pricing" className="py-3 text-muted-foreground transition-colors hover:text-foreground">
                             {t("nav.pricing")}
                         </Link>
-                        <Link href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Link href="#how-it-works" className="py-3 text-muted-foreground transition-colors hover:text-foreground">
                             {t("nav.howItWorks")}
                         </Link>
-                        <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Link href="/blog" locale={locale} className="py-3 text-muted-foreground transition-colors hover:text-foreground">
                             {t("nav.blog")}
                         </Link>
-                        <Link href="/roadmap" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Link href="/roadmap" locale={locale} className="py-3 text-muted-foreground transition-colors hover:text-foreground">
                             {t("nav.roadmap")}
                         </Link>
                     </nav>
                     <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                         <LanguageSwitcher />
                         <ThemeToggle />
-                        <NextLink href={signInPath} className="hidden sm:inline-flex">
-                            <Button variant="ghost">{t("nav.signIn")}</Button>
-                        </NextLink>
-                        <NextLink href={signUpPath} className="hidden sm:inline-flex">
-                            <Button>{t("nav.getStarted")}</Button>
-                        </NextLink>
+                        <Button asChild variant="ghost" className="hidden min-h-11 sm:inline-flex">
+                            <NextLink href={signInPath}>{t("nav.signIn")}</NextLink>
+                        </Button>
+                        <Button asChild className="hidden min-h-11 sm:inline-flex">
+                            <NextLink href={signUpPath}>{t("nav.getStarted")}</NextLink>
+                        </Button>
+                        <details className="group relative sm:hidden">
+                            <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-md border border-input bg-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                                <Menu className="h-5 w-5" aria-hidden="true" />
+                                <span className="sr-only">Open navigation menu</span>
+                            </summary>
+                            <nav
+                                aria-label="Mobile navigation"
+                                className="absolute right-0 top-12 z-50 flex w-72 flex-col gap-1 rounded-lg border bg-background p-2 shadow-lg"
+                            >
+                                <Link href="#features" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.features")}
+                                </Link>
+                                <Link href="#pricing" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.pricing")}
+                                </Link>
+                                <Link href="#how-it-works" className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.howItWorks")}
+                                </Link>
+                                <Link href="/blog" locale={locale} className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.blog")}
+                                </Link>
+                                <Link href="/roadmap" locale={locale} className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.roadmap")}
+                                </Link>
+                                <div className="my-1 border-t" />
+                                <NextLink href={signInPath} className="rounded-md px-3 py-3 text-sm font-medium hover:bg-accent">
+                                    {t("nav.signIn")}
+                                </NextLink>
+                                <NextLink href={signUpPath} className="rounded-md bg-primary px-3 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                                    {t("nav.getStarted")}
+                                </NextLink>
+                            </nav>
+                        </details>
                     </div>
                 </div>
             </header>
@@ -179,20 +214,57 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         {t("hero.description")}
                     </p>
                     <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-                        <NextLink href={signUpPath}>
-                            <Button size="lg" className="gap-2 px-8">
+                        <Button asChild size="lg" className="gap-2 px-8">
+                            <NextLink href={signUpPath}>
                                 {t("hero.startFree")} <ArrowRight className="h-4 w-4" />
-                            </Button>
-                        </NextLink>
-                        <Link href="#pricing">
-                            <Button size="lg" variant="outline" className="px-8">
-                                {t("hero.viewPricing")}
-                            </Button>
-                        </Link>
+                            </NextLink>
+                        </Button>
+                        <Button asChild size="lg" variant="outline" className="px-8">
+                            <Link href="#pricing">{t("hero.viewPricing")}</Link>
+                        </Button>
                     </div>
                     <p className="mt-2 max-w-md text-sm text-muted-foreground">
                         {t("hero.noCreditCard")}
                     </p>
+                </section>
+
+                {/* Product proof */}
+                <section aria-labelledby="product-proof-title" className="container pb-20">
+                    <div className="mx-auto mb-8 max-w-2xl text-center">
+                        <Badge variant="outline" className="mb-4">
+                            {t("productProof.eyebrow")}
+                        </Badge>
+                        <h2 id="product-proof-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                            {t("productProof.title")}
+                        </h2>
+                        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+                            {t("productProof.description")}
+                        </p>
+                    </div>
+                    <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-3">
+                        <div className="rounded-lg border bg-card/60 px-4 py-3 text-center text-sm font-medium">
+                            {t("productProof.compatibility")}
+                        </div>
+                        <div className="rounded-lg border bg-card/60 px-4 py-3 text-center text-sm font-medium">
+                            {t("productProof.documents")}
+                        </div>
+                        <div className="rounded-lg border bg-card/60 px-4 py-3 text-center text-sm font-medium">
+                            {t("productProof.pipeline")}
+                        </div>
+                    </div>
+                    <figure className="mx-auto mt-6 max-w-6xl overflow-hidden rounded-xl border bg-card shadow-2xl shadow-primary/10">
+                        <Image
+                            src="/images/dashboard-autoapply.webp"
+                            width={1425}
+                            height={811}
+                            sizes="(max-width: 768px) 100vw, 1152px"
+                            alt={t("productProof.imageAlt")}
+                            className="h-auto w-full"
+                        />
+                        <figcaption className="border-t px-4 py-3 text-center text-sm text-muted-foreground">
+                            {t("productProof.caption")}
+                        </figcaption>
+                    </figure>
                 </section>
 
                 {/* Stats Bar */}
@@ -216,6 +288,37 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 <div className="mt-1 text-sm text-muted-foreground">{t("stats.discoveryCycle")}</div>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                {/* Verifiable trust evidence */}
+                <section aria-labelledby="trust-evidence-title" className="container py-20">
+                    <div className="mx-auto mb-10 max-w-2xl text-center">
+                        <h2 id="trust-evidence-title" className="text-3xl font-bold tracking-tight sm:text-4xl">
+                            {t("trustEvidence.title")}
+                        </h2>
+                        <p className="mt-4 text-lg text-muted-foreground">{t("trustEvidence.description")}</p>
+                    </div>
+                    <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+                        {[
+                            { icon: Shield, titleKey: "trustEvidence.controlTitle", descKey: "trustEvidence.controlDescription" },
+                            { icon: Check, titleKey: "trustEvidence.paymentTitle", descKey: "trustEvidence.paymentDescription" },
+                            { icon: Search, titleKey: "trustEvidence.sourcesTitle", descKey: "trustEvidence.sourcesDescription" },
+                        ].map((item) => (
+                            <div key={item.titleKey} className="rounded-xl border bg-card p-6">
+                                <item.icon aria-hidden="true" className="mb-4 h-8 w-8 text-primary" />
+                                <h3 className="text-lg font-semibold">{t(item.titleKey)}</h3>
+                                <p className="mt-2 leading-relaxed text-muted-foreground">{t(item.descKey)}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-8 flex flex-wrap justify-center gap-3">
+                        <Button asChild variant="outline" className="min-h-11">
+                            <Link href="/privacy" locale={locale}>{t("trustEvidence.privacyLink")}</Link>
+                        </Button>
+                        <Button asChild variant="ghost" className="min-h-11">
+                            <Link href="/terms" locale={locale}>{t("trustEvidence.termsLink")}</Link>
+                        </Button>
                     </div>
                 </section>
 
@@ -296,11 +399,11 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             <p className="text-sm text-muted-foreground">{t("roadmap.builtInPublicDesc")}</p>
                         </div>
                     </div>
-                    <Link href="/roadmap">
-                        <Button variant="outline" className="gap-2 sm:whitespace-nowrap">
+                    <Button asChild variant="outline" className="min-h-11 gap-2 sm:whitespace-nowrap">
+                        <Link href="/roadmap" locale={locale}>
                             {t("roadmap.viewRoadmap")} <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
                 </div>
             </section>
 
@@ -344,11 +447,9 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             </ul>
                         </CardContent>
                         <CardFooter>
-                            <NextLink href={signUpPath} className="w-full">
-                                <Button variant="outline" className="h-auto w-full whitespace-normal py-3 text-center">
-                                    {t("hero.startFree")}
-                                </Button>
-                            </NextLink>
+                            <Button asChild variant="outline" className="h-auto w-full whitespace-normal py-3 text-center">
+                                <NextLink href={signUpPath}>{t("hero.startFree")}</NextLink>
+                            </Button>
                         </CardFooter>
                     </Card>
 
@@ -398,7 +499,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                             <CheckoutButton
                                 plan="pro_monthly"
                                 fallbackHref={signUpProMonthlyHref}
-                                className="h-auto w-full whitespace-normal py-3 text-center leading-tight"
+                                className="h-auto min-h-11 w-full whitespace-normal py-3 text-center leading-tight"
                             >
                                 {t("pricing.getProMonthly")}
                             </CheckoutButton>
@@ -406,7 +507,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 plan="pro_yearly"
                                 fallbackHref={signUpProYearlyHref}
                                 variant="ghost"
-                                className="h-auto w-full whitespace-normal py-2 text-center text-xs leading-tight"
+                                className="h-auto min-h-11 w-full whitespace-normal py-2 text-center text-xs leading-tight"
                             >
                                 {t("pricing.proSaveYearly")}
                             </CheckoutButton>
@@ -445,7 +546,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 plan="unlimited"
                                 fallbackHref={signUpUnlimitedHref}
                                 variant="outline"
-                                className="h-auto w-full whitespace-normal py-3 text-center leading-tight"
+                                className="h-auto min-h-11 w-full whitespace-normal py-3 text-center leading-tight"
                             >
                                 {t("pricing.goUnlimited")}
                             </CheckoutButton>
@@ -453,7 +554,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 plan="unlimited_yearly"
                                 fallbackHref={signUpUnlimitedYearlyHref}
                                 variant="ghost"
-                                className="h-auto w-full whitespace-normal py-2 text-center text-xs leading-tight"
+                                className="h-auto min-h-11 w-full whitespace-normal py-2 text-center text-xs leading-tight"
                             >
                                 {t("pricing.unlimitedSaveYearly")}
                             </CheckoutButton>
@@ -469,7 +570,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         plan="credit_pack"
                         fallbackHref={signUpCreditPackHref}
                         variant="secondary"
-                        className="h-auto whitespace-normal py-3 text-center leading-tight"
+                        className="h-auto min-h-11 whitespace-normal py-3 text-center leading-tight"
                     >
                         {t("pricing.buyCreditPack")}
                     </CheckoutButton>
@@ -485,11 +586,11 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                         <p className="mx-auto mb-8 max-w-lg text-lg text-primary-foreground/95">
                             {t("cta.subtitle")}
                         </p>
-                        <NextLink href={signUpPath}>
-                            <Button size="lg" variant="secondary" className="gap-2 px-8">
+                        <Button asChild size="lg" variant="secondary" className="gap-2 px-8">
+                            <NextLink href={signUpPath}>
                                 {t("cta.getStarted")} <ArrowRight className="h-4 w-4" />
-                            </Button>
-                        </NextLink>
+                            </NextLink>
+                        </Button>
                     </div>
                 </section>
             </main>
@@ -507,30 +608,30 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 {t("footer.tagline")}
                             </p>
                             <div className="flex items-center gap-3">
-                                <a href={OFFICIAL_X_URL} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
+                                <a href={OFFICIAL_X_URL} target="_blank" rel="noopener noreferrer" className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="Twitter">
                                     <Twitter className="h-4 w-4" />
                                 </a>
-                                <a href={OFFICIAL_LINKEDIN_URL} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="LinkedIn">
+                                <a href={OFFICIAL_LINKEDIN_URL} target="_blank" rel="noopener noreferrer" className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="LinkedIn">
                                     <Linkedin className="h-4 w-4" />
                                 </a>
                             </div>
                         </div>
                         <div>
                             <h3 className="mb-3 text-sm font-semibold">{t("footer.product")}</h3>
-                            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                                <Link href="#features" className="hover:text-foreground transition-colors">{t("nav.features")}</Link>
-                                <Link href="#pricing" className="hover:text-foreground transition-colors">{t("nav.pricing")}</Link>
-                                <Link href="#how-it-works" className="hover:text-foreground transition-colors">{t("nav.howItWorks")}</Link>
-                                <Link href="/blog" className="hover:text-foreground transition-colors">{t("nav.blog")}</Link>
-                                <Link href="/roadmap" className="hover:text-foreground transition-colors">{t("footer.roadmap")}</Link>
+                            <div className="flex flex-col text-sm text-muted-foreground">
+                                <Link href="#features" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.features")}</Link>
+                                <Link href="#pricing" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.pricing")}</Link>
+                                <Link href="#how-it-works" className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.howItWorks")}</Link>
+                                <Link href="/blog" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("nav.blog")}</Link>
+                                <Link href="/roadmap" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.roadmap")}</Link>
                             </div>
                         </div>
                         <div>
                             <h3 className="mb-3 text-sm font-semibold">{t("footer.legal")}</h3>
-                            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                                <Link href="/terms" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link>
-                                <Link href="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link>
-                                <Link href="/contact" className="hover:text-foreground transition-colors">{t("footer.contact")}</Link>
+                            <div className="flex flex-col text-sm text-muted-foreground">
+                                <Link href="/terms" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.termsOfService")}</Link>
+                                <Link href="/privacy" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.privacyPolicy")}</Link>
+                                <Link href="/contact" locale={locale} className="flex min-h-11 items-center transition-colors hover:text-foreground">{t("footer.contact")}</Link>
                             </div>
                         </div>
                         <div>

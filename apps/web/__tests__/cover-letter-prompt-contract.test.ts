@@ -42,7 +42,8 @@ describe("cover-letter prompt contract", () => {
     it("tightens batch cover-letter generation instructions and context assembly", () => {
         const jsCode = getWorkflowNodeJsCode(BATCH_WORKFLOW_PATH, "Build Tailor Prompt Batch v3");
 
-        expect(jsCode).toContain("const jobsToTailor = candidates.map");
+        expect(jsCode).toContain("const selectedCandidates = candidates.slice");
+        expect(jsCode).toContain("const jobsToTailor = selectedCandidates.map");
         expect(jsCode).toContain("companyKnown");
         expect(jsCode).toContain("Cover letter specificity contract:");
         expect(jsCode).toContain(

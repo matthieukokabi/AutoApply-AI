@@ -17,11 +17,33 @@
         "viewPricing": "Preise ansehen",
         "noCreditCard": "Keine Kreditkarte erforderlich. 3 kostenlose massgeschneiderte Dokumente pro Monat."
     },
+    "productProof": {
+        "eyebrow": "Echter Produktablauf",
+        "title": "Ihre gesamte Jobsuche auf einen Blick",
+        "description": "Prüfen Sie jede Stelle, jeden Kompatibilitätswert, jedes angepasste Dokument und jeden Bewerbungsstatus in einem übersichtlichen Arbeitsbereich.",
+        "compatibility": "Kompatibilitätswerte",
+        "documents": "Angepasste Lebensläufe und Anschreiben",
+        "pipeline": "Bewerbungspipeline",
+        "imageAlt": "AutoApply-AI-Dashboard mit Bewerbungszahlen, durchschnittlichem Kompatibilitätswert und Kanban-Bewerbungspipeline",
+        "caption": "Das AutoApply-Dashboard organisiert entdeckte, angepasste, versendete, interviewte, angenommene und abgelehnte Stellen."
+    },
     "stats": {
         "jobApis": "Job-APIs",
         "atsKeywords": "ATS-Schlüsselwörter erkannt",
         "fabricatedSkills": "Erfundene Fähigkeiten",
         "discoveryCycle": "Auto-Entdeckungszyklus"
+    },
+    "trustEvidence": {
+        "title": "Vertrauen durch klare Kontrollen",
+        "description": "Konkrete Schutzmaßnahmen, die Sie prüfen können – ohne vage Sicherheitssiegel oder erfundene Zertifizierungen.",
+        "controlTitle": "Sie kontrollieren Ihre Daten",
+        "controlDescription": "Exportieren Sie Ihre Kontodaten als JSON oder löschen Sie Ihr Konto und die zugehörigen Daten in den Einstellungen.",
+        "paymentTitle": "Kartendaten bleiben bei Stripe",
+        "paymentDescription": "Zahlungen werden von Stripe verarbeitet. AutoApply speichert Ihre Kartendaten nicht.",
+        "sourcesTitle": "Nur offizielle Job-APIs",
+        "sourcesDescription": "Die Jobsuche nutzt offizielle Anbieter-APIs und sendet keine persönlichen Profildaten in Suchanfragen.",
+        "privacyLink": "Datenschutzerklärung lesen",
+        "termsLink": "Bedingungen ansehen"
     },
     "howItWorks": {
         "title": "So funktioniert's",
@@ -45,7 +67,7 @@
         "automatedPipeline": "Automatisierte Pipeline",
         "automatedPipelineDesc": "Präferenzen einmal festlegen. Alle 4 Stunden werden neue passende Stellen gefunden und Dokumente automatisch vorbereitet.",
         "privacyFirst": "Datenschutz zuerst",
-        "privacyFirstDesc": "DSGVO-konform. Keine Zugangsdaten gespeichert. Keine automatischen Anmeldungen. Ihre Daten gehören Ihnen.",
+        "privacyFirstDesc": "Keine Speicherung von Jobportal-Zugangsdaten und keine automatisierten Logins. Exportieren oder löschen Sie Ihre Kontodaten in den Einstellungen.",
         "antiHallucination": "Anti-Halluzination",
         "antiHallucinationDesc": "Null Toleranz für erfundene Inhalte. KI ordnet nur um, formuliert um und hebt hervor, was bereits in Ihrem Lebenslauf steht."
     },
@@ -86,8 +108,7 @@
     "cta": {
         "title": "Bereit, Ihre Jobsuche zu transformieren?",
         "subtitle": "Schliessen Sie sich Jobsuchenden an, die mit KI-personalisierten Bewerbungen schneller zu Vorstellungsgesprächen kommen.",
-        "getStarted": "Kostenlos starten",
-        "blog": "Blog"
+        "getStarted": "Kostenlos starten"
     },
     "blog": {
         "title": "Blog",

@@ -80,8 +80,41 @@ describe("next config CSP analytics hashes", () => {
 
         expect(enforcedCsp).toContain("script-src");
         expect(reportOnlyCsp).toContain("script-src");
+        expect(enforcedCsp).toContain("default-src 'self'");
+        expect(enforcedCsp).not.toMatch(/default-src[^;]*(?:https:|data:|blob:)/);
         expect(enforcedCsp).toContain("'unsafe-inline'");
         expect(enforcedCsp).not.toContain("sha256-");
+        expect(enforcedCsp).not.toMatch(/script-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain("https://clerk.autoapply.works");
+        expect(enforcedCsp).toContain("https://www.googletagmanager.com");
+        expect(enforcedCsp).toContain("upgrade-insecure-requests");
+        expect(reportOnlyCsp).not.toContain("upgrade-insecure-requests");
+        expect(enforcedCsp).toContain(
+            "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com"
+        );
+        expect(enforcedCsp).toContain(
+            "form-action 'self' https://checkout.stripe.com"
+        );
+        expect(enforcedCsp).not.toMatch(/frame-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).not.toMatch(/form-action[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain(
+            "connect-src 'self' https://api.clerk.com https://clerk.autoapply.works https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://checkout.stripe.com https://api.stripe.com"
+        );
+        expect(enforcedCsp).not.toMatch(/connect-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).not.toMatch(/connect-src[^;]*\swss:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain(
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
+        );
+        expect(enforcedCsp).not.toMatch(/style-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain(
+            "font-src 'self' data: https://fonts.gstatic.com"
+        );
+        expect(enforcedCsp).not.toMatch(/font-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain(
+            "img-src 'self' data: blob: https://img.clerk.com https://www.google-analytics.com https://www.googletagmanager.com"
+        );
+        expect(enforcedCsp).not.toMatch(/img-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(reportOnlyCsp).toContain("https://img.clerk.com");
         expect(reportOnlyCsp).toContain("sha256-");
     });
 
@@ -96,6 +129,9 @@ describe("next config CSP analytics hashes", () => {
         expect(reportOnlyCsp).toContain("script-src");
         expect(enforcedCsp).toContain("'unsafe-inline'");
         expect(enforcedCsp).not.toContain("sha256-");
+        expect(enforcedCsp).not.toMatch(/script-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain("https://clerk.autoapply.works");
+        expect(enforcedCsp).toContain("https://www.google-analytics.com");
         expect(reportOnlyCsp).toContain("sha256-");
     });
 });

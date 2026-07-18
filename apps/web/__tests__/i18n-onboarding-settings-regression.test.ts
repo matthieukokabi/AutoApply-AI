@@ -39,6 +39,16 @@ function getPathValue(messages: Messages, segments: readonly string[]): string {
     return value;
 }
 
+function flattenMessageKeys(messages: Messages, prefix = ""): string[] {
+    return Object.entries(messages).flatMap(([key, value]) => {
+        const pathKey = prefix ? `${prefix}.${key}` : key;
+        if (value && typeof value === "object" && !Array.isArray(value)) {
+            return flattenMessageKeys(value as Messages, pathKey);
+        }
+        return [pathKey];
+    });
+}
+
 describe("i18n onboarding/settings regression", () => {
     const enMessages = loadMessages("en");
 
@@ -60,6 +70,15 @@ describe("i18n onboarding/settings regression", () => {
                 expect(localizedValue.length).toBeGreaterThan(0);
                 expect(localizedValue).not.toBe(englishValue);
             }
+        }
+    });
+
+    it("keeps every locale catalog structurally identical to English", () => {
+        const englishKeys = flattenMessageKeys(enMessages).sort();
+
+        for (const locale of NON_EN_LOCALES) {
+            const localeKeys = flattenMessageKeys(loadMessages(locale)).sort();
+            expect(localeKeys, locale).toEqual(englishKeys);
         }
     });
 });

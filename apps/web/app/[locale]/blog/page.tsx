@@ -64,7 +64,7 @@ export default async function BlogPage({
             {/* Navigation */}
             <header className="border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-50">
                 <div className="container flex h-16 items-center justify-between">
-                    <Link href="/" className="flex items-center space-x-2">
+                    <Link href="/" locale={locale} className="flex items-center space-x-2">
                         <Sparkles className="h-6 w-6 text-primary" />
                         <span className="font-bold text-xl">AutoApply AI</span>
                     </Link>
@@ -72,6 +72,7 @@ export default async function BlogPage({
                         <LanguageSwitcher />
                         <Link
                             href="/sign-in"
+                            locale={locale}
                             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {t("signIn")}
@@ -102,6 +103,7 @@ export default async function BlogPage({
                             <Link
                                 key={post.slug}
                                 href={`/blog/${post.slug}` as any}
+                                locale={locale}
                             >
                                 <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
                                     <CardContent className="p-6 flex flex-col h-full">

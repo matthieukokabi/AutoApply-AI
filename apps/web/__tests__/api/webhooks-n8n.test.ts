@@ -538,6 +538,92 @@ describe("POST /api/webhooks/n8n", () => {
                 ])
             );
         });
+
+        it("matches US state abbreviations as tokens instead of substrings inside unrelated words", async () => {
+            vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL) => {
+                const url = String(input);
+
+                if (url.includes("themuse.com")) {
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            results: [
+                                {
+                                    id: "muse_noise_1",
+                                    name: "Flexible Workflow Flagship Analyst",
+                                    company: { name: "Noise Corp" },
+                                    locations: [{ name: "Remote" }],
+                                    contents:
+                                        "<p>Flexible workflow flagship operations role with enough body text to pass normalization.</p>",
+                                    refs: { landing_page: "https://example.com/noise" },
+                                    publication_date: "2026-04-30T10:00:00Z",
+                                },
+                                {
+                                    id: "muse_florida_1",
+                                    name: "Accounting Analyst",
+                                    company: { name: "Florida Corp" },
+                                    locations: [{ name: "Florida" }],
+                                    contents:
+                                        "<p>Accounting and finance role based in Florida with enough description text to pass normalization.</p>",
+                                    refs: { landing_page: "https://example.com/florida" },
+                                    publication_date: "2026-04-30T10:00:00Z",
+                                },
+                                {
+                                    id: "muse_fl_1",
+                                    name: "Finance Associate",
+                                    company: { name: "Jacksonville Corp" },
+                                    locations: [{ name: "Jacksonville, FL" }],
+                                    contents:
+                                        "<p>Finance role in Jacksonville, FL with enough description text to pass normalization.</p>",
+                                    refs: { landing_page: "https://example.com/jacksonville-fl" },
+                                    publication_date: "2026-04-30T10:00:00Z",
+                                },
+                            ],
+                        }),
+                        text: async () => "",
+                    } as Response;
+                }
+
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        results: [],
+                        jobs: [],
+                        data: [],
+                    }),
+                    text: async () => "",
+                } as Response;
+            });
+
+            const request = createWebhookRequest("fetch_jobs_for_user", {
+                user: {
+                    userId: "user_fl",
+                    targetTitles: ["Accounting & Finance"],
+                    locations: ["FL"],
+                    remotePreference: "any",
+                    masterCvText: "Accounting and finance CV content",
+                    subscriptionStatus: "pro",
+                    creditsRemaining: 12,
+                },
+                sourceConfig: {
+                    adzunaAppId: "",
+                    adzunaAppKey: "",
+                    jsearchApiKey: "",
+                    joobleApiKey: "",
+                    reedApiKey: "",
+                },
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+            const titles = data.jobs.map((job: { title: string }) => job.title);
+
+            expect(response.status).toBe(200);
+            expect(titles).toEqual(["Accounting Analyst", "Finance Associate"]);
+            expect(titles).not.toContain("Flexible Workflow Flagship Analyst");
+        });
     });
 
     describe("new_applications", () => {
@@ -2083,6 +2169,35 @@ describe("POST /api/webhooks/n8n", () => {
                 }),
             });
         });
+
+        it("logs recovered tailor parse failures without marking the run failed", async () => {
+            vi.mocked(prisma.workflowError.create).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("workflow_error", {
+                workflowId: "job-discovery-pipeline-v3",
+                nodeName: "Parse Tailor Batch v3",
+                errorType: "TAILORING_PARSE_FAILURE",
+                message: "Could not parse tailoring payload",
+                payload: {
+                    runId: "disc_v3_recovered_tailor_parse",
+                    slotKey: "2026-04-30T20:46",
+                    triggerKind: "manual",
+                    schedulerSource: "manual_operator",
+                    fallbackToDiscovered: true,
+                },
+            });
+
+            const response = await POST(request);
+            expect(response.status).toBe(200);
+            expect(prisma.workflowError.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    workflowId: "job-discovery-pipeline-v3",
+                    nodeName: "Parse Tailor Batch v3",
+                    errorType: "TAILORING_PARSE_FAILURE",
+                }),
+            });
+            expect(prisma.discoveryScheduleRun.upsert).not.toHaveBeenCalled();
+        });
     });
 
     describe("discovery_run_status", () => {
@@ -2347,6 +2462,206 @@ describe("POST /api/webhooks/n8n", () => {
                             factualGuardBlockedCount: 0,
                             coverLetterQualityBlockedCount: 0,
                         }),
+                    }),
+                }),
+            });
+        });
+
+        it("reconciles usersProcessed across branch fragments when follow-up summary omits runId", async () => {
+            const firstBranchAttributions = [
+                ...Array.from({ length: 20 }, () => ({
+                    userId: "user_a",
+                    persistedStatus: "discovered",
+                })),
+                ...Array.from({ length: 24 }, () => ({
+                    userId: "user_b",
+                    persistedStatus: "tailored",
+                })),
+                ...Array.from({ length: 25 }, () => ({
+                    userId: "user_c",
+                    persistedStatus: "discovered",
+                })),
+                ...Array.from({ length: 16 }, () => ({
+                    userId: "user_d",
+                    persistedStatus: "discovered",
+                })),
+            ];
+            const secondBranchAttributions = [
+                ...firstBranchAttributions,
+                ...Array.from({ length: 12 }, () => ({
+                    userId: "user_e",
+                    persistedStatus: "discovered",
+                })),
+            ];
+
+            vi.mocked(prisma.applicationRunAttribution.findMany)
+                .mockResolvedValueOnce(firstBranchAttributions as any)
+                .mockResolvedValueOnce(secondBranchAttributions as any);
+            vi.mocked(prisma.workflowError.findMany)
+                .mockResolvedValueOnce([] as any)
+                .mockResolvedValueOnce([] as any);
+
+            vi.mocked(prisma.discoveryScheduleRun.findUnique)
+                .mockResolvedValueOnce({
+                    runId: "disc_v3_slot_2026_05_13T07_20_scheduled",
+                    usersSeen: 5,
+                    usersCanary: 5,
+                    usersProcessed: 0,
+                    usersFailed: 0,
+                    persistedApplications: 0,
+                    lockAcquired: true,
+                    lockReleased: false,
+                    status: "accepted",
+                    errorCode: null,
+                    errorMessage: null,
+                } as any)
+                .mockResolvedValueOnce({
+                    id: "ledger_branch_fragment",
+                    metadata: {},
+                } as any)
+                .mockResolvedValueOnce({
+                    id: "ledger_branch_fragment",
+                    metadata: {},
+                } as any);
+
+            vi.mocked(prisma.discoveryScheduleRun.findFirst).mockResolvedValue({
+                runId: "disc_v3_slot_2026_05_13T07_20_scheduled",
+                usersSeen: 5,
+                usersCanary: 5,
+                usersProcessed: 4,
+                usersFailed: 0,
+                persistedApplications: 85,
+                lockAcquired: true,
+                lockReleased: false,
+                status: "completed",
+                errorCode: null,
+                errorMessage: null,
+            } as any);
+
+            vi.mocked(prisma.discoveryScheduleRun.update)
+                .mockResolvedValueOnce({} as any)
+                .mockResolvedValueOnce({} as any);
+
+            const firstRequest = createWebhookRequest("discovery_run_status", {
+                runId: "disc_v3_slot_2026_05_13T07_20_scheduled",
+                slotKey: "2026-05-13T07:20",
+                triggerKind: "scheduled",
+                schedulerSource: "vercel_cron",
+                status: "completed",
+                usersSeen: 5,
+                usersCanary: 5,
+                usersProcessed: 4,
+                usersFailed: 0,
+                persistedApplications: 85,
+                lockAcquired: true,
+                lockReleased: false,
+            });
+
+            const firstResponse = await POST(firstRequest);
+            expect(firstResponse.status).toBe(200);
+
+            const secondRequest = createWebhookRequest("discovery_run_status", {
+                summary: {
+                    slotKey: "2026-05-13T07:20",
+                    triggerKind: "scheduled",
+                    schedulerSource: "vercel_cron",
+                    status: "completed",
+                    usersSeen: 5,
+                    usersCanary: 5,
+                    usersProcessed: 1,
+                    usersFailed: 0,
+                    persistedApplications: 12,
+                    lockAcquired: true,
+                    lockReleased: false,
+                },
+            });
+
+            const secondResponse = await POST(secondRequest);
+            const secondData = await secondResponse.json();
+
+            expect(secondResponse.status).toBe(200);
+            expect(secondData.ok).toBe(true);
+            expect(prisma.discoveryScheduleRun.findFirst).toHaveBeenCalledWith({
+                where: {
+                    slotKey: "2026-05-13T07:20",
+                    triggerKind: "scheduled",
+                },
+                orderBy: { requestedAt: "desc" },
+                select: expect.objectContaining({
+                    runId: true,
+                    usersProcessed: true,
+                    persistedApplications: true,
+                }),
+            });
+            expect(prisma.discoveryScheduleRun.update).toHaveBeenLastCalledWith({
+                where: { id: "ledger_branch_fragment" },
+                data: expect.objectContaining({
+                    usersProcessed: 5,
+                    persistedApplications: 97,
+                }),
+            });
+        });
+
+        it("converts recovered persisted warnings into completed run status", async () => {
+            vi.mocked(prisma.applicationRunAttribution.findMany).mockResolvedValue([
+                { persistedStatus: "discovered" },
+                { persistedStatus: "discovered" },
+            ] as any);
+            vi.mocked(prisma.workflowError.findMany).mockResolvedValue([] as any);
+            vi.mocked(prisma.discoveryScheduleRun.findUnique)
+                .mockResolvedValueOnce({
+                    usersSeen: 5,
+                    usersCanary: 5,
+                    usersProcessed: 5,
+                    usersFailed: 0,
+                    persistedApplications: 0,
+                    lockAcquired: true,
+                    lockReleased: true,
+                    status: "failed",
+                    errorCode: "TAILORING_PARSE_FAILURE",
+                    errorMessage: "Parse Tailor Batch v3:TAILORING_PARSE_FAILURE",
+                } as any)
+                .mockResolvedValueOnce({
+                    id: "ledger_recovered_warning",
+                    metadata: {},
+                } as any);
+            vi.mocked(prisma.discoveryScheduleRun.update).mockResolvedValue({} as any);
+
+            const request = createWebhookRequest("discovery_run_status", {
+                runId: "disc_v3_recovered_warning",
+                slotKey: "2026-04-30T20:46",
+                triggerKind: "manual",
+                schedulerSource: "manual_operator",
+                status: "completed_with_warnings",
+                usersSeen: 5,
+                usersCanary: 5,
+                usersProcessed: 5,
+                usersFailed: 0,
+                persistedApplications: 18,
+                lockAcquired: true,
+                lockReleased: true,
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.ok).toBe(true);
+            expect(prisma.discoveryScheduleRun.update).toHaveBeenCalledWith({
+                where: { id: "ledger_recovered_warning" },
+                data: expect.objectContaining({
+                    status: "completed",
+                    errorCode: null,
+                    errorMessage: null,
+                    persistedApplications: 18,
+                    metadata: expect.objectContaining({
+                        runWarnings: [
+                            expect.objectContaining({
+                                code: "TAILORING_PARSE_FAILURE",
+                                message: "Parse Tailor Batch v3:TAILORING_PARSE_FAILURE",
+                                status: "completed_with_warnings",
+                            }),
+                        ],
                     }),
                 }),
             });

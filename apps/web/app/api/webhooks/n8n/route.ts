@@ -386,10 +386,7 @@ async function deriveDiscoveryRunSummary(runId: string): Promise<DiscoveryRunDer
     const usersProcessed = new Set(
         safeAttributions
             .map((row) => row.userId)
-            .filter(
-                (userId): userId is string =>
-                    typeof userId === "string" && userId.trim().length > 0
-            )
+            .filter((userId): userId is string => typeof userId === "string" && userId.trim().length > 0)
     ).size;
     const factualGuardBlockedCount = safeWorkflowErrors.filter(
         (row) => row.errorType === FACTUAL_GUARD_BLOCKED_ERROR_TYPE
@@ -1043,6 +1040,87 @@ function normalizeForLocationMatch(value: string) {
         .toLowerCase();
 }
 
+const US_STATE_ABBREVIATIONS: Record<string, string> = {
+    al: "alabama",
+    ak: "alaska",
+    az: "arizona",
+    ar: "arkansas",
+    ca: "california",
+    co: "colorado",
+    ct: "connecticut",
+    de: "delaware",
+    fl: "florida",
+    ga: "georgia",
+    hi: "hawaii",
+    id: "idaho",
+    il: "illinois",
+    in: "indiana",
+    ia: "iowa",
+    ks: "kansas",
+    ky: "kentucky",
+    la: "louisiana",
+    me: "maine",
+    md: "maryland",
+    ma: "massachusetts",
+    mi: "michigan",
+    mn: "minnesota",
+    ms: "mississippi",
+    mo: "missouri",
+    mt: "montana",
+    ne: "nebraska",
+    nv: "nevada",
+    nh: "new hampshire",
+    nj: "new jersey",
+    nm: "new mexico",
+    ny: "new york",
+    nc: "north carolina",
+    nd: "north dakota",
+    oh: "ohio",
+    ok: "oklahoma",
+    or: "oregon",
+    pa: "pennsylvania",
+    ri: "rhode island",
+    sc: "south carolina",
+    sd: "south dakota",
+    tn: "tennessee",
+    tx: "texas",
+    ut: "utah",
+    vt: "vermont",
+    va: "virginia",
+    wa: "washington",
+    wv: "west virginia",
+    wi: "wisconsin",
+    wy: "wyoming",
+    dc: "district of columbia",
+};
+
+function containsLocationToken(haystack: string, needle: string) {
+    if (!needle) {
+        return false;
+    }
+
+    if (needle.length <= 3) {
+        const escapedNeedle = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return new RegExp(`(^|[^a-z0-9])${escapedNeedle}([^a-z0-9]|$)`).test(haystack);
+    }
+
+    return haystack.includes(needle);
+}
+
+function matchesLocationNeedle(haystack: string, needle: string) {
+    const normalizedNeedle = normalizeForLocationMatch(needle).trim();
+    const stateName = US_STATE_ABBREVIATIONS[normalizedNeedle];
+
+    if (stateName) {
+        return (
+            containsLocationToken(haystack, normalizedNeedle) ||
+            containsLocationToken(haystack, stateName)
+        );
+    }
+
+    return containsLocationToken(haystack, normalizedNeedle);
+}
+
 function matchesPreferredLocation(
     job: DiscoveryJob,
     locationNeedles: string[],
@@ -1055,7 +1133,9 @@ function matchesPreferredLocation(
     const haystack = normalizeForLocationMatch(
         `${job.location || ""} ${job.title || ""} ${job.description || ""}`
     );
-    const matchesLocation = locationNeedles.some((needle) => haystack.includes(needle));
+    const matchesLocation = locationNeedles.some((needle) =>
+        matchesLocationNeedle(haystack, needle)
+    );
     const mentionsRemote = /(remote|home office|work from home|hybrid|teletravail|hybride)/.test(
         haystack
     );
@@ -2892,6 +2972,7 @@ export async function POST(req: Request) {
                     },
                 });
 
+                let recoveredTailorParseWarning = false;
                 if (webhookData.workflowId.trim() === "job-discovery-pipeline-v3") {
                     const payload =
                         webhookData.payload &&
@@ -2916,28 +2997,45 @@ export async function POST(req: Request) {
                         typeof payload.schedulerSource === "string"
                             ? payload.schedulerSource
                             : "n8n_callback";
+                    recoveredTailorParseWarning =
+                        webhookData.errorType.trim() === "TAILORING_PARSE_FAILURE" &&
+                        payload.fallbackToDiscovered === true;
 
-                    await markDiscoveryRunFailed({
-                        runId: payloadRunId || runId,
-                        slotKey: payloadSlotKey,
-                        triggerKind: payloadTriggerKind,
-                        schedulerSource: payloadSource,
-                        errorCode: webhookData.errorType.trim(),
-                        errorMessage: webhookData.message.trim(),
-                    });
+                    if (!recoveredTailorParseWarning) {
+                        await markDiscoveryRunFailed({
+                            runId: payloadRunId || runId,
+                            slotKey: payloadSlotKey,
+                            triggerKind: payloadTriggerKind,
+                            schedulerSource: payloadSource,
+                            errorCode: webhookData.errorType.trim(),
+                            errorMessage: webhookData.message.trim(),
+                        });
+                    }
                 }
 
-                logPipelineEvent("error", "workflow_error_logged", {
-                    runId,
-                    workflowId: webhookData.workflowId.trim(),
-                    nodeName: webhookData.nodeName.trim(),
-                    errorType: webhookData.errorType.trim(),
-                });
+                logPipelineEvent(
+                    recoveredTailorParseWarning ? "warn" : "error",
+                    recoveredTailorParseWarning
+                        ? "workflow_warning_logged"
+                        : "workflow_error_logged",
+                    {
+                        runId,
+                        workflowId: webhookData.workflowId.trim(),
+                        nodeName: webhookData.nodeName.trim(),
+                        errorType: webhookData.errorType.trim(),
+                    }
+                );
 
                 return NextResponse.json({ message: "Error logged", runId });
             }
 
             case "discovery_run_status": {
+                const fallbackSummaryRunId =
+                    (typeof webhookData.runId === "string" &&
+                        webhookData.runId.trim()) ||
+                    (typeof headerRunId === "string" && headerRunId.trim()) ||
+                    bodyRunId ||
+                    null;
                 const summaryData: Record<string, unknown> =
                     webhookData.summary &&
                     typeof webhookData.summary === "object" &&
@@ -2946,8 +3044,7 @@ export async function POST(req: Request) {
                               ...(webhookData.summary as Record<string, unknown>),
                               runId:
                                   (webhookData.summary as Record<string, unknown>).runId ||
-                                  webhookData.runId ||
-                                  runId,
+                                  fallbackSummaryRunId,
                               slotKey:
                                   (webhookData.summary as Record<string, unknown>).slotKey ||
                                   webhookData.slotKey ||
@@ -2964,7 +3061,7 @@ export async function POST(req: Request) {
                               runId:
                                   (typeof webhookData.runId === "string" &&
                                       webhookData.runId.trim()) ||
-                                  runId,
+                                  fallbackSummaryRunId,
                               slotKey:
                                   (typeof webhookData.slotKey === "string" &&
                                       webhookData.slotKey.trim()) ||
@@ -2973,10 +3070,69 @@ export async function POST(req: Request) {
                                   null,
                           };
 
-                const summaryRunId =
+                let summaryRunId =
                     typeof summaryData.runId === "string" && summaryData.runId.trim()
                         ? summaryData.runId.trim()
                         : null;
+                const summarySlotKey =
+                    typeof summaryData.slotKey === "string" && summaryData.slotKey.trim()
+                        ? summaryData.slotKey.trim()
+                        : null;
+                const summaryTriggerKind =
+                    typeof summaryData.triggerKind === "string" &&
+                    summaryData.triggerKind.trim()
+                        ? summaryData.triggerKind.trim()
+                        : "scheduled";
+
+                let existingSummary = summaryRunId
+                    ? await prisma.discoveryScheduleRun.findUnique({
+                          where: { runId: summaryRunId },
+                          select: {
+                              runId: true,
+                              usersSeen: true,
+                              usersCanary: true,
+                              usersProcessed: true,
+                              usersFailed: true,
+                              persistedApplications: true,
+                              lockAcquired: true,
+                              lockReleased: true,
+                              status: true,
+                              errorCode: true,
+                              errorMessage: true,
+                          },
+                      })
+                    : summarySlotKey
+                      ? await prisma.discoveryScheduleRun.findFirst({
+                            where: {
+                                slotKey: summarySlotKey,
+                                triggerKind: summaryTriggerKind,
+                            },
+                            orderBy: { requestedAt: "desc" },
+                            select: {
+                                runId: true,
+                                usersSeen: true,
+                                usersCanary: true,
+                                usersProcessed: true,
+                                usersFailed: true,
+                                persistedApplications: true,
+                                lockAcquired: true,
+                                lockReleased: true,
+                                status: true,
+                                errorCode: true,
+                                errorMessage: true,
+                            },
+                        })
+                      : null;
+
+                if (
+                    !summaryRunId &&
+                    typeof existingSummary?.runId === "string" &&
+                    existingSummary.runId.trim()
+                ) {
+                    summaryRunId = existingSummary.runId.trim();
+                    summaryData.runId = summaryRunId;
+                }
+
                 if (
                     webhookRunContext.n8nExecutionId !== null &&
                     summaryData.n8nExecutionId === undefined &&
@@ -3015,53 +3171,6 @@ export async function POST(req: Request) {
                                   derivedSummary.persistedApplications
                               );
                 }
-                const summarySlotKey =
-                    typeof summaryData.slotKey === "string" && summaryData.slotKey.trim()
-                        ? summaryData.slotKey.trim()
-                        : null;
-                const summaryTriggerKind =
-                    typeof summaryData.triggerKind === "string" &&
-                    summaryData.triggerKind.trim()
-                        ? summaryData.triggerKind.trim()
-                        : "scheduled";
-
-                const existingSummary = summaryRunId
-                    ? await prisma.discoveryScheduleRun.findUnique({
-                          where: { runId: summaryRunId },
-                          select: {
-                              usersSeen: true,
-                              usersCanary: true,
-                              usersProcessed: true,
-                              usersFailed: true,
-                              persistedApplications: true,
-                              lockAcquired: true,
-                              lockReleased: true,
-                              status: true,
-                              errorCode: true,
-                              errorMessage: true,
-                          },
-                      })
-                    : summarySlotKey
-                      ? await prisma.discoveryScheduleRun.findFirst({
-                            where: {
-                                slotKey: summarySlotKey,
-                                triggerKind: summaryTriggerKind,
-                            },
-                            orderBy: { requestedAt: "desc" },
-                            select: {
-                                usersSeen: true,
-                                usersCanary: true,
-                                usersProcessed: true,
-                                usersFailed: true,
-                                persistedApplications: true,
-                                lockAcquired: true,
-                                lockReleased: true,
-                                status: true,
-                                errorCode: true,
-                                errorMessage: true,
-                            },
-                        })
-                      : null;
 
                 const numericFields = [
                     "usersSeen",

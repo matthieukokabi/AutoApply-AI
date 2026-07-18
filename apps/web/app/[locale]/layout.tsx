@@ -1,9 +1,25 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { AnalyticsConsentGate } from "@/components/analytics-consent-gate";
+import { AnalyticsSessionEvents } from "@/components/analytics-session-events";
+import { CookieConsent } from "@/components/cookie-consent";
+import { ThemeProvider } from "@/components/theme-provider";
 import { locales, type Locale } from "@/i18n/config";
 import { buildCanonicalOgParity } from "@/lib/seo";
+import { getAppBaseUrl, toAbsoluteAppUrl } from "@/lib/site-url";
+import "../globals.css";
+
+const inter = Inter({
+    subsets: ["latin"],
+    display: "swap",
+});
+const appBaseUrl = getAppBaseUrl();
+const defaultOpenGraphImage = toAbsoluteAppUrl("/opengraph-image");
+const defaultTwitterImage = toAbsoluteAppUrl("/twitter-image");
+const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
 
 const seoByLocale: Record<string, { title: string; description: string; keywords: string[] }> = {
     en: {
@@ -47,9 +63,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     const parity = buildCanonicalOgParity(locale, "/");
 
     return {
-        title: seo.title,
+        title: {
+            default: seo.title,
+            template: "%s | AutoApply AI",
+        },
         description: seo.description,
         keywords: seo.keywords,
+        metadataBase: new URL(appBaseUrl),
         alternates: parity.alternates,
         openGraph: {
             ...parity.openGraph,
@@ -57,7 +77,30 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
             description: seo.description,
             locale: locale,
             alternateLocale: locales.filter((l) => l !== locale),
+            images: [
+                {
+                    url: defaultOpenGraphImage,
+                    width: 1200,
+                    height: 630,
+                    alt: "AutoApply AI — Tailor Your Resume & Cover Letter to Every Job with AI",
+                },
+            ],
         },
+        twitter: {
+            card: "summary_large_image",
+            site: "@autoapplyai",
+            creator: "@autoapplyai",
+            title: seo.title,
+            description: seo.description,
+            images: [defaultTwitterImage],
+        },
+        robots: {
+            index: true,
+            follow: true,
+        },
+        ...(googleSiteVerification
+            ? { verification: { google: googleSiteVerification } }
+            : {}),
     };
 }
 
@@ -74,11 +117,27 @@ export default async function LocaleLayout({
         notFound();
     }
 
+    setRequestLocale(locale);
     const messages = await getMessages();
 
     return (
-        <NextIntlClientProvider messages={messages}>
-            {children}
-        </NextIntlClientProvider>
+        <html lang={locale} suppressHydrationWarning>
+            <head />
+            <body className={inter.className}>
+                <AnalyticsConsentGate />
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <NextIntlClientProvider messages={messages}>
+                        <AnalyticsSessionEvents />
+                        {children}
+                        <CookieConsent />
+                    </NextIntlClientProvider>
+                </ThemeProvider>
+            </body>
+        </html>
     );
 }

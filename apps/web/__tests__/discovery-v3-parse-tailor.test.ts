@@ -77,7 +77,7 @@ describe("job discovery v3 Parse Tailor node", () => {
         expect(result.json.applicationsFinal[0].status).toBe("tailored");
     });
 
-    it("fails closed on malformed mid-body JSON", () => {
+    it("falls back to discovered applications on malformed mid-body JSON", () => {
         const malformedMidBody = '[{"idx":0,"tailored_cv_markdown":"x",,"motivation_letter_markdown":"y"}]';
 
         const result = runParseTailorNode(basePrev, {
@@ -86,5 +86,37 @@ describe("job discovery v3 Parse Tailor node", () => {
 
         expect(result.json.tailorParseOk).toBe(false);
         expect(result.json.tailorReasonCode).toBe("TAILORING_PARSE_FAILURE");
+        expect(result.json.tailorParseFallbackToDiscovered).toBe(true);
+        expect(result.json.applicationsFinal).toHaveLength(1);
+        expect(result.json.applicationsFinal[0]).toMatchObject({
+            status: "discovered",
+            tailoredCvMarkdown: null,
+            coverLetterMarkdown: null,
+        });
+    });
+
+    it("classifies truncated JSON as parse failure without destroying base opportunities", () => {
+        const truncatedText =
+            '[{"idx":0,"tailored_cv_markdown":"# Tailored CV","motivation_letter_markdown":"Cover';
+
+        const result = runParseTailorNode(basePrev, {
+            stop_reason: "max_tokens",
+            content: [{ text: truncatedText }],
+        });
+
+        expect(result.json.tailorParseOk).toBe(false);
+        expect(result.json.tailorReasonCode).toBe("TAILORING_PARSE_FAILURE");
+        expect(result.json.tailorParseMeta).toMatchObject({
+            stopReason: "max_tokens",
+            textLength: truncatedText.length,
+        });
+        expect(result.json.applicationsFinal).toEqual([
+            expect.objectContaining({
+                externalId: "job-1",
+                status: "discovered",
+                tailoredCvMarkdown: null,
+                coverLetterMarkdown: null,
+            }),
+        ]);
     });
 });

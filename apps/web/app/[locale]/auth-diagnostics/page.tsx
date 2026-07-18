@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
 
 type DiagnosticsPayload = {
     generatedAt: string;
@@ -31,6 +32,8 @@ type DiagnosticsPayload = {
 
 export default function AuthDiagnosticsPage() {
     const t = useTranslations("authDiagnostics");
+    const params = useParams<{ locale: string }>();
+    const locale = params.locale;
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<DiagnosticsPayload | null>(null);
@@ -144,12 +147,12 @@ export default function AuthDiagnosticsPage() {
 
             <div className="mt-8 flex flex-wrap gap-2">
                 <Button onClick={() => window.location.reload()}>{t("actions.runAgain")}</Button>
-                <Link href="/sign-in">
-                    <Button variant="outline">{t("actions.backToSignIn")}</Button>
-                </Link>
-                <Link href="/sign-up">
-                    <Button variant="outline">{t("actions.backToSignUp")}</Button>
-                </Link>
+                <Button asChild variant="outline">
+                    <Link href="/sign-in" locale={locale}>{t("actions.backToSignIn")}</Link>
+                </Button>
+                <Button asChild variant="outline">
+                    <Link href="/sign-up" locale={locale}>{t("actions.backToSignUp")}</Link>
+                </Button>
             </div>
         </main>
     );

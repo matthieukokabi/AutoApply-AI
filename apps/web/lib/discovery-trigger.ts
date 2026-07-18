@@ -322,29 +322,81 @@ function buildMetadataForSummary(
         }
     }
 
-    if (Object.keys(mergedRunMetrics).length === 0) {
+    const warningCode = toStringOrNull(summaryInput.reasonCode);
+    const warningMessage = toStringOrNull(summaryInput.reason);
+    const warningStatus = toStringOrNull(summaryInput.status);
+    const persistedApplications = safeNumber(summaryInput.persistedApplications, 0);
+    const warningOnly =
+        persistedApplications > 0 &&
+        Boolean(
+            warningCode ||
+                warningMessage ||
+                warningStatus === "completed_with_user_errors" ||
+                warningStatus === "completed_with_warnings"
+        );
+
+    if (Object.keys(mergedRunMetrics).length === 0 && !warningOnly) {
         return undefined;
     }
 
-    return {
+    const metadata = {
         ...existingMetadataObject,
-        runMetrics: mergedRunMetrics,
-        metricsUpdatedAt: now.toISOString(),
+        ...(Object.keys(mergedRunMetrics).length > 0
+            ? {
+                  runMetrics: mergedRunMetrics,
+                  metricsUpdatedAt: now.toISOString(),
+              }
+            : {}),
     } as Prisma.InputJsonValue;
+
+    if (warningOnly && metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
+        const metadataRecord = metadata as Record<string, unknown>;
+        const existingWarnings = Array.isArray(metadataRecord.runWarnings)
+            ? metadataRecord.runWarnings.filter(
+                  (item): item is Record<string, unknown> =>
+                      Boolean(item) && typeof item === "object" && !Array.isArray(item)
+              )
+            : [];
+        const nextWarning = {
+            code: warningCode || warningStatus || "completed_with_warnings",
+            message: warningMessage || "Run completed with recovered warnings.",
+            status: warningStatus || null,
+            recordedAt: now.toISOString(),
+        };
+        const warningKey = `${nextWarning.code}:${nextWarning.message}`;
+        const dedupedWarnings = existingWarnings.filter(
+            (item) => `${String(item.code || "")}:${String(item.message || "")}` !== warningKey
+        );
+        metadataRecord.runWarnings = [...dedupedWarnings, nextWarning].slice(-10);
+        metadataRecord.lastWarningAt = now.toISOString();
+    }
+
+    return metadata;
 }
 
 function resolveLedgerStatus(summary: DiscoveryRunSummary) {
     const status = toStringOrNull(summary.status);
     const reason = toStringOrNull(summary.reason);
     const reasonCode = toStringOrNull(summary.reasonCode);
+    const persistedApplications = safeNumber(summary.persistedApplications, 0);
 
     if (status === "skipped_lock_not_acquired" || reason === "lock_not_acquired") {
         return "lock_skipped";
     }
 
+    if (persistedApplications > 0) {
+        return "completed";
+    }
+
+    if (status === "completed" || status === "ok") {
+        return "completed";
+    }
+
     if (
         status === "failed" ||
         status === "error" ||
+        status === "completed_with_user_errors" ||
+        status === "completed_with_warnings" ||
         reasonCode ||
         (reason && reason !== "lock_not_acquired")
     ) {
@@ -371,8 +423,10 @@ export async function updateDiscoveryRunSummary(summaryInput: DiscoveryRunSummar
     const persistedApplications = safeNumber(summaryInput.persistedApplications, 0);
     const lockAcquired = toOptionalBoolean(summaryInput.lockAcquired);
     const lockReleased = toOptionalBoolean(summaryInput.lockReleased);
-    const errorCode = toStringOrNull(summaryInput.reasonCode);
-    const errorMessage = toStringOrNull(summaryInput.reason);
+    const errorCode =
+        status === "failed" ? toStringOrNull(summaryInput.reasonCode) : null;
+    const errorMessage =
+        status === "failed" ? toStringOrNull(summaryInput.reason) : null;
     const now = new Date();
     const commonUpdateData: Prisma.DiscoveryScheduleRunUpdateInput = {
         status,

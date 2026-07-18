@@ -11,6 +11,8 @@ describe("discovery run ledger audit helpers", () => {
         expect(defaults.workflowId).toBe("job-discovery-pipeline-v3");
         expect(defaults.runId).toBeNull();
         expect(defaults.jsonOnly).toBe(false);
+        expect(defaults.lowProcessedSeenRatioThreshold).toBe(0.35);
+        expect(defaults.lowProcessedSeenRatioStreak).toBe(3);
 
         const parsed = audit.parseArgs([
             "--count",
@@ -29,6 +31,10 @@ describe("discovery run ledger audit helpers", () => {
             "0.75",
             "--min-runs-for-spike",
             "4",
+            "--low-processed-seen-ratio-threshold",
+            "0.4",
+            "--low-processed-seen-ratio-streak",
+            "2",
         ]);
 
         expect(parsed.count).toBe(1);
@@ -40,6 +46,8 @@ describe("discovery run ledger audit helpers", () => {
         expect(parsed.zeroTailoredStreakThreshold).toBe(3);
         expect(parsed.blockRateSpikeThreshold).toBe(0.75);
         expect(parsed.minRunsForSpike).toBe(4);
+        expect(parsed.lowProcessedSeenRatioThreshold).toBe(0.4);
+        expect(parsed.lowProcessedSeenRatioStreak).toBe(2);
     });
 
     it("extracts run metrics safely from metadata", () => {
@@ -82,6 +90,8 @@ describe("discovery run ledger audit helpers", () => {
                 requestedAt: "2026-04-13T09:00:00.000Z",
                 startedAt: "2026-04-13T09:00:01.000Z",
                 finishedAt: "2026-04-13T09:03:00.000Z",
+                usersSeen: 5,
+                usersCanary: 1,
                 usersProcessed: 1,
                 persistedApplications: 1,
                 errorCode: null,
@@ -106,6 +116,8 @@ describe("discovery run ledger audit helpers", () => {
                 requestedAt: "2026-04-13T05:00:00.000Z",
                 startedAt: "2026-04-13T05:00:01.000Z",
                 finishedAt: "2026-04-13T05:02:00.000Z",
+                usersSeen: 5,
+                usersCanary: 1,
                 usersProcessed: 1,
                 persistedApplications: 1,
                 errorCode: null,
@@ -130,6 +142,8 @@ describe("discovery run ledger audit helpers", () => {
                 requestedAt: "2026-04-13T01:00:00.000Z",
                 startedAt: "2026-04-13T01:00:01.000Z",
                 finishedAt: "2026-04-13T01:01:00.000Z",
+                usersSeen: 0,
+                usersCanary: 0,
                 usersProcessed: 0,
                 persistedApplications: 0,
                 errorCode: "N8N_EXECUTION_FAILED",
@@ -142,6 +156,8 @@ describe("discovery run ledger audit helpers", () => {
             zeroTailoredStreakThreshold: 2,
             blockRateSpikeThreshold: 0.5,
             minRunsForSpike: 2,
+            lowProcessedSeenRatioThreshold: 0.4,
+            lowProcessedSeenRatioStreak: 2,
         });
 
         expect(summary.totalRunsInspected).toBe(3);
@@ -150,6 +166,7 @@ describe("discovery run ledger audit helpers", () => {
         expect(summary.runsWithZeroTailoredOutputs).toBe(2);
         expect(summary.runsWithFactualGuardBlocks).toBe(1);
         expect(summary.runsWithCoverLetterQualityBlocks).toBe(1);
+        expect(summary.runsWithLowProcessedSeenRatio).toBe(2);
         expect(summary.runsMissingExpectedSummaryFields).toBe(0);
         expect(summary.latestRunStatus).toBe("completed");
 
@@ -158,6 +175,7 @@ describe("discovery run ledger audit helpers", () => {
         );
         expect(anomalyCodes.has("failed_runs_present")).toBe(true);
         expect(anomalyCodes.has("repeated_zero_tailored_runs")).toBe(true);
+        expect(anomalyCodes.has("repeated_low_processed_seen_ratio")).toBe(true);
         expect(anomalyCodes.has("factual_guard_block_rate_spike")).toBe(true);
         expect(anomalyCodes.has("cover_letter_block_rate_spike")).toBe(true);
     });
