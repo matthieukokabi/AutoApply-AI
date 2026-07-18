@@ -61,8 +61,8 @@ const CONTENT_SECURITY_POLICY = [
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https:",
     "connect-src 'self' https: wss:",
-    "frame-src 'self' https:",
-    "form-action 'self' https:",
+    "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
+    "form-action 'self' https://checkout.stripe.com",
     "worker-src 'self' blob:",
     "upgrade-insecure-requests",
 ]

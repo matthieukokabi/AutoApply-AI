@@ -85,6 +85,14 @@ describe("next config CSP analytics hashes", () => {
         expect(enforcedCsp).not.toMatch(/script-src[^;]*\shttps:\s*(?:;|$)/);
         expect(enforcedCsp).toContain("https://clerk.autoapply.works");
         expect(enforcedCsp).toContain("https://www.googletagmanager.com");
+        expect(enforcedCsp).toContain(
+            "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com"
+        );
+        expect(enforcedCsp).toContain(
+            "form-action 'self' https://checkout.stripe.com"
+        );
+        expect(enforcedCsp).not.toMatch(/frame-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).not.toMatch(/form-action[^;]*\shttps:\s*(?:;|$)/);
         expect(reportOnlyCsp).toContain("sha256-");
     });
 
