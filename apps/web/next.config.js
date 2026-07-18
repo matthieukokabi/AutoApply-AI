@@ -36,7 +36,11 @@ const analyticsInlineScriptHashes = getAnalyticsInlineScriptHashes();
 const ENFORCED_SCRIPT_SRC = [
     "'self'",
     "'unsafe-inline'",
-    "https:",
+    "https://www.googletagmanager.com",
+    "https://www.google-analytics.com",
+    "https://challenges.cloudflare.com",
+    "https://clerk.autoapply.works",
+    "https://js.stripe.com",
 ].join(" ");
 const STRICT_REPORT_ONLY_SCRIPT_SRC = [
     "'self'",

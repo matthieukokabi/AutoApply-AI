@@ -82,6 +82,9 @@ describe("next config CSP analytics hashes", () => {
         expect(reportOnlyCsp).toContain("script-src");
         expect(enforcedCsp).toContain("'unsafe-inline'");
         expect(enforcedCsp).not.toContain("sha256-");
+        expect(enforcedCsp).not.toMatch(/script-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain("https://clerk.autoapply.works");
+        expect(enforcedCsp).toContain("https://www.googletagmanager.com");
         expect(reportOnlyCsp).toContain("sha256-");
     });
 
@@ -96,6 +99,9 @@ describe("next config CSP analytics hashes", () => {
         expect(reportOnlyCsp).toContain("script-src");
         expect(enforcedCsp).toContain("'unsafe-inline'");
         expect(enforcedCsp).not.toContain("sha256-");
+        expect(enforcedCsp).not.toMatch(/script-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain("https://clerk.autoapply.works");
+        expect(enforcedCsp).toContain("https://www.google-analytics.com");
         expect(reportOnlyCsp).toContain("sha256-");
     });
 });

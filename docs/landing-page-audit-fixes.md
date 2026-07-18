@@ -16,5 +16,6 @@
 - [x] Make auth-diagnostics recovery controls semantic, locale-bound links to Clerk sign-in and sign-up — completed 2026-07-18.
 - [x] Keep protected-route Clerk fallbacks and first-login onboarding in the requested locale — completed 2026-07-18.
 - [x] Bind the locale root before loading next-intl messages so public and campaign routes remain statically cacheable — completed 2026-07-18.
+- [x] Restrict enforced script execution to the app plus audited Clerk, analytics, Cloudflare, and Stripe origins — completed 2026-07-18.
 - [ ] Correct remaining localized-link and auth metadata inconsistencies.
 - [ ] Improve public-route caching and tighten the enforced content security policy.
