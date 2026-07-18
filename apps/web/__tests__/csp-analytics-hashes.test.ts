@@ -93,6 +93,11 @@ describe("next config CSP analytics hashes", () => {
         );
         expect(enforcedCsp).not.toMatch(/frame-src[^;]*\shttps:\s*(?:;|$)/);
         expect(enforcedCsp).not.toMatch(/form-action[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain(
+            "connect-src 'self' https://api.clerk.com https://clerk.autoapply.works https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://checkout.stripe.com https://api.stripe.com"
+        );
+        expect(enforcedCsp).not.toMatch(/connect-src[^;]*\shttps:\s*(?:;|$)/);
+        expect(enforcedCsp).not.toMatch(/connect-src[^;]*\swss:\s*(?:;|$)/);
         expect(reportOnlyCsp).toContain("sha256-");
     });
 
