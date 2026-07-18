@@ -19,5 +19,6 @@
 - [x] Restrict enforced script execution to the app plus audited Clerk, analytics, Cloudflare, and Stripe origins — completed 2026-07-18.
 - [x] Restrict embedded frames and form submissions to audited Turnstile and Stripe destinations — completed 2026-07-18.
 - [x] Restrict browser connections to audited Clerk, analytics, and Stripe API destinations — completed 2026-07-18.
+- [x] Restrict external stylesheets to same-origin and Google Fonts while retaining required Clerk/Next inline styles — completed 2026-07-18.
 - [ ] Correct remaining localized-link and auth metadata inconsistencies.
 - [ ] Improve public-route caching and tighten the enforced content security policy.

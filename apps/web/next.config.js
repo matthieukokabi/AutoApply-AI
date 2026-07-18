@@ -57,7 +57,7 @@ const CONTENT_SECURITY_POLICY = [
     "object-src 'none'",
     "frame-ancestors 'none'",
     `script-src ${ENFORCED_SCRIPT_SRC}`,
-    "style-src 'self' 'unsafe-inline' https:",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https:",
     "connect-src 'self' https://api.clerk.com https://clerk.autoapply.works https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://checkout.stripe.com https://api.stripe.com",

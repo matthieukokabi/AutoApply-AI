@@ -98,6 +98,10 @@ describe("next config CSP analytics hashes", () => {
         );
         expect(enforcedCsp).not.toMatch(/connect-src[^;]*\shttps:\s*(?:;|$)/);
         expect(enforcedCsp).not.toMatch(/connect-src[^;]*\swss:\s*(?:;|$)/);
+        expect(enforcedCsp).toContain(
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
+        );
+        expect(enforcedCsp).not.toMatch(/style-src[^;]*\shttps:\s*(?:;|$)/);
         expect(reportOnlyCsp).toContain("sha256-");
     });
 
