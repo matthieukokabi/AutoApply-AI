@@ -1,9 +1,10 @@
 # AutoApply AI — Production TODO
 
-Last updated: 2026-07-18 (Europe/Zurich)
+Last updated: 2026-07-26 (Europe/Zurich)
 
 ## P0 — Protected Path Gate 0 (runway hardening)
 
+- [x] Close the account-erasure billing gap exposed by the Mike support incident: make authenticated deletion resolve both linked and orphaned exact-email Stripe customers, cancel every non-terminal subscription without proration, delete Stripe customer/payment references, delete the Clerk identity before cascading application-data deletion, stop safely on external failures, and return traceable request IDs; add regression coverage for orphaned billing, duplicate-customer deduplication, terminal subscriptions, and failure ordering; refresh Next.js/PostCSS/Sharp/brace-expansion security baseline to zero known vulnerabilities and verify 455-test suite, lint, and 161-page production build — completed on 2026-07-26
 - [x] Make Lighthouse regression enforcement deterministic without relaxing budgets: aggregate successful route measurements by per-metric median, require three successful CI samples per route, expose aggregation provenance/sample counts, and add regression coverage proving one noisy last sample cannot decide the gate; verify exact two-route CI audit (landing median LCP 625 ms, sign-up 814 ms), zero-vulnerability audit, 452-test suite, lint, and 161-page build — completed on 2026-07-18
 - [x] Prevent recovered tailoring parse failures from double-counting discovery summaries: keep the tailor workflow-error callback terminal while routing recovery persistence through the sole finalization/aggregation path, add graph-level regression coverage excluding the callback from finalizer sources, and verify 16 targeted workflow tests, zero-vulnerability audit, 451-test suite, lint, and 161-page production build — completed on 2026-07-18
 - [x] Restore environment-safe performance CI baselining for PR #11: remove the accidentally tracked machine-specific July 18 budget output that made GitHub compare runner LCP against a non-comparable local sample, preserve all absolute and relative thresholds, and verify the exact two-route CI audit plus zero-vulnerability audit, 451-test suite, lint, and 161-page production build — completed on 2026-07-18

@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 const mockClerkUsers = {
     createUser: vi.fn(),
+    deleteUser: vi.fn(),
     getUserList: vi.fn(),
     verifyPassword: vi.fn(),
 };
@@ -230,9 +231,12 @@ vi.mock("@/lib/stripe", () => ({
             constructEvent: vi.fn(),
         },
         subscriptions: {
+            cancel: vi.fn(),
+            list: vi.fn(),
             retrieve: vi.fn(),
         },
         customers: {
+            del: vi.fn(),
             retrieve: vi.fn(),
             list: vi.fn(),
         },
