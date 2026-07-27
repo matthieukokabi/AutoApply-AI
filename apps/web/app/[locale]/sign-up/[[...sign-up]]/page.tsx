@@ -225,6 +225,7 @@ export default function SignUpPage() {
 
                 {shouldShowLoadingCard ? (
                     <div
+                        data-auth-loading-card="sign-up"
                         className={`${AUTH_WIDGET_SHELL_CLASS} rounded-xl border border-slate-200 bg-white/80 p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/80 flex flex-col items-center justify-center`}
                     >
                         <p className="text-sm text-slate-600 dark:text-slate-400">

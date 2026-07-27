@@ -61,7 +61,10 @@ export function AuthRecoveryCard({
     const isSignInMode = mode === "sign-in";
 
     return (
-        <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-6 text-center shadow-sm dark:border-amber-800 dark:bg-amber-950/30">
+        <div
+            data-auth-recovery-card={mode}
+            className="rounded-xl border border-amber-300 bg-amber-50/90 p-6 text-center shadow-sm dark:border-amber-800 dark:bg-amber-950/30"
+        >
             <div className="mb-3 flex justify-center">
                 <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
@@ -110,6 +113,7 @@ export function AuthRecoveryCard({
                     <Button
                         type="button"
                         variant="secondary"
+                        data-auth-recovery-action="diagnostics"
                         className="w-full"
                         onClick={() => {
                             window.location.href = diagnosticsUrl;

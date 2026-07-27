@@ -114,11 +114,9 @@ for locale in $LOCALES; do
           hasOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
           hasUnauthorizedText: text.includes('unauthorized'),
           hasRecoveryCard:
-            text.includes('auth_init_blocked') ||
-            text.includes('secure sign-up is currently blocked'),
+            Boolean(document.querySelector('[data-auth-recovery-card=\"sign-up\"]')),
           hasDiagnosticsAction:
-            text.includes('run auth diagnostics') ||
-            text.includes('open diagnostics')
+            Boolean(document.querySelector('[data-auth-recovery-action=\"diagnostics\"]'))
         };
       }")"; then
         status="fail"
