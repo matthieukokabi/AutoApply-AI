@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type MouseEvent } from "react";
+import React, { useState, type MouseEvent } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -12,6 +12,7 @@ import {
     getLocalizedPathForRoute,
     isAbortError,
     isUnauthorizedCheckoutError,
+    shouldRedirectToAuthBeforeCheckout,
     type CheckoutPlan,
 } from "@/lib/checkout-intent";
 import { trackBeginCheckout } from "@/lib/analytics";
@@ -96,11 +97,22 @@ export function CheckoutButton({
     }
 
     function handleAnchorCheckout(event: MouseEvent<HTMLAnchorElement>) {
-        event.preventDefault();
         if (loading) {
+            event.preventDefault();
             return;
         }
 
+        const shouldUseAuthFallback = shouldRedirectToAuthBeforeCheckout(
+            false,
+            null,
+            document.cookie
+        );
+        if (shouldUseAuthFallback) {
+            trackBeginCheckout(plan, "landing_pricing");
+            return;
+        }
+
+        event.preventDefault();
         void handleCheckout();
     }
 
@@ -111,10 +123,7 @@ export function CheckoutButton({
                     <a
                         href={fallbackHref}
                         onClick={handleAnchorCheckout}
-                        aria-disabled={loading}
-                        className={loading ? "pointer-events-none opacity-50" : undefined}
                     >
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                         {children}
                     </a>
                 </Button>
