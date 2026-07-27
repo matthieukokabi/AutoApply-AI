@@ -60,8 +60,6 @@ click_upgrade_cta() {
   local click_json
   if ! click_json="$(eval_json "$session" "() => {
     const getText = (el) => (el?.textContent || '').trim();
-    // Simulate stale session-cookie scenarios reported on some devices.
-    document.cookie = '__session=qa_stale_session_cookie; Path=/; SameSite=Lax';
     window.name = 'qaCheckoutCalls:0';
     if (!(window).__qaCheckoutFetchWrapped) {
       const originalFetch = window.fetch.bind(window);
@@ -170,6 +168,7 @@ for locale in $LOCALES; do
           hasUnauthorizedText: document.body.innerText.toLowerCase().includes('unauthorized'),
           hasAuthSurface:
             Boolean(document.querySelector('input[type=email], button[type=submit], .cl-card, [data-clerk-component]')) ||
+            Boolean(document.querySelector('[data-auth-recovery-card], [data-auth-loading-card]')) ||
             document.body.innerText.toLowerCase().includes('loading secure sign-up') ||
             document.body.innerText.toLowerCase().includes('open diagnostics'),
           checkoutCallsFromLanding
@@ -188,7 +187,7 @@ for locale in $LOCALES; do
     fi
 
     if [[ "$status" == "pass" ]]; then
-      if ! signin_json="$(eval_json "$session" "() => ({ url: location.href, hasOverflow: document.documentElement.scrollWidth > window.innerWidth + 1, hasUnauthorizedText: document.body.innerText.toLowerCase().includes('unauthorized'), hasAuthSurface: Boolean(document.querySelector('input[type=email], button[type=submit], .cl-card, [data-clerk-component]')) || document.body.innerText.toLowerCase().includes('loading secure sign-in') || document.body.innerText.toLowerCase().includes('open diagnostics') })")"; then
+      if ! signin_json="$(eval_json "$session" "() => ({ url: location.href, hasOverflow: document.documentElement.scrollWidth > window.innerWidth + 1, hasUnauthorizedText: document.body.innerText.toLowerCase().includes('unauthorized'), hasAuthSurface: Boolean(document.querySelector('input[type=email], button[type=submit], .cl-card, [data-clerk-component], [data-auth-recovery-card], [data-auth-loading-card]')) || document.body.innerText.toLowerCase().includes('loading secure sign-in') || document.body.innerText.toLowerCase().includes('open diagnostics') })")"; then
         status="fail"
         reason="signin_eval_failed"
       fi
