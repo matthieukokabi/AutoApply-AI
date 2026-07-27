@@ -109,7 +109,7 @@ for (const locale of locales) {
                         hasAuthSurface:
                             Boolean(
                                 document.querySelector(
-                                    "input[type=email], button[type=submit], .cl-card, [data-clerk-component]"
+                                    "input[type=email], button[type=submit], .cl-card, [data-clerk-component], [data-auth-recovery-card], [data-auth-loading-card]"
                                 )
                             ) ||
                             bodyText.includes("loading secure sign-up") ||
@@ -190,11 +190,11 @@ for (const locale of locales) {
                             document.documentElement.scrollWidth > window.innerWidth + 1,
                         hasUnauthorizedText: bodyText.includes("unauthorized"),
                         hasRecoverySurface:
-                            bodyText.includes("secure sign-up is currently blocked") ||
-                            bodyText.includes("open diagnostics") ||
-                            bodyText.includes("run auth diagnostics") ||
-                            bodyText.includes("go to sign in") ||
-                            bodyText.includes("loading secure sign-up"),
+                            Boolean(
+                                document.querySelector(
+                                    '[data-auth-recovery-card="sign-up"], [data-auth-loading-card="sign-up"]'
+                                )
+                            ),
                     };
                 });
 
