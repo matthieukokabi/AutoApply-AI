@@ -4,6 +4,7 @@ import { useRef, useState, useCallback } from "react";
 import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { Camera, X, User } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getPhotoUploadValidationError } from "@/lib/photo-upload";
 
 interface PhotoUploadProps {
@@ -16,6 +17,7 @@ interface PhotoUploadProps {
  * Outputs base64 data URL, typically 20-40KB for a 200x200 headshot.
  */
 export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
+    const t = useTranslations("dashboard.profilePage.structuredCard.cvPhoto");
     const inputRef = useRef<HTMLInputElement>(null);
     const [processing, setProcessing] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
 
             const validationError = getPhotoUploadValidationError(file);
             if (validationError) {
-                setErrorMessage(validationError);
+                setErrorMessage(t(validationError));
                 if (inputRef.current) inputRef.current.value = "";
                 return;
             }
@@ -40,14 +42,14 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
                 onChange(base64);
             } catch (err) {
                 console.error("Photo processing failed:", err);
-                setErrorMessage("Failed to process image. Please try a different file.");
+                setErrorMessage(t("processingFailed"));
             } finally {
                 setProcessing(false);
                 // Reset input so same file can be re-selected
                 if (inputRef.current) inputRef.current.value = "";
             }
         },
-        [onChange]
+        [onChange, t]
     );
 
     return (
@@ -86,10 +88,10 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
                     disabled={processing}
                 >
                     {processing
-                        ? "Processing..."
+                        ? t("processing")
                         : value
-                          ? "Change photo"
-                          : "Upload photo"}
+                          ? t("change")
+                          : t("upload")}
                 </Button>
                 {value && (
                     <Button
@@ -103,11 +105,11 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
                         }}
                     >
                         <X className="w-3 h-3 mr-1" />
-                        Remove
+                        {t("remove")}
                     </Button>
                 )}
                 <p className="text-xs text-muted-foreground">
-                    Recommended for Swiss CVs. Max 5MB.
+                    {t("recommendation")}
                 </p>
                 {errorMessage ? (
                     <p role="alert" className="text-xs text-destructive">

@@ -349,7 +349,15 @@
                 "description": "Review and edit the AI-parsed sections of your CV. This structured data powers compatibility scoring and tailoring.",
                 "cvPhoto": {
                     "title": "CV Photo",
-                    "description": "Standard for Swiss and European CVs. Your photo will appear on tailored CVs."
+                    "description": "Standard for Swiss and European CVs. Your photo will appear on tailored CVs.",
+                    "upload": "Upload photo",
+                    "change": "Change photo",
+                    "remove": "Remove",
+                    "processing": "Processing...",
+                    "processingFailed": "Failed to process image. Please try a different file.",
+                    "invalidFileType": "Please select an image file.",
+                    "fileTooLarge": "Image must be under 5MB.",
+                    "recommendation": "Recommended for Swiss CVs. Max 5MB."
                 },
                 "contact": {
                     "title": "Contact Information",

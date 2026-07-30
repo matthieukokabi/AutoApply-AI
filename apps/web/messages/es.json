@@ -349,7 +349,15 @@
                 "description": "Revisa y edita las secciones de tu CV analizadas por la IA. Estos datos estructurados impulsan la puntuación y el tailoring.",
                 "cvPhoto": {
                     "title": "Foto del CV",
-                    "description": "Estándar en CV suizos y europeos. Tu foto aparecerá en los CV personalizados."
+                    "description": "Estándar en CV suizos y europeos. Tu foto aparecerá en los CV personalizados.",
+                    "upload": "Subir foto",
+                    "change": "Cambiar foto",
+                    "remove": "Eliminar",
+                    "processing": "Procesando...",
+                    "processingFailed": "No se pudo procesar la imagen. Prueba con otro archivo.",
+                    "invalidFileType": "Selecciona un archivo de imagen.",
+                    "fileTooLarge": "La imagen debe ocupar menos de 5 MB.",
+                    "recommendation": "Recomendado para CV suizos. Máximo 5 MB."
                 },
                 "contact": {
                     "title": "Información de contacto",

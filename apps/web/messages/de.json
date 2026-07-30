@@ -349,7 +349,15 @@
                 "description": "Prüfen und bearbeiten Sie die von der KI analysierten CV-Bereiche. Diese strukturierten Daten steuern Scoring und Tailoring.",
                 "cvPhoto": {
                     "title": "CV-Foto",
-                    "description": "Standard für Schweizer und europäische CVs. Ihr Foto erscheint auf personalisierten CVs."
+                    "description": "Standard für Schweizer und europäische CVs. Ihr Foto erscheint auf personalisierten CVs.",
+                    "upload": "Foto hochladen",
+                    "change": "Foto ändern",
+                    "remove": "Entfernen",
+                    "processing": "Wird verarbeitet...",
+                    "processingFailed": "Das Bild konnte nicht verarbeitet werden. Bitte versuchen Sie eine andere Datei.",
+                    "invalidFileType": "Bitte wählen Sie eine Bilddatei aus.",
+                    "fileTooLarge": "Das Bild muss kleiner als 5 MB sein.",
+                    "recommendation": "Für Schweizer Lebensläufe empfohlen. Maximal 5 MB."
                 },
                 "contact": {
                     "title": "Kontaktinformationen",

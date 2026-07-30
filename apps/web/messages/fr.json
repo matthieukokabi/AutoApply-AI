@@ -349,7 +349,15 @@
                 "description": "Relisez et modifiez les sections de votre CV analysées par l'IA. Ces données structurées alimentent le scoring et la personnalisation.",
                 "cvPhoto": {
                     "title": "Photo du CV",
-                    "description": "Standard pour les CV suisses et européens. Votre photo apparaîtra sur les CV personnalisés."
+                    "description": "Standard pour les CV suisses et européens. Votre photo apparaîtra sur les CV personnalisés.",
+                    "upload": "Téléverser une photo",
+                    "change": "Changer la photo",
+                    "remove": "Supprimer",
+                    "processing": "Traitement...",
+                    "processingFailed": "Impossible de traiter l'image. Veuillez essayer un autre fichier.",
+                    "invalidFileType": "Veuillez sélectionner un fichier image.",
+                    "fileTooLarge": "L'image doit faire moins de 5 Mo.",
+                    "recommendation": "Recommandé pour les CV suisses. 5 Mo maximum."
                 },
                 "contact": {
                     "title": "Informations de contact",
