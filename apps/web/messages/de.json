@@ -355,6 +355,8 @@
                     "remove": "Entfernen",
                     "processing": "Wird verarbeitet...",
                     "processingFailed": "Das Bild konnte nicht verarbeitet werden. Bitte versuchen Sie eine andere Datei.",
+                    "invalidFileType": "Bitte wählen Sie eine Bilddatei aus.",
+                    "fileTooLarge": "Das Bild muss kleiner als 5 MB sein.",
                     "recommendation": "Für Schweizer Lebensläufe empfohlen. Maximal 5 MB."
                 },
                 "contact": {

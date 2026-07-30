@@ -355,6 +355,8 @@
                     "remove": "Remove",
                     "processing": "Processing...",
                     "processingFailed": "Failed to process image. Please try a different file.",
+                    "invalidFileType": "Please select an image file.",
+                    "fileTooLarge": "Image must be under 5MB.",
                     "recommendation": "Recommended for Swiss CVs. Max 5MB."
                 },
                 "contact": {

@@ -17,9 +17,7 @@ describe("photo upload validation", () => {
             size: 1024,
         } as Pick<File, "type" | "size">;
 
-        expect(getPhotoUploadValidationError(file)).toBe(
-            "Please select an image file."
-        );
+        expect(getPhotoUploadValidationError(file)).toBe("invalidFileType");
     });
 
     it("rejects oversized image files", () => {
@@ -28,8 +26,6 @@ describe("photo upload validation", () => {
             size: 5 * 1024 * 1024 + 1,
         } as Pick<File, "type" | "size">;
 
-        expect(getPhotoUploadValidationError(file)).toBe(
-            "Image must be under 5MB."
-        );
+        expect(getPhotoUploadValidationError(file)).toBe("fileTooLarge");
     });
 });

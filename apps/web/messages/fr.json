@@ -355,6 +355,8 @@
                     "remove": "Supprimer",
                     "processing": "Traitement...",
                     "processingFailed": "Impossible de traiter l'image. Veuillez essayer un autre fichier.",
+                    "invalidFileType": "Veuillez sélectionner un fichier image.",
+                    "fileTooLarge": "L'image doit faire moins de 5 Mo.",
                     "recommendation": "Recommandé pour les CV suisses. 5 Mo maximum."
                 },
                 "contact": {

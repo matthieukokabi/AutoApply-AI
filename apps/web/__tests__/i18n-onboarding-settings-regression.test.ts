@@ -14,6 +14,8 @@ const CRITICAL_TRANSLATION_PATHS = [
     ["onboarding", "preferences", "title"],
     ["dashboard", "profilePage", "structuredCard", "cvPhoto", "upload"],
     ["dashboard", "profilePage", "structuredCard", "cvPhoto", "processingFailed"],
+    ["dashboard", "profilePage", "structuredCard", "cvPhoto", "invalidFileType"],
+    ["dashboard", "profilePage", "structuredCard", "cvPhoto", "fileTooLarge"],
     ["dashboard", "profilePage", "structuredCard", "cvPhoto", "recommendation"],
     ["localeError", "title"],
     ["notFoundPage", "title"],

@@ -29,7 +29,7 @@ export function PhotoUpload({ value, onChange }: PhotoUploadProps) {
 
             const validationError = getPhotoUploadValidationError(file);
             if (validationError) {
-                setErrorMessage(validationError);
+                setErrorMessage(t(validationError));
                 if (inputRef.current) inputRef.current.value = "";
                 return;
             }
