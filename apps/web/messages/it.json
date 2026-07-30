@@ -422,6 +422,10 @@
                 "description": "Redigi la tua lettera con il tuo stile e scaricala quando è pronta.",
                 "editorLabel": "Editor lettera",
                 "previewLabel": "Anteprima lettera"
+            },
+            "templates": {
+                "cv": "# Nome e cognome\n**Ruolo desiderato**\nCittà, Paese | email@example.com | +41 00 000 00 00\n\n## Profilo\nProfilo professionale in 3-5 righe incentrato sul tuo principale valore aggiunto.\n\n## Esperienza\n### Ruolo attuale — Nome dell'azienda\n**2022 - Oggi**\n- Risultato quantificato e relativo impatto.\n- Progetto chiave pertinente ai ruoli desiderati.\n\n### Ruolo precedente — Nome dell'azienda\n**2019 - 2022**\n- Responsabilità principale legata ai risultati aziendali.\n- Contributo attraverso collaborazione, leadership o competenze tecniche.\n\n## Formazione\n### Titolo di studio — Nome dell'istituto\n**2018**\n- Riconoscimento o specializzazione pertinente.\n\n## Competenze\n- Competenza 1\n- Competenza 2\n- Competenza 3\n",
+                "letter": "# Lettera di presentazione\n\nGentile team di selezione,\n\nvorrei candidarmi per il ruolo di [Ruolo] presso [Azienda]. La mia esperienza in [Ambito] e i risultati ottenuti in [Risultato] sono in linea con le vostre esigenze.\n\nNel mio ruolo più recente, ho [risultato specifico con metrica o impatto]. Questa esperienza risponde direttamente alla vostra esigenza di [requisito dell'offerta].\n\nSono particolarmente interessato/a alla missione e al team di [Azienda] e sarei lieto/a di contribuire attraverso [valore che apporterai].\n\nGrazie per l'attenzione. Sarò lieto/a di discutere come la mia esperienza possa supportare il vostro team.\n\nCordiali saluti,\n[Nome e cognome]\n"
             }
         },
         "jobsPage": {

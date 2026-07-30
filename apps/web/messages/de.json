@@ -422,6 +422,10 @@
                 "description": "Verfassen Sie Ihr Motivationsschreiben in Ihrem eigenen Stil und laden Sie es herunter, sobald es fertig ist.",
                 "editorLabel": "Schreiben-Editor",
                 "previewLabel": "Schreiben-Vorschau"
+            },
+            "templates": {
+                "cv": "# Ihr vollständiger Name\n**Zielposition**\nStadt, Land | email@example.com | +41 00 000 00 00\n\n## Kurzprofil\nBerufliches Kurzprofil in 3 bis 5 Zeilen mit Ihrem stärksten Mehrwert.\n\n## Berufserfahrung\n### Aktuelle Position — Unternehmensname\n**2022 - Heute**\n- Messbarer Erfolg und erzielte Wirkung.\n- Wichtiges Projekt mit Bezug zu den Zielpositionen.\n\n### Vorherige Position — Unternehmensname\n**2019 - 2022**\n- Zentrale Verantwortung mit Bezug zu Geschäftsergebnissen.\n- Beitrag durch Zusammenarbeit, Führung oder technische Expertise.\n\n## Ausbildung\n### Abschluss — Name der Bildungseinrichtung\n**2018**\n- Auszeichnung oder relevante Spezialisierung.\n\n## Kenntnisse\n- Kenntnis 1\n- Kenntnis 2\n- Kenntnis 3\n",
+                "letter": "# Bewerbungsschreiben\n\nSehr geehrte Damen und Herren,\n\nhiermit bewerbe ich mich für die Position [Position] bei [Unternehmen]. Meine Erfahrung im Bereich [Fachgebiet] und meine Erfolge bei [Ergebnis] passen sehr gut zu Ihren Anforderungen.\n\nIn meiner letzten Position habe ich [konkreter Erfolg mit Kennzahl oder Wirkung]. Diese Erfahrung entspricht unmittelbar Ihrem Bedarf an [Anforderung aus der Stellenbeschreibung].\n\nDie Mission und das Team von [Unternehmen] interessieren mich besonders. Gern möchte ich mit [Ihr Mehrwert] zu Ihrem Erfolg beitragen.\n\nVielen Dank für Ihre Zeit. Ich freue mich darauf, mit Ihnen zu besprechen, wie meine Erfahrung Ihr Team unterstützen kann.\n\nMit freundlichen Grüßen\n[Ihr Name]\n"
             }
         },
         "jobsPage": {

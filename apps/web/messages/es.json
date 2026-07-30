@@ -422,6 +422,10 @@
                 "description": "Redacta tu carta de motivación con tu propio estilo y descárgala cuando esté lista.",
                 "editorLabel": "Editor de carta",
                 "previewLabel": "Vista previa de la carta"
+            },
+            "templates": {
+                "cv": "# Tu nombre completo\n**Puesto objetivo**\nCiudad, País | email@example.com | +41 00 000 00 00\n\n## Perfil\nResumen profesional de 3 a 5 líneas centrado en tu principal propuesta de valor.\n\n## Experiencia\n### Puesto actual — Nombre de la empresa\n**2022 - Actualidad**\n- Logro cuantificado y su impacto.\n- Proyecto clave relevante para los puestos objetivo.\n\n### Puesto anterior — Nombre de la empresa\n**2019 - 2022**\n- Responsabilidad principal vinculada a resultados empresariales.\n- Contribución mediante colaboración, liderazgo o experiencia técnica.\n\n## Formación\n### Titulación — Nombre de la institución\n**2018**\n- Distinción o especialización relevante.\n\n## Habilidades\n- Habilidad 1\n- Habilidad 2\n- Habilidad 3\n",
+                "letter": "# Carta de presentación\n\nEstimado equipo de selección:\n\nMe gustaría presentar mi candidatura al puesto de [Puesto] en [Empresa]. Mi experiencia en [Área] y los resultados que he conseguido en [Resultado] encajan bien con sus requisitos.\n\nEn mi puesto más reciente, [logro concreto con métrica o impacto]. Esta experiencia responde directamente a su necesidad de [requisito de la oferta].\n\nMe interesa especialmente la misión y el equipo de [Empresa], y me gustaría contribuir mediante [valor que aportarás].\n\nGracias por considerar mi candidatura. Estaré encantado/a de conversar sobre cómo mi experiencia puede apoyar a su equipo.\n\nAtentamente,\n[Tu nombre]\n"
             }
         },
         "jobsPage": {
