@@ -122,6 +122,9 @@ Paris, France | camille@example.com
 - Analyse
 - Leadership
 
+## Skills
+- Product discovery
+
 ## Formation
 ### Master — Université
 **2020**
@@ -131,6 +134,11 @@ Paris, France | camille@example.com
 ### Responsable produit — Exemple
 **2021 - Aujourd'hui**
 - Livraison réussie
+
+## Experience
+### Product Manager — Example
+**2020 - 2021**
+- Successful launch
 
 ## Profil
 Spécialiste produit expérimentée.
@@ -147,6 +155,10 @@ Spécialiste produit expérimentée.
         const normalized = normalizeCvMarkdown(markdown);
         expect(normalized).toContain("## Formation");
         expect(normalized).not.toContain("## Education");
+        expect(normalized).toContain("## Expérience");
+        expect(normalized).not.toContain("## Experience");
+        expect(normalized.match(/## Compétences/g)).toHaveLength(1);
+        expect(normalized).not.toContain("## Skills");
     });
 });
 

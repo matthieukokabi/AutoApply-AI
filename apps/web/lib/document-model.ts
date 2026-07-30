@@ -339,7 +339,11 @@ function canonicalSectionTitle(title: string) {
     if (/\beducation\b|\bformation\b/.test(normalizedKey)) {
         return "Education";
     }
-    if (/\bskill\b|\bcompeten\b|\bcompéten\b|\btechnology\b/.test(normalizedKey)) {
+    if (
+        /\bskill\b|\bcompeten\b|\bcompétences?\b|\btechnology\b/.test(
+            normalizedKey
+        )
+    ) {
         return "Skills";
     }
     if (/\blanguage\b|\blangue\b/.test(normalizedKey)) {
@@ -412,13 +416,13 @@ function mergeSections(sections: CanonicalCvSection[]) {
             continue;
         }
 
+        const prefersLocalizedTitle =
+            /[^\x00-\x7F]/.test(sourceTitle) ||
+            ["formation", "profil"].includes(comparableKey(sourceTitle));
+
         if (!mergedMap.has(key)) {
             mergedMap.set(key, {
-                title:
-                    /[^\x00-\x7F]/.test(sourceTitle) ||
-                    ["formation", "profil"].includes(comparableKey(sourceTitle))
-                        ? sourceTitle
-                        : canonicalTitle,
+                title: prefersLocalizedTitle ? sourceTitle : canonicalTitle,
                 paragraphs: [],
                 subsections: [],
             });
@@ -426,6 +430,9 @@ function mergeSections(sections: CanonicalCvSection[]) {
         }
 
         const target = mergedMap.get(key)!;
+        if (prefersLocalizedTitle) {
+            target.title = sourceTitle;
+        }
         target.paragraphs.push(...section.paragraphs);
         target.subsections.push(...section.subsections);
     }
