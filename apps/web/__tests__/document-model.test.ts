@@ -112,6 +112,42 @@ Generated at: 2026-04-03T12:22:00Z
         expect(model.contact.email).toBe("alex.martin@example.com");
         expect(model.contact.location).toBeUndefined();
     });
+
+    it("preserves localized French section labels while retaining canonical ordering", () => {
+        const markdown = `# Camille Martin
+**Responsable produit**
+Paris, France | camille@example.com
+
+## Compétences
+- Analyse
+- Leadership
+
+## Formation
+### Master — Université
+**2020**
+- Mention
+
+## Expérience
+### Responsable produit — Exemple
+**2021 - Aujourd'hui**
+- Livraison réussie
+
+## Profil
+Spécialiste produit expérimentée.
+`;
+
+        const model = buildCanonicalCvDocument(markdown);
+        expect(model.sections.map((section) => section.title)).toEqual([
+            "Profil",
+            "Expérience",
+            "Formation",
+            "Compétences",
+        ]);
+
+        const normalized = normalizeCvMarkdown(markdown);
+        expect(normalized).toContain("## Formation");
+        expect(normalized).not.toContain("## Education");
+    });
 });
 
 describe("normalizeCvMarkdown", () => {

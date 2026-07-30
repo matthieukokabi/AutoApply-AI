@@ -324,12 +324,12 @@ function canonicalSectionTitle(title: string) {
     const normalizedKey = comparableKey(title);
 
     if (
-        /\bsummary\b|\bprofile\b|\babout\b/.test(normalizedKey)
+        /\bsummary\b|\bprofile\b|\bprofil\b|\babout\b/.test(normalizedKey)
     ) {
         return "Summary";
     }
     if (
-        /\bexperience\b/.test(normalizedKey) ||
+        /\bexperience\b|\bexpérience\b/.test(normalizedKey) ||
         /\bemployment\b/.test(normalizedKey) ||
         /\bwork history\b/.test(normalizedKey) ||
         /\bcareer\b/.test(normalizedKey)
@@ -339,7 +339,7 @@ function canonicalSectionTitle(title: string) {
     if (/\beducation\b|\bformation\b/.test(normalizedKey)) {
         return "Education";
     }
-    if (/\bskill\b|\bcompeten\b|\btechnology\b/.test(normalizedKey)) {
+    if (/\bskill\b|\bcompeten\b|\bcompéten\b|\btechnology\b/.test(normalizedKey)) {
         return "Skills";
     }
     if (/\blanguage\b|\blangue\b/.test(normalizedKey)) {
@@ -356,7 +356,7 @@ function canonicalSectionTitle(title: string) {
 }
 
 function sectionOrderWeight(title: string) {
-    const normalized = normalizeText(title).toLowerCase();
+    const normalized = canonicalSectionTitle(title).toLowerCase();
     const idx = SECTION_ORDER.findIndex((item) => normalized === item || normalized.includes(item));
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
 }
@@ -405,15 +405,20 @@ function mergeSections(sections: CanonicalCvSection[]) {
     const order: string[] = [];
 
     for (const section of sections) {
-        const title = canonicalSectionTitle(section.title);
-        const key = normalizeText(title).toLowerCase();
+        const sourceTitle = normalizeText(section.title);
+        const canonicalTitle = canonicalSectionTitle(sourceTitle);
+        const key = normalizeText(canonicalTitle).toLowerCase();
         if (!key) {
             continue;
         }
 
         if (!mergedMap.has(key)) {
             mergedMap.set(key, {
-                title,
+                title:
+                    /[^\x00-\x7F]/.test(sourceTitle) ||
+                    ["formation", "profil"].includes(comparableKey(sourceTitle))
+                        ? sourceTitle
+                        : canonicalTitle,
                 paragraphs: [],
                 subsections: [],
             });
@@ -564,7 +569,7 @@ export function buildCanonicalCvDocument(markdown: string): CanonicalCvDocument 
 
     const sections = mergeSections(
         parsed.sections.map((section) => ({
-            title: canonicalSectionTitle(section.title),
+            title: normalizeText(section.title),
             paragraphs: section.paragraphs
                 .map((paragraph) =>
                     normalizeText(stripMarkdownInline(paragraph))
