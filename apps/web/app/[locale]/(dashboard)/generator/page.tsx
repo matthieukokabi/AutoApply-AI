@@ -16,51 +16,6 @@ import { CVDisplay } from "@/components/cv-display";
 import { CoverLetterDisplay } from "@/components/cover-letter-display";
 import { useRouter } from "@/i18n/routing";
 
-const DEFAULT_CV_TEMPLATE = `# Your Full Name
-**Target Role**
-City, Country | email@example.com | +41 00 000 00 00
-
-## Summary
-Profile summary in 3-5 lines focused on your strongest value proposition.
-
-## Experience
-### Current Role — Company Name
-**2022 - Present**
-- Quantified achievement with impact.
-- Key project relevant to target jobs.
-
-### Previous Role — Company Name
-**2019 - 2022**
-- Core responsibility linked to business results.
-- Collaboration, leadership, or technical contribution.
-
-## Education
-### Degree — University Name
-**2018**
-- Distinction or relevant specialization.
-
-## Skills
-- Skill 1
-- Skill 2
-- Skill 3
-`;
-
-const DEFAULT_LETTER_TEMPLATE = `# Motivation Letter
-
-Dear Hiring Manager,
-
-I am writing to apply for the [Role] position at [Company]. My background in [Domain] and my experience delivering [Outcome] align strongly with your requirements.
-
-In my recent role, I [specific achievement with metric/impact]. This directly relates to your need for [requirement from job description].
-
-I am particularly interested in [company mission/team context], and I would be excited to contribute by [value you will bring].
-
-Thank you for your time and consideration. I would welcome the opportunity to discuss how my experience can support your team.
-
-Sincerely,
-[Your Name]
-`;
-
 const POLL_MAX_ATTEMPTS = 20;
 const POLL_INTERVAL_MS = 3000;
 
@@ -79,8 +34,10 @@ export default function GeneratorPage() {
     const t = useTranslations("dashboard.generatorPage");
     const router = useRouter();
     const { getToken } = useAuth();
-    const [cvMarkdown, setCvMarkdown] = useState(DEFAULT_CV_TEMPLATE);
-    const [letterMarkdown, setLetterMarkdown] = useState(DEFAULT_LETTER_TEMPLATE);
+    const [cvMarkdown, setCvMarkdown] = useState(() => t.raw("templates.cv"));
+    const [letterMarkdown, setLetterMarkdown] = useState(() =>
+        t.raw("templates.letter")
+    );
     const [isGenerating, setIsGenerating] = useState(false);
     const [isDownloadingCv, setIsDownloadingCv] = useState(false);
     const [isDownloadingLetter, setIsDownloadingLetter] = useState(false);
@@ -327,7 +284,7 @@ export default function GeneratorPage() {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setCvMarkdown(DEFAULT_CV_TEMPLATE)}
+                            onClick={() => setCvMarkdown(t.raw("templates.cv"))}
                         >
                             <RotateCcw className="h-4 w-4 mr-2" />
                             {t("actions.resetCv")}
@@ -374,7 +331,9 @@ export default function GeneratorPage() {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setLetterMarkdown(DEFAULT_LETTER_TEMPLATE)}
+                            onClick={() =>
+                                setLetterMarkdown(t.raw("templates.letter"))
+                            }
                         >
                             <RotateCcw className="h-4 w-4 mr-2" />
                             {t("actions.resetLetter")}

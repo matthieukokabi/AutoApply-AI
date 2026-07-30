@@ -422,6 +422,10 @@
                 "description": "Rédigez votre lettre avec votre propre style et téléchargez-la quand elle est prête.",
                 "editorLabel": "Éditeur lettre",
                 "previewLabel": "Aperçu lettre"
+            },
+            "templates": {
+                "cv": "# Votre nom complet\n**Poste ciblé**\nVille, Pays | email@example.com | +41 00 000 00 00\n\n## Profil\nRésumé professionnel en 3 à 5 lignes mettant en avant votre principale valeur ajoutée.\n\n## Expérience\n### Poste actuel — Nom de l'entreprise\n**2022 - Aujourd'hui**\n- Réalisation quantifiée et son impact.\n- Projet clé pertinent pour les postes ciblés.\n\n### Poste précédent — Nom de l'entreprise\n**2019 - 2022**\n- Responsabilité principale liée aux résultats de l'entreprise.\n- Contribution en collaboration, leadership ou expertise technique.\n\n## Formation\n### Diplôme — Nom de l'établissement\n**2018**\n- Distinction ou spécialisation pertinente.\n\n## Compétences\n- Compétence 1\n- Compétence 2\n- Compétence 3\n",
+                "letter": "# Lettre de motivation\n\nMadame, Monsieur,\n\nJe vous adresse ma candidature au poste de [Poste] chez [Entreprise]. Mon expérience en [Domaine] et les résultats obtenus en [Résultat] correspondent étroitement à vos besoins.\n\nDans mon poste récent, j'ai [réalisation précise avec mesure ou impact]. Cette expérience répond directement à votre besoin de [exigence de l'offre].\n\nLa mission et l'équipe de [Entreprise] m'intéressent particulièrement, et je serais ravi(e) de contribuer grâce à [valeur que vous apporterez].\n\nJe vous remercie pour votre attention et serais heureux(se) d'échanger sur la manière dont mon expérience peut soutenir votre équipe.\n\nCordialement,\n[Votre nom]\n"
             }
         },
         "jobsPage": {

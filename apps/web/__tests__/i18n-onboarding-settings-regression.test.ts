@@ -17,6 +17,8 @@ const CRITICAL_TRANSLATION_PATHS = [
     ["dashboard", "profilePage", "structuredCard", "cvPhoto", "invalidFileType"],
     ["dashboard", "profilePage", "structuredCard", "cvPhoto", "fileTooLarge"],
     ["dashboard", "profilePage", "structuredCard", "cvPhoto", "recommendation"],
+    ["dashboard", "generatorPage", "templates", "cv"],
+    ["dashboard", "generatorPage", "templates", "letter"],
     ["localeError", "title"],
     ["notFoundPage", "title"],
     ["checkoutButton", "genericError"],
@@ -84,6 +86,31 @@ describe("i18n onboarding/settings regression", () => {
         for (const locale of NON_EN_LOCALES) {
             const localeKeys = flattenMessageKeys(loadMessages(locale)).sort();
             expect(localeKeys, locale).toEqual(englishKeys);
+        }
+    });
+
+    it("keeps localized CV Studio templates as usable Markdown", () => {
+        for (const locale of ["en", ...NON_EN_LOCALES]) {
+            const localeMessages = loadMessages(locale);
+            const cv = getPathValue(localeMessages, [
+                "dashboard",
+                "generatorPage",
+                "templates",
+                "cv",
+            ]);
+            const letter = getPathValue(localeMessages, [
+                "dashboard",
+                "generatorPage",
+                "templates",
+                "letter",
+            ]);
+
+            expect(cv, locale).toMatch(/^# .+/);
+            expect(cv.match(/^## /gm)?.length, locale).toBeGreaterThanOrEqual(4);
+            expect(cv, locale).toContain("email@example.com");
+            expect(letter, locale).toMatch(/^# .+/);
+            expect(letter, locale).toMatch(/\[[^\]]+\]/);
+            expect(letter.split("\n\n").length, locale).toBeGreaterThanOrEqual(5);
         }
     });
 });

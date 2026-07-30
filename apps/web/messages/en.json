@@ -422,6 +422,10 @@
                 "description": "Draft your motivation letter with your own style and download it when ready.",
                 "editorLabel": "Letter Editor",
                 "previewLabel": "Letter Preview"
+            },
+            "templates": {
+                "cv": "# Your Full Name\n**Target Role**\nCity, Country | email@example.com | +41 00 000 00 00\n\n## Summary\nProfile summary in 3-5 lines focused on your strongest value proposition.\n\n## Experience\n### Current Role — Company Name\n**2022 - Present**\n- Quantified achievement with impact.\n- Key project relevant to target jobs.\n\n### Previous Role — Company Name\n**2019 - 2022**\n- Core responsibility linked to business results.\n- Collaboration, leadership, or technical contribution.\n\n## Education\n### Degree — University Name\n**2018**\n- Distinction or relevant specialization.\n\n## Skills\n- Skill 1\n- Skill 2\n- Skill 3\n",
+                "letter": "# Motivation Letter\n\nDear Hiring Manager,\n\nI am writing to apply for the [Role] position at [Company]. My background in [Domain] and my experience delivering [Outcome] align strongly with your requirements.\n\nIn my recent role, I [specific achievement with metric/impact]. This directly relates to your need for [requirement from job description].\n\nI am particularly interested in [company mission/team context], and I would be excited to contribute by [value you will bring].\n\nThank you for your time and consideration. I would welcome the opportunity to discuss how my experience can support your team.\n\nSincerely,\n[Your Name]\n"
             }
         },
         "jobsPage": {
