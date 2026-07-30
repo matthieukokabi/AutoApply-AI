@@ -140,6 +140,11 @@ Paris, France | camille@example.com
 **2020 - 2021**
 - Successful launch
 
+## Work Experience — Contract
+### Product Owner — Example
+**2019 - 2020**
+- Contract delivery
+
 ## Profil
 Spécialiste produit expérimentée.
 `;

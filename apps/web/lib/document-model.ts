@@ -417,8 +417,9 @@ function mergeSections(sections: CanonicalCvSection[]) {
         }
 
         const prefersLocalizedTitle =
-            /[^\x00-\x7F]/.test(sourceTitle) ||
-            ["formation", "profil"].includes(comparableKey(sourceTitle));
+            /^(profil|expérience|formation|compétences)(?:\b|$)/.test(
+                comparableKey(sourceTitle)
+            );
 
         if (!mergedMap.has(key)) {
             mergedMap.set(key, {
