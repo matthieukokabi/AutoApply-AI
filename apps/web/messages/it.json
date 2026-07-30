@@ -349,7 +349,13 @@
                 "description": "Rivedi e modifica le sezioni del CV analizzate dall'IA. Questi dati strutturati alimentano scoring e tailoring.",
                 "cvPhoto": {
                     "title": "Foto CV",
-                    "description": "Standard per CV svizzeri ed europei. La tua foto apparirà nei CV personalizzati."
+                    "description": "Standard per CV svizzeri ed europei. La tua foto apparirà nei CV personalizzati.",
+                    "upload": "Carica foto",
+                    "change": "Cambia foto",
+                    "remove": "Rimuovi",
+                    "processing": "Elaborazione...",
+                    "processingFailed": "Impossibile elaborare l'immagine. Prova con un altro file.",
+                    "recommendation": "Consigliato per i CV svizzeri. Massimo 5 MB."
                 },
                 "contact": {
                     "title": "Informazioni di contatto",
