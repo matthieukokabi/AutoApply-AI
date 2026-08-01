@@ -10,6 +10,7 @@ const CRITICAL_TRANSLATION_PATHS = [
     ["themeToggle", "label"],
     ["dashboard", "settings", "title"],
     ["dashboard", "settings", "automation", "title"],
+    ["dashboard", "settings", "automation", "linkedinModeNote"],
     ["onboarding", "welcome", "title"],
     ["onboarding", "cv", "title"],
     ["onboarding", "preferences", "title"],
