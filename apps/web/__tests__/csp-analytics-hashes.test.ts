@@ -5,6 +5,11 @@ import { describe, expect, it } from "vitest";
 const require = createRequire(import.meta.url);
 
 type NextConfigWithHeaders = {
+    experimental?: {
+        sri?: {
+            algorithm?: string;
+        };
+    };
     headers: () => Promise<
         {
             headers: Array<{ key: string; value: string }>;
@@ -71,6 +76,15 @@ async function getScriptPolicies(config: NextConfigWithHeaders) {
 }
 
 describe("next config CSP analytics hashes", () => {
+    it("enables build-time script integrity without forcing dynamic nonces", () => {
+        const config = loadNextConfigWithEnv({
+            NEXT_PUBLIC_GTM_ID: null,
+            NEXT_PUBLIC_GA_MEASUREMENT_ID: null,
+        });
+
+        expect(config.experimental?.sri?.algorithm).toBe("sha256");
+    });
+
     it("adds sha256 hash allowances in report-only CSP when GTM inline bootstrap is enabled", async () => {
         const config = loadNextConfigWithEnv({
             NEXT_PUBLIC_GTM_ID: "GTM-TEST123",
