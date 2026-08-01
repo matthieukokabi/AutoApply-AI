@@ -8,6 +8,7 @@
         "blog": "Blog",
         "roadmap": "Roadmap"
     },
+    "themeToggle": { "label": "Toggle theme" },
     "hero": {
         "badge": "AI-Powered Career Assistant",
         "titleStart": "Land Your Dream Job with",

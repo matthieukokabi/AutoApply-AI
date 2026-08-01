@@ -8,6 +8,7 @@
         "blog": "Blog",
         "roadmap": "Roadmap"
     },
+    "themeToggle": { "label": "Design wechseln" },
     "hero": {
         "badge": "KI-gestützter Karriere-Assistent",
         "titleStart": "Finden Sie Ihren Traumjob mit",

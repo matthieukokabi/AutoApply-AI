@@ -8,6 +8,7 @@
         "blog": "Blog",
         "roadmap": "Roadmap"
     },
+    "themeToggle": { "label": "Cambia tema" },
     "hero": {
         "badge": "Assistente di carriera con IA",
         "titleStart": "Trova il tuo lavoro ideale con",
