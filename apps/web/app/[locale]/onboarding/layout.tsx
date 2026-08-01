@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { getClerkLocalization } from "@/lib/clerk-localization";
 
 export const metadata: Metadata = {
     robots: {
@@ -8,10 +9,18 @@ export const metadata: Metadata = {
     },
 };
 
-export default function OnboardingLayout({
+export default async function OnboardingLayout({
     children,
+    params,
 }: {
     children: React.ReactNode;
+    params: Promise<{ locale: string }>;
 }) {
-    return <ClerkProvider>{children}</ClerkProvider>;
+    const { locale } = await params;
+
+    return (
+        <ClerkProvider localization={getClerkLocalization(locale)}>
+            {children}
+        </ClerkProvider>
+    );
 }
