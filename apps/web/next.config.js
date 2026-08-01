@@ -126,11 +126,6 @@ const SECURITY_HEADERS = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     outputFileTracingRoot: path.join(__dirname, "../../"),
-    experimental: {
-        sri: {
-            algorithm: "sha256",
-        },
-    },
     images: {
         remotePatterns: [
             {
