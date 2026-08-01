@@ -22,6 +22,7 @@ import {
     OFFICIAL_LINKEDIN_URL,
     OFFICIAL_X_URL,
 } from "@/lib/brand-identity";
+import { getClerkLocalization } from "@/lib/clerk-localization";
 
 export const metadata: Metadata = {
     robots: {
@@ -116,7 +117,7 @@ export default async function DashboardLayout({
     ];
 
     return (
-        <ClerkProvider>
+        <ClerkProvider localization={getClerkLocalization(locale)}>
             <div className="flex h-dvh min-h-0">
             {/* Sidebar */}
                 <aside className="w-64 border-r bg-card flex flex-col min-h-0 overflow-hidden">
