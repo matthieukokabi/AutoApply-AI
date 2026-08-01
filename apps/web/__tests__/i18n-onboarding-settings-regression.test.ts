@@ -7,6 +7,7 @@ type Messages = Record<string, unknown>;
 const NON_EN_LOCALES = ["fr", "de", "es", "it"] as const;
 
 const CRITICAL_TRANSLATION_PATHS = [
+    ["themeToggle", "label"],
     ["dashboard", "settings", "title"],
     ["dashboard", "settings", "automation", "title"],
     ["onboarding", "welcome", "title"],
