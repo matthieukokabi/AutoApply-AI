@@ -129,6 +129,10 @@ export function resolveDiscoveryWebhookUrl() {
         return explicit.replace(/ /g, "%2520").replace(/%20/g, "%2520");
     }
 
+    return resolveCanonicalDiscoveryWebhookUrl();
+}
+
+export function resolveCanonicalDiscoveryWebhookUrl() {
     const base = process.env.N8N_WEBHOOK_URL?.trim();
     if (!base) {
         return null;

@@ -1,6 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { buildDiscoveryRunId, resolveDiscoveryWebhookUrl } from "@/lib/discovery-scheduler";
+import {
+    buildDiscoveryRunId,
+    resolveCanonicalDiscoveryWebhookUrl,
+    resolveDiscoveryWebhookUrl,
+} from "@/lib/discovery-scheduler";
 
 type TriggerKind = "scheduled" | "manual";
 
@@ -138,7 +142,7 @@ export async function triggerDiscoveryRun(params: TriggerRunParams) {
     }
 
     try {
-        const response = await fetch(webhookUrl, {
+        const requestInit: RequestInit = {
             method: "POST",
             headers: {
                 "content-type": "application/json",
@@ -146,7 +150,17 @@ export async function triggerDiscoveryRun(params: TriggerRunParams) {
                 "x-run-id": runId,
             },
             body: JSON.stringify(payload),
-        });
+        };
+        let response = await fetch(webhookUrl, requestInit);
+
+        const canonicalWebhookUrl = resolveCanonicalDiscoveryWebhookUrl();
+        if (
+            response.status === 404 &&
+            canonicalWebhookUrl &&
+            canonicalWebhookUrl !== webhookUrl
+        ) {
+            response = await fetch(canonicalWebhookUrl, requestInit);
+        }
 
         if (!response.ok) {
             const bodyText = await response.text();
