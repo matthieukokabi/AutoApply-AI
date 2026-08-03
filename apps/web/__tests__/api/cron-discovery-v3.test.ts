@@ -2,7 +2,7 @@ import { createRequire } from "module";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { sendAutomationHealthAlert } from "@/lib/email";
-import { POST as DISCOVERY_POST } from "@/app/api/cron/discovery-v3/route";
+import { POST as DISCOVERY_POST } from "@/app/api/cron/discovery-v3/dispatch-v2/route";
 import { POST as MANUAL_POST } from "@/app/api/cron/discovery-v3/manual/route";
 import { POST as HEALTH_POST } from "@/app/api/cron/discovery-v3/health/route";
 import { triggerDiscoveryRun } from "@/lib/discovery-trigger";
@@ -75,7 +75,7 @@ describe("discovery v3 cron routes", () => {
         process.env.AUTOMATION_ALERT_EMAIL_TO = "ops@example.com";
     });
 
-    describe("POST /api/cron/discovery-v3", () => {
+    describe("POST /api/cron/discovery-v3/dispatch-v2", () => {
         it("returns 503 when CRON_SECRET is missing", async () => {
             delete process.env.CRON_SECRET;
             const request = new Request("http://localhost/api/cron/discovery-v3", {
