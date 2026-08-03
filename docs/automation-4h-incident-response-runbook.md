@@ -21,7 +21,8 @@ Use this runbook when users report no new job opportunities and/or no tailored C
 - One scheduler authority only: external cron calls app endpoints.
 - Expected discovery slots (Europe/Zurich): `07:20`, `12:20`, `18:20`.
 - Scheduler endpoints:
-  - `POST /api/cron/discovery-v3` (slot dispatch)
+  - `POST /api/cron/discovery-v3/dispatch-v2` (registered Vercel Cron slot dispatch)
+  - `POST /api/cron/discovery-v3` (legacy-compatible slot dispatch; not scheduled)
   - `POST /api/cron/discovery-v3/health` (dead-man health check)
   - `POST /api/cron/discovery-v3/manual` (operator-only replay path)
 
@@ -147,7 +148,7 @@ V3_CANARY_USER_IDS=
 V3_CANARY_SAMPLE_RATE=0
 ```
 
-2. Pause external cron jobs for `/api/cron/discovery-v3` and `/api/cron/discovery-v3/health` (or rotate `CRON_SECRET`).
+2. Pause external cron jobs for `/api/cron/discovery-v3/dispatch-v2` and `/api/cron/discovery-v3/health` (or rotate `CRON_SECRET`). The unversioned `/api/cron/discovery-v3` compatibility route is not a registered cron job.
 3. Redeploy web app so `/api/tailor` routes all users back to v2 webhook path.
 4. Keep all v2 workflows unchanged and active.
 5. Keep v3 workflows additive (do not delete them); optionally deactivate them in n8n if needed for noise reduction.

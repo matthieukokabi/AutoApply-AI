@@ -6,11 +6,11 @@
     },
     "crons": [
         {
-            "path": "/api/cron/discovery-v3",
+            "path": "/api/cron/discovery-v3/dispatch-v2",
             "schedule": "20 5,10,16 * * *"
         },
         {
-            "path": "/api/cron/discovery-v3",
+            "path": "/api/cron/discovery-v3/dispatch-v2",
             "schedule": "20 6,11,17 * * *"
         },
         {

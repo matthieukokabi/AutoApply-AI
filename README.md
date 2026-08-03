@@ -81,7 +81,8 @@ For the additive v3 automation rollout (locks, idempotency, canary routing, paci
 
 - `docs/automation-v3-env-contract.md`
 - Discovery v3 scheduling authority is external cron via:
-  - `POST /api/cron/discovery-v3`
+  - `POST /api/cron/discovery-v3/dispatch-v2` (registered Vercel Cron path)
+  - `POST /api/cron/discovery-v3` (legacy-compatible alias)
   - `POST /api/cron/discovery-v3/health`
 
 ## Project Structure
