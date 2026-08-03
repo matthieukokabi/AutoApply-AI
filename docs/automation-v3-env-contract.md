@@ -37,7 +37,7 @@ This contract defines the required server/runtime variables for the additive v3 
 
 | Variable | Purpose |
 | --- | --- |
-| `CRON_SECRET` | Bearer secret for `/api/cron/discovery-v3` and `/api/cron/discovery-v3/health`. |
+| `CRON_SECRET` | Bearer secret for the scheduled `/api/cron/discovery-v3/dispatch-v2` entrypoint, its legacy-compatible `/api/cron/discovery-v3` alias, and `/api/cron/discovery-v3/health`. |
 | `DISCOVERY_MANUAL_TRIGGER_SECRET` | Optional dedicated secret for `/api/cron/discovery-v3/manual` (falls back to `CRON_SECRET`). |
 | `N8N_DISCOVERY_V3_WEBHOOK_URL` | Optional explicit n8n webhook URL override for discovery v3 trigger dispatch (defaults to `${N8N_WEBHOOK_URL}/webhook/discovery-pipeline-v3`). |
 | `AUTOMATION_ALERT_EMAIL_TO` | Optional CSV recipients for scheduler health alerts (`missed slot`, `stuck run`, `consecutive failures`, `stale locks`). |
@@ -59,7 +59,7 @@ This contract defines the required server/runtime variables for the additive v3 
 ## Emergency rollback controls
 
 - Fast disable: set `V3_CANARY_USER_IDS` to empty and `V3_CANARY_SAMPLE_RATE=0`, then redeploy `apps/web`.
-- External scheduler disable: pause cron entries that call `/api/cron/discovery-v3` and `/api/cron/discovery-v3/health` (or rotate `CRON_SECRET`) before changing workflow versions.
+- External scheduler disable: pause cron entries that call `/api/cron/discovery-v3/dispatch-v2` and `/api/cron/discovery-v3/health` (or rotate `CRON_SECRET`) before changing workflow versions. The unversioned `/api/cron/discovery-v3` route remains available only for compatibility and is not the registered Vercel Cron path.
 - Keep v2 workflows in place; do not delete or mutate legacy/v2 definitions during v3 rollback.
 - Before changing any live n8n workflow version bindings, capture a checkpoint with:
 
