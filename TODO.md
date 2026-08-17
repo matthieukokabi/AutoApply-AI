@@ -2,6 +2,12 @@
 
 Last updated: 2026-08-01 (Europe/Zurich)
 
+## P0 — VPS2 self-hosting cutover
+
+- [x] Add version-controlled VPS2 systemd and Nginx definitions for a loopback-only AutoApply web runtime on port 3600 with WebSocket forwarding and dual `apply.zuerifix.tech` / `autoapply.zuerifix.tech` routing — completed on 2026-08-17
+- [ ] Point the selected `zuerifix.tech` hostname(s) at `187.124.30.177`, issue Let's Encrypt certificates, and verify HTTPS after DNS propagation.
+- [ ] Migrate the production PostgreSQL database from Neon and the n8n automation runtime from Render to VPS2, then switch runtime connection settings and complete authenticated end-to-end verification.
+
 ## P0 — Protected Path Gate 0 (runway hardening)
 
 - [x] Replace the stale Vercel Cron registration that continued invoking the obsolete composite n8n webhook after the app/config repair: rotate both DST-safe discovery schedules from `/api/cron/discovery-v3` to the versioned `/api/cron/discovery-v3/dispatch-v2` entrypoint while reusing the canonical handler and retaining the original endpoint for compatibility; refresh newly vulnerable transitive security overrides to `brace-expansion@5.0.9` and `ip-address@10.4.0` so the release retains a zero-vulnerability baseline — completed on 2026-08-03
