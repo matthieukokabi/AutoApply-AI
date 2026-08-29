@@ -737,7 +737,7 @@
                 "privacy_blocking": "Le impostazioni privacy del browser stanno bloccando l'archiviazione necessaria per l'autenticazione."
             },
             "steps": {
-                "enableCookies": "Abilita i cookie per `autoapply.works`.",
+                "enableCookies": "Abilita i cookie per `apply.zuerifix.tech`.",
                 "allowClerkHost": "Consenti `clerk.autoapply.works` nelle impostazioni blocker/VPN/DNS privato.",
                 "disableStrictTracking": "Disattiva la protezione antitracciamento rigida per questo sito e riprova.",
                 "tryAnotherBrowser": "Se ancora bloccato, prova un altro browser o una scheda non privata."

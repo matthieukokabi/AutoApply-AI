@@ -1,20 +1,21 @@
 import { getLocalizedAbsoluteUrl } from "@/lib/seo";
+import { getAppBaseUrl, toAbsoluteAppUrl } from "@/lib/site-url";
 import {
     OFFICIAL_CONTACT_EMAIL,
     OFFICIAL_LINKEDIN_URL,
     OFFICIAL_X_URL,
 } from "@/lib/brand-identity";
 
-const ORGANIZATION_ID = "https://autoapply.works/#organization";
-const SUPPORT_CONTACT_POINT_ID = "https://autoapply.works/#contact-support";
+const ORGANIZATION_ID = `${getAppBaseUrl()}/#organization`;
+const SUPPORT_CONTACT_POINT_ID = `${getAppBaseUrl()}/#contact-support`;
 
 function buildOrganizationSchema() {
     return {
         "@type": "Organization",
         "@id": ORGANIZATION_ID,
         name: "AutoApply AI",
-        url: "https://autoapply.works",
-        logo: "https://autoapply.works/icon.svg",
+        url: getAppBaseUrl(),
+        logo: toAbsoluteAppUrl("/icon.svg"),
         email: OFFICIAL_CONTACT_EMAIL,
         contactPoint: [
             {
@@ -22,7 +23,7 @@ function buildOrganizationSchema() {
                 "@id": SUPPORT_CONTACT_POINT_ID,
                 contactType: "customer support",
                 email: OFFICIAL_CONTACT_EMAIL,
-                url: "https://autoapply.works/en/contact",
+                url: toAbsoluteAppUrl("/en/contact"),
                 areaServed: "Worldwide",
                 availableLanguage: ["en", "fr", "de", "es", "it"],
             },
@@ -51,7 +52,7 @@ export function buildTrustPageJsonLd(
                 about: {
                     "@id": ORGANIZATION_ID,
                 },
-                primaryImageOfPage: "https://autoapply.works/opengraph-image",
+                primaryImageOfPage: toAbsoluteAppUrl("/opengraph-image"),
             },
         ],
     };

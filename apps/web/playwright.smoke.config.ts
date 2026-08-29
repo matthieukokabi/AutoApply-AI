@@ -10,7 +10,7 @@ export default defineConfig({
     retries: 0,
     reporter: [["line"]],
     use: {
-        baseURL: process.env.SMOKE_BASE_URL || "https://autoapply.works",
+        baseURL: process.env.SMOKE_BASE_URL || "https://apply.zuerifix.tech",
         trace: "retain-on-failure",
     },
 });

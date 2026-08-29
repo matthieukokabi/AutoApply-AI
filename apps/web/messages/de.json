@@ -737,7 +737,7 @@
                 "privacy_blocking": "Datenschutzeinstellungen des Browsers blockieren erforderlichen Authentifizierungs-Speicher."
             },
             "steps": {
-                "enableCookies": "Aktivieren Sie Cookies für `autoapply.works`.",
+                "enableCookies": "Aktivieren Sie Cookies für `apply.zuerifix.tech`.",
                 "allowClerkHost": "Erlauben Sie `clerk.autoapply.works` in Blocker-/VPN-/Private-DNS-Einstellungen.",
                 "disableStrictTracking": "Deaktivieren Sie strengen Tracking-Schutz für diese Seite und versuchen Sie es erneut.",
                 "tryAnotherBrowser": "Wenn weiterhin blockiert, versuchen Sie einen anderen Browser oder einen nicht-privaten Tab."

@@ -737,7 +737,7 @@
                 "privacy_blocking": "Browser privacy settings are blocking required authentication storage."
             },
             "steps": {
-                "enableCookies": "Enable cookies for `autoapply.works`.",
+                "enableCookies": "Enable cookies for `apply.zuerifix.tech`.",
                 "allowClerkHost": "Allow `clerk.autoapply.works` in blocker/VPN/private DNS settings.",
                 "disableStrictTracking": "Disable strict tracking protection for this site and retry.",
                 "tryAnotherBrowser": "If still blocked, try another browser or non-private tab."

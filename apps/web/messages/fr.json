@@ -737,7 +737,7 @@
                 "privacy_blocking": "Les paramètres de confidentialité du navigateur bloquent le stockage d'authentification."
             },
             "steps": {
-                "enableCookies": "Activez les cookies pour `autoapply.works`.",
+                "enableCookies": "Activez les cookies pour `apply.zuerifix.tech`.",
                 "allowClerkHost": "Autorisez `clerk.autoapply.works` dans les paramètres bloqueur/VPN/DNS privé.",
                 "disableStrictTracking": "Désactivez la protection anti-tracking stricte pour ce site puis réessayez.",
                 "tryAnotherBrowser": "Si c'est toujours bloqué, essayez un autre navigateur ou un onglet non privé."
