@@ -193,7 +193,7 @@ export function GET() {
                         display: "flex",
                     }}
                 >
-                    autoapply.works
+                    apply.zuerifix.tech
                 </div>
             </div>
         ),

@@ -175,7 +175,7 @@ function buildRecommendations(input: {
     }
 
     if (!input.hasCookieHeader && input.authStatus !== "signed_in") {
-        recommendations.push("Browser did not send cookies. Enable cookies for autoapply.works.");
+        recommendations.push("Browser did not send cookies. Enable cookies for apply.zuerifix.tech.");
     }
 
     if (input.hasCookieHeader && !input.hasKnownAuthCookie && input.authStatus !== "signed_in") {

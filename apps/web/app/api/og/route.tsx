@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
                         display: "flex",
                     }}
                 >
-                    autoapply.works
+                    apply.zuerifix.tech
                 </div>
             </div>
         ),
