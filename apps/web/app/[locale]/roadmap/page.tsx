@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { buildCanonicalOgParity } from "@/lib/seo";
+import { getAppBaseUrl, toAbsoluteAppUrl } from "@/lib/site-url";
 import {
     Sparkles,
     CheckCircle2,
@@ -98,11 +99,11 @@ export default async function RoadmapPage({ params }: { params: Promise<{ locale
         "@type": "WebPage",
         name: t("roadmap.title"),
         description: t("roadmap.description"),
-        url: `https://autoapply.works/${locale === "en" ? "" : locale + "/"}roadmap`,
+        url: toAbsoluteAppUrl(`/${locale}/roadmap`),
         isPartOf: {
             "@type": "WebSite",
             name: "AutoApply AI",
-            url: "https://autoapply.works",
+            url: getAppBaseUrl(),
         },
     };
 

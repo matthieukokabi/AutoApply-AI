@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import sitemap from "@/app/sitemap";
 import { defaultLocale, locales } from "@/i18n/config";
 
-const baseUrl = "https://autoapply.works";
+const baseUrl = "https://apply.zuerifix.tech";
 const staticPaths = [
     "",
     "/blog",

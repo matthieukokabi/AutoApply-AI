@@ -1,4 +1,4 @@
-const DEFAULT_APP_BASE_URL = "https://autoapply.works";
+const DEFAULT_APP_BASE_URL = "https://apply.zuerifix.tech";
 
 function normalizePath(path: string): string {
     if (!path) {

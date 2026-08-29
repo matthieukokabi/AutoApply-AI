@@ -17,6 +17,7 @@ import {
     OFFICIAL_LINKEDIN_URL,
     OFFICIAL_X_URL,
 } from "@/lib/brand-identity";
+import { getAppBaseUrl } from "@/lib/site-url";
 import {
     ArrowRight,
     FileText,
@@ -89,7 +90,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         description: t("hero.description"),
-        url: "https://autoapply.works",
+        url: getAppBaseUrl(),
         offers: [
             {
                 "@type": "Offer",

@@ -13,6 +13,7 @@ import {
     buildCanonicalOgParity,
     buildDynamicOgImageUrl,
 } from "@/lib/seo";
+import { getAppBaseUrl, toAbsoluteAppUrl } from "@/lib/site-url";
 /**
  * Pre-render all blog post slugs at build time.
  * Combined with parent layout's locale params, this generates all locale × slug pages.
@@ -97,9 +98,9 @@ export default async function BlogPostPage({
         publisher: {
             "@type": "Organization",
             name: "AutoApply AI",
-            url: "https://autoapply.works",
+            url: getAppBaseUrl(),
         },
-        mainEntityOfPage: `https://autoapply.works/${locale}/blog/${slug}`,
+        mainEntityOfPage: toAbsoluteAppUrl(`/${locale}/blog/${slug}`),
         keywords: post.tags.join(", "),
     };
 

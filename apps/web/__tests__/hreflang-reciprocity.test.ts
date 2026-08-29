@@ -43,16 +43,16 @@ describe("hreflang reciprocity", () => {
                 const languages = alternates.languages;
 
                 expect(alternates.canonical).toBe(
-                    `https://autoapply.works${toLocalizedPath(locale, routePath)}`
+                    `https://apply.zuerifix.tech${toLocalizedPath(locale, routePath)}`
                 );
                 expect(languages?.[locale]).toBe(alternates.canonical);
                 expect(languages?.["x-default"]).toBe(
-                    `https://autoapply.works${toLocalizedPath(defaultLocale, routePath)}`
+                    `https://apply.zuerifix.tech${toLocalizedPath(defaultLocale, routePath)}`
                 );
 
                 for (const peerLocale of locales) {
                     expect(languages?.[peerLocale]).toBe(
-                        `https://autoapply.works${toLocalizedPath(
+                        `https://apply.zuerifix.tech${toLocalizedPath(
                             peerLocale,
                             routePath
                         )}`
