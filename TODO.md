@@ -4,6 +4,7 @@ Last updated: 2026-08-01 (Europe/Zurich)
 
 ## P0 — Protected Path Gate 0 (runway hardening)
 
+- [x] Restore the PR web-quality security gate after the retained-host SEO migration: upgrade dev-only Lighthouse from `^12.6.1` to `^13.4.1`, refresh its Puppeteer dependency chain, apply safe transitive audit updates, and revalidate a zero-vulnerability dependency baseline — completed on 2026-08-29
 - [x] Migrate the public SEO origin to the retained `https://apply.zuerifix.tech` host, including canonical/hreflang defaults, sitemap and robots generation, Open Graph parity, and structured-data URLs; retain `autoapply.works` only as a redirect source — completed on 2026-08-29
 
 - [x] Replace the stale Vercel Cron registration that continued invoking the obsolete composite n8n webhook after the app/config repair: rotate both DST-safe discovery schedules from `/api/cron/discovery-v3` to the versioned `/api/cron/discovery-v3/dispatch-v2` entrypoint while reusing the canonical handler and retaining the original endpoint for compatibility; refresh newly vulnerable transitive security overrides to `brace-expansion@5.0.9` and `ip-address@10.4.0` so the release retains a zero-vulnerability baseline — completed on 2026-08-03
