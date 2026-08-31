@@ -4,6 +4,7 @@ Last updated: 2026-08-01 (Europe/Zurich)
 
 ## P0 — Protected Path Gate 0 (runway hardening)
 
+- [x] Restore scheduling after migration from Vercel to the self-hosted VPS: add an idempotent installer that provisions `CRON_SECRET`, recreates DST-safe discovery dispatch, health monitoring, and weekly-digest cron entries, and restarts the web service so the protected endpoints receive the new secret — completed on 2026-08-29
 - [x] Restore the PR web-quality security gate after the retained-host SEO migration: upgrade dev-only Lighthouse from `^12.6.1` to `^13.4.1`, refresh its Puppeteer dependency chain, apply safe transitive audit updates, and revalidate a zero-vulnerability dependency baseline — completed on 2026-08-29
 - [x] Migrate the public SEO origin to the retained `https://apply.zuerifix.tech` host, including canonical/hreflang defaults, sitemap and robots generation, Open Graph parity, structured-data URLs, visible social-image branding, and cookie-recovery guidance; retain `autoapply.works` only as a redirect source — completed on 2026-08-29
 
