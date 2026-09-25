@@ -21,14 +21,13 @@ export async function GET(request: NextRequest) {
             ],
         },
         "2": {
-            title: "7 Job Board APIs",
+            title: "6 Job Board APIs",
             subtitle: "Automatic discovery from official sources every 4 hours",
             features: [
                 "Adzuna (Global)",
                 "The Muse (US/EU)",
                 "Remotive (Remote jobs)",
                 "Arbeitnow (EU/DACH)",
-                "JSearch (RapidAPI)",
                 "Jooble (Global)",
                 "Reed (UK)",
             ],

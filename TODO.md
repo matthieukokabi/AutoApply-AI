@@ -2,6 +2,10 @@
 
 Last updated: 2026-08-01 (Europe/Zurich)
 
+## P0 — Paid connector retirement
+
+- [x] Retire JSearch/RapidAPI from active discovery, connector health, n8n and recovery workflows, deployment/env contracts, and six-source product claims while preserving legacy-job filtering; add regression coverage proving no JSearch request or missing-key alert can recur and verify focused pipeline tests, the 478-test suite, lint/type checks, and the 162-route production build — completed on 2026-09-25
+
 ## P0 — Protected Path Gate 0 (runway hardening)
 
 - [x] Restore scheduling after migration from Vercel to the self-hosted VPS: add an idempotent installer that provisions `CRON_SECRET`, recreates DST-safe discovery dispatch, health monitoring, and weekly-digest cron entries, and restarts the web service so the protected endpoints receive the new secret — completed on 2026-08-29

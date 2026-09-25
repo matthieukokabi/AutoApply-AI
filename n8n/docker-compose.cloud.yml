@@ -52,7 +52,6 @@ services:
       # Job board API keys
       ADZUNA_APP_ID: ${ADZUNA_APP_ID}
       ADZUNA_APP_KEY: ${ADZUNA_APP_KEY}
-      JSEARCH_API_KEY: ${JSEARCH_API_KEY}
       JOOBLE_API_KEY: ${JOOBLE_API_KEY}
       REED_API_KEY: ${REED_API_KEY}
 

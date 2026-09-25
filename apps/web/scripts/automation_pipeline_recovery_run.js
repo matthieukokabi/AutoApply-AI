@@ -159,7 +159,6 @@ function extractConfigFromLoadNode(jsCode) {
         webhookSecret: pick("webhookSecret"),
         adzunaAppId: pick("adzunaAppId"),
         adzunaAppKey: pick("adzunaAppKey"),
-        jsearchApiKey: pick("jsearchApiKey"),
         joobleApiKey: pick("joobleApiKey"),
         reedApiKey: pick("reedApiKey"),
     };
@@ -421,24 +420,6 @@ function normalizeJobs(source, payload) {
                     url: j.url || "",
                     salary: null,
                     postedAt: j.created_at || null,
-                });
-            }
-            break;
-        }
-        case "jsearch": {
-            for (const j of payload?.data || []) {
-                out.push({
-                    externalId: `jsearch-${j.job_id}`,
-                    title: j.job_title || "",
-                    company: j.employer_name || "Unknown",
-                    location: j.job_city
-                        ? `${j.job_city}, ${j.job_state || j.job_country || ""}`
-                        : (j.job_country || ""),
-                    description: (j.job_description || "").substring(0, 3000),
-                    source: "jsearch",
-                    url: j.job_apply_link || j.job_google_link || "",
-                    salary: j.job_min_salary ? `${j.job_min_salary}-${j.job_max_salary}` : null,
-                    postedAt: j.job_posted_at_datetime_utc || null,
                 });
             }
             break;
@@ -830,23 +811,6 @@ async function main() {
                 return aggregateConnectorResponses(responses, "data");
             },
         });
-
-        if (config.jsearchApiKey) {
-            const query = `${searchTitle} ${searchLocation || "remote"}`.trim();
-            connectors.push({
-                source: "jsearch",
-                fetcher: () =>
-                    safeFetchJson(
-                        `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1`,
-                        {
-                            headers: {
-                                "X-RapidAPI-Key": config.jsearchApiKey,
-                                "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
-                            },
-                        }
-                    ),
-            });
-        }
 
         if (config.joobleApiKey) {
             connectors.push({

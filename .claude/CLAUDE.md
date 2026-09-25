@@ -79,7 +79,7 @@ At the END of every session:
 - Riverpod state management
 
 #### n8n Workflows — Built ✅
-- Job Discovery Pipeline (7 sources: Adzuna, The Muse, Remotive, Arbeitnow, JSearch, Jooble, Reed)
+- Job Discovery Pipeline (6 sources: Adzuna, The Muse, Remotive, Arbeitnow, Jooble, Reed)
 - Single Job Tailoring (webhook-triggered)
 - HTML templates for CV/cover letter PDFs
 
@@ -100,7 +100,7 @@ At the END of every session:
 
 #### Operations (PRIORITY 1)
 - Import n8n workflow JSON files into running Render n8n instance
-- Get remaining job API keys: JSearch (RapidAPI), Jooble, Reed
+- Get remaining job API keys: Jooble, Reed
 - End-to-end test: paste job → n8n tailors → view documents
 - Adzuna API key already configured (App ID: e2af75b6)
 
@@ -213,7 +213,7 @@ See `apps/web/prisma/schema.prisma` for full definitions.
 9. ~~Create Stripe products and connect billing~~ ✅ (live mode, 5 products)
 10. ~~Write legal pages~~ ✅ (ToS, Privacy Policy, Contact, Cookie consent)
 11. **Import n8n workflows into running Render instance** ← CURRENT PRIORITY
-12. **Get remaining job API keys** (JSearch, Jooble, Reed)
+12. **Get remaining job API keys** (Jooble, Reed)
 13. **End-to-end test** (paste job → n8n tailors → view documents)
 14. **Launch preparation** (ProductHunt, demo video, monitoring)
 

@@ -924,7 +924,6 @@ type DiscoveryUserPayload = {
 type DiscoverySourceConfig = {
     adzunaAppId: string;
     adzunaAppKey: string;
-    jsearchApiKey: string;
     joobleApiKey: string;
     reedApiKey: string;
 };
@@ -1677,10 +1676,6 @@ export async function POST(req: Request) {
                         typeof sourceConfigPayload.adzunaAppKey === "string"
                             ? sourceConfigPayload.adzunaAppKey.trim()
                             : "",
-                    jsearchApiKey:
-                        typeof sourceConfigPayload.jsearchApiKey === "string"
-                            ? sourceConfigPayload.jsearchApiKey.trim()
-                            : "",
                     joobleApiKey:
                         typeof sourceConfigPayload.joobleApiKey === "string"
                             ? sourceConfigPayload.joobleApiKey.trim()
@@ -1905,78 +1900,7 @@ export async function POST(req: Request) {
                     });
                 }
 
-                // 5) JSearch (RapidAPI)
-                if (sourceConfig.jsearchApiKey) {
-                    const shouldQueryJsearch =
-                        countCurrentInventory() < minInventoryBeforePaidApis;
-                    if (!shouldQueryJsearch) {
-                        connectors.push({
-                            source: "jsearch",
-                            ok: true,
-                            status: null,
-                            error: "skipped_sufficient_inventory",
-                            normalizedCount: 0,
-                        });
-                    } else {
-                        const searchPair =
-                            searchPairs.length > 0
-                                ? searchPairs[0]
-                                : { title: searchTitle, location: searchLocation };
-                        const query = `${searchPair.title || searchTitle} ${searchPair.location || searchLocation || "remote"}`;
-                        const response = await safeFetchJson(
-                            `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&num_pages=1`,
-                            {
-                                headers: {
-                                    "X-RapidAPI-Key": sourceConfig.jsearchApiKey,
-                                    "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
-                                },
-                            }
-                        );
-                        let normalizedCount = 0;
-
-                        if (response.ok) {
-                            const jobs = Array.isArray(response.body?.data)
-                                ? response.body.data
-                                : [];
-                            for (const entry of jobs) {
-                                allJobs.push({
-                                    externalId: `jsearch-${entry.job_id}`,
-                                    title: entry.job_title || "",
-                                    company: entry.employer_name || "Unknown",
-                                    location: entry.job_city
-                                        ? `${entry.job_city}, ${entry.job_state || entry.job_country || ""}`
-                                        : entry.job_country || "",
-                                    description: String(entry.job_description || "").slice(0, 3000),
-                                    source: "jsearch",
-                                    url: entry.job_apply_link || entry.job_google_link || "",
-                                    salary: entry.job_min_salary
-                                        ? `${entry.job_min_salary}-${entry.job_max_salary}`
-                                        : null,
-                                    postedAt: entry.job_posted_at_datetime_utc || null,
-                                });
-                                normalizedCount += 1;
-                            }
-                        }
-
-                        connectors.push({
-                            source: "jsearch",
-                            ok: response.ok,
-                            status: response.status,
-                            error: response.ok ? null : response.error,
-                            normalizedCount,
-                        });
-                    }
-                } else {
-                    connectors.push({
-                        source: "jsearch",
-                        ok: false,
-                        status: null,
-                        error: "missing_jsearch_api_key",
-                        normalizedCount: 0,
-                    });
-                }
-
-                // 6) Jooble
+                // 5) Jooble
                 if (sourceConfig.joobleApiKey) {
                     let normalizedCount = 0;
                     let status: number | null = null;
@@ -2035,7 +1959,7 @@ export async function POST(req: Request) {
                     });
                 }
 
-                // 7) Reed
+                // 6) Reed
                 if (sourceConfig.reedApiKey) {
                     const shouldQueryReed =
                         countCurrentInventory() < minInventoryBeforePaidApis;

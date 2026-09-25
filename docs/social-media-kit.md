@@ -33,7 +33,7 @@ Replace only `utm_content` when you duplicate a post variant. Keep `utm_source`,
 
 **Brand Voice:**
 - Professional but approachable
-- Data-driven (mention real numbers: 7 job APIs, ATS keywords, compatibility scores)
+- Data-driven (mention real numbers: 6 job APIs, ATS keywords, compatibility scores)
 - Empathetic to job seekers' frustration
 - Never overpromise (never say "guarantees interviews")
 
@@ -50,12 +50,12 @@ Replace only `utm_content` when you duplicate a post variant. Keep `utm_source`,
 
 ### Bio (160 chars max)
 ```
-AI-powered job applications. Tailored CVs & cover letters in seconds. 7 job APIs. ATS-optimized. Zero fabrication. GDPR compliant. Built for EU + global job seekers.
+AI-powered job applications. Tailored CVs & cover letters in seconds. 6 job APIs. ATS-optimized. Zero fabrication. GDPR compliant. Built for EU + global job seekers.
 ```
 
 ### Alternative Bio (shorter)
 ```
-Tailor your CV for every job in seconds. AI-powered, ATS-optimized, zero fabrication. 7 job board APIs. Start free at autoapply.works
+Tailor your CV for every job in seconds. AI-powered, ATS-optimized, zero fabrication. 6 job board APIs. Start free at autoapply.works
 ```
 
 ### Pinned Launch Tweet
@@ -67,7 +67,7 @@ We built the tool we wished existed during our own job search.
 Paste a job listing. Get a tailored CV + cover letter in 60 seconds.
 
 How it works:
-- 7 job APIs scan for matches every 4 hours
+- 6 job APIs scan for matches every 4 hours
 - AI scores your compatibility (skills, experience, education)
 - Your CV gets restructured with ATS keywords
 - Cover letter generated from YOUR real experience
@@ -95,7 +95,7 @@ This becomes the single source of truth — nothing gets added that isn't yours.
 Tweet 3:
 Step 2: Discover or paste jobs.
 
-AutoApply aggregates from 7 official APIs: Adzuna, The Muse, Remotive, Arbeitnow, JSearch, Jooble, and Reed.
+AutoApply aggregates from 6 official APIs: Adzuna, The Muse, Remotive, Arbeitnow, Jooble, and Reed.
 
 Each job gets scored 0-100 based on:
 - Skills match (40%)
@@ -186,7 +186,7 @@ HOW IT WORKS
 3. Get tailored documents — AI-optimized CV + cover letter as clean PDFs
 
 KEY FEATURES
-- 7 Job Board APIs: Adzuna, The Muse, Remotive, Arbeitnow, JSearch, Jooble, Reed
+- 6 Job Board APIs: Adzuna, The Muse, Remotive, Arbeitnow, Jooble, Reed
 - AI Compatibility Scoring: 0-100 based on skills (40%), experience (25%), education (15%), industry fit (20%)
 - ATS Optimization: Keyword-rich restructuring that passes automated screening
 - Anti-Hallucination: Never adds skills, experience, or credentials you don't have
@@ -216,7 +216,7 @@ Here's what makes it different:
 
 2. ATS-optimized — Each tailored CV includes the specific keywords that get you past automated screening systems.
 
-3. 7 job board APIs — New opportunities are discovered every 4 hours from Adzuna, The Muse, Remotive, Arbeitnow, JSearch, Jooble, and Reed.
+3. 6 job board APIs — New opportunities are discovered every 4 hours from Adzuna, The Muse, Remotive, Arbeitnow, Jooble, and Reed.
 
 4. Compatibility scoring — Every job gets scored 0-100 so you focus on roles where you're most competitive.
 
@@ -246,7 +246,7 @@ AutoApply AI tailors your resume and cover letter for every job listing — auto
 Upload your CV once. Our AI scores your compatibility with each role and restructures your resume with ATS-optimized keywords, using only your real qualifications. Never fabricates.
 
 KEY FEATURES:
-- 7 Job Board APIs scanning every 4 hours
+- 6 Job Board APIs scanning every 4 hours
 - AI compatibility scoring (0-100)
 - ATS keyword optimization
 - One-click tailored CV + cover letter PDFs
@@ -278,7 +278,7 @@ The key principle behind AutoApply: your CV should never contain anything you ca
 
 Here's how it works:
 1. Upload your master CV (PDF, DOCX, or paste text)
-2. Browse jobs from 7 official APIs, or paste any job listing
+2. Browse jobs from 6 official APIs, or paste any job listing
 3. Get a tailored CV + cover letter as PDFs in ~60 seconds
 
 I'd love your feedback on:
@@ -317,7 +317,7 @@ Try it free at {PRODUCTHUNT_CTA} — 3 tailored documents per month, no credit c
 | Mon | Twitter | Share user metrics (X documents generated, avg score) |
 | Tue | LinkedIn | Case study or testimonial (if available) |
 | Wed | Twitter | "Why we never fabricate CV content" thread |
-| Thu | LinkedIn | Feature spotlight: 7 job board APIs |
+| Thu | LinkedIn | Feature spotlight: 6 job board APIs |
 | Fri | Twitter | "Job search in Europe? We support EN/FR/DE/ES/IT" |
 
 ### Week 4 — Growth

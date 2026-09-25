@@ -126,7 +126,7 @@ const FETCH_JOBS_VIA_APP_API_NODE = {
                 },
                 {
                     name: "data",
-                    value: "={{ JSON.stringify({ user: { userId: $json.userId, targetTitles: $json.targetTitles, locations: $json.locations, remotePreference: $json.remotePreference, masterCvText: $json.masterCvText, subscriptionStatus: $json.subscriptionStatus, creditsRemaining: $json.creditsRemaining }, sourceConfig: { adzunaAppId: $('Load Config').first().json.adzunaAppId || '', adzunaAppKey: $('Load Config').first().json.adzunaAppKey || '', jsearchApiKey: $('Load Config').first().json.jsearchApiKey || '', joobleApiKey: $('Load Config').first().json.joobleApiKey || '', reedApiKey: $('Load Config').first().json.reedApiKey || '' } }) }}",
+                    value: "={{ JSON.stringify({ user: { userId: $json.userId, targetTitles: $json.targetTitles, locations: $json.locations, remotePreference: $json.remotePreference, masterCvText: $json.masterCvText, subscriptionStatus: $json.subscriptionStatus, creditsRemaining: $json.creditsRemaining }, sourceConfig: { adzunaAppId: $('Load Config').first().json.adzunaAppId || '', adzunaAppKey: $('Load Config').first().json.adzunaAppKey || '', joobleApiKey: $('Load Config').first().json.joobleApiKey || '', reedApiKey: $('Load Config').first().json.reedApiKey || '' } }) }}",
                 },
             ],
         },

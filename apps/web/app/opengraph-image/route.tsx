@@ -135,7 +135,7 @@ export function GET() {
                             display: "flex",
                         }}
                     >
-                        AI-powered ATS-optimized resumes and cover letters. 7 job board APIs. Zero fabrication. GDPR compliant.
+                        AI-powered ATS-optimized resumes and cover letters. 6 job board APIs. Zero fabrication. GDPR compliant.
                     </div>
 
                     {/* Stats */}
@@ -147,7 +147,7 @@ export function GET() {
                         }}
                     >
                         {[
-                            { num: "7", label: "Job APIs" },
+                            { num: "6", label: "Job APIs" },
                             { num: "100+", label: "ATS Keywords" },
                             { num: "0", label: "Fabricated" },
                             { num: "60s", label: "Per Tailoring" },

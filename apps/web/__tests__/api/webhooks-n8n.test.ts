@@ -431,7 +431,6 @@ describe("POST /api/webhooks/n8n", () => {
                     sourceConfig: {
                         adzunaAppId: "",
                         adzunaAppKey: "",
-                        jsearchApiKey: "",
                         joobleApiKey: "",
                         reedApiKey: "",
                     },
@@ -498,7 +497,6 @@ describe("POST /api/webhooks/n8n", () => {
                 sourceConfig: {
                     adzunaAppId: "",
                     adzunaAppKey: "",
-                    jsearchApiKey: "",
                     joobleApiKey: "",
                     reedApiKey: "",
                 },
@@ -537,6 +535,145 @@ describe("POST /api/webhooks/n8n", () => {
                     }),
                 ])
             );
+            expect(data.connectors).not.toEqual(
+                expect.arrayContaining([expect.objectContaining({ source: "jsearch" })])
+            );
+            expect(
+                vi.mocked(global.fetch).mock.calls.some(([input]) =>
+                    String(input).includes("jsearch.p.rapidapi.com")
+                )
+            ).toBe(false);
+        });
+
+        it("normalizes jobs from all six active sources without JSearch configuration", async () => {
+            vi.mocked(global.fetch).mockImplementation(async (input: RequestInfo | URL) => {
+                const url = String(input);
+                let body: Record<string, unknown> = {};
+
+                if (url.includes("api.adzuna.com")) {
+                    body = {
+                        results: [{
+                            id: "adzuna_1",
+                            title: "Adzuna Engineer",
+                            company: { display_name: "Adzuna Corp" },
+                            location: { display_name: "Zurich" },
+                            description: "A".repeat(80),
+                            redirect_url: "https://example.com/adzuna",
+                            created: "2026-09-20T10:00:00Z",
+                        }],
+                    };
+                } else if (url.includes("themuse.com")) {
+                    body = {
+                        results: [{
+                            id: "muse_1",
+                            name: "Muse Engineer",
+                            company: { name: "Muse Corp" },
+                            locations: [{ name: "Zurich" }],
+                            contents: "M".repeat(80),
+                            refs: { landing_page: "https://example.com/muse" },
+                            publication_date: "2026-09-20T10:00:00Z",
+                        }],
+                    };
+                } else if (url.includes("remotive.com")) {
+                    body = {
+                        jobs: [{
+                            id: "remotive_1",
+                            title: "Remotive Engineer",
+                            company_name: "Remotive Corp",
+                            candidate_required_location: "Zurich",
+                            description: "R".repeat(80),
+                            url: "https://example.com/remotive",
+                            publication_date: "2026-09-20T10:00:00Z",
+                        }],
+                    };
+                } else if (url.includes("arbeitnow.com")) {
+                    body = {
+                        data: [{
+                            slug: "arbeitnow_1",
+                            title: "Arbeitnow Engineer",
+                            company_name: "Arbeitnow Corp",
+                            location: "Zurich",
+                            description: "B".repeat(80),
+                            url: "https://example.com/arbeitnow",
+                            created_at: "2026-09-20T10:00:00Z",
+                        }],
+                    };
+                } else if (url.includes("jooble.org")) {
+                    body = {
+                        jobs: [{
+                            id: "jooble_1",
+                            title: "Jooble Engineer",
+                            company: "Jooble Corp",
+                            location: "Zurich",
+                            snippet: "J".repeat(80),
+                            link: "https://example.com/jooble",
+                            updated: "2026-09-20T10:00:00Z",
+                        }],
+                    };
+                } else if (url.includes("reed.co.uk")) {
+                    body = {
+                        results: [{
+                            jobId: "reed_1",
+                            jobTitle: "Reed Engineer",
+                            employerName: "Reed Corp",
+                            locationName: "Zurich",
+                            jobDescription: "D".repeat(80),
+                            jobUrl: "https://example.com/reed",
+                            date: "2026-09-20T10:00:00Z",
+                        }],
+                    };
+                }
+
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => body,
+                    text: async () => JSON.stringify(body),
+                } as Response;
+            });
+
+            const response = await POST(createWebhookRequest("fetch_jobs_for_user", {
+                user: {
+                    userId: "user_all_sources",
+                    targetTitles: ["Engineer"],
+                    locations: ["Zurich"],
+                    remotePreference: "any",
+                    masterCvText: "Engineering CV content",
+                    subscriptionStatus: "pro",
+                    creditsRemaining: 12,
+                },
+                sourceConfig: {
+                    adzunaAppId: "adzuna-id",
+                    adzunaAppKey: "adzuna-key",
+                    joobleApiKey: "jooble-key",
+                    reedApiKey: "reed-key",
+                },
+            }));
+            const data = await response.json();
+            const sources = new Set(data.jobs.map((job: { source: string }) => job.source));
+
+            expect(response.status).toBe(200);
+            expect(sources).toEqual(new Set([
+                "adzuna",
+                "themuse",
+                "remotive",
+                "arbeitnow",
+                "jooble",
+                "reed",
+            ]));
+            expect(data.connectors.map((connector: { source: string }) => connector.source)).toEqual([
+                "adzuna",
+                "themuse",
+                "remotive",
+                "arbeitnow",
+                "jooble",
+                "reed",
+            ]);
+            expect(
+                vi.mocked(global.fetch).mock.calls.some(([input]) =>
+                    String(input).includes("jsearch.p.rapidapi.com")
+                )
+            ).toBe(false);
         });
 
         it("matches US state abbreviations as tokens instead of substrings inside unrelated words", async () => {
@@ -610,7 +747,6 @@ describe("POST /api/webhooks/n8n", () => {
                 sourceConfig: {
                     adzunaAppId: "",
                     adzunaAppKey: "",
-                    jsearchApiKey: "",
                     joobleApiKey: "",
                     reedApiKey: "",
                 },

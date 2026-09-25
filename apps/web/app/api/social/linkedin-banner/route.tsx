@@ -70,7 +70,7 @@ export async function GET() {
                             AutoApply AI
                         </div>
                         <div style={{ fontSize: 14, color: "#64748B" }}>
-                            AI-Tailored CVs & Cover Letters | ATS-Optimized | 7 Job APIs | Zero Fabrication
+                            AI-Tailored CVs & Cover Letters | ATS-Optimized | 6 Job APIs | Zero Fabrication
                         </div>
                     </div>
 

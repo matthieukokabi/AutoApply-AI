@@ -121,12 +121,12 @@ export async function GET() {
                             AI-Tailored CVs & Cover Letters
                         </div>
                         <div style={{ fontSize: 18, color: "#64748B", lineHeight: 1.4 }}>
-                            ATS-optimized. 7 job APIs. Zero fabrication.
+                            ATS-optimized. 6 job APIs. Zero fabrication.
                         </div>
                         {/* Mini stats */}
                         <div style={{ display: "flex", gap: 24, marginTop: 12 }}>
                             {[
-                                { n: "7", l: "APIs" },
+                                { n: "6", l: "APIs" },
                                 { n: "100+", l: "Keywords" },
                                 { n: "60s", l: "Tailoring" },
                             ].map((s) => (

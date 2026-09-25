@@ -11,7 +11,6 @@ This contract defines the required server/runtime variables for the additive v3 
 | `ANTHROPIC_API_KEY` | API key used by v3 scoring/tailoring model calls. |
 | `ADZUNA_APP_ID` | Adzuna API app id for discovery connectors. |
 | `ADZUNA_APP_KEY` | Adzuna API app key for discovery connectors. |
-| `JSEARCH_API_KEY` | JSearch API key for discovery connectors. |
 | `JOOBLE_API_KEY` | Jooble API key for discovery connectors. |
 | `REED_API_KEY` | Reed API key for discovery connectors. |
 

@@ -642,7 +642,6 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
                                 <span>The Muse API</span>
                                 <span>Remotive API</span>
                                 <span>Arbeitnow API</span>
-                                <span>JSearch API</span>
                                 <span>Jooble API</span>
                                 <span>Reed API</span>
                             </div>

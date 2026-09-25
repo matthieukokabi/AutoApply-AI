@@ -29,7 +29,7 @@ describe("automation pipeline recovery script helpers", () => {
     });
 
     it("handles failed connector responses without producing normalized jobs", () => {
-        const result = recovery.buildConnectorResult("jsearch", {
+        const result = recovery.buildConnectorResult("jooble", {
             ok: false,
             status: 429,
             error: "rate_limited",
